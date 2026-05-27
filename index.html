@@ -724,17 +724,28 @@
         }
 
         function loadSelectedSeason(val) {
-            if(val === "current") {
-                renderLeagueTable(leagueData);
-            } else {
-                const selectedSeason = archivedSeasons.find(s => s.seasonId == val);
-                if(selectedSeason) {
-                    const legacyData = {};
-                    selectedSeason.table.forEach(t => legacyData[t.name] = t);
-                    renderLeagueTable(legacyData);
-                }
+    const el = document.getElementById('current-datetime');
+    
+    if(val === "current") {
+        // اگر فصل جاری بود، تاریخ زنده سیستم رو نشون بده
+        updateCurrentDateTime();
+        renderLeagueTable(leagueData);
+    } else {
+        
+        const selectedSeason = archivedSeasons.find(s => s.seasonId == val);
+        if(selectedSeason) {
+            const legacyData = {};
+            selectedSeason.table.forEach(t => legacyData[t.name] = t);
+            renderLeagueTable(legacyData);
+            
+          
+            if(el && selectedSeason.date) {
+                const dt = formatShamsiDateTime(selectedSeason.date);
+                el.innerHTML = `<i class="far fa-calendar-alt mr-1"></i> Finished on: ${dt.date} - ${dt.time}`;
             }
         }
+    }
+}
 
         async function loadMainLeagueDataFromGitHub() {
             if(!Object.keys(mainLeagueData).length) initializeMainLeagueData();
