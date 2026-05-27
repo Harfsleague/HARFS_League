@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HARFS App V4</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* Base Styles & Variables */
+        :root {
+            --primary-color: #1e3a8a; /* Darker Blue-800 */
+            --secondary-color: #60a5fa; /* Lighter Blue-400 */
+            --dark-bg: #0d1a2a; /* Very Dark Navy Blue Background */
+            --glass-bg: rgba(255, 255, 255, 0.08); 
+            --shadow-color: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #0d1a2a, #1c1b2d, #2d1b4e, #0d1a2a);
+            background-size: 400% 400%;
+            animation: gradientAnimation 8s ease infinite;
+            direction: ltr;
+            overflow: hidden;
+            padding: 0; 
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Global App Container --- */
+        .app-container {
+            width: 100%; max-width: 380px; height: 100vh; position: relative; overflow: hidden; padding: 0 20px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        /* --- Splash Screen (Smooth Pulse Animation) --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 1s ease-out;
+        }
+        .splash-text {
+            font-size: 3rem; font-weight: 700; letter-spacing: 5px; color: white;
+            animation: pulse 1.5s infinite alternate; 
+        }
+        
+        @keyframes pulse { 
+            0% { opacity: 0.3; } 
+            50% { opacity: 1; } 
+            100% { opacity: 0.3; } 
+        }
+        
+        /* --- Menu Screen --- */
+        #menu-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            background: transparent; direction: ltr;
+            transition: opacity 0.4s ease-out;
+            opacity: 0; 
+            padding: 0 20px;
+        }
+        #menu-screen.active { 
+            display: flex; opacity: 1; 
+        }
+        
+        .menu-list {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        /* Liquid Glass Menu Items */
+        .menu-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 18px;
+            border-radius: 20px;
+            
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(30, 58, 138, 0.25));
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .menu-list-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .menu-list-item:hover::before {
+            left: 100%;
+        }
+
+        .menu-list-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .menu-item-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .menu-list-item i.menu-icon {
+            font-size: 1.3rem;
+            color: var(--secondary-color);
+            margin-right: 18px;
+            width: 28px;
+            text-align: center;
+        }
+        
+        .menu-list-item span {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .menu-list-item i.menu-chevron {
+            font-size: 0.9rem;
+            color: #a7b7e6;
+        }
+
+        /* Specific Admin Item Style */
+        .menu-list-item.admin-item {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.3), rgba(59, 130, 246, 0.2));
+            border: 1px solid rgba(30, 58, 138, 0.4);
+        }
+        .menu-list-item.admin-item:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(30, 58, 138, 0.2));
+        }
+
+        /* --- Screens (Player/League/Chat) --- */
+        .page-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 40;
+            display: none; flex-direction: column; justify-content: flex-start; align-items: center;
+            background: transparent; 
+            direction: ltr;
+            padding: 20px 0; 
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: opacity 0.4s ease-out;
+            opacity: 0;
+        }
+        
+        .page-screen.active {
+            opacity: 1;
+        }
+        
+        /* --- League Table Styles --- */
+        .league-header {
+            direction: ltr;
+            text-align: left;
+            width: 100%; padding: 0 10px; margin-bottom: 20px;
+            position: sticky; top: 0; z-index: 10; 
+            background: rgba(13, 26, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding-top: 10px; 
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            border-radius: 15px;
+        }
+        
+        .league-table-container {
+            direction: ltr;
+            width: 100%; 
+            padding: 0 10px;
+            border-radius: 15px; 
+            overflow: hidden; 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .team-header { 
+            font-weight: bold; 
+            background: #1e3a8a; 
+            padding: 10px 0; 
+            text-align: center; 
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        /* Alternate Row Colors and Hover */
+        .team-row {
+            display: grid; 
+            grid-template-columns: 0.3fr 1.8fr repeat(4, 0.6fr) repeat(3, 0.7fr) 0.8fr; 
+            padding: 10px 0; font-size: 0.8rem; 
+            align-items: center;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .team-row:nth-child(even) {
+            background-color: rgba(21, 39, 59, 0.5); 
+        }
+        .team-row:nth-child(odd) {
+            background-color: rgba(26, 47, 74, 0.5); 
+        }
+        .team-row:hover {
+            background-color: rgba(37, 75, 115, 0.7); 
+            transform: scale(1.02);
+            transition: all 0.2s ease;
+        }
+
+        .team-name { 
+            font-weight: 600; 
+            text-align: left;
+            overflow: hidden; 
+            white-space: nowrap; 
+            text-overflow: ellipsis;
+            justify-content: flex-start;
+        }
+        .team-pts { font-weight: bold; color: #ffeb3b; font-size: 1rem; } 
+        .team-rank { font-weight: 700; color: #60a5fa; text-align: center; }
+
+        /* --- NEW: Main League Table Styles (Capsule Liquid Glass) --- */
+        .main-league-container {
+            width: 100%;
+            padding: 0 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Increased gap */
+            margin-top: 10px;
+        }
+
+        .team-capsule {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 40px;
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(30, 58, 138, 0.25));
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .team-capsule::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .team-capsule:hover::before {
+            left: 100%;
+        }
+
+        .team-capsule:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .capsule-left {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .capsule-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .capsule-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .capsule-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .capsule-rank {
+            font-size: 0.75rem;
+            color: #a7b7e6;
+        }
+
+        .capsule-points {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 6px 12px;
+            min-width: 60px;
+        }
+
+        .points-label {
+            font-size: 0.65rem;
+            color: #a7b7e6;
+            margin-bottom: 1px;
+        }
+
+        .points-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffeb3b;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        }
+
+        /* Special styling for top 3 teams */
+        .team-capsule.gold {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .team-capsule.silver {
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(192, 192, 192, 0.05));
+            border: 1px solid rgba(192, 192, 192, 0.4);
+        }
+
+        .team-capsule.bronze {
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(205, 127, 50, 0.05));
+            border: 1px solid rgba(205, 127, 50, 0.4);
+        }
+
+        /* Liquid Glass Buttons */
+        .glass-button {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(30, 58, 138, 0.25));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 10px 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(30, 58, 138, 0.35));
+        }
+
+        /* Modal Styles */
+        #match-registration-modal, #admin-options-modal, #team-profile-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+            z-index: 1000; display: none; align-items: center; justify-content: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, rgba(40, 40, 40, 0.9), rgba(20, 20, 20, 0.9));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px; 
+            border-radius: 20px; 
+            width: 90%; 
+            max-width: 400px;
+            direction: ltr;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+        }
+        
+        .modal-content select, .modal-content input[type="number"] {
+            color: #1a1a1a !important; 
+            background-color: #f0f0f0; 
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        /* History items with glass effect */
+        .history-item {
+            padding: 15px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.1), rgba(30, 58, 138, 0.2));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="splash-screen">
+        <div class="splash-text" id="harfs-text" style="direction: ltr;">HARFS</div>
+    </div>
+
+    <div class="app-container hidden" id="app-container">
+        
+        <div id="menu-screen" style="display: none;">
+            <p class="text-gray-400 text-blue-400 mb-2">HARFS Football League System</p>
+            
+            <div class="menu-list">
+                
+                <div class="menu-list-item" onclick="navigate('main-league')">
+                    <div class="menu-item-content">
+                        <i class="fas fa-trophy menu-icon"></i> 
+                        <span>Overall Championship</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+                
+                <div class="menu-list-item" onclick="navigate('league')">
+                    <div class="menu-item-content">
+                        <i class="fas fa-futbol menu-icon"></i> 
+                        <span>Current Season</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+
+                <div class="menu-list-item" onclick="navigate('history')">
+                    <div class="menu-item-content">
+                        <i class="fas fa-history menu-icon"></i> 
+                        <span>Match History</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+
+                <div class="menu-list-item admin-item" onclick="showAdminOptions()">
+                    <div class="menu-item-content">
+                        <i class="fas fa-user-shield menu-icon"></i> 
+                        <span>Admin Panel</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NEW: Main League Table Screen -->
+        <div id="main-league-screen" class="page-screen" style="display: none;">
+            <div class="league-header">
+                <h2 class="text-2xl font-bold text-yellow-300 text-center mb-4">Overall Championship</h2> 
+                
+                <div class="text-center text-sm text-gray-400" id="main-current-datetime">Loading...</div>
+            </div>
+            
+            <div class="main-league-container">
+                <div id="main-league-body">
+                    <!-- Team capsules will be inserted here -->
+                </div>
+                <div id="main-loading-message" class="text-center text-gray-500 mt-10">Loading championship data...</div>
+            </div>
+            
+            <button class="glass-button mt-5 mb-5" onclick="navigate('menu')">
+                <i class="fas fa-chevron-left mr-1"></i> Back to Menu
+            </button>
+        </div>
+        
+        <div id="league-table-screen" class="page-screen" style="display: none;">
+            <div class="league-header">
+                <h2 class="text-2xl font-bold text-blue-300 text-center mb-4">Current Season Table</h2> 
+                
+                <div class="text-center text-sm text-gray-400" id="current-datetime">Loading...</div>
+                
+                <div class="team-row team-header text-center mt-4">
+                    <div>#</div>
+                    <div class="team-name">Team</div>
+                    <div>P</div>
+                    <div>W</div>
+                    <div>D</div>
+                    <div>L</div>
+                    <div>GF</div> 
+                    <div>GA</div>
+                    <div>GD</div>
+                    <div class="team-pts">Pts</div>
+                </div>
+            </div>
+            
+            <div class="league-table-container mt-1">
+                <div id="league-table-body">
+                    </div>
+                <div id="loading-message" class="text-center text-gray-500 mt-10">Loading league data...</div>
+            </div>
+            
+            <button class="glass-button mt-5 mb-5" onclick="navigate('menu')">
+                <i class="fas fa-chevron-left mr-1"></i> Back to Menu
+            </button>
+        </div>
+        
+        <div id="match-history-screen" class="page-screen" style="display: none;">
+            <div class="league-header">
+                <h2 class="text-2xl font-bold text-blue-300 text-center mb-4">Complete Match History</h2> 
+            </div>
+            
+            <div class="w-full px-4">
+                <div id="history-list" class="flex flex-col">
+                    <div id="history-loading" class="text-center text-gray-500 mt-10">Loading history...</div>
+                </div>
+            </div>
+            
+            <button class="glass-button mt-5 mb-5" onclick="navigate('menu')">
+                <i class="fas fa-chevron-left mr-1"></i> Back to Menu
+            </button>
+        </div>
+        
+        <div id="match-registration-modal" style="display: none;">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4 text-blue-400">Register Match Result</h3>
+                
+                <div class="flex justify-between items-center mb-4 text-center">
+                    <div class="w-2/5">
+                        <label class="block mb-1 text-sm font-semibold">Home Team:</label>
+                        <select id="home-team-select" class="w-full p-2 text-black rounded"></select>
+                    </div>
+                    <div class="w-1/5">
+                        <label class="block mb-1 text-sm font-semibold">Score:</label>
+                        <input type="number" id="home-score" class="w-full p-2 text-black rounded text-center" value="0" min="0">
+                    </div>
+                    <span class="text-2xl pt-6 px-1">-</span>
+                    <div class="w-1/5">
+                        <label class="block mb-1 text-sm font-semibold">Score:</label>
+                        <input type="number" id="away-score" class="w-full p-2 text-black rounded text-center" value="0" min="0">
+                    </div>
+                    <div class="w-2/5">
+                        <label class="block mb-1 text-sm font-semibold">Away Team:</label>
+                        <select id="away-team-select" class="w-full p-2 text-black rounded"></select>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-red-400 text-center mb-4" id="modal-error" style="display:none;">Home and Away teams must be different.</p>
+
+                <div class="flex justify-end mt-4">
+                    <button class="glass-button bg-red-500 bg-opacity-70 hover:bg-opacity-100 ml-2" onclick="hideRegistrationModal()">
+                        Cancel
+                    </button>
+                    <button class="glass-button bg-green-500 bg-opacity-70 hover:bg-opacity-100" onclick="registerMatchResult()">
+                        Save & Register
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="admin-options-modal" style="display: none;">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4 text-blue-400">Match Management Panel</h3>
+                
+                <div id="admin-history-list" class="max-h-80 overflow-y-auto mb-4 p-2 bg-gray-700 bg-opacity-50 rounded-lg">
+                    <div class="text-center text-gray-400">Loading...</div>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button class="glass-button bg-red-500 bg-opacity-70 hover:bg-opacity-100 ml-2" onclick="hideAdminOptionsModal()">
+                        Close
+                    </button>
+                    <button class="glass-button bg-yellow-600 bg-opacity-70 hover:bg-opacity-100" onclick="resetLeagueConfirm()">
+                        <i class="fas fa-undo mr-1"></i> Reset League
+                    </button>
+                    <button class="glass-button bg-purple-600 bg-opacity-70 hover:bg-opacity-100 ml-2" onclick="finishSeason()">
+                        <i class="fas fa-flag-checkered mr-1"></i> Finish Season
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-0 w-full max-w-sm p-2 text-center text-xs text-gray-500 z-50">
+            Powered by <i class="fas fa-heart text-red-600 animate-pulse"></i>
+        </div>
+    </div>
+
+    <!-- Team Profile Modal -->
+    <div id="team-profile-modal" style="display: none;">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 text-blue-400" id="profile-team-title">Team Profile</h3>
+            
+            <div class="flex flex-col items-center mb-4">
+                <img id="profile-team-logo" src="" alt="Team Logo" 
+                     class="w-24 h-24 object-cover rounded-full border-4 border-blue-500 mb-3">
+                <h4 id="profile-team-name" class="text-2xl font-bold">Team Name</h4>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-gray-700 p-3 rounded text-center">
+                    <div class="text-sm text-gray-400">Points</div>
+                    <div id="profile-stat-pts" class="text-xl font-bold text-yellow-400">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded text-center">
+                    <div class="text-sm text-gray-400">Played</div>
+                    <div id="profile-stat-p" class="text-xl font-bold">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded text-center">
+                    <div class="text-sm text-gray-400">Wins</div>
+                    <div id="profile-stat-w" class="text-xl font-bold text-green-400">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded text-center">
+                    <div class="text-sm text-gray-400">Losses</div>
+                    <div id="profile-stat-l" class="text-xl font-bold text-red-400">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded text-center">
+                    <div class="text-sm text-gray-400">Goals For</div>
+                    <div id="profile-stat-gf" class="text-xl font-bold">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded text-center">
+                    <div class="text-sm text-gray-400">Goals Against</div>
+                    <div id="profile-stat-ga" class="text-xl font-bold">0</div>
+                </div>
+            </div>
+            
+            <button class="glass-button w-full mt-4" onclick="hideTeamProfile()">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <audio id="background-music" loop style="display: none;">
+        <source src="https://raw.githubusercontent.com/rzarisfi/HarfsMusic/league-data/HARFS_background.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // ** توابع تاریخ شمسی **
+
+        // 1. لیست ماه‌های شمسی به انگلیسی برای نمایش
+        const J_MONTHS_EN = [
+            "Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar", 
+            "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"
+        ];
+
+        // 2. تابع کمکی برای تبدیل ارقام فارسی به انگلیسی (ضروری برای پردازش تاریخ)
+        function toEnglishDigits(str) {
+            if (!str) return str;
+            return str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+        }
+
+        // 3. تابع اصلی به‌روزرسانی تاریخ شمسی و زمان
+        function updateCurrentDateTime() {
+            const now = new Date();
+            const localTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+            // 1. گرفتن تاریخ شمسی با ارقام فارسی
+            const faDateString = now.toLocaleDateString('fa-IR', { year: 'numeric', month: 'numeric', day: 'numeric' });
+            
+            // 2. تبدیل ارقام فارسی به انگلیسی برای پردازش
+            const enDateString = toEnglishDigits(faDateString);
+            
+            // 3. جداسازی اجزای تاریخ
+            const parts = enDateString.split('/');
+            const J_YEAR = parts[0]; // سال شمسی
+            const J_MONTH_NUM = parseInt(parts[1], 10); // شماره ماه شمسی (1 تا 12)
+            const J_DAY = parts[2]; // روز شمسی
+
+            // 4. یافتن نام ماه شمسی به انگلیسی
+            const J_MONTH_NAME = J_MONTHS_EN[J_MONTH_NUM - 1] || 'Unknown';
+            
+            // 5. گرفتن نام روز هفته به انگلیسی
+            const J_WEEKDAY_EN = now.toLocaleDateString("en-US", { weekday: 'short' });
+
+            // 6. ساخت رشته نهایی تاریخ با فرمت مورد نظر
+            const solarDateFinal = `${J_DAY}${J_MONTH_NAME}${J_YEAR}    ${J_WEEKDAY_EN}`;
+            
+            // به‌روز رسانی المان HTML
+            const dtElement = document.getElementById('current-datetime');
+            const mainDtElement = document.getElementById('main-current-datetime');
+            
+            if (dtElement) {
+                dtElement.textContent = `${solarDateFinal} - Time: ${localTime}`;
+            }
+            if (mainDtElement) {
+                mainDtElement.textContent = `${solarDateFinal} - Time: ${localTime}`;
+            }
+        }
+        
+        // 4. تابع کمکی برای فرمت دهی تاریخ شمسی از روی Timestamp
+        function formatShamsiDateTime(timestamp) {
+            const now = new Date(timestamp);
+            
+            // Time with seconds
+            const localTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+            // Date conversion
+            const faDateString = now.toLocaleDateString('fa-IR', { year: 'numeric', month: 'numeric', day: 'numeric' });
+            const enDateString = toEnglishDigits(faDateString);
+            const parts = enDateString.split('/');
+            const J_YEAR = parts[0]; 
+            const J_MONTH_NUM = parseInt(parts[1], 10); 
+            const J_DAY = parts[2]; 
+            const J_MONTH_NAME = J_MONTHS_EN[J_MONTH_NUM - 1] || 'Unknown';
+            const J_WEEKDAY_EN = now.toLocaleDateString("en-US", { weekday: 'short' });
+
+            // Format: 12Aban1404 Mon
+            const solarDateFinal = `${J_DAY}${J_MONTH_NAME}${J_YEAR}    ${J_WEEKDAY_EN}`;
+
+            return {
+                date: solarDateFinal,
+                time: localTime
+            };
+        }
+        
+        // ** پایان توابع تاریخ شمسی **
+        
+        // ----------------------------------------------------
+        // *** GLOBAL CONFIGURATION ***
+        // ----------------------------------------------------
+        const GITHUB_REPO = "rzarisfi/HarfsMusic"; 
+        const GITHUB_LEAGUE_BRANCH = "league-data";
+        const GITHUB_LEAGUE_FILE = "league_data.json";
+        const GITHUB_MAIN_LEAGUE_FILE = "main_league_data.json"; // NEW: Main league file
+        const GITHUB_MATCHES_FILE = "match_history.json"; 
+        
+        // Base URL for team flag images
+        const GITHUB_IMAGE_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
+
+        // Admin Password
+        const ADMIN_PASSWORD = "0000"; 
+
+        // Global Team List
+        const TEAM_NAMES = [
+            "HOSI", 
+            "Sajsfi", 
+            "Bayern", 
+            "Yellow"
+        ];
+        
+        // Display Names (English)
+        const TEAM_DISPLAY_NAMES = {
+            "HOSI": "HOSI",
+            "Sajsfi": "Sajsfi",
+            "Bayern": "Bayern",
+            "Yellow": "Yellow"
+        };
+        
+        let leagueData = {}; // Current season data
+        let mainLeagueData = {}; // NEW: Main league data
+        let sha = null; 
+        let mainSha = null; // NEW: SHA for main league data
+        let matchHistory = []; 
+        let matchesSha = null; 
+        let backgroundMusicStarted = false;
+
+        // ----------------------------------------------------
+        // *** ADMIN & UI FUNCTIONS ***
+        // ----------------------------------------------------
+
+        function initializeLeagueData() {
+            TEAM_NAMES.forEach(teamKey => {
+                leagueData[teamKey] = { name: teamKey, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, Pts: 0 };
+            });
+        }
+        
+        function initializeMainLeagueData() {
+            TEAM_NAMES.forEach(teamKey => {
+                mainLeagueData[teamKey] = { name: teamKey, totalPoints: 0 };
+            });
+        }
+        
+        function checkAdminAccess() {
+            const password = prompt("Please enter the admin password:");
+            if (password === ADMIN_PASSWORD) {
+                return true;
+            }
+            alert("Incorrect password.");
+            return false;
+        }
+        
+        function showAdminOptions() {
+            if (!checkAdminAccess()) return; 
+
+            let TOKEN = localStorage.getItem('github_pat');
+
+            if (!TOKEN) {
+                TOKEN = prompt("A GitHub Personal Access Token (PAT) is required for saving data. Please enter it:");
+                if (!TOKEN) {
+                    alert("Operation canceled. Cannot register or manage games without a token.");
+                    return;
+                }
+                localStorage.setItem('github_pat', TOKEN);
+                sha = null; 
+                mainSha = null;
+                matchesSha = null;
+            }
+
+            if (confirm("Admin access granted.\n\nClick OK to register a new result, or CANCEL to manage match history.")) {
+                showRegistrationModal();
+            } else {
+                showAdminOptionsModal();
+            }
+        }
+        
+        function showAdminOptionsModal() {
+            if (document.getElementById('admin-options-modal').style.display === 'flex') return;
+            
+            loadMatchHistoryFromGitHub().then(history => {
+                renderAdminHistory(history);
+                document.getElementById('admin-options-modal').style.display = 'flex';
+            });
+        }
+        
+        function hideAdminOptionsModal() {
+            document.getElementById('admin-options-modal').style.display = 'none';
+        }
+        
+        function showRegistrationModal() { 
+            document.getElementById('home-score').value = 0;
+            document.getElementById('away-score').value = 0;
+            document.getElementById('modal-error').style.display = 'none';
+            document.getElementById('match-registration-modal').style.display = 'flex'; 
+        }
+        
+        function hideRegistrationModal() { 
+            document.getElementById('match-registration-modal').style.display = 'none'; 
+        }
+
+        // NEW: Team Profile Functions
+        function showTeamProfile(teamKey) {
+            const teamData = leagueData[teamKey];
+            if (!teamData) {
+                console.error("Team data not found:", teamKey);
+                return;
+            }
+            
+            const displayName = TEAM_DISPLAY_NAMES[teamKey] || teamKey;
+            
+            // Populate Profile Data
+            document.getElementById('profile-team-title').textContent = `${displayName} Profile`;
+            document.getElementById('profile-team-logo').src = `${GITHUB_IMAGE_BASE_URL}${teamKey}.png`;
+            document.getElementById('profile-team-logo').alt = `${displayName} Logo`;
+            document.getElementById('profile-team-name').textContent = displayName;
+            
+            document.getElementById('profile-stat-pts').textContent = teamData.Pts;
+            document.getElementById('profile-stat-p').textContent = teamData.P;
+            document.getElementById('profile-stat-w').textContent = teamData.W;
+            document.getElementById('profile-stat-l').textContent = teamData.L;
+            document.getElementById('profile-stat-gf').textContent = teamData.GF;
+            document.getElementById('profile-stat-ga').textContent = teamData.GA;
+            
+            // Show Modal
+            document.getElementById('team-profile-modal').style.display = 'flex';
+        }
+        
+        function hideTeamProfile() {
+            document.getElementById('team-profile-modal').style.display = 'none';
+        }
+
+        // ----------------------------------------------------
+        // *** LEAGUE RECALCULATION & MANAGEMENT ***
+        // ----------------------------------------------------
+        
+        function resetLeagueStats() {
+            TEAM_NAMES.forEach(teamKey => {
+                leagueData[teamKey] = { name: teamKey, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, Pts: 0 };
+            });
+        }
+        
+        function recalculateLeagueFromHistory() {
+            resetLeagueStats(); 
+            
+            matchHistory.forEach(match => {
+                const [homeScore, awayScore] = match.score.split('-').map(Number);
+
+                if (leagueData[match.home] && leagueData[match.away]) {
+                    updateTeamStats(leagueData[match.home], homeScore, awayScore);
+                    updateTeamStats(leagueData[match.away], awayScore, homeScore);
+                }
+            });
+        }
+        
+        // NEW: Function to finish the season and update main league
+        async function finishSeason() {
+            if (!confirm("Are you sure you want to finish the current season? This will award points to the top 3 teams in the main championship and reset the current season.")) return;
+            
+            // Calculate top 3 teams from current season
+            const sortedTable = calculateLeagueTable();
+            const top3 = sortedTable.slice(0, 3);
+            
+            // Award points: 1st=3, 2nd=2, 3rd=1
+            const pointsAwarded = [3, 2, 1];
+            
+            // Update main league data
+            top3.forEach((team, index) => {
+                const teamKey = team.name;
+                if (mainLeagueData[teamKey]) {
+                    mainLeagueData[teamKey].totalPoints += pointsAwarded[index];
+                }
+            });
+            
+            // Save main league data
+            const successMainLeague = await saveMainLeagueDataToGitHub(mainLeagueData, 'Season finished: Awarded points to top 3 teams');
+            
+            if (successMainLeague) {
+                // Reset current season
+                matchHistory = [];
+                resetLeagueStats();
+                
+                const successHistory = await saveMatchHistoryToGitHub(matchHistory, 'Season finished: Reset match history');
+                const successLeague = await saveLeagueDataToGitHub(leagueData, 'Season finished: Reset current season');
+                
+                if (successHistory && successLeague) {
+                    alert("Season finished successfully! Points awarded to top 3 teams in the overall championship.");
+                    hideAdminOptionsModal();
+                    navigate('main-league'); // Navigate to main league table
+                } else {
+                    alert("Error resetting current season data.");
+                }
+            } else {
+                alert("Error updating main championship data.");
+            }
+        }
+        
+        async function deleteMatch(index) {
+            if (!confirm("Are you sure you want to delete this match? This action cannot be undone.")) return;
+            
+            matchHistory.splice(index, 1);
+            
+            const successHistory = await saveMatchHistoryToGitHub(matchHistory, `Admin: Deleted match at index ${index}`);
+
+            if (successHistory) {
+                recalculateLeagueFromHistory();
+                
+                const successLeague = await saveLeagueDataToGitHub(leagueData, 'Admin: Recalculated league stats after deletion.');
+                
+                if (successLeague) {
+                    alert("Match deleted successfully and league table reset.");
+                    hideAdminOptionsModal();
+                    navigate('league'); 
+                } else {
+                    alert("Error saving league stats after deletion. Please check your GitHub token.");
+                }
+            } else {
+                alert("Error deleting match from GitHub history.");
+            }
+        }
+        
+        async function resetLeagueConfirm() {
+            if (!confirm("WARNING! Are you sure you want to delete all match results and history? This action cannot be undone!")) return;
+            if (!confirm("FINAL WARNING: Clicking OK will wipe all league statistics. Do you wish to continue?")) return;
+
+            matchHistory = [];
+            resetLeagueStats();
+
+            const successHistory = await saveMatchHistoryToGitHub(matchHistory, 'Admin: Full league reset.');
+            const successLeague = await saveLeagueDataToGitHub(leagueData, 'Admin: Full league reset.');
+
+            if (successHistory && successLeague) {
+                alert("League has been completely reset.");
+                hideAdminOptionsModal();
+                navigate('league'); 
+            } else {
+                alert("Error resetting league. Please check your GitHub token.");
+            }
+        }
+        
+        function renderAdminHistory(history) {
+            matchHistory = history || matchHistory; 
+            const historyListElement = document.getElementById('admin-history-list');
+
+            if (matchHistory.length === 0) {
+                historyListElement.innerHTML = '<div class="text-center text-gray-400 p-4">No matches registered yet.</div>';
+                return;
+            }
+
+            const historyHtml = matchHistory.map((match, index) => {
+                const homeName = TEAM_DISPLAY_NAMES[match.home] || match.home;
+                const awayName = TEAM_DISPLAY_NAMES[match.away] || match.away;
+                
+                return `
+                    <div class="admin-match-item hover:bg-gray-600 transition duration-150 rounded p-2">
+                        <span class="font-semibold text-white text-sm">
+                            ${homeName} <span class="text-blue-300 mx-1">${match.score}</span> ${awayName}
+                        </span>
+                        <div>
+                            <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs" 
+                                    onclick="deleteMatch(${index})">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            historyListElement.innerHTML = historyHtml;
+        }
+
+        // ----------------------------------------------------
+        // *** CORE APP & NAVIGATION LOGIC ***
+        // ----------------------------------------------------
+        
+        function navigate(route) {
+            const allScreens = document.querySelectorAll('.page-screen, #menu-screen');
+            let targetScreenId = '';
+
+            switch(route) {
+                case 'menu':        targetScreenId = 'menu-screen'; break;
+                case 'main-league': targetScreenId = 'main-league-screen'; break; // NEW
+                case 'league':      targetScreenId = 'league-table-screen'; break;
+                case 'history':     targetScreenId = 'match-history-screen'; break;
+            }
+
+            const targetScreen = document.getElementById(targetScreenId);
+
+            // 1. Hide all other screens
+            allScreens.forEach(screen => {
+                if (screen.id !== targetScreenId && screen.classList.contains('active')) {
+                    screen.classList.remove('active');
+                    
+                    // Set display: none *after* animation
+                    setTimeout(() => {
+                        // Check again in case user navigated away quickly
+                        if (!screen.classList.contains('active')) {
+                            screen.style.display = 'none';
+                        }
+                    }, 400);
+                }
+            });
+
+            // 2. Show the target screen
+            if (targetScreen) {
+                // Set display: flex so it's in the DOM for animation
+                targetScreen.style.display = 'flex';
+                
+                // Force a reflow (browser paint) before adding 'active'
+                setTimeout(() => {
+                    targetScreen.classList.add('active');
+                }, 10);
+            }
+
+            // 3. Load data for specific pages
+            if(route === 'main-league') {
+                updateCurrentDateTime();
+                document.getElementById('main-loading-message').style.display = 'block';
+                
+                // Load main league data
+                loadMainLeagueDataFromGitHub()
+                    .then(() => {
+                        renderMainLeagueTable();
+                    })
+                    .catch(error => {
+                        console.error("Error loading main league data on navigation:", error);
+                        document.getElementById('main-loading-message').textContent = "Error loading data. Ensure JSON files exist on GitHub.";
+                        renderMainLeagueTable();
+                    });
+            }
+            else if(route === 'league') {
+                updateCurrentDateTime();
+                document.getElementById('loading-message').style.display = 'block';
+                
+                // Public READ access (no token needed here)
+                Promise.all([loadLeagueDataFromGitHub(), loadMatchHistoryFromGitHub()])
+                    .then(([leagueDataResult]) => {
+                        renderLeagueTable(leagueDataResult);
+                    })
+                    .catch(error => {
+                        console.error("Error loading league data on navigation:", error);
+                        document.getElementById('loading-message').textContent = "Error loading data. Ensure JSON files exist on GitHub.";
+                        renderLeagueTable(leagueData);
+                    });
+            }
+            else if(route === 'history') {
+                document.getElementById('history-loading').style.display = 'block';
+                // Public READ access (no token needed here)
+                loadMatchHistoryFromGitHub().then(renderMatchHistory);
+            }
+        }
+        
+        function startApp() {
+            const SPLASH_DURATION_MS = 2000; 
+            
+            setTimeout(() => {
+                const splashScreen = document.getElementById('splash-screen');
+                splashScreen.style.opacity = '0';
+                
+                setTimeout(() => {
+                    splashScreen.style.display = 'none'; 
+                    document.getElementById('app-container').classList.remove('hidden');
+                    navigate('menu'); 
+                }, 1000);
+            }, SPLASH_DURATION_MS);
+        }
+
+        // ----------------------------------------------------
+        // *** LEAGUE TABLE LOGIC ***
+        // ----------------------------------------------------
+        
+        function calculateLeagueTable() {
+            const table = Object.values(leagueData).sort((a, b) => {
+                if (b.Pts !== a.Pts) return b.Pts - a.Pts;
+                const diffA = a.GF - a.GA;
+                const diffB = b.GF - b.GA;
+                if (diffB !== diffA) return diffB - diffA;
+                return b.GF - a.GF; 
+            });
+            return table;
+        }
+
+        // NEW: Function to render main league table with capsules
+        function renderMainLeagueTable() {
+            document.getElementById('main-loading-message').style.display = 'none';
+            
+            // Convert main league data to array and sort by points
+            const mainTable = Object.values(mainLeagueData)
+                .sort((a, b) => b.totalPoints - a.totalPoints);
+            
+            const mainLeagueBody = document.getElementById('main-league-body');
+            
+            const capsulesHtml = mainTable.map((team, index) => {
+                const displayName = TEAM_DISPLAY_NAMES[team.name] || team.name;
+                
+                // Determine special styling for top 3 teams
+                let capsuleClass = "team-capsule";
+                if (index === 0) capsuleClass += " gold";
+                else if (index === 1) capsuleClass += " silver";
+                else if (index === 2) capsuleClass += " bronze";
+                
+                return `
+                    <div class="${capsuleClass}">
+                        <div class="capsule-left">
+                            <img src="${GITHUB_IMAGE_BASE_URL}${team.name}.png" 
+                                 alt="${displayName} Flag" 
+                                 class="capsule-logo">
+                            <div class="capsule-info">
+                                <div class="capsule-name">${displayName}</div>
+                                <div class="capsule-rank">Rank: ${index + 1}</div>
+                            </div>
+                        </div>
+                        <div class="capsule-points">
+                            <div class="points-label">Points</div>
+                            <div class="points-value">${team.totalPoints}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            mainLeagueBody.innerHTML = capsulesHtml;
+        }
+
+        function renderLeagueTable(data) {
+            leagueData = data;
+            const tableBody = document.getElementById('league-table-body');
+            const calculatedTable = calculateLeagueTable();
+            
+            document.getElementById('loading-message').style.display = 'none';
+
+            tableBody.innerHTML = calculatedTable.map((team, index) => {
+                const displayName = TEAM_DISPLAY_NAMES[team.name] || team.name;
+
+                return `
+                    <div class="team-row text-center hover:bg-gray-800 transition duration-150 cursor-pointer" data-team-key="${team.name}">
+                        <div class="team-rank">${index + 1}</div>
+                        
+                        <div class="team-name text-left pl-2 flex items-center">
+                            <img src="${GITHUB_IMAGE_BASE_URL}${team.name}.png" 
+                                 alt="${displayName} Flag" 
+                                 class="w-5 h-5 object-cover mr-2 border border-gray-600">
+                            <span>${displayName}</span>
+                        </div>
+                        
+                        <div>${team.P}</div>
+                        <div>${team.W}</div>
+                        <div>${team.D}</div>
+                        <div>${team.L}</div>
+                        <div>${team.GF}</div> 
+                        <div>${team.GA}</div>
+                        <div class="font-bold">${team.GF - team.GA}</div> 
+                        <div class="team-pts">${team.Pts}</div>
+                    </div>
+                `;
+            }).join('');
+             
+             // ** اضافه کردن event listener برای دابل کلیک **
+             tableBody.querySelectorAll('.team-row').forEach(row => {
+                 row.addEventListener('dblclick', function() {
+                     const teamKey = this.getAttribute('data-team-key');
+                     showTeamProfile(teamKey);
+                 });
+             });
+             
+             // Populate team selectors
+             const homeSelect = document.getElementById('home-team-select');
+             const awaySelect = document.getElementById('away-team-select');
+             
+             if (homeSelect.options.length !== TEAM_NAMES.length) {
+                const optionsHtml = TEAM_NAMES.map(teamKey => 
+                    `<option value="${teamKey}">${TEAM_DISPLAY_NAMES[teamKey] || teamKey}</option>`
+                ).join('');
+                homeSelect.innerHTML = optionsHtml;
+                awaySelect.innerHTML = optionsHtml;
+             }
+        }
+        
+        function updateTeamStats(team, goalsFor, goalsAgainst) {
+            team.P += 1;
+            team.GF += goalsFor;
+            team.GA += goalsAgainst;
+
+            if (goalsFor > goalsAgainst) { // Win
+                team.W += 1;
+                team.Pts += 3;
+            } else if (goalsFor === goalsAgainst) { // Draw
+                team.D += 1;
+                team.Pts += 1;
+            } else { // Loss
+                team.L += 1;
+            }
+        }
+        
+        async function registerMatchResult() {
+            const homeTeamName = document.getElementById('home-team-select').value;
+            const awayTeamName = document.getElementById('away-team-select').value;
+            const homeScore = parseInt(document.getElementById('home-score').value);
+            const awayScore = parseInt(document.getElementById('away-score').value);
+            const modalError = document.getElementById('modal-error');
+            modalError.style.display = 'none';
+
+            if (homeTeamName === awayTeamName) {
+                modalError.style.display = 'block';
+                return;
+            }
+            if (isNaN(homeScore) || isNaN(awayScore) || homeScore < 0 || awayScore < 0) {
+                 alert("Please enter valid scores.");
+                 return;
+            }
+            
+            const displayHomeName = TEAM_DISPLAY_NAMES[homeTeamName] || homeTeamName;
+            const displayAwayName = TEAM_DISPLAY_NAMES[awayTeamName] || awayTeamName;
+
+            if(confirm(`Are you sure you want to register the result: ${displayHomeName} ${homeScore} - ${awayScore} ${displayAwayName}?`)){
+
+                const oldLeagueData = JSON.parse(JSON.stringify(leagueData));
+                const oldMatchHistory = JSON.parse(JSON.stringify(matchHistory));
+                
+                const homeTeam = leagueData[homeTeamName];
+                const awayTeam = leagueData[awayTeamName];
+                
+                updateTeamStats(homeTeam, homeScore, awayScore);
+                updateTeamStats(awayTeam, awayScore, homeScore);
+                
+                const matchDetail = {
+                    home: homeTeamName,
+                    away: awayTeamName,
+                    score: `${homeScore}-${awayScore}`,
+                    timestamp: new Date().toISOString()
+                };
+                matchHistory.unshift(matchDetail); 
+                
+                const successLeague = await saveLeagueDataToGitHub(leagueData, `Match Result: ${homeTeamName} ${homeScore}-${awayScore} ${awayTeamName}`);
+                
+                if (successLeague) {
+                    const successHistory = await saveMatchHistoryToGitHub(matchHistory, `Add Match: ${matchDetail.score}`);
+                    
+                    if (successHistory) {
+                        hideRegistrationModal();
+                        navigate('league');
+                        alert("Match result and history saved successfully.");
+                    } else {
+                        leagueData = oldLeagueData;
+                        matchHistory = oldMatchHistory;
+                        alert("Error saving history! Please check your GitHub token.");
+                    }
+                } else {
+                    leagueData = oldLeagueData;
+                    matchHistory = oldMatchHistory;
+                    alert("Error saving league stats! Please check your GitHub token.");
+                }
+            }
+        }
+
+        function renderMatchHistory(history) {
+            const historyList = document.getElementById('history-list');
+            document.getElementById('history-loading').style.display = 'none';
+            matchHistory = history; 
+
+            if (history.length === 0) {
+                 historyList.innerHTML = '<div class="text-center text-gray-500 mt-5">No matches registered yet.</div>';
+                 return;
+            }
+
+            const historyHtml = history.map(match => {
+                const homeName = TEAM_DISPLAY_NAMES[match.home] || match.home;
+                const awayName = TEAM_DISPLAY_NAMES[match.away] || match.away;
+                
+                // استفاده از تابع شمسی‌سازی برای نمایش تاریخ و زمان دقیق
+                const formattedDate = formatShamsiDateTime(match.timestamp);
+                const date = formattedDate.date;
+                const time = formattedDate.time;
+                
+                return `
+                    <div class="history-item">
+                        <div class="font-bold text-center text-lg mb-2 flex items-center justify-center">
+                            
+                            <img src="${GITHUB_IMAGE_BASE_URL}${match.home}.png" 
+                                 alt="${homeName} Flag" 
+                                 class="w-6 h-6 object-cover mr-2 border border-gray-600">
+                            
+                            <span>${homeName}</span> 
+                            <span class="text-blue-300 mx-2">${match.score}</span> 
+                            <span>${awayName}</span>
+                            
+                            <img src="${GITHUB_IMAGE_BASE_URL}${match.away}.png" 
+                                 alt="${awayName} Flag" 
+                                 class="w-6 h-6 object-cover ml-2 border border-gray-600">
+                            
+                        </div>
+                        <div class="text-xs text-gray-400 text-center">
+                            <span>Date: ${date}</span> | <span>Time: ${time}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            historyList.innerHTML = historyHtml;
+        }
+
+        // ----------------------------------------------------
+        // *** GITHUB API INTERACTION ***
+        // ----------------------------------------------------
+
+        const BASE_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
+        
+        function b64Encode(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+
+        async function getGitHubToken() {
+            let TOKEN = localStorage.getItem('github_pat');
+            return TOKEN; 
+        }
+        
+        // NEW: Function to load main league data
+        async function loadMainLeagueDataFromGitHub() {
+            if (Object.keys(mainLeagueData).length === 0) { 
+                initializeMainLeagueData(); 
+            }
+            
+            try {
+                const response = await fetch(`${BASE_API_URL}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+                
+                if (response.ok) {
+                    const shaData = await response.json();
+                    mainSha = shaData.sha; 
+                    
+                    const fileContentResponse = await fetch(shaData.download_url);
+                    const fileContent = await fileContentResponse.json();
+                    
+                    Object.keys(fileContent).forEach(teamKey => {
+                        if (mainLeagueData[teamKey]) {
+                            mainLeagueData[teamKey] = { ...mainLeagueData[teamKey], ...fileContent[teamKey], name: teamKey };
+                        }
+                    });
+                    
+                    return mainLeagueData;
+                } else if (response.status === 404) {
+                    console.log("Main league data file not found (404). Initializing data.");
+                    return mainLeagueData;
+                } 
+                throw new Error(`Failed to fetch main league data: ${response.statusText} (${response.status})`);
+            } catch (error) {
+                console.error("Error in loadMainLeagueDataFromGitHub:", error);
+                mainSha = null;
+                return mainLeagueData; 
+            }
+        }
+        
+        async function loadLeagueDataFromGitHub() {
+            if (Object.keys(leagueData).length === 0) { initializeLeagueData(); }
+            
+            try {
+                const response = await fetch(`${BASE_API_URL}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+                
+                if (response.ok) {
+                    const shaData = await response.json();
+                    sha = shaData.sha; 
+                    
+                    const fileContentResponse = await fetch(shaData.download_url);
+                    const fileContent = await fileContentResponse.json();
+                    
+                    Object.keys(fileContent).forEach(teamKey => {
+                        if (leagueData[teamKey]) {
+                            leagueData[teamKey] = { ...leagueData[teamKey], ...fileContent[teamKey], name: teamKey };
+                        }
+                    });
+                    
+                    return leagueData;
+                } else if (response.status === 404) {
+                    console.log("League data file not found (404). Initializing data.");
+                    return leagueData;
+                } 
+                throw new Error(`Failed to fetch league data: ${response.statusText} (${response.status})`);
+            } catch (error) {
+                console.error("Error in loadLeagueDataFromGitHub:", error);
+                sha = null;
+                return leagueData; 
+            }
+        }
+        
+        async function loadMatchHistoryFromGitHub() {
+            try {
+                const response = await fetch(`${BASE_API_URL}${GITHUB_MATCHES_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+                
+                if (response.ok) {
+                    const shaData = await response.json();
+                    matchesSha = shaData.sha; 
+                    
+                    const fileContentResponse = await fetch(shaData.download_url);
+                    matchHistory = await fileContentResponse.json();
+                    return matchHistory;
+                } else if (response.status === 404) {
+                    console.log("Match history file not found (404). Initializing empty history.");
+                    matchHistory = [];
+                    return [];
+                }
+                throw new Error(`Failed to fetch history: ${response.statusText}`);
+            } catch (error) {
+                console.error("Error in loadMatchHistoryFromGitHub:", error);
+                matchesSha = null;
+                matchHistory = [];
+                return [];
+            }
+        }
+        
+        // NEW: Function to save main league data
+        async function saveMainLeagueDataToGitHub(data, commitMessage) {
+            const TOKEN = localStorage.getItem('github_pat');
+            if (!TOKEN) { 
+                alert("Save operation canceled due to missing GitHub token."); 
+                return false; 
+            }
+
+            const dataToSave = {};
+            Object.keys(data).forEach(key => {
+                const { name, ...stats } = data[key]; 
+                dataToSave[key] = stats;
+            });
+            const content = JSON.stringify(dataToSave, null, 2);
+            const base64Content = b64Encode(content);
+            
+            const requestBody = { 
+                message: commitMessage, 
+                content: base64Content, 
+                branch: GITHUB_LEAGUE_BRANCH 
+            };
+
+            if (mainSha) {
+                requestBody.sha = mainSha;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_API_URL}${GITHUB_MAIN_LEAGUE_FILE}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    mainSha = responseData.content.sha; 
+                    return true;
+                } else {
+                    const errorText = await response.text();
+                    console.error("GitHub Main League Save Error (Status:", response.status, "):", errorText);
+                    mainSha = null; 
+                    if(response.status === 401 || response.status === 403) { 
+                        alert("GitHub token error: Insufficient permissions or expired token. Token removed.");
+                        localStorage.removeItem('github_pat'); 
+                    } else if (response.status === 422 && errorText.includes('"sha" wasn\'t supplied.')) {
+                        alert("Save error (422): File data on GitHub is not up-to-date. Please remove and re-enter the token or manually check the file.");
+                    }
+                    return false;
+                }
+            } catch (error) {
+                console.error("GitHub Main League Save Exception:", error);
+                mainSha = null;
+                return false;
+            }
+        }
+        
+        async function saveLeagueDataToGitHub(data, commitMessage) {
+            const TOKEN = localStorage.getItem('github_pat');
+            if (!TOKEN) { 
+                alert("Save operation canceled due to missing GitHub token."); 
+                return false; 
+            }
+
+            const dataToSave = {};
+            Object.keys(data).forEach(key => {
+                const { name, ...stats } = data[key]; 
+                dataToSave[key] = stats;
+            });
+            const content = JSON.stringify(dataToSave, null, 2);
+            const base64Content = b64Encode(content);
+            
+            const requestBody = { 
+                message: commitMessage, 
+                content: base64Content, 
+                branch: GITHUB_LEAGUE_BRANCH 
+            };
+
+            if (sha) {
+                requestBody.sha = sha;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_API_URL}${GITHUB_LEAGUE_FILE}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    sha = responseData.content.sha; 
+                    return true;
+                } else {
+                    const errorText = await response.text();
+                    console.error("GitHub League Save Error (Status:", response.status, "):", errorText);
+                    sha = null; 
+                    if(response.status === 401 || response.status === 403) { 
+                        alert("GitHub token error: Insufficient permissions or expired token. Token removed.");
+                        localStorage.removeItem('github_pat'); 
+                    } else if (response.status === 422 && errorText.includes('"sha" wasn\'t supplied.')) {
+                        alert("Save error (422): File data on GitHub is not up-to-date. Please remove and re-enter the token or manually check the file.");
+                    }
+                    return false;
+                }
+            } catch (error) {
+                console.error("GitHub League Save Exception:", error);
+                sha = null;
+                return false;
+            }
+        }
+
+        async function saveMatchHistoryToGitHub(data, commitMessage) {
+            const TOKEN = localStorage.getItem('github_pat');
+            if (!TOKEN) { 
+                alert("Save operation canceled due to missing GitHub token."); 
+                return false; 
+            }
+
+            const content = JSON.stringify(data, null, 2);
+            const base64Content = b64Encode(content);
+
+            const requestBody = { 
+                message: commitMessage, 
+                content: base64Content, 
+                branch: GITHUB_LEAGUE_BRANCH 
+            };
+            
+            if (matchesSha) {
+                requestBody.sha = matchesSha;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_API_URL}${GITHUB_MATCHES_FILE}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    matchesSha = responseData.content.sha; 
+                    return true;
+                } else {
+                    const errorText = await response.text();
+                    console.error("GitHub History Save Error (Status:", response.status, "):", errorText);
+                    matchesSha = null;
+                    if(response.status === 401 || response.status === 403) { 
+                        alert("GitHub token error: Insufficient permissions or expired token. Token removed.");
+                        localStorage.removeItem('github_pat'); 
+                    } else if (response.status === 422 && errorText.includes('"sha" wasn\'t supplied.')) {
+                        alert("Save error (422): File data on GitHub is not up-to-date. Please remove and re-enter the token or manually check the file.");
+                    }
+                    return false;
+                }
+            } catch (error) {
+                console.error("GitHub History Save Exception:", error);
+                matchesSha = null;
+                return false;
+            }
+        }
+        
+        // --- Background Music ---
+        const backgroundMusic = document.getElementById('background-music');
+        function handleFirstInteraction() {
+            if (!backgroundMusicStarted) {
+                if (backgroundMusic) {
+                    backgroundMusic.volume = 0.15;
+                    backgroundMusic.play().then(() => {
+                        backgroundMusicStarted = true;
+                        console.log("Global background music started on first user interaction.");
+                    }).catch(error => {
+                        console.error("Failed to play global background music on first interaction:", error);
+                    });
+                }
+                document.removeEventListener('click', handleFirstInteraction);
+                document.removeEventListener('keydown', handleFirstInteraction);
+            }
+        }
+        
+        document.addEventListener('click', handleFirstInteraction);
+        document.addEventListener('keydown', handleFirstInteraction);
+
+        // --- FINAL APP STARTUP ---
+        
+        initializeLeagueData();
+        initializeMainLeagueData();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCurrentDateTime();
+            setInterval(updateCurrentDateTime, 1000);
+            startApp();
+        });
+    </script>
+</body>
+</html>
+

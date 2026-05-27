@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- Base Styles & Variables --- */
+        :root {
+            --primary-glow: #60a5fa;
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-bg: rgba(13, 26, 42, 0.6);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center; /* Center vertically on desktop */
+            justify-content: center; /* Center horizontally on desktop */
+            background: radial-gradient(circle at 50% 120%, #1e1b4b, #0f172a);
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- Ambient Background Animation --- */
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.5;
+            animation: floatOrb 10s infinite ease-in-out;
+        }
+        .orb-1 { width: 300px; height: 300px; background: #1d4ed8; top: -50px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: #7c3aed; bottom: -100px; right: -100px; animation-delay: -5s; }
+        
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -50px) scale(1.1); }
+        }
+
+        /* --- Global App Container --- */
+        .app-container {
+            width: 100%; 
+            height: 100vh; 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 420px;
+                height: 90vh;
+                border-radius: 40px;
+                box-shadow: 0 0 50px rgba(0,0,0,0.5);
+                border: 8px solid #1e293b;
+            }
+        }
+
+        /* --- HERO LOGO TRANSITION & ANIMATION (UPDATED) --- */
+        #hero-logo-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            transition: all 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            text-align: center;
+            pointer-events: none;
+            width: 100%;
+        }
+
+        /* انیمیشن جدید برای تپش نور */
+        @keyframes glowPulse {
+            0%, 100% {
+                text-shadow: 0 0 0 rgba(96, 165, 250, 0.4), 0 0 10px rgba(255, 255, 255, 0.1);
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                text-shadow: 0 0 0 rgba(96, 165, 250, 0.4), 0 0 10px rgba(255, 255, 255, 0.1);
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        .hero-text {
+            font-size: 4rem; 
+            font-weight: 800; 
+            letter-spacing: 8px; 
+            background: linear-gradient(to bottom, #fff, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* اعمال انیمیشن */
+            animation: glowPulse 5s infinite ease-in-out;
+            transition: all 1.2s ease;
+        }
+
+        .hero-subtext {
+            font-size: 1rem; color: #93c5fd; opacity: 0;
+            margin-top: -10px; letter-spacing: 2px;
+            transform: translateY(20px); transition: all 0.8s ease 0.5s;
+        }
+
+        #hero-logo-container.in-header { top: 60px; transform: translate(-50%, 0); }
+        #hero-logo-container.in-header .hero-text { font-size: 2.5rem; letter-spacing: 4px; }
+        #hero-logo-container.in-header .hero-subtext { opacity: 1; transform: translateY(0); }
+
+        /* --- Menu Screen --- */
+        #menu-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.8s ease-out;
+            padding: 120px 20px 0 20px; 
+        }
+        #menu-screen.active { display: flex; opacity: 1; }
+        
+        .menu-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; perspective: 1000px; }
+
+        .menu-list-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative; overflow: hidden; cursor: pointer;
+            transition: transform 0.1s ease-out, background 0.3s;
+            transform-style: preserve-3d;
+        }
+
+        .menu-list-item.touch-active {
+            transform: scale(0.96) !important;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(96, 165, 250, 0.6);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
+        }
+
+        .menu-icon-box {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 58, 138, 0.4));
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            margin-right: 18px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .menu-list-item span { font-size: 1.05rem; font-weight: 600; color: #f1f5f9; }
+        .menu-list-item i.menu-chevron { font-size: 0.9rem; color: rgba(255,255,255,0.4); }
+
+        /* --- Screens --- */
+        .page-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 40;
+            display: none; flex-direction: column; align-items: center;
+            background: transparent; 
+            padding: 85px 0 80px 0;
+            overflow-y: auto; opacity: 0; transition: opacity 0.4s ease-out;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .page-screen::-webkit-scrollbar { display: none; }
+        .page-screen.active { opacity: 1; }
+
+        /* --- Header & Tables --- */
+        .league-header {
+            width: 95%; margin-bottom: 15px;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.08);
+            padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        /* --- UPDATED TEAM CAPSULE FOR MOBILE --- */
+        .team-capsule {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; /* فضای داخلی بیشتر */
+            margin-bottom: 12px;
+            border-radius: 24px; /* گوشه‌های نرم‌تر */
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden; /* برای عدد پس‌زمینه */
+        }
+        
+        /* پس زمینه برای رتبه‌های خاص */
+        .team-capsule.gold { background: linear-gradient(90deg, rgba(234, 179, 8, 0.15), rgba(15, 23, 42, 0.4)); border-color: rgba(234, 179, 8, 0.3); }
+        .team-capsule.silver { background: linear-gradient(90deg, rgba(209, 213, 219, 0.15), rgba(15, 23, 42, 0.4)); border-color: rgba(209, 213, 219, 0.3); }
+        .team-capsule.bronze { background: linear-gradient(90deg, rgba(217, 119, 6, 0.15), rgba(15, 23, 42, 0.4)); border-color: rgba(217, 119, 6, 0.3); }
+
+        .capsule-logo { 
+            width: 48px; height: 48px; 
+            border-radius: 50%; object-fit: cover; 
+            border: 2px solid rgba(255,255,255,0.15); 
+            margin-right: 14px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+
+        /* استایل جدید برای نمایش امتیاز */
+        .points-display {
+            display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+            z-index: 2; min-width: 50px;
+        }
+
+        /* --- Modals & Buttons --- */
+        .glass-button {
+            background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2); color: white;
+            padding: 12px 24px; border-radius: 16px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .glass-button:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
+
+        .modal-content {
+            background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px; padding: 25px; width: 90%; max-width: 380px;
+        }
+
+        .team-row {
+            display: grid; grid-template-columns: 0.5fr 2.5fr repeat(7, 0.8fr);
+            padding: 14px 5px; font-size: 0.8rem; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .match-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .badge-win { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge-loss { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .badge-draw { background: rgba(156, 163, 175, 0.2); color: #d1d5db; border: 1px solid rgba(156, 163, 175, 0.4); }
+
+    </style>
+</head>
+<body>
+
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div id="hero-logo-container">
+        <div class="hero-text" id="harfs-text">HARFS</div>
+        <div class="hero-subtext">LEAGUE SYSTEM</div>
+    </div>
+
+    <div class="app-container" id="app-container">
+        
+        <div id="menu-screen">
+            <div class="menu-list">
+                <div class="menu-list-item tilt-card touch-card" onclick="navigate('main-league')">
+                    <div class="menu-item-content flex items-center">
+                        <div class="menu-icon-box"><i class="fas fa-trophy text-yellow-400"></i></div>
+                        <span>Overall Championship</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+                
+                <div class="menu-list-item tilt-card touch-card" onclick="navigate('league')">
+                    <div class="menu-item-content flex items-center">
+                        <div class="menu-icon-box"><i class="fas fa-futbol text-blue-400"></i></div>
+                        <span>Current Season</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+
+                <div class="menu-list-item tilt-card touch-card" onclick="navigate('history')">
+                    <div class="menu-item-content flex items-center">
+                        <div class="menu-icon-box"><i class="fas fa-history text-purple-400"></i></div>
+                        <span>Match History</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+
+                <div class="menu-list-item admin-item tilt-card touch-card" onclick="showAdminOptions()">
+                    <div class="menu-item-content flex items-center">
+                        <div class="menu-icon-box" style="background: rgba(220,38,38,0.2);"><i class="fas fa-user-shield text-red-400"></i></div>
+                        <span>Admin Panel</span>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div id="main-league-screen" class="page-screen">
+            <div class="league-header">
+                <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 uppercase tracking-widest mb-1">Championship</h2> 
+                <div class="text-[10px] text-gray-400 font-mono" id="main-current-datetime">Syncing...</div>
+            </div>
+            
+            <div class="w-full px-4 pb-20">
+                <div id="main-league-body" class="flex flex-col gap-3"></div>
+                <div id="main-loading-message" class="text-center text-blue-300 mt-10 animate-pulse text-sm">Syncing data...</div>
+            </div>
+            
+            <div class="fixed bottom-6 z-50">
+                <button class="glass-button" onclick="navigate('menu')">
+                    <i class="fas fa-th-large mr-2"></i> Menu
+                </button>
+            </div>
+        </div>
+        
+        <div id="league-table-screen" class="page-screen">
+            <div class="league-header">
+                <h2 class="text-xl font-bold text-blue-100 uppercase tracking-widest mb-1">Season Table</h2> 
+                <div class="text-[10px] text-gray-400 font-mono mb-3" id="current-datetime">...</div>
+                
+                <div class="team-row font-bold text-blue-300 text-[10px] uppercase tracking-wider border-b-2 border-blue-500/50 pb-2">
+                    <div>#</div>
+                    <div class="team-name pl-2 text-left">Team</div>
+                    <div>P</div>
+                    <div>W</div>
+                    <div>D</div>
+                    <div>L</div>
+                    <div class="hidden">GF</div> <div class="hidden">GA</div>
+                    <div>GD</div>
+                    <div class="team-pts text-yellow-400 text-right pr-2">Pts</div>
+                </div>
+            </div>
+            
+            <div class="w-full px-2 pb-20">
+                <div id="league-table-body" class="bg-white bg-opacity-5 rounded-2xl overflow-hidden backdrop-blur-sm"></div>
+                <div id="loading-message" class="text-center text-gray-400 mt-10 text-sm">Loading...</div>
+            </div>
+            
+            <div class="fixed bottom-6 z-50">
+                <button class="glass-button" onclick="navigate('menu')">
+                    <i class="fas fa-th-large mr-2"></i> Menu
+                </button>
+            </div>
+        </div>
+        
+        <div id="match-history-screen" class="page-screen">
+            <div class="league-header">
+                <h2 class="text-xl font-bold text-blue-100">MATCH FEED</h2> 
+            </div>
+            
+            <div class="w-full px-4 pb-20">
+                <div id="history-list" class="flex flex-col gap-3">
+                    <div id="history-loading" class="text-center text-gray-500 mt-10 text-sm">Loading history...</div>
+                </div>
+            </div>
+            
+            <div class="fixed bottom-6 z-50">
+                <button class="glass-button" onclick="navigate('menu')">
+                    <i class="fas fa-th-large mr-2"></i> Menu
+                </button>
+            </div>
+        </div>
+        
+        <div id="match-registration-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm">
+            <div class="modal-content">
+                <h3 class="text-lg font-bold mb-6 text-white text-center border-b border-gray-700 pb-3">Register Result</h3>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col w-1/3">
+                        <select id="home-team-select" class="w-full p-2 bg-gray-800 text-white rounded-lg text-sm border border-gray-600 outline-none"></select>
+                    </div>
+                    <div class="flex items-center justify-center w-1/3 gap-1">
+                        <input type="number" id="home-score" class="w-10 p-2 bg-gray-700 text-white text-center rounded-lg font-bold text-lg" value="0">
+                        <span class="text-gray-400">:</span>
+                        <input type="number" id="away-score" class="w-10 p-2 bg-gray-700 text-white text-center rounded-lg font-bold text-lg" value="0">
+                    </div>
+                    <div class="flex flex-col w-1/3">
+                        <select id="away-team-select" class="w-full p-2 bg-gray-800 text-white rounded-lg text-sm border border-gray-600 outline-none"></select>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-red-400 text-center mb-4" id="modal-error" style="display:none;">Teams must be different.</p>
+
+                <div class="flex justify-between gap-3 mt-6">
+                    <button class="glass-button w-1/2 bg-red-500 bg-opacity-20 text-xs" onclick="hideRegistrationModal()">Cancel</button>
+                    <button class="glass-button w-1/2 bg-green-500 bg-opacity-20 text-xs" onclick="registerMatchResult()">Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="admin-options-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm">
+            <div class="modal-content">
+                <h3 class="text-lg font-bold mb-4 text-white">Admin Panel</h3>
+                
+                <div id="admin-history-list" class="max-h-56 overflow-y-auto mb-4 p-2 bg-black bg-opacity-30 rounded-xl text-sm">
+                    <div class="text-center text-gray-400">Loading...</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <button class="glass-button text-xs bg-yellow-600 bg-opacity-30" onclick="resetLeagueConfirm()">Reset</button>
+                    <button class="glass-button text-xs bg-purple-600 bg-opacity-30" onclick="finishSeason()">End Season</button>
+                    <button class="glass-button col-span-2 bg-red-500 bg-opacity-30 mt-2 text-xs" onclick="hideAdminOptionsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="team-profile-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm px-4">
+            <div class="modal-content text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-900 to-transparent opacity-50 z-0"></div>
+                
+                <div class="relative z-10">
+                    <img id="profile-team-logo" src="" class="w-24 h-24 object-cover rounded-full border-4 border-blue-500 shadow-xl mx-auto mb-3 mt-2">
+                    <h4 id="profile-team-name" class="text-2xl font-bold text-white mb-1">Team</h4>
+                    <div class="text-xs text-blue-300 uppercase tracking-widest mb-6">Season Stats</div>
+                    
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <div class="bg-white bg-opacity-10 p-3 rounded-2xl border border-white border-opacity-10">
+                            <div class="text-[10px] text-gray-400 uppercase">Points</div>
+                            <div id="profile-stat-pts" class="text-2xl font-bold text-yellow-400">0</div>
+                        </div>
+                        <div class="bg-white bg-opacity-10 p-3 rounded-2xl border border-white border-opacity-10">
+                            <div class="text-[10px] text-gray-400 uppercase">Played</div>
+                            <div id="profile-stat-p" class="text-2xl font-bold text-white">0</div>
+                        </div>
+                        <div class="bg-white bg-opacity-10 p-3 rounded-2xl border border-white border-opacity-10">
+                            <div class="text-[10px] text-gray-400 uppercase">GD</div>
+                            <div id="profile-stat-gf" class="text-2xl font-bold text-green-400">0</div>
+                        </div> 
+                    </div>
+
+                    <div class="bg-black bg-opacity-40 rounded-xl p-3 mb-6 border border-white border-opacity-5">
+                        <div class="text-[10px] text-gray-400 uppercase mb-2 text-left ml-1">Last Match</div>
+                        <div class="flex items-center justify-between">
+                            <div id="last-match-result-badge" class="match-badge badge-draw">N/A</div>
+                            <div id="last-match-detail" class="text-sm font-semibold text-gray-200">No matches yet</div>
+                        </div>
+                    </div>
+                    
+                    <button class="glass-button w-full" onclick="hideTeamProfile()">Close</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <audio id="background-music" loop style="display: none;">
+        <source src="https://raw.githubusercontent.com/rzarisfi/HarfsMusic/league-data/HARFS_background.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // --- Mobile Logic ---
+        const touchCards = document.querySelectorAll('.touch-card');
+        
+        touchCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                if(window.innerWidth < 768) return; 
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            });
+
+            card.addEventListener('touchstart', () => {
+                card.classList.add('touch-active');
+            }, {passive: true});
+
+            card.addEventListener('touchend', () => {
+                setTimeout(() => card.classList.remove('touch-active'), 150);
+            });
+        });
+
+        // --- Logic ---
+        const J_MONTHS_EN = ["Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar", "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"];
+        function toEnglishDigits(str) { if (!str) return str; return str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); }
+        
+        function updateCurrentDateTime() {
+            const now = new Date();
+            const localTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const faDateString = now.toLocaleDateString('fa-IR', { year: 'numeric', month: 'numeric', day: 'numeric' });
+            const enDateString = toEnglishDigits(faDateString);
+            const parts = enDateString.split('/');
+            const J_MONTH_NAME = J_MONTHS_EN[parseInt(parts[1], 10) - 1] || 'Unknown';
+            const solarDateFinal = `${parts[2]} ${J_MONTH_NAME}`;
+            
+            const els = [document.getElementById('current-datetime'), document.getElementById('main-current-datetime')];
+            els.forEach(el => { if(el) el.innerHTML = `<i class="far fa-clock mr-1"></i> ${localTime} &nbsp;|&nbsp; <i class="far fa-calendar-alt mr-1"></i> ${solarDateFinal}`; });
+        }
+        
+        function formatShamsiDateTime(timestamp) {
+            const now = new Date(timestamp);
+            const localTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const faDateString = now.toLocaleDateString('fa-IR', { month: 'numeric', day: 'numeric' });
+            return { date: toEnglishDigits(faDateString), time: localTime };
+        }
+
+        const GITHUB_REPO = "rzarisfi/HarfsMusic"; 
+        const GITHUB_LEAGUE_BRANCH = "league-data";
+        const GITHUB_LEAGUE_FILE = "league_data.json";
+        const GITHUB_MAIN_LEAGUE_FILE = "main_league_data.json";
+        const GITHUB_MATCHES_FILE = "match_history.json"; 
+        const GITHUB_IMAGE_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
+        const ADMIN_PASSWORD = "0000"; 
+        const TEAM_NAMES = ["HOSI", "Sajsfi", "Bayern", "Yellow"];
+        const TEAM_DISPLAY_NAMES = { "HOSI": "HOSI", "Sajsfi": "Sajsfi", "Bayern": "Bayern", "Yellow": "Yellow" };
+        
+        let leagueData = {}, mainLeagueData = {}, sha = null, mainSha = null, matchHistory = [], matchesSha = null, backgroundMusicStarted = false;
+
+        function initializeLeagueData() { TEAM_NAMES.forEach(t => leagueData[t] = { name: t, P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 }); }
+        function initializeMainLeagueData() { TEAM_NAMES.forEach(t => mainLeagueData[t] = { name: t, totalPoints: 0 }); }
+
+        function startApp() {
+            setTimeout(() => {
+                const logoContainer = document.getElementById('hero-logo-container');
+                const menuScreen = document.getElementById('menu-screen');
+                logoContainer.classList.add('in-header');
+                setTimeout(() => {
+                    menuScreen.style.display = 'flex';
+                    setTimeout(() => menuScreen.classList.add('active'), 50);
+                }, 800);
+            }, 1500);
+        }
+
+        function navigate(route) {
+            const logoContainer = document.getElementById('hero-logo-container');
+            if (route === 'menu') {
+                logoContainer.style.opacity = '1';
+                logoContainer.style.pointerEvents = 'none';
+            } else {
+                logoContainer.style.opacity = '0';
+            }
+
+            const allScreens = document.querySelectorAll('.page-screen, #menu-screen');
+            let targetId = '';
+            if(route === 'menu') targetId = 'menu-screen';
+            if(route === 'main-league') targetId = 'main-league-screen';
+            if(route === 'league') targetId = 'league-table-screen';
+            if(route === 'history') targetId = 'match-history-screen';
+
+            allScreens.forEach(s => {
+                if(s.id !== targetId) {
+                    s.classList.remove('active');
+                    setTimeout(() => { if(!s.classList.contains('active')) s.style.display = 'none'; }, 400);
+                }
+            });
+
+            const target = document.getElementById(targetId);
+            if(target) {
+                target.style.display = 'flex';
+                setTimeout(() => target.classList.add('active'), 50);
+            }
+
+            if(route === 'main-league') loadMainLeagueDataFromGitHub().then(renderMainLeagueTable);
+            if(route === 'league') Promise.all([loadLeagueDataFromGitHub(), loadMatchHistoryFromGitHub()]).then(([d]) => renderLeagueTable(d));
+            if(route === 'history') loadMatchHistoryFromGitHub().then(renderMatchHistory);
+        }
+
+        // --- UPDATED RENDER FUNCTION FOR CHAMPIONSHIP (Mobile Friendly) ---
+        function renderMainLeagueTable() {
+            document.getElementById('main-loading-message').style.display = 'none';
+            const table = Object.values(mainLeagueData).sort((a,b) => b.totalPoints - a.totalPoints);
+            
+            document.getElementById('main-league-body').innerHTML = table.map((team, index) => {
+                let rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+                
+                // تعیین رنگ امتیازها بر اساس رتبه
+                let pointColorClass = 'text-white';
+                let pointGlow = '';
+                
+                if (index === 0) {
+                    pointColorClass = 'text-yellow-400';
+                    pointGlow = 'style="text-shadow: 0 0 10px rgba(250, 204, 21, 0.6);"'; // Gold glow
+                } else if (index === 1) {
+                    pointColorClass = 'text-gray-300';
+                    pointGlow = 'style="text-shadow: 0 0 8px rgba(209, 213, 219, 0.4);"'; // Silver glow
+                } else if (index === 2) {
+                    pointColorClass = 'text-yellow-700'; // Bronze (Darker yellow/brown)
+                }
+
+                // ساختار جدید کارت برای نمایش بهتر در موبایل
+                return `
+                    <div class="team-capsule ${rankClass}">
+                        <div class="absolute -left-1 bottom-[-10px] text-6xl font-black opacity-10 select-none z-0 italic font-mono text-white">
+                            ${index + 1}
+                        </div>
+
+                        <div class="flex items-center z-10 relative flex-grow">
+                            <img src="${GITHUB_IMAGE_BASE_URL}${team.name}.png" class="capsule-logo">
+                            <div class="flex flex-col justify-center">
+                                <div class="font-bold text-lg leading-tight text-white">${TEAM_DISPLAY_NAMES[team.name]}</div>
+                                <div class="text-[10px] text-blue-300 uppercase tracking-widest opacity-80 mt-0.5">Rank #${index + 1}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="points-display pl-3">
+                            <span class="text-2xl font-black ${pointColorClass} leading-none" ${pointGlow}>${team.totalPoints}</span>
+                            <span class="text-[8px] text-gray-400 uppercase tracking-wider mt-1">PTS</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderLeagueTable(data) {
+            leagueData = data;
+            document.getElementById('loading-message').style.display = 'none';
+            const table = Object.values(leagueData).sort((a,b) => (b.Pts - a.Pts) || ((b.GF-b.GA) - (a.GF-a.GA)));
+
+            const tbody = document.getElementById('league-table-body');
+            tbody.innerHTML = table.map((t, i) => `
+                <div class="team-row hover:bg-white hover:bg-opacity-10 transition cursor-pointer active:bg-blue-500 active:bg-opacity-20" onclick="showTeamProfile('${t.name}')">
+                    <div class="text-center text-gray-400 font-mono text-xs">${i+1}</div>
+                    <div class="team-name pl-2 flex items-center">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" class="w-6 h-6 rounded-full mr-2 border border-gray-500">
+                        <span class="font-semibold text-sm">${TEAM_DISPLAY_NAMES[t.name]}</span>
+                    </div>
+                    <div class="text-center text-gray-300">${t.P}</div>
+                    <div class="text-center text-green-400 font-bold">${t.W}</div>
+                    <div class="text-center text-gray-400">${t.D}</div>
+                    <div class="text-center text-red-400">${t.L}</div>
+                    <div class="text-center text-gray-500 text-xs hidden">${t.GF}</div>
+                    <div class="text-center text-gray-500 text-xs hidden">${t.GA}</div>
+                    <div class="text-center text-gray-300 font-bold">${t.GF - t.GA}</div>
+                    <div class="text-center text-yellow-400 font-bold text-lg pr-2">${t.Pts}</div>
+                </div>
+            `).join('');
+            
+            const opts = TEAM_NAMES.map(t => `<option value="${t}">${TEAM_DISPLAY_NAMES[t]}</option>`).join('');
+            document.getElementById('home-team-select').innerHTML = opts;
+            document.getElementById('away-team-select').innerHTML = opts;
+        }
+
+        function renderMatchHistory(history) {
+            matchHistory = history;
+            document.getElementById('history-loading').style.display = 'none';
+            const list = document.getElementById('history-list');
+            if(!history.length) { list.innerHTML = '<div class="text-center text-gray-500">No matches yet.</div>'; return; }
+
+            list.innerHTML = history.map(m => {
+                const dt = formatShamsiDateTime(m.timestamp);
+                return `
+                <div class="bg-white bg-opacity-5 rounded-xl p-3 border border-white border-opacity-5 flex justify-between items-center">
+                    <div class="flex items-center w-5/12 justify-end">
+                        <span class="font-bold text-xs mr-2 text-right truncate">${TEAM_DISPLAY_NAMES[m.home]}</span>
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" class="w-7 h-7 rounded-full">
+                    </div>
+                    <div class="w-2/12 text-center flex flex-col">
+                        <span class="text-lg font-bold text-yellow-400 tracking-widest bg-black bg-opacity-20 rounded px-1">${m.score}</span>
+                        <span class="text-[8px] text-gray-500 mt-1 font-mono">${dt.date}</span>
+                    </div>
+                    <div class="flex items-center w-5/12 justify-start">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" class="w-7 h-7 rounded-full ml-2">
+                        <span class="font-bold text-xs ml-2 text-left truncate">${TEAM_DISPLAY_NAMES[m.away]}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // --- Helper & Admin Functions ---
+        function checkAdminAccess() { const p = prompt("Admin password:"); return p === ADMIN_PASSWORD; }
+        function showAdminOptions() {
+            if(!checkAdminAccess()) { alert("Wrong password"); return; }
+            let t = localStorage.getItem('github_pat');
+            if(!t) { t = prompt("Enter GitHub PAT:"); if(!t) return; localStorage.setItem('github_pat', t); sha=null; mainSha=null; matchesSha=null; }
+            if(confirm("Register Match (OK) or Manage (Cancel)?")) showRegistrationModal(); else showAdminOptionsModal();
+        }
+        function showRegistrationModal() { document.getElementById('match-registration-modal').style.display='flex'; }
+        function hideRegistrationModal() { document.getElementById('match-registration-modal').style.display='none'; }
+        function showAdminOptionsModal() { loadMatchHistoryFromGitHub().then(h => { renderAdminHistory(h); document.getElementById('admin-options-modal').style.display='flex'; }); }
+        function hideAdminOptionsModal() { document.getElementById('admin-options-modal').style.display='none'; }
+        
+        function showTeamProfile(key) {
+             const t = leagueData[key];
+             document.getElementById('profile-team-logo').src = `${GITHUB_IMAGE_BASE_URL}${key}.png`;
+             document.getElementById('profile-team-name').textContent = TEAM_DISPLAY_NAMES[key];
+             document.getElementById('profile-stat-pts').textContent = t.Pts;
+             document.getElementById('profile-stat-p').textContent = t.P;
+             document.getElementById('profile-stat-gf').textContent = (t.GF - t.GA) > 0 ? `+${t.GF - t.GA}` : t.GF - t.GA; 
+             
+             const lastMatch = matchHistory.find(m => m.home === key || m.away === key);
+             const badge = document.getElementById('last-match-result-badge');
+             const detail = document.getElementById('last-match-detail');
+             
+             badge.className = 'match-badge';
+             
+             if(lastMatch) {
+                 const isHome = lastMatch.home === key;
+                 const opponent = isHome ? lastMatch.away : lastMatch.home;
+                 const scoreParts = lastMatch.score.split('-');
+                 const myScore = isHome ? parseInt(scoreParts[0]) : parseInt(scoreParts[1]);
+                 const oppScore = isHome ? parseInt(scoreParts[1]) : parseInt(scoreParts[0]);
+                 
+                 detail.textContent = `vs ${TEAM_DISPLAY_NAMES[opponent]} (${myScore}-${oppScore})`;
+                 
+                 if(myScore > oppScore) {
+                     badge.textContent = "WON";
+                     badge.classList.add('badge-win');
+                 } else if (myScore < oppScore) {
+                     badge.textContent = "LOST";
+                     badge.classList.add('badge-loss');
+                 } else {
+                     badge.textContent = "DRAW";
+                     badge.classList.add('badge-draw');
+                 }
+             } else {
+                 badge.textContent = "N/A";
+                 badge.classList.add('badge-draw');
+                 detail.textContent = "No matches played yet";
+             }
+
+             document.getElementById('team-profile-modal').style.display = 'flex';
+        }
+        function hideTeamProfile() { document.getElementById('team-profile-modal').style.display = 'none'; }
+
+        function renderAdminHistory(h) {
+             document.getElementById('admin-history-list').innerHTML = h.map((m,i) => `
+                <div class="flex justify-between items-center bg-gray-800 p-2 mb-1 rounded text-xs">
+                    <span>${m.home} ${m.score} ${m.away}</span>
+                    <button class="text-red-400 hover:text-red-200" onclick="deleteMatch(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+             `).join('');
+        }
+        
+        const BASE_API = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
+        function b64Encode(s) { return btoa(unescape(encodeURIComponent(s))); }
+        
+        async function loadMainLeagueDataFromGitHub() {
+            if(!Object.keys(mainLeagueData).length) initializeMainLeagueData();
+            try {
+                const r = await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+                if(r.ok) { const d = await r.json(); mainSha=d.sha; const c = await (await fetch(d.download_url)).json(); Object.keys(c).forEach(k => { if(mainLeagueData[k]) mainLeagueData[k] = {...mainLeagueData[k], ...c[k]} }); }
+            } catch(e) { console.log(e); } return mainLeagueData;
+        }
+        async function loadLeagueDataFromGitHub() {
+             if(!Object.keys(leagueData).length) initializeLeagueData();
+             try {
+                const r = await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+                if(r.ok) { const d = await r.json(); sha=d.sha; const c = await (await fetch(d.download_url)).json(); Object.keys(c).forEach(k => { if(leagueData[k]) leagueData[k] = {...leagueData[k], ...c[k]} }); }
+            } catch(e) { console.log(e); } return leagueData;
+        }
+        async function loadMatchHistoryFromGitHub() {
+            try {
+                const r = await fetch(`${BASE_API}${GITHUB_MATCHES_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+                if(r.ok) { const d = await r.json(); matchesSha=d.sha; matchHistory = await (await fetch(d.download_url)).json(); }
+            } catch(e) { matchHistory=[]; } return matchHistory;
+        }
+
+        async function saveFile(filename, data, msg, currentSha, isMain=false, isHistory=false) {
+            const token = localStorage.getItem('github_pat');
+            if(!token) return false;
+            let content = b64Encode(JSON.stringify(data, null, 2));
+            let body = { message: msg, content: content, branch: GITHUB_LEAGUE_BRANCH };
+            if(currentSha) body.sha = currentSha;
+            try {
+                const r = await fetch(`${BASE_API}${filename}`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                if(r.ok) { const d = await r.json(); if(isMain) mainSha=d.content.sha; else if(isHistory) matchesSha=d.content.sha; else sha=d.content.sha; return true; }
+            } catch(e) { console.error(e); } return false;
+        }
+        
+        async function saveMainLeagueDataToGitHub(d, m) { const toSave={}; Object.keys(d).forEach(k=>{const{name,...rest}=d[k];toSave[k]=rest;}); return saveFile(GITHUB_MAIN_LEAGUE_FILE, toSave, m, mainSha, true); }
+        async function saveLeagueDataToGitHub(d, m) { const toSave={}; Object.keys(d).forEach(k=>{const{name,...rest}=d[k];toSave[k]=rest;}); return saveFile(GITHUB_LEAGUE_FILE, toSave, m, sha); }
+        async function saveMatchHistoryToGitHub(d, m) { return saveFile(GITHUB_MATCHES_FILE, d, m, matchesSha, false, true); }
+
+        function updateTeamStats(t, gf, ga) { t.P++; t.GF+=gf; t.GA+=ga; if(gf>ga){t.W++;t.Pts+=3;}else if(gf===ga){t.D++;t.Pts+=1;}else{t.L++;} }
+        
+        async function registerMatchResult() {
+            const h = document.getElementById('home-team-select').value, a = document.getElementById('away-team-select').value;
+            const hs = parseInt(document.getElementById('home-score').value), as = parseInt(document.getElementById('away-score').value);
+            if(h===a) { document.getElementById('modal-error').style.display='block'; return; }
+            if(confirm(`Save: ${h} ${hs}-${as} ${a}?`)) {
+                 updateTeamStats(leagueData[h], hs, as); updateTeamStats(leagueData[a], as, hs);
+                 const m = { home: h, away: a, score: `${hs}-${as}`, timestamp: new Date().toISOString() };
+                 matchHistory.unshift(m);
+                 await saveLeagueDataToGitHub(leagueData, `Match ${m.score}`);
+                 await saveMatchHistoryToGitHub(matchHistory, `History ${m.score}`);
+                 hideRegistrationModal(); navigate('league');
+            }
+        }
+        
+        async function deleteMatch(i) {
+            if(confirm("Delete match? (Stats won't revert automatically)")) {
+                matchHistory.splice(i, 1);
+                await saveMatchHistoryToGitHub(matchHistory, "Deleted match");
+                hideAdminOptionsModal(); navigate('history');
+            }
+        }
+        
+        async function finishSeason() {
+            if(confirm("Finish Season? Top 3 get points.")) {
+                const sorted = Object.values(leagueData).sort((a,b)=>b.Pts-a.Pts);
+                [3,2,1].forEach((p,i) => { if(sorted[i]) mainLeagueData[sorted[i].name].totalPoints += p; });
+                await saveMainLeagueDataToGitHub(mainLeagueData, "Season End");
+                matchHistory=[]; initializeLeagueData();
+                await saveMatchHistoryToGitHub(matchHistory, "Reset");
+                await saveLeagueDataToGitHub(leagueData, "Reset");
+                navigate('main-league');
+            }
+        }
+        
+        async function resetLeagueConfirm() {
+            if(confirm("FULL RESET?")) {
+                matchHistory=[]; initializeLeagueData();
+                await saveMatchHistoryToGitHub(matchHistory, "Reset");
+                await saveLeagueDataToGitHub(leagueData, "Reset");
+                navigate('league');
+            }
+        }
+
+        const bgMusic = document.getElementById('background-music');
+        
+        function initAudio() {
+            if (!backgroundMusicStarted && bgMusic) {
+                bgMusic.volume = 0.15;
+                let playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        backgroundMusicStarted = true;
+                        removeAudioListeners();
+                    }).catch(error => {
+                        console.log("Waiting for user interaction to play audio...");
+                    });
+                }
+            }
+        }
+
+        function removeAudioListeners() {
+            document.removeEventListener('click', initAudio);
+            document.removeEventListener('touchstart', initAudio);
+            document.removeEventListener('mousedown', initAudio);
+        }
+
+        document.addEventListener('click', initAudio);
+        document.addEventListener('touchstart', initAudio, {passive: true});
+        document.addEventListener('mousedown', initAudio);
+        
+        initializeLeagueData(); 
+        initializeMainLeagueData();
+        
+        document.addEventListener('DOMContentLoaded', () => { 
+            updateCurrentDateTime(); 
+            setInterval(updateCurrentDateTime, 60000); 
+            startApp(); 
+        });
+
+    </script>
+</body>
+</html>
+
