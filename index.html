@@ -7,14 +7,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <link rel="manifest" href="./manifest.json">
-<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
 
-<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
 
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
-
-<meta name="theme-color" content="#0f172a">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
         /* --- Base Styles & Variables --- */
@@ -112,7 +111,6 @@
             transform: translateY(20px); transition: all 0.8s ease 0.5s;
         }
 
-        /* 3. تغییرات کپسول هدر (جلوگیری از تداخل هنگام اسکرول) - Liquid Glass Applied */
         #hero-logo-container.in-header { 
             top: 25px; 
             transform: translate(-50%, 0); 
@@ -130,8 +128,7 @@
         #hero-logo-container.in-header .hero-text { font-size: 1.8rem; letter-spacing: 4px; }
         #hero-logo-container.in-header .hero-subtext { opacity: 1; transform: translateY(0); font-size: 0.7rem; margin-top: -3px; }
 
-        /* --- Bottom Navigation --- Liquid Glass Applied */
-        /* 2. کپسول گزینه‌ها بالاتر آورده شد (bottom: 40px) */
+        /* --- Bottom Navigation --- */
         .bottom-nav {
             position: absolute;
             bottom: 40px; 
@@ -178,7 +175,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 40;
             display: none; flex-direction: column; align-items: center;
             background: transparent; 
-            padding: 110px 0 130px 0; /* Padding 조정: فضای زیر و روی صفحه تنظیم شد */
+            padding: 110px 0 130px 0; 
             overflow-y: auto; opacity: 0; transition: opacity 0.4s ease-out;
             -ms-overflow-style: none; scrollbar-width: none;
         }
@@ -247,7 +244,7 @@
             border: 1px solid rgba(255,255,255,0.2); color: white;
             padding: 12px 24px; border-radius: 16px; font-weight: 600;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s; cursor: pointer;
         }
         .glass-button:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
 
@@ -293,7 +290,7 @@
             <div class="nav-item" onclick="navigate('history')" id="nav-history">
                 <i class="fas fa-history"></i><span>History</span>
             </div>
-            <div class="nav-item" onclick="showAdminOptions()" id="nav-admin">
+            <div class="nav-item" onclick="navigate('admin')" id="nav-admin">
                 <i class="fas fa-user-shield"></i><span>Admin</span>
             </div>
         </nav>
@@ -350,46 +347,62 @@
                 </div>
             </div>
         </div>
-        
-        <div id="match-registration-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm">
-            <div class="modal-content">
-                <h3 class="text-xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 text-center border-b border-gray-700 border-opacity-50 pb-4">Register Result</h3>
-                
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex flex-col w-1/3">
-                        <select id="home-team-select" class="glass-input w-full p-2.5 rounded-xl text-sm font-semibold"></select>
-                    </div>
-                    <div class="flex items-center justify-center w-1/3 gap-1.5">
-                        <input type="number" id="home-score" class="glass-input w-12 p-2.5 text-center rounded-xl font-bold text-xl" value="0">
-                        <span class="text-gray-400 font-bold">:</span>
-                        <input type="number" id="away-score" class="glass-input w-12 p-2.5 text-center rounded-xl font-bold text-xl" value="0">
-                    </div>
-                    <div class="flex flex-col w-1/3">
-                        <select id="away-team-select" class="glass-input w-full p-2.5 rounded-xl text-sm font-semibold"></select>
-                    </div>
-                </div>
-                
-                <p class="text-xs text-red-400 text-center mb-4" id="modal-error" style="display:none;">Teams must be different.</p>
 
-                <div class="flex justify-between gap-3 mt-6">
-                    <button class="glass-button w-1/2 border-red-500/30 text-red-300 hover:bg-red-500/10 text-xs" onclick="hideRegistrationModal()">Cancel</button>
-                    <button class="glass-button w-1/2 border-green-500/30 text-green-300 hover:bg-green-500/10 text-xs" onclick="registerMatchResult()">Save Match</button>
+        <div id="admin-screen" class="page-screen">
+            <div class="league-header">
+                <h2 class="text-xl font-bold text-purple-300 uppercase tracking-widest">Admin Panel</h2>
+            </div>
+            
+            <div id="admin-login-section" class="w-full px-6 flex flex-col items-center justify-center h-full gap-5 mt-10">
+                <div class="bg-white bg-opacity-5 p-8 rounded-3xl border border-white border-opacity-10 flex flex-col items-center w-full max-w-xs backdrop-blur-md shadow-2xl">
+                    <i class="fas fa-user-shield text-5xl text-purple-400 mb-6 drop-shadow-lg"></i>
+                    <input type="password" id="admin-pwd-input" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg mb-4" placeholder="Enter PIN">
+                    <button class="glass-button w-full border-purple-500/50 text-purple-300 hover:bg-purple-500/20 font-bold" onclick="verifyAdmin()">Unlock Panel</button>
+                    <p id="admin-error" class="text-xs text-red-400 mt-3 font-semibold" style="display:none;">Incorrect PIN</p>
                 </div>
             </div>
-        </div>
-        
-        <div id="admin-options-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm">
-            <div class="modal-content">
-                <h3 class="text-xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 text-center border-b border-gray-700 border-opacity-50 pb-4">Admin Panel</h3>
+
+            <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-4 pb-8" style="display:none;">
                 
-                <div id="admin-history-list" class="max-h-56 overflow-y-auto mb-4 p-2 bg-black bg-opacity-20 rounded-2xl border border-white border-opacity-5 text-sm">
-                    <div class="text-center text-gray-400">Loading...</div>
+                <div class="bg-white bg-opacity-5 p-4 rounded-2xl border border-white border-opacity-10 shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-blue-500 opacity-70"></div>
+                    <h3 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-blue-300 mb-4 text-center tracking-wide uppercase">Register Match</h3>
+                    
+                    <div class="flex justify-between items-center mb-4 gap-2">
+                        <select id="home-team-select" class="glass-input w-1/3 p-2.5 rounded-xl text-xs font-semibold text-center"></select>
+                        <div class="flex items-center justify-center gap-1.5 flex-1">
+                            <input type="number" id="home-score" class="glass-input w-10 p-2 text-center rounded-xl font-bold text-lg" value="0">
+                            <span class="text-gray-400 font-bold">:</span>
+                            <input type="number" id="away-score" class="glass-input w-10 p-2 text-center rounded-xl font-bold text-lg" value="0">
+                        </div>
+                        <select id="away-team-select" class="glass-input w-1/3 p-2.5 rounded-xl text-xs font-semibold text-center"></select>
+                    </div>
+                    
+                    <p class="text-xs text-red-400 text-center mb-3 font-semibold" id="admin-match-error" style="display:none;">Teams must be different.</p>
+                    <button class="glass-button w-full border-green-500/30 text-green-300 hover:bg-green-500/10 text-sm font-bold py-2.5" onclick="registerMatchResult()">Save Match</button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mt-4">
-                    <button class="glass-button text-xs border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10" onclick="resetLeagueConfirm()">Reset All</button>
-                    <button class="glass-button text-xs border-purple-500/30 text-purple-300 hover:bg-purple-500/10" onclick="finishSeason()">End Season</button>
-                    <button class="glass-button col-span-2 mt-2 text-xs border-white/20 hover:bg-white/10" onclick="hideAdminOptionsModal()">Close Panel</button>
+                <div class="bg-white bg-opacity-5 p-4 rounded-2xl border border-white border-opacity-10 shadow-lg relative overflow-hidden mt-4">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-70"></div>
+                    <h3 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300 mb-4 text-center tracking-wide uppercase">League Management</h3>
+                    
+                    <div class="flex gap-3">
+                        <button class="glass-button flex-1 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 text-xs py-2.5 flex flex-col items-center gap-1" onclick="finishSeason()">
+                            <i class="fas fa-flag-checkered text-lg"></i>
+                            <span>End Season</span>
+                        </button>
+                        <button class="glass-button flex-1 border-red-500/30 text-red-300 hover:bg-red-500/10 text-xs py-2.5 flex flex-col items-center gap-1" onclick="resetLeagueConfirm()">
+                            <i class="fas fa-skull-crossbones text-lg"></i>
+                            <span>Reset All</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white bg-opacity-5 p-4 rounded-2xl border border-white border-opacity-10 shadow-lg mt-4">
+                    <h3 class="text-xs font-bold text-gray-400 mb-3 text-center uppercase tracking-widest">Recent Matches (Edit)</h3>
+                    <div id="admin-history-list" class="max-h-48 overflow-y-auto pr-1 space-y-2">
+                        <div class="text-center text-gray-500 text-xs">Loading...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -442,9 +455,13 @@
         const J_MONTHS_EN = ["Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar", "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"];
         function toEnglishDigits(str) { if (!str) return str; return str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); }
         
+        let isViewingArchive = false; // Flag for live clock
+
         function updateCurrentDateTime() {
+            if(isViewingArchive) return; // Stop updating if looking at an old season
             const now = new Date();
-            const localTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            // Changed hour12 to false for 24-hour clock
+            const localTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
             const faDateString = now.toLocaleDateString('fa-IR', { year: 'numeric', month: 'numeric', day: 'numeric' });
             const enDateString = toEnglishDigits(faDateString);
             const parts = enDateString.split('/');
@@ -472,12 +489,12 @@
         const TEAM_NAMES = ["HOSI", "Sajsfi", "Bayern", "Yellow"];
         const TEAM_DISPLAY_NAMES = { "HOSI": "HOSI", "Sajsfi": "Sajsfi", "Bayern": "Bayern", "Yellow": "Yellow" };
         
-        // --- New variables for Archiving ---
+        // --- Variables ---
         const GITHUB_ARCHIVE_FILE = "seasons_archive.json";
         let archiveSha = null;
         let archivedSeasons = [];
-
         let leagueData = {}, mainLeagueData = {}, sha = null, mainSha = null, matchHistory = [], matchesSha = null, backgroundMusicStarted = false;
+        let isAdminUnlocked = false;
 
         function initializeLeagueData() { TEAM_NAMES.forEach(t => leagueData[t] = { name: t, P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 }); }
         function initializeMainLeagueData() { TEAM_NAMES.forEach(t => mainLeagueData[t] = { name: t, totalPoints: 0 }); }
@@ -499,12 +516,14 @@
             if(route === 'main-league') document.getElementById('nav-main').classList.add('active');
             if(route === 'league') document.getElementById('nav-season').classList.add('active');
             if(route === 'history') document.getElementById('nav-history').classList.add('active');
+            if(route === 'admin') document.getElementById('nav-admin').classList.add('active');
 
             const allScreens = document.querySelectorAll('.page-screen');
             let targetId = '';
             if(route === 'main-league') targetId = 'main-league-screen';
             if(route === 'league') targetId = 'league-table-screen';
             if(route === 'history') targetId = 'match-history-screen';
+            if(route === 'admin') targetId = 'admin-screen';
 
             allScreens.forEach(s => {
                 if(s.id !== targetId) {
@@ -521,12 +540,21 @@
 
             if(route === 'main-league') loadMainLeagueDataFromGitHub().then(renderMainLeagueTable);
             if(route === 'league') Promise.all([loadLeagueDataFromGitHub(), loadMatchHistoryFromGitHub()]).then(([d]) => {
-                // ریست کردن سلکتور به فصل جاری وقتی وارد این صفحه می‌شویم
                 const selector = document.getElementById('season-selector');
                 if(selector) selector.value = 'current';
+                isViewingArchive = false;
+                updateCurrentDateTime();
                 renderLeagueTable(d);
             });
             if(route === 'history') loadMatchHistoryFromGitHub().then(renderMatchHistory);
+            if(route === 'admin') {
+                if(isAdminUnlocked) {
+                    showAdminDashboard();
+                } else {
+                    document.getElementById('admin-login-section').style.display = 'flex';
+                    document.getElementById('admin-dashboard-section').style.display = 'none';
+                }
+            }
         }
 
         function renderMainLeagueTable() {
@@ -583,10 +611,6 @@
                     <div class="pts-col text-yellow-400 font-bold text-sm">${t.Pts}</div>
                 </div>
             `).join('');
-            
-            const opts = TEAM_NAMES.map(t => `<option value="${t}" style="background: #1e293b; color: white;">${TEAM_DISPLAY_NAMES[t]}</option>`).join('');
-            document.getElementById('home-team-select').innerHTML = opts;
-            document.getElementById('away-team-select').innerHTML = opts;
         }
 
         function renderMatchHistory(history) {
@@ -629,22 +653,42 @@
             }).join('');
         }
 
-        // --- Admin & Helper Functions ---
-        function checkAdminAccess() { const p = prompt("Admin password:"); return p === ADMIN_PASSWORD; }
-        function showAdminOptions() {
-            if(!checkAdminAccess()) { alert("Wrong password"); return; }
-            let t = localStorage.getItem('github_pat');
-            if(!t) { t = prompt("Enter GitHub PAT:"); if(!t) return; localStorage.setItem('github_pat', t); sha=null; mainSha=null; matchesSha=null; archiveSha=null; }
-            if(confirm("Register Match (OK) or Manage (Cancel)?")) showRegistrationModal(); else showAdminOptionsModal();
+        // --- Admin & UI Functions ---
+        function verifyAdmin() {
+            const input = document.getElementById('admin-pwd-input').value;
+            if(input === ADMIN_PASSWORD) {
+                document.getElementById('admin-error').style.display = 'none';
+                isAdminUnlocked = true;
+                document.getElementById('admin-pwd-input').value = '';
+                
+                let t = localStorage.getItem('github_pat');
+                if(!t) { 
+                    t = prompt("Enter GitHub PAT to enable saving:"); 
+                    if(t) localStorage.setItem('github_pat', t); 
+                    sha=null; mainSha=null; matchesSha=null; archiveSha=null; 
+                }
+                
+                showAdminDashboard();
+            } else {
+                document.getElementById('admin-error').style.display = 'block';
+            }
         }
-        function showRegistrationModal() { document.getElementById('match-registration-modal').style.display='flex'; }
-        function hideRegistrationModal() { document.getElementById('match-registration-modal').style.display='none'; }
-        function showAdminOptionsModal() { loadMatchHistoryFromGitHub().then(h => { renderAdminHistory(h); document.getElementById('admin-options-modal').style.display='flex'; }); }
-        function hideAdminOptionsModal() { document.getElementById('admin-options-modal').style.display='none'; }
+
+        function showAdminDashboard() {
+            document.getElementById('admin-login-section').style.display = 'none';
+            document.getElementById('admin-dashboard-section').style.display = 'flex';
+            
+            // Populate team selectors if not already
+            const opts = TEAM_NAMES.map(t => `<option value="${t}" style="background: #1e293b; color: white;">${TEAM_DISPLAY_NAMES[t]}</option>`).join('');
+            document.getElementById('home-team-select').innerHTML = opts;
+            document.getElementById('away-team-select').innerHTML = opts;
+
+            loadMatchHistoryFromGitHub().then(h => { renderAdminHistory(h); });
+        }
         
         function showTeamProfile(key) {
              const t = leagueData[key];
-             if(!t) return; // اگر دیتای قدیمی کلیک شد کرش نکند
+             if(!t) return; 
              document.getElementById('profile-team-logo').src = `${GITHUB_IMAGE_BASE_URL}${key}.png`;
              document.getElementById('profile-team-name').textContent = TEAM_DISPLAY_NAMES[key];
              document.getElementById('profile-stat-pts').textContent = t.Pts;
@@ -724,28 +768,30 @@
         }
 
         function loadSelectedSeason(val) {
-    const el = document.getElementById('current-datetime');
-    
-    if(val === "current") {
-        // اگر فصل جاری بود، تاریخ زنده سیستم رو نشون بده
-        updateCurrentDateTime();
-        renderLeagueTable(leagueData);
-    } else {
-        
-        const selectedSeason = archivedSeasons.find(s => s.seasonId == val);
-        if(selectedSeason) {
-            const legacyData = {};
-            selectedSeason.table.forEach(t => legacyData[t.name] = t);
-            renderLeagueTable(legacyData);
-            
-          
-            if(el && selectedSeason.date) {
-                const dt = formatShamsiDateTime(selectedSeason.date);
-                el.innerHTML = `<i class="far fa-calendar-alt mr-1"></i> Finished on: ${dt.date} - ${dt.time}`;
+            if(val === "current") {
+                isViewingArchive = false;
+                updateCurrentDateTime();
+                renderLeagueTable(leagueData);
+            } else {
+                isViewingArchive = true;
+                const selectedSeason = archivedSeasons.find(s => s.seasonId == val);
+                if(selectedSeason) {
+                    const archiveDate = new Date(selectedSeason.date);
+                    const faDateString = archiveDate.toLocaleDateString('fa-IR', { year: 'numeric', month: 'numeric', day: 'numeric' });
+                    const enDateString = toEnglishDigits(faDateString);
+                    const parts = enDateString.split('/');
+                    const J_MONTH_NAME = J_MONTHS_EN[parseInt(parts[1], 10) - 1] || 'Unknown';
+                    const solarDateFinal = `${parts[2]} ${J_MONTH_NAME} ${parts[0]}`; 
+                    
+                    const el = document.getElementById('current-datetime');
+                    if(el) el.innerHTML = `<i class="far fa-calendar-check mr-1"></i> Ended: ${solarDateFinal}`;
+
+                    const legacyData = {};
+                    selectedSeason.table.forEach(t => legacyData[t.name] = t);
+                    renderLeagueTable(legacyData);
+                }
             }
         }
-    }
-}
 
         async function loadMainLeagueDataFromGitHub() {
             if(!Object.keys(mainLeagueData).length) initializeMainLeagueData();
@@ -793,26 +839,45 @@
         async function saveMatchHistoryToGitHub(d, m) { return saveFile(GITHUB_MATCHES_FILE, d, m, matchesSha); }
 
         function updateTeamStats(t, gf, ga) { t.P++; t.GF+=gf; t.GA+=ga; if(gf>ga){t.W++;t.Pts+=3;}else if(gf===ga){t.D++;t.Pts+=1;}else{t.L++;} }
+        function revertTeamStats(t, gf, ga) { t.P--; t.GF-=gf; t.GA-=ga; if(gf>ga){t.W--;t.Pts-=3;}else if(gf===ga){t.D--;t.Pts-=1;}else{t.L--;} }
         
         async function registerMatchResult() {
             const h = document.getElementById('home-team-select').value, a = document.getElementById('away-team-select').value;
             const hs = parseInt(document.getElementById('home-score').value), as = parseInt(document.getElementById('away-score').value);
-            if(h===a) { document.getElementById('modal-error').style.display='block'; return; }
+            if(h===a) { document.getElementById('admin-match-error').style.display='block'; return; }
             if(confirm(`Save: ${h} ${hs}-${as} ${a}?`)) {
                  updateTeamStats(leagueData[h], hs, as); updateTeamStats(leagueData[a], as, hs);
                  const m = { home: h, away: a, score: `${hs}-${as}`, timestamp: new Date().toISOString() };
                  matchHistory.unshift(m);
                  await saveLeagueDataToGitHub(leagueData, `Match ${m.score}`);
                  await saveMatchHistoryToGitHub(matchHistory, `History ${m.score}`);
-                 hideRegistrationModal(); navigate('league');
+                 
+                 document.getElementById('home-score').value = 0; 
+                 document.getElementById('away-score').value = 0;
+                 document.getElementById('admin-match-error').style.display='none';
+                 showAdminDashboard();
             }
         }
         
         async function deleteMatch(i) {
-            if(confirm("Delete match? (Stats won't revert automatically)")) {
+            if(confirm("Are you sure you want to delete this match? Stats will revert automatically.")) {
+                const m = matchHistory[i];
+                const scoreParts = m.score.split('-');
+                const hs = parseInt(scoreParts[0]);
+                const as = parseInt(scoreParts[1]);
+
+                // Revert stats
+                revertTeamStats(leagueData[m.home], hs, as);
+                revertTeamStats(leagueData[m.away], as, hs);
+
+                // Remove match from history
                 matchHistory.splice(i, 1);
+
+                // Save to GitHub
+                await saveLeagueDataToGitHub(leagueData, "Reverted stats for deleted match");
                 await saveMatchHistoryToGitHub(matchHistory, "Deleted match");
-                hideAdminOptionsModal(); navigate('history');
+
+                showAdminDashboard();
             }
         }
         
@@ -836,16 +901,13 @@
             });
             
             await saveFile(GITHUB_ARCHIVE_FILE, archivedSeasons, `Archived Season ${seasonNumber}`, archiveSha);
-            loadArchiveDropdown(); // Update the dropdown after archiving
+            loadArchiveDropdown(); 
         }
 
         async function finishSeason() {
             if(confirm("Are you sure you want to end the season? Top 3 teams get points and the season will be archived.")) {
-                
                 await loadMainLeagueDataFromGitHub();
-                
                 const sorted = Object.values(leagueData).sort((a,b) => (b.Pts - a.Pts) || ((b.GF-b.GA) - (a.GF-a.GA)));
-                
                 const pointsToAward = [3, 2, 1];
                 pointsToAward.forEach((points, index) => { 
                     if(sorted[index] && mainLeagueData[sorted[index].name]) {
@@ -854,7 +916,6 @@
                 });
 
                 await archiveCurrentSeason(sorted, matchHistory);
-
                 await saveMainLeagueDataToGitHub(mainLeagueData, "Season End: Points Applied");
                 
                 matchHistory = []; 
@@ -862,7 +923,6 @@
                 await saveMatchHistoryToGitHub(matchHistory, "Reset matches for new season");
                 await saveLeagueDataToGitHub(leagueData, "Reset league for new season");
                 
-                hideAdminOptionsModal();
                 navigate('main-league');
             }
         }
@@ -912,7 +972,6 @@
             loadArchiveDropdown();
             startApp(); 
         });
-
     </script>
 
     <script>
@@ -926,4 +985,3 @@
     </script>
 </body>
 </html>
-
