@@ -1577,7 +1577,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 if('serviceWorker' in navigator){
     window.addEventListener('load',()=>{
-        navigator.serviceWorker.register('https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/sw.js')
+        navigator.serviceWorker.register('/sw.js')
         .then(()=>console.log('SW registered'))
         .catch(e=>console.error(e));
     });
