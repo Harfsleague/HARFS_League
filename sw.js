@@ -1,20 +1,27 @@
-{
-  "short_name": "Harfs League",
-  "name": "Harfs League System",
-  "icons": [
-    {
-      "src": "https://raw.githubusercontent.com/rzarisfi/HarfsMusic/league-data/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/rzarisfi/HarfsMusic/league-data/icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#0f172a",
-  "background_color": "#0f172a"
-}
+const CACHE_NAME = 'harfs-v1';
+const ASSETS = [
+  'https://harfsleague.github.io/',
+  'https://harfsleague.github.io/index.html'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
+  );
+});
