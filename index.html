@@ -499,16 +499,20 @@ body.wc26 #hero-logo-container.in-header { padding-right:52px; }
 
 /* team profile */
 #team-profile-modal .modal-content{padding:0;overflow:hidden;max-width:320px;}
-.profile-header{height:90px;position:relative;overflow:hidden;}
-.profile-header-bg{position:absolute;inset:0;background:linear-gradient(135deg,rgba(30,58,138,0.8),rgba(109,40,217,0.6));}
+.profile-header{height:100px;position:relative;overflow:visible;}
+.profile-header-bg{
+    position:absolute;inset:0;height:100px;
+    background:linear-gradient(135deg,rgba(30,58,138,0.8),rgba(109,40,217,0.6));
+    border-radius:0;overflow:hidden;
+}
 body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.8),rgba(153,27,27,0.7));}
 .profile-avatar{
-    width:72px;height:72px;border-radius:50%;object-fit:cover;
-    border:3px solid rgba(255,255,255,0.28);
+    width:80px;height:80px;border-radius:50%;object-fit:cover;
+    border:3px solid rgba(255,255,255,0.35);
     box-shadow:0 8px 24px rgba(0,0,0,0.5);
-    position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);z-index:2;
+    position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);z-index:10;
 }
-.profile-body{padding:36px 20px 20px;}
+.profile-body{padding:50px 20px 20px;}
 .stat-card{
     background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
     border-radius:16px;padding:12px 8px;text-align:center;
