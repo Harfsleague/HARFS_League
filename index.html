@@ -29,7 +29,7 @@
     --silver: #d1d5db;
     --bronze: #b45309;
     --header-text: #bfdbfe;
-    --nav-active-bg: rgba(59,130,246,0.22);
+    --nav-active-bg: rgba(9,130,246,0.22);
     --nav-active-color: #60a5fa;
     --nav-active-border: rgba(96,165,250,0.45);
     --hero-grad: linear-gradient(135deg,#fff 0%,#93c5fd 50%,#818cf8 100%);
@@ -1323,7 +1323,7 @@ function setupOverallHold(){
         overallHoldTimer=setTimeout(()=>{
             haptic([20,50,20,50,60]);
             revealAdminButton();
-        },5000);
+        },3000);
     }
     function cancelHold(){
         if(overallHoldTimer){clearTimeout(overallHoldTimer);overallHoldTimer=null;}
@@ -1359,10 +1359,10 @@ function revealAdminButton(){
     icon.className='fas fa-user-shield';
     label.textContent='Admin';
     showToast('Admin button revealed! Tap it to enter.','info',3000);
-    // Auto-hide after 30 seconds if not used
+    // Auto-hide after 90 seconds if not used
     setTimeout(()=>{
         if(adminRevealed)hideAdminButton();
-    },30000);
+    },90000);
 }
 
 function hideAdminButton(){
