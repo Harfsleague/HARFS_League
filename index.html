@@ -589,6 +589,117 @@ body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.
 @keyframes spin{to{transform:rotate(360deg);}}
 .match-card.hidden-by-filter{display:none;}
 
+/* =====================================================
+   GOLDEN MOMENTS SECTION
+   ===================================================== */
+.weird-card {
+    background:rgba(10,18,30,0.72);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;overflow:hidden;
+    position:relative;margin-bottom:14px;
+    transition:transform 0.2s;
+    animation:cardIn 0.4s ease both;
+    width:100%;
+}
+.weird-card:active{transform:scale(0.98);}
+.weird-card-bar{height:4px;width:100%;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);}
+.weird-card-body{padding:14px 16px 16px;}
+.weird-card-date{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:0.62rem;color:#6b7280;font-family:monospace;
+    background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:999px;
+    margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);
+}
+.weird-card-text{
+    font-size:0.82rem;line-height:1.6;color:#d1d5db;
+    margin-bottom:12px;white-space:pre-wrap;
+}
+.weird-card-images{display:flex;gap:8px;}
+.weird-img-thumb{
+    flex:1;border-radius:14px;overflow:hidden;
+    cursor:pointer;position:relative;
+    background:rgba(0,0,0,0.3);
+    border:1px solid rgba(255,255,255,0.08);
+    aspect-ratio:16/9;
+    transition:transform 0.2s;
+}
+.weird-img-thumb:active{transform:scale(0.96);}
+.weird-img-thumb img{
+    width:100%;height:100%;object-fit:cover;display:block;
+}
+.weird-img-thumb::after{
+    content:'\f00e';font-family:'Font Awesome 6 Free';font-weight:900;
+    position:absolute;bottom:6px;right:8px;
+    font-size:0.72rem;color:rgba(255,255,255,0.6);
+    background:rgba(0,0,0,0.45);padding:3px 6px;border-radius:6px;
+}
+/* Image lightbox */
+#weird-lightbox{
+    position:fixed;inset:0;z-index:800;
+    background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity 0.25s;pointer-events:none;
+}
+#weird-lightbox.open{opacity:1;pointer-events:auto;}
+#weird-lightbox img{
+    max-width:92%;max-height:88vh;border-radius:16px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.7);
+    transform:scale(0.9);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+#weird-lightbox.open img{transform:scale(1);}
+#weird-lightbox-close{
+    position:absolute;top:20px;right:20px;
+    width:40px;height:40px;border-radius:50%;
+    background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:1rem;color:white;
+    transition:all 0.2s;
+}
+#weird-lightbox-close:active{transform:scale(0.9);}
+
+/* Admin form for weird events */
+.weird-admin-section{
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;overflow:hidden;margin-bottom:14px;
+}
+.weird-upload-box{
+    border:2px dashed rgba(251,191,36,0.3);border-radius:14px;
+    padding:14px;text-align:center;cursor:pointer;
+    transition:all 0.2s;background:rgba(251,191,36,0.04);
+    position:relative;
+}
+.weird-upload-box:hover{border-color:rgba(251,191,36,0.5);background:rgba(251,191,36,0.07);}
+.weird-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.weird-img-preview-row{display:flex;gap:8px;margin-top:10px;}
+.weird-img-preview{
+    flex:1;border-radius:10px;overflow:hidden;
+    border:1px solid rgba(255,255,255,0.1);
+    aspect-ratio:16/9;background:rgba(0,0,0,0.3);
+    position:relative;display:flex;align-items:center;justify-content:center;
+}
+.weird-img-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.weird-img-remove{
+    position:absolute;top:4px;right:4px;
+    background:rgba(239,68,68,0.7);color:white;border:none;
+    border-radius:50%;width:20px;height:20px;font-size:0.65rem;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+
+/* ============ NAV ADMIN → WEIRD EVENTS TRANSITION ============ */
+#nav-admin{transition:all 0.4s ease;}
+#nav-admin.admin-revealed{
+    background:rgba(139,92,246,0.2)!important;
+    color:#c4b5fd!important;
+    border:1px solid rgba(139,92,246,0.4)!important;
+    box-shadow:0 0 14px rgba(139,92,246,0.3)!important;
+}
+
+/* overall hold — no visual ring, silent */
+#nav-main{position:relative;}
+
+/* =====================================================
+   HERO HEADER CLICKABLE HINT
+   ===================================================== */
 /* Hero header clickable hint */
 #hero-logo-container.in-header:hover {
     background:rgba(255,255,255,0.07) !important;
@@ -696,7 +807,7 @@ body.wc26 .app-container::before {
 <div class="app-container" id="app-container">
 
     <nav class="bottom-nav" id="bottom-navigation">
-        <div class="nav-item" onclick="navigate('main-league')" id="nav-main">
+        <div class="nav-item" id="nav-main">
             <i class="fas fa-trophy"></i><span>Overall</span>
         </div>
         <div class="nav-item active" onclick="navigate('league')" id="nav-season">
@@ -705,8 +816,8 @@ body.wc26 .app-container::before {
         <div class="nav-item" onclick="navigate('history')" id="nav-history">
             <i class="fas fa-history"></i><span>History</span>
         </div>
-        <div class="nav-item" onclick="navigate('admin')" id="nav-admin">
-            <i class="fas fa-user-shield"></i><span>Admin</span>
+        <div class="nav-item" onclick="handleWeirdOrAdminNav()" id="nav-admin">
+            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Moments</span>
         </div>
     </nav>
 
@@ -775,7 +886,21 @@ body.wc26 .app-container::before {
                 <span class="spinner"></span> Loading...
             </div>
         </div>
-    </div>
+
+        <!-- Archive match history (shown only when viewing archived season) -->
+        <div class="w-full px-3 mt-2" id="archive-history-section" style="display:none;">
+            <div style="background:rgba(10,18,30,0.65);border:1px solid rgba(255,255,255,0.07);border-radius:22px;overflow:hidden;margin-bottom:14px;">
+                <div style="height:3px;background:linear-gradient(90deg,#374151,#4b5563);"></div>
+                <div style="padding:14px;">
+                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;color:#6b7280;">
+                        <i class="fas fa-history mr-1"></i> Season Matches
+                    </h3>
+                    <div id="archive-history-list" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /league-table-screen -->
 
     <!-- ============ MATCH HISTORY ============ -->
     <div id="match-history-screen" class="page-screen">
@@ -798,6 +923,9 @@ body.wc26 .app-container::before {
     <div id="admin-screen" class="page-screen">
         <div class="league-header">
             <h2 class="text-base font-black text-purple-300 uppercase tracking-widest">Admin Panel</h2>
+            <button onclick="exitAdmin()" style="margin-top:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Exit Admin
+            </button>
         </div>
 
         <div id="admin-login-section" class="w-full px-6 flex flex-col items-center gap-5">
@@ -867,6 +995,25 @@ body.wc26 .app-container::before {
                 </div>
             </div>
 
+            <!-- Weird Event Registration -->
+            <div class="weird-admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
+                <div class="admin-section-body" style="padding:14px;">
+                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
+                    <textarea id="weird-event-text" class="glass-input w-full p-3 rounded-xl text-sm mb-3" rows="3" placeholder="Describe this special moment..." style="resize:none;font-family:inherit;line-height:1.5;"></textarea>
+                    <!-- Image upload -->
+                    <div class="weird-upload-box" id="weird-upload-box">
+                        <input type="file" id="weird-file-input" accept="image/*" multiple onchange="handleWeirdImageSelect(event)">
+                        <i class="fas fa-camera" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                        <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos <span style="color:#4b5563;">(max 2)</span></p>
+                    </div>
+                    <div class="weird-img-preview-row" id="weird-preview-row" style="display:none;"></div>
+                    <button class="glass-button w-full mt-3 font-bold text-sm py-3" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;" onclick="saveWeirdEvent()">
+                        <i class="fas fa-bolt mr-2"></i> Save Event
+                    </button>
+                </div>
+            </div>
+
             <!-- Recent Matches -->
             <div class="admin-section">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#374151,#4b5563);"></div>
@@ -880,7 +1027,26 @@ body.wc26 .app-container::before {
         </div>
     </div>
 
-    <!-- ============ TEAM PROFILE MODAL ============ -->
+    <!-- ============ GOLDEN MOMENTS ============ -->
+    <div id="weird-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments</h2>
+            <p class="text-xs mt-1" style="color:#6b7280;">Special memories — forever preserved</p>
+        </div>
+        <div class="w-full px-4">
+            <div id="weird-events-list">
+                <div id="weird-loading" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ IMAGE LIGHTBOX ============ -->
+    <div id="weird-lightbox" onclick="closeWeirdLightbox()">
+        <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
+        <img id="weird-lightbox-img" src="" alt="">
+    </div>
     <div id="team-profile-modal" class="modal-overlay">
         <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;">
             <div class="profile-header">
@@ -944,6 +1110,7 @@ const GITHUB_LEAGUE_FILE="league_data.json";
 const GITHUB_MAIN_LEAGUE_FILE="main_league_data.json";
 const GITHUB_MATCHES_FILE="match_history.json";
 const GITHUB_ARCHIVE_FILE="seasons_archive.json";
+const GITHUB_WEIRD_FILE="weird_events.json";
 const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
 const ADMIN_PASSWORD="0000";
 const TEAM_NAMES=["HOSI","Sajsfi","Bayern","Yellow"];
@@ -951,10 +1118,13 @@ const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sajsfi":"Sajsfi","Bayern":"Bayern","Yel
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 
 let leagueData={},mainLeagueData={};
-let sha=null,mainSha=null,matchesSha=null,archiveSha=null;
-let matchHistory=[],archivedSeasons=[];
+let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null;
+let matchHistory=[],archivedSeasons=[],weirdEvents=[];
 let backgroundMusicStarted=false,isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
+let weirdImages=[]; // base64 images for new event
+let adminRevealed=false; // whether admin button is shown
+let overallHoldTimer=null,overallHoldStart=null;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
 function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,totalPoints:0});}
@@ -1081,7 +1251,7 @@ function formatShamsiDateTime(ts){
 // ============================================================
 // SWIPE + ROUTES
 // ============================================================
-const ROUTES=['main-league','league','history','admin'];
+const ROUTES=['main-league','league','history','weird'];
 let currentRouteIndex=1;
 
 // ============================================================
@@ -1142,21 +1312,308 @@ function startApp(){
 })();
 
 // ============================================================
-// NAVIGATE
+// OVERALL LONG-PRESS → REVEAL ADMIN
 // ============================================================
+function setupOverallHold(){
+    const navMain=document.getElementById('nav-main');
+
+    function startHold(e){
+        e.preventDefault&&e.preventDefault();
+        overallHoldStart=Date.now();
+        overallHoldTimer=setTimeout(()=>{
+            haptic([20,50,20,50,60]);
+            revealAdminButton();
+        },5000);
+    }
+    function cancelHold(){
+        if(overallHoldTimer){clearTimeout(overallHoldTimer);overallHoldTimer=null;}
+        // If held less than 5s, navigate to main-league normally
+        if(overallHoldStart&&(Date.now()-overallHoldStart)<4800&&!adminRevealed){
+            navigate('main-league');
+        }
+        overallHoldStart=null;
+    }
+
+    navMain.addEventListener('mousedown',startHold);
+    navMain.addEventListener('touchstart',startHold,{passive:false});
+    navMain.addEventListener('mouseup',cancelHold);
+    navMain.addEventListener('mouseleave',cancelHold);
+    navMain.addEventListener('touchend',cancelHold);
+    navMain.addEventListener('touchcancel',cancelHold);
+
+    // Short tap (no hold) navigates to main-league when admin not revealed
+    navMain.addEventListener('click',()=>{
+        if(!adminRevealed && (!overallHoldStart || (Date.now()-overallHoldStart)<300)){
+            navigate('main-league');
+        }
+    });
+}
+
+function revealAdminButton(){
+    if(adminRevealed)return;
+    adminRevealed=true;
+    const navBtn=document.getElementById('nav-admin');
+    const icon=document.getElementById('nav-admin-icon');
+    const label=document.getElementById('nav-admin-label');
+    navBtn.classList.add('admin-revealed');
+    icon.className='fas fa-user-shield';
+    label.textContent='Admin';
+    showToast('Admin button revealed! Tap it to enter.','info',3000);
+    // Auto-hide after 30 seconds if not used
+    setTimeout(()=>{
+        if(adminRevealed)hideAdminButton();
+    },30000);
+}
+
+function hideAdminButton(){
+    adminRevealed=false;
+    const navBtn=document.getElementById('nav-admin');
+    const icon=document.getElementById('nav-admin-icon');
+    const label=document.getElementById('nav-admin-label');
+    navBtn.classList.remove('admin-revealed');
+    icon.className='fas fa-star';
+    label.textContent='Moments';
+    // If we were on admin screen, go back to golden moments
+    const adminScreen=document.getElementById('admin-screen');
+    if(adminScreen&&adminScreen.classList.contains('active')){
+        navigate('weird');
+    }
+}
+
+function handleWeirdOrAdminNav(){
+    if(adminRevealed){
+        // Enter admin panel
+        navigate('admin');
+        // After entering admin, hide admin reveal (will return to weird on exit)
+    } else {
+        navigate('weird');
+    }
+}
+
+// ============================================================
+// GOLDEN MOMENTS — IMAGE COMPRESSION
+// ============================================================
+function compressImage(base64,maxW,maxH,quality){
+    return new Promise(resolve=>{
+        const img=new Image();
+        img.onload=()=>{
+            let w=img.width,h=img.height;
+            if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+            if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+            const canvas=document.createElement('canvas');
+            canvas.width=w;canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            resolve(canvas.toDataURL('image/jpeg',quality));
+        };
+        img.onerror=()=>resolve(base64);
+        img.src=base64;
+    });
+}
+
+// ============================================================
+// GOLDEN MOMENTS — IMAGE HANDLING
+// ============================================================
+function handleWeirdImageSelect(e){
+    const files=Array.from(e.target.files).slice(0,2-weirdImages.length);
+    files.forEach(file=>{
+        if(weirdImages.length>=2)return;
+        const reader=new FileReader();
+        reader.onload=async ev=>{
+            // Compress before storing
+            const compressed=await compressImage(ev.target.result,900,900,0.7);
+            weirdImages.push(compressed);
+            renderWeirdPreview();
+        };
+        reader.readAsDataURL(file);
+    });
+    e.target.value='';
+}
+function renderWeirdPreview(){
+    const row=document.getElementById('weird-preview-row');
+    const box=document.getElementById('weird-upload-box');
+    if(!row||!box)return;
+    if(weirdImages.length===0){row.style.display='none';box.style.display='block';return;}
+    row.style.display='flex';
+    row.innerHTML=weirdImages.map((src,i)=>`
+        <div class="weird-img-preview">
+            <img src="${src}" alt="preview">
+            <button class="weird-img-remove" onclick="removeWeirdImage(${i})"><i class="fas fa-times"></i></button>
+        </div>`).join('');
+    if(weirdImages.length>=2)box.style.display='none';
+    else box.style.display='block';
+}
+function removeWeirdImage(i){
+    weirdImages.splice(i,1);
+    renderWeirdPreview();
+}
+
+// ============================================================
+// GOLDEN MOMENTS — SAVE
+// ============================================================
+async function saveWeirdEvent(){
+    const text=document.getElementById('weird-event-text').value.trim();
+    if(!text){showToast('Please write a description','error');return;}
+    const ok=await showConfirm({icon:'⭐',title:'Save Golden Moment?',message:'This will be permanently stored in the league archive.',okLabel:'Save',okColor:'purple'});
+    if(!ok)return;
+    const event={
+        id:Date.now(),
+        text:text,
+        images:[...weirdImages],
+        timestamp:new Date().toISOString()
+    };
+    weirdEvents.unshift(event);
+    const saved=await saveWeirdEventsToGitHub(weirdEvents,'New golden moment');
+    if(saved){
+        showToast('Golden Moment saved! ⭐','success');
+        document.getElementById('weird-event-text').value='';
+        weirdImages=[];renderWeirdPreview();
+        showAdminDashboard();
+    } else {
+        showToast('Save failed — check network','error');
+        weirdEvents.shift();
+    }
+}
+
+// ============================================================
+// GOLDEN MOMENTS — RENDER
+// ============================================================
+function renderWeirdEvents(){
+    const list=document.getElementById('weird-events-list');
+    const loadingEl=document.getElementById('weird-loading');
+    if(loadingEl)loadingEl.style.display='none';
+    if(!list)return;
+    if(!weirdEvents||weirdEvents.length===0){
+        list.innerHTML='<div style="text-align:center;margin-top:50px;"><div style="font-size:2.5rem;margin-bottom:12px;">⭐</div><p style="font-size:0.85rem;color:#4b5563;">No golden moments yet...</p></div>';
+        return;
+    }
+    list.innerHTML=weirdEvents.map(ev=>{
+        const dt=formatShamsiDateTime(ev.timestamp);
+        const imgs=ev.images&&ev.images.length>0
+            ?`<div class="weird-card-images">
+                ${ev.images.map((src,i)=>`
+                    <div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${i})">
+                        <img src="${src}" alt="photo ${i+1}">
+                    </div>`).join('')}
+               </div>`:'';
+        return`<div class="weird-card">
+            <div class="weird-card-bar"></div>
+            <div class="weird-card-body">
+                <div class="weird-card-date">
+                    <i class="far fa-calendar-alt"></i>${dt.date} · ${dt.time}
+                </div>
+                <div class="weird-card-text">${ev.text}</div>
+                ${imgs}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ============================================================
+// GOLDEN MOMENTS — LIGHTBOX
+// ============================================================
+function openWeirdLightbox(eventId,imgIndex){
+    haptic([8]);
+    const ev=weirdEvents.find(e=>e.id===eventId);
+    if(!ev||!ev.images[imgIndex])return;
+    document.getElementById('weird-lightbox-img').src=ev.images[imgIndex];
+    document.getElementById('weird-lightbox').classList.add('open');
+}
+function closeWeirdLightbox(){
+    document.getElementById('weird-lightbox').classList.remove('open');
+    setTimeout(()=>{document.getElementById('weird-lightbox-img').src='';},300);
+}
+
+// ============================================================
+// WEIRD EVENTS — GITHUB LOADER / SAVER
+// ============================================================
+async function loadWeirdEventsFromGitHub(){
+    try{
+        const r=await fetch(`${BASE_API}${GITHUB_WEIRD_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();
+            weirdSha=d.sha;
+            weirdEvents=await(await fetch(d.download_url+'?t='+Date.now())).json();
+        } else {
+            // 404 = file not created yet in GitHub, treat as empty
+            weirdEvents=[];
+            weirdSha=null;
+        }
+    }catch(e){weirdEvents=[];weirdSha=null;}
+    return weirdEvents;
+}
+async function saveWeirdEventsToGitHub(data,msg){
+    return saveFile(GITHUB_WEIRD_FILE,data,msg,weirdSha);
+}
+
+// Hook into saveFile to track weirdSha
+async function saveFile(filename,data,msg,curSha){
+    const token=localStorage.getItem('github_pat');if(!token)return false;
+    let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
+    if(curSha)body.sha=curSha;
+    try{
+        const r=await fetch(`${BASE_API}${filename}`,{method:'PUT',headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(r.ok){const d=await r.json();
+            if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
+            else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
+            else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
+            else if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;
+            else sha=d.content.sha;
+            return true;}
+    }catch(e){console.error(e);}return false;
+}
+
+// ============================================================
+// PATCH verifyAdmin to hide admin button after unlock + go back on exit
+// ============================================================
+function verifyAdmin(){
+    const input=document.getElementById('admin-pwd-input').value;
+    if(input===ADMIN_PASSWORD){
+        document.getElementById('admin-error').style.display='none';
+        isAdminUnlocked=true;document.getElementById('admin-pwd-input').value='';
+        haptic([8,40,8]);
+        let t=localStorage.getItem('github_pat');
+        if(!t){t=prompt("Enter GitHub PAT:");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;}
+        showAdminDashboard();showToast('Admin panel unlocked','success');
+    } else {
+        haptic([60,30,60]);document.getElementById('admin-error').style.display='block';
+        showToast('Incorrect PIN','error');
+    }
+}
+function showAdminDashboard(){
+    document.getElementById('admin-login-section').style.display='none';
+    document.getElementById('admin-dashboard-section').style.display='flex';
+    const opts=TEAM_NAMES.map(t=>`<option value="${t}" style="background:#0a121e;color:white;">${TEAM_DISPLAY_NAMES[t]}</option>`).join('');
+    document.getElementById('home-team-select').innerHTML=opts;
+    document.getElementById('away-team-select').innerHTML=opts;
+    if(TEAM_NAMES.length>1)document.getElementById('away-team-select').value=TEAM_NAMES[1];
+    homeScore=0;awayScore=0;
+    document.getElementById('home-score-display').textContent='0';
+    document.getElementById('away-score-display').textContent='0';
+    updateMatchPreview();
+    loadMatchHistoryFromGitHub().then(h=>renderAdminHistory(h));
+    // reset weird image upload
+    weirdImages=[];renderWeirdPreview();
+}
+
+// Called when admin navigates away or finishes — restore nav
+function exitAdmin(){
+    isAdminUnlocked=false;
+    hideAdminButton();
+    navigate('weird');
+}
 function navigate(route){
     haptic([8]);
     currentRouteIndex=ROUTES.indexOf(route);
     const navMap={
         'main-league':'nav-main','league':'nav-season',
-        'history':'nav-history','admin':'nav-admin'
+        'history':'nav-history','weird':'nav-admin','admin':'nav-admin'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
 
     const idMap={
         'main-league':'main-league-screen','league':'league-table-screen',
-        'history':'match-history-screen','admin':'admin-screen'
+        'history':'match-history-screen','weird':'weird-screen','admin':'admin-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{
@@ -1172,8 +1629,11 @@ function navigate(route){
     if(route==='league')Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([d])=>{
         const sel=document.getElementById('season-selector');if(sel)sel.value='current';
         isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
+        const archSec=document.getElementById('archive-history-section');
+        if(archSec)archSec.style.display='none';
     });
     if(route==='history')loadMatchHistoryFromGitHub().then(renderMatchHistory);
+    if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
     if(route==='admin'){
         if(isAdminUnlocked)showAdminDashboard();
         else{document.getElementById('admin-login-section').style.display='flex';document.getElementById('admin-dashboard-section').style.display='none';}
@@ -1236,7 +1696,8 @@ function renderMainLeagueTable(){
 // RENDER — SEASON TABLE  (uses <table> now — no grid bug)
 // ============================================================
 function renderLeagueTable(dataToRender){
-    document.getElementById('loading-message').style.display='none';
+    const loadingEl=document.getElementById('loading-message');
+    if(loadingEl)loadingEl.style.display='none';
     const table=Object.values(dataToRender).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
     const tbody=document.getElementById('league-table-body');
     tbody.innerHTML=table.map((t,i)=>{
@@ -1285,9 +1746,11 @@ function filterHistory(filter,chip){
 }
 function renderMatchHistory(history){
     matchHistory=history;
-    document.getElementById('history-loading').style.display='none';
+    const loadingEl=document.getElementById('history-loading');
+    if(loadingEl)loadingEl.style.display='none';
     buildFilterChips();
     const list=document.getElementById('history-list');
+    if(!list)return;
     if(!history.length){
         list.innerHTML='<div style="text-align:center;margin-top:40px;color:#374151;"><i class="fas fa-futbol" style="font-size:2rem;display:block;margin-bottom:8px;opacity:0.3;"></i><p style="font-size:0.85rem;">No matches yet</p></div>';
         return;
@@ -1348,37 +1811,6 @@ function updateMatchPreview(){
     document.getElementById('preview-home-name').textContent=TEAM_DISPLAY_NAMES[h]||'Home';
     document.getElementById('preview-away-name').textContent=TEAM_DISPLAY_NAMES[a]||'Away';
     document.getElementById('preview-score-text').textContent=`${homeScore} : ${awayScore}`;
-}
-
-// ============================================================
-// ADMIN
-// ============================================================
-function verifyAdmin(){
-    const input=document.getElementById('admin-pwd-input').value;
-    if(input===ADMIN_PASSWORD){
-        document.getElementById('admin-error').style.display='none';
-        isAdminUnlocked=true;document.getElementById('admin-pwd-input').value='';
-        haptic([8,40,8]);
-        let t=localStorage.getItem('github_pat');
-        if(!t){t=prompt("Enter GitHub PAT:");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;}
-        showAdminDashboard();showToast('Admin panel unlocked','success');
-    } else {
-        haptic([60,30,60]);document.getElementById('admin-error').style.display='block';
-        showToast('Incorrect PIN','error');
-    }
-}
-function showAdminDashboard(){
-    document.getElementById('admin-login-section').style.display='none';
-    document.getElementById('admin-dashboard-section').style.display='flex';
-    const opts=TEAM_NAMES.map(t=>`<option value="${t}" style="background:#0a121e;color:white;">${TEAM_DISPLAY_NAMES[t]}</option>`).join('');
-    document.getElementById('home-team-select').innerHTML=opts;
-    document.getElementById('away-team-select').innerHTML=opts;
-    if(TEAM_NAMES.length>1)document.getElementById('away-team-select').value=TEAM_NAMES[1];
-    homeScore=0;awayScore=0;
-    document.getElementById('home-score-display').textContent='0';
-    document.getElementById('away-score-display').textContent='0';
-    updateMatchPreview();
-    loadMatchHistoryFromGitHub().then(h=>renderAdminHistory(h));
 }
 
 // ============================================================
@@ -1445,18 +1877,71 @@ async function loadArchiveDropdown(){
     }catch(e){console.log("No archives yet");}
 }
 function loadSelectedSeason(val){
-    if(val==='current'){isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(leagueData);}
-    else{
-        isViewingArchive=true;const s=archivedSeasons.find(s=>s.seasonId==val);
+    const archiveHistSection=document.getElementById('archive-history-section');
+    if(val==='current'){
+        isViewingArchive=false;
+        updateCurrentDateTime();
+        renderLeagueTable(leagueData);
+        if(archiveHistSection)archiveHistSection.style.display='none';
+    } else {
+        isViewingArchive=true;
+        const s=archivedSeasons.find(s=>s.seasonId==val);
         if(s){
             const d=new Date(s.date);
             const fa=d.toLocaleDateString('fa-IR',{year:'numeric',month:'numeric',day:'numeric'});
             const parts=toEnglishDigits(fa).split('/');
             const el=document.getElementById('current-datetime');
             if(el)el.innerHTML=`<i class="far fa-calendar-check mr-1"></i>Ended: ${parts[2]} ${J_MONTHS_EN[parseInt(parts[1],10)-1]} ${parts[0]}`;
-            const ld={};s.table.forEach(t=>ld[t.name]=t);renderLeagueTable(ld);
+            const ld={};s.table.forEach(t=>ld[t.name]=t);
+            renderLeagueTable(ld);
+            // Show archived season match history
+            if(archiveHistSection){
+                const history=s.history||[];
+                if(history.length>0){
+                    archiveHistSection.style.display='block';
+                    renderArchiveHistory(history);
+                } else {
+                    archiveHistSection.style.display='none';
+                }
+            }
         }
     }
+}
+
+function renderArchiveHistory(history){
+    const list=document.getElementById('archive-history-list');
+    if(!list)return;
+    list.innerHTML=history.map((m,idx)=>{
+        const dt=formatShamsiDateTime(m.timestamp);
+        const parts=m.score.split('-');
+        const hs=parseInt(parts[0]),as=parseInt(parts[1]);
+        let barColor='#6366f1';
+        if(hs>as)barColor='#22c55e';
+        else if(as>hs)barColor='#ef4444';
+        return`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;">
+            <div style="height:2px;background:${barColor};"></div>
+            <div style="padding:10px 12px;">
+                <div style="text-align:center;margin-bottom:8px;">
+                    <span style="font-size:0.58rem;color:#4b5563;background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:999px;font-family:monospace;">
+                        <i class="far fa-calendar-alt" style="margin-right:3px;"></i>${dt.date} · ${dt.time}
+                    </span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.opacity='0.3'">
+                        <span style="font-size:0.65rem;font-weight:700;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.home]||m.home}</span>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:5px 12px;font-size:1.1rem;font-weight:900;color:#fbbf24;letter-spacing:3px;min-width:70px;text-align:center;">
+                        ${m.score}
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.opacity='0.3'">
+                        <span style="font-size:0.65rem;font-weight:700;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.away]||m.away}</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
 }
 async function loadMainLeagueDataFromGitHub(){
     if(!Object.keys(mainLeagueData).length)initializeMainLeagueData();
@@ -1473,20 +1958,6 @@ async function loadMatchHistoryFromGitHub(){
 // ============================================================
 // GITHUB SAVERS
 // ============================================================
-async function saveFile(filename,data,msg,curSha){
-    const token=localStorage.getItem('github_pat');if(!token)return false;
-    let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
-    if(curSha)body.sha=curSha;
-    try{
-        const r=await fetch(`${BASE_API}${filename}`,{method:'PUT',headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
-        if(r.ok){const d=await r.json();
-            if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
-            else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
-            else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
-            else sha=d.content.sha;
-            return true;}
-    }catch(e){console.error(e);}return false;
-}
 async function saveMainLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_MAIN_LEAGUE_FILE,ts,m,mainSha);}
 async function saveLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_LEAGUE_FILE,ts,m,sha);}
 async function saveMatchHistoryToGitHub(d,m){return saveFile(GITHUB_MATCHES_FILE,d,m,matchesSha);}
@@ -1529,7 +2000,7 @@ async function deleteMatch(i){
 async function archiveCurrentSeason(finalTable,finalHistory){
     try{const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();archiveSha=d.sha;archivedSeasons=await(await fetch(d.download_url)).json();}}catch(e){}
     const n=archivedSeasons.length+1;
-    archivedSeasons.push({seasonId:n,date:new Date().toISOString(),table:finalTable,history:finalHistory});
+    archivedSeasons.push({seasonId:n,date:new Date().toISOString(),table:finalTable,history:finalHistory||[]});
     await saveFile(GITHUB_ARCHIVE_FILE,archivedSeasons,`Archived Season ${n}`,archiveSha);
     loadArchiveDropdown();
 }
@@ -1574,6 +2045,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     updateCurrentDateTime();
     setInterval(updateCurrentDateTime,60000);
     loadArchiveDropdown();
+    setupOverallHold();
     startApp();
 });
 </script>
