@@ -1,0 +1,2736 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="manifest" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/manifest.json">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+/* =====================================================
+   CSS VARIABLES — DEFAULT (HARFS) THEME
+   ===================================================== */
+:root {
+    --bg-from: #1e1b4b;
+    --bg-mid:  #0f172a;
+    --bg-to:   #020617;
+    --orb1: #1d4ed8;
+    --orb2: #7c3aed;
+    --orb3: #0ea5e9;
+    --primary: #60a5fa;
+    --primary-glow: rgba(96,165,250,0.35);
+    --accent: #818cf8;
+    --gold: #fbbf24;
+    --silver: #d1d5db;
+    --bronze: #b45309;
+    --header-text: #bfdbfe;
+    --nav-active-bg: rgba(9,130,246,0.22);
+    --nav-active-color: #60a5fa;
+    --nav-active-border: rgba(96,165,250,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#93c5fd 50%,#818cf8 100%);
+    --hero-sub: #93c5fd;
+    --table-rank1-bg: rgba(251,191,36,0.07);
+    --particle-color: 147,197,253;
+}
+
+/* =====================================================
+   WORLD CUP 2026 THEME
+   ===================================================== */
+body.wc26 {
+    --bg-from: #0a2a1a;
+    --bg-mid:  #08150e;
+    --bg-to:   #020a05;
+    --orb1: #166534;
+    --orb2: #991b1b;
+    --orb3: #854d0e;
+    --primary: #4ade80;
+    --primary-glow: rgba(74,222,128,0.35);
+    --accent: #fbbf24;
+    --header-text: #bbf7d0;
+    --nav-active-bg: rgba(74,222,128,0.18);
+    --nav-active-color: #4ade80;
+    --nav-active-border: rgba(74,222,128,0.4);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#86efac 50%,#fbbf24 100%);
+    --hero-sub: #86efac;
+    --table-rank1-bg: rgba(74,222,128,0.08);
+    --particle-color: 134,239,172;
+}
+
+/* =====================================================
+   BASE
+   ===================================================== */
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 30% 80%, var(--bg-from) 0%, var(--bg-mid) 60%, var(--bg-to) 100%);
+    overflow: hidden;
+    padding: 0; margin: 0;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.8s ease;
+}
+
+#particle-canvas {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    z-index:0; pointer-events:none;
+}
+
+.ambient-orb {
+    position: fixed; border-radius:50%;
+    filter: blur(90px); z-index:0; pointer-events:none;
+    animation: floatOrb 12s infinite ease-in-out;
+    transition: background 0.8s ease;
+}
+.orb-1 { width:350px;height:350px; background:radial-gradient(circle,var(--orb1),transparent); top:-80px;left:-120px; opacity:0.4; }
+.orb-2 { width:450px;height:450px; background:radial-gradient(circle,var(--orb2),transparent); bottom:-120px;right:-120px; opacity:0.35; animation-delay:-6s; }
+.orb-3 { width:250px;height:250px; background:radial-gradient(circle,var(--orb3),transparent); top:40%;right:-80px; opacity:0.22; animation-delay:-3s; }
+
+@keyframes floatOrb {
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(25px,-40px) scale(1.08);}
+}
+
+/* =====================================================
+   APP CONTAINER
+   ===================================================== */
+.app-container {
+    width:100%; height:100vh;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    background:rgba(15,23,42,0.12); z-index:10;
+}
+@media(min-width:768px){
+    .app-container{
+        max-width:420px; height:90vh; border-radius:40px;
+        box-shadow:0 0 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.05);
+        border:8px solid #1e293b;
+    }
+}
+
+/* =====================================================
+   HERO LOGO
+   ===================================================== */
+/* Hero logo block is now clickable to toggle theme */
+#hero-logo-container {
+    position:fixed; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    z-index:200;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
+    /* Initial state — invisible, no box yet */
+    opacity:0;
+    background: transparent;
+    border-radius: 28px;
+    padding: 8px 30px;
+    border: 1px solid transparent;
+    box-shadow: none;
+    min-width: 220px;
+    /* No transition yet — JS will add class to trigger animations */
+}
+
+/* Phase 1: Box forms in place (JS adds .box-forming) */
+#hero-logo-container.box-forming {
+    opacity: 1;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-top: 1px solid rgba(255,255,255,0.22);
+    border-left: 1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 12px rgba(255,255,255,0.03);
+    transition:
+        opacity 0.5s ease,
+        background 0.6s ease,
+        border-color 0.5s ease,
+        box-shadow 0.7s ease;
+}
+/* Phase 2: Move to header (JS adds .in-header) */
+#hero-logo-container.in-header {
+    pointer-events:auto; cursor:pointer;
+    top:22px; 
+    transform:translate(-50%,0);
+    opacity: 1;
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.1);
+    border-top:1px solid rgba(255,255,255,0.22);
+    border-left:1px solid rgba(255,255,255,0.22);
+    border-radius:28px; padding:8px 30px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 0 12px rgba(255,255,255,0.03);
+    min-width:220px;
+    transition: top 0.9s cubic-bezier(0.25,0.46,0.45,0.94),
+                transform 0.9s cubic-bezier(0.25,0.46,0.45,0.94),
+                border-radius 0.6s ease,
+                padding 0.6s ease,
+                opacity 0.4s ease;
+}
+
+/* hero/subtext styles shared */
+.hero-text {
+    font-size:4rem; font-weight:800; letter-spacing:10px;
+    background: var(--hero-grad);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    animation:glowPulse 5s infinite ease-in-out;
+    opacity:0;
+    transform: translateY(12px);
+    transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s;
+}
+#hero-logo-container.box-forming .hero-text,
+#hero-logo-container.in-header .hero-text {
+    opacity:1; transform:translateY(0);
+}
+@keyframes glowPulse {
+    0%,100%{filter:drop-shadow(0 0 8px var(--primary-glow)); transform:scale(1);}
+    50%{filter:drop-shadow(0 0 20px var(--primary-glow)); transform:scale(1.03);}
+}
+.hero-subtext {
+    font-size:0.85rem; color:var(--hero-sub); opacity:0;
+    margin-top:-8px; letter-spacing:4px; text-transform:uppercase;
+    transform:translateY(12px);
+    transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+}
+#hero-logo-container.box-forming .hero-subtext,
+#hero-logo-container.in-header .hero-subtext {
+    opacity:1; transform:translateY(0);
+}
+#hero-logo-container.in-header .hero-text{font-size:1.8rem;letter-spacing:4px;}
+#hero-logo-container.in-header .hero-subtext{font-size:0.65rem;margin-top:-2px;}
+
+/* WC26 logo badge in header - shown next to HARFS text */
+.wc26-logo-badge {
+    display:none;
+    width:36px; height:36px;
+    flex-shrink:0;
+    margin-left:8px;
+    vertical-align:middle;
+    filter:drop-shadow(0 0 6px rgba(74,222,128,0.5));
+    transition:all 0.4s ease;
+}
+/* Badge in hero (splash) state - larger */
+#hero-logo-container:not(.in-header) .wc26-logo-badge {
+    display:block;
+    width:72px; height:72px;
+    margin-top:12px;
+    margin-left:0;
+}
+/* Badge in header state - inline next to HARFS */
+#hero-logo-container.in-header .wc26-logo-badge {
+    display:inline-block;
+    width:32px; height:32px;
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+}
+body.wc26 .wc26-logo-badge { display:block; }
+body.wc26 #hero-logo-container.in-header { padding-right:52px; }
+
+
+
+/* =====================================================
+   THEME TOGGLE BUTTON
+   ===================================================== */
+/* Theme toggle button hidden — merged into hero logo block */
+#theme-toggle-btn {
+    display: none !important;
+}
+
+/* =====================================================
+   BOTTOM NAV
+   ===================================================== */
+.bottom-nav {
+    position:absolute; bottom:12px; left:50%;
+    transform:translateX(-50%); width:90%; max-width:360px;
+    background:rgba(10,18,30,0.75);
+    backdrop-filter:blur(28px) saturate(200%);
+    -webkit-backdrop-filter:blur(28px) saturate(200%);
+    border-radius:9999px;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 8px; z-index:100;
+    box-shadow:0 8px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.09);
+    opacity:0; transition:opacity 0.8s ease; pointer-events:none;
+}
+.bottom-nav.active{opacity:1;pointer-events:auto;}
+.nav-item {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#374151; padding:9px 0; border-radius:9999px;
+    transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); width:25%; cursor:pointer;
+    position:relative;
+}
+.nav-item i{font-size:1.1rem;margin-bottom:3px;transition:transform 0.3s ease;}
+.nav-item span{font-size:0.58rem;font-weight:700;letter-spacing:0.5px;}
+.nav-item.active{
+    background:var(--nav-active-bg);
+    color:var(--nav-active-color);
+    box-shadow:0 0 14px var(--primary-glow),inset 0 0 8px rgba(255,255,255,0.04);
+    border:1px solid var(--nav-active-border);
+}
+.nav-item.active i{transform:translateY(-2px);}
+.nav-item::after{
+    content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+    width:0;height:2px;background:var(--primary);border-radius:999px;
+    transition:width 0.3s ease;
+}
+.nav-item.active::after{width:18px;}
+
+/* =====================================================
+   SCREENS
+   ===================================================== */
+.page-screen {
+    position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;
+    display:none;flex-direction:column;align-items:center;
+    background:transparent;
+    padding:96px 0 100px 0;
+    overflow-y:auto;opacity:0;
+    transition:opacity 0.32s ease-out,transform 0.32s ease-out;
+    -ms-overflow-style:none;scrollbar-width:none;
+    transform:translateX(28px);
+}
+.page-screen::-webkit-scrollbar{display:none;}
+.page-screen.active{opacity:1;transform:translateX(0);}
+
+/* =====================================================
+   HEADER CARD
+   ===================================================== */
+.league-header{
+    width:95%;margin-bottom:12px;
+    background:rgba(10,18,30,0.65);
+    backdrop-filter:blur(20px);
+    border-radius:22px;border:1px solid rgba(255,255,255,0.07);
+    padding:14px 16px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+    text-align:center;display:flex;flex-direction:column;align-items:center;
+}
+
+/* =====================================================
+   MODERN RANKING (Overall) — unified numbered design
+   ===================================================== */
+.ranking-top3-wrapper {
+    width:100%; margin-bottom:8px;
+    display:flex; flex-direction:column; gap:8px;
+}
+.ranking-card {
+    display:flex; align-items:center; gap:12px;
+    border-radius:18px; padding:13px 15px;
+    position:relative; overflow:hidden;
+    animation:rankCardIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    cursor:default; transition:transform 0.15s;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.07);
+}
+.ranking-card:active { transform:scale(0.985); }
+
+/* rank-specific accents */
+.ranking-card.rank-1 {
+    background:linear-gradient(135deg,rgba(251,191,36,0.11),rgba(251,191,36,0.03));
+    border:1px solid rgba(251,191,36,0.30);
+    box-shadow:0 3px 20px rgba(251,191,36,0.09);
+}
+.ranking-card.rank-2 {
+    background:linear-gradient(135deg,rgba(203,213,225,0.08),rgba(203,213,225,0.02));
+    border:1px solid rgba(203,213,225,0.18);
+}
+.ranking-card.rank-3 {
+    background:linear-gradient(135deg,rgba(180,83,9,0.09),rgba(180,83,9,0.02));
+    border:1px solid rgba(180,83,9,0.20);
+}
+@keyframes rankCardIn {
+    from { opacity:0; transform:translateY(14px) scale(0.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* rank number badge */
+.ranking-badge {
+    width:40px; height:40px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1rem; font-weight:900; flex-shrink:0;
+    font-family:monospace;
+}
+.ranking-card.rank-1 .ranking-badge {
+    background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.08));
+    color:var(--gold);
+    border:1px solid rgba(251,191,36,0.50);
+    box-shadow: 0 2px 12px rgba(251,191,36,0.20);
+    font-size:1.15rem;
+}
+.ranking-card.rank-2 .ranking-badge {
+    background: linear-gradient(135deg, rgba(203,213,225,0.15), rgba(203,213,225,0.04));
+    color:var(--silver);
+    border:1px solid rgba(203,213,225,0.35);
+}
+.ranking-card.rank-3 .ranking-badge {
+    background: linear-gradient(135deg, rgba(180,83,9,0.18), rgba(180,83,9,0.05));
+    color:#d97706;
+    border:1px solid rgba(180,83,9,0.35);
+}
+.ranking-card.rank-other .ranking-badge {
+    background:rgba(255,255,255,0.05);
+    color:#6b7280;
+    border:1px solid rgba(255,255,255,0.10);
+    font-size:0.9rem;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 700;
+}
+
+/* avatar */
+.ranking-avatar {
+    width:48px; height:48px; border-radius:50%; object-fit:cover;
+    flex-shrink:0;
+}
+.ranking-card.rank-1 .ranking-avatar { border:2px solid rgba(251,191,36,0.6); box-shadow:0 0 14px rgba(251,191,36,0.30); }
+.ranking-card.rank-2 .ranking-avatar { border:2px solid rgba(203,213,225,0.40); }
+.ranking-card.rank-3 .ranking-avatar { border:2px solid rgba(180,83,9,0.45); }
+.ranking-card.rank-other .ranking-avatar { border:2px solid rgba(255,255,255,0.10); }
+
+/* info */
+.ranking-info { flex:1; min-width:0; }
+.ranking-name {
+    font-size:1.02rem; font-weight:900; color:#f1f5f9;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    letter-spacing:0.2px;
+}
+.ranking-card.rank-1 .ranking-name { color:#fef3c7; font-size:1.1rem; }
+.ranking-card.rank-2 .ranking-name { color:#f0f4f8; }
+.ranking-card.rank-3 .ranking-name { color:#e5e7eb; }
+/* ranking-sublabel removed */
+
+/* points */
+.ranking-pts-block { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
+.ranking-pts-num { font-size:1.45rem; font-weight:900; line-height:1; }
+.ranking-card.rank-1 .ranking-pts-num { color:var(--gold); text-shadow:0 0 10px rgba(251,191,36,0.4); }
+.ranking-card.rank-2 .ranking-pts-num { color:var(--silver); }
+.ranking-card.rank-3 .ranking-pts-num { color:#d97706; }
+.ranking-card.rank-other .ranking-pts-num { color:#9ca3af; font-size:1.2rem; }
+.ranking-pts-lbl { font-size:0.52rem; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+/* left accent bar */
+.ranking-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0;
+    width:3px; border-radius:0 2px 2px 0;
+}
+.ranking-card.rank-1::before { background:var(--gold); }
+.ranking-card.rank-2::before { background:var(--silver); }
+.ranking-card.rank-3::before { background:#d97706; }
+.ranking-card.rank-other::before { background:rgba(255,255,255,0.06); }
+
+/* remaining capsules */
+.team-capsule{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;margin-bottom:10px;border-radius:20px;
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+    position:relative;overflow:hidden;transition:transform 0.2s;
+}
+.team-capsule:active{transform:scale(0.98);}
+.capsule-logo{
+    width:44px;height:44px;border-radius:50%;object-fit:cover;
+    border:2px solid rgba(255,255,255,0.12);margin-right:12px;z-index:2;
+}
+.points-display{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;z-index:2;min-width:48px;}
+
+/* =====================================================
+   SEASON TABLE  ← FIXED
+   ===================================================== */
+.table-wrap {
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.06);
+    background:rgba(10,18,30,0.6);
+    backdrop-filter:blur(14px);
+}
+.season-table {
+    width:100%;
+    min-width:320px;
+    border-collapse:collapse;
+    table-layout:fixed;
+}
+.season-table thead tr {
+    border-bottom:1px solid rgba(var(--primary),.25);
+}
+.season-table thead th {
+    padding:11px 0;
+    font-size:0.7rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:0.5px;
+    color:var(--primary);
+    text-align:center;
+    white-space:nowrap;
+}
+.season-table thead th.th-team { text-align:left; padding-left:10px; color:var(--header-text); }
+.season-table thead th.th-pts  { color:#fbbf24; }
+.season-table thead th.th-gf   { color:#4ade80; }
+.season-table thead th.th-ga   { color:#f87171; }
+
+/* column widths */
+.season-table col.c-rank { width:28px; }
+.season-table col.c-team { width:auto; }
+.season-table col.c-num  { width:30px; }
+.season-table col.c-pts  { width:36px; }
+
+.season-table tbody tr {
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    cursor:pointer;
+    transition:background 0.15s;
+    animation:rowIn 0.3s ease both;
+}
+.season-table tbody tr:last-child{border-bottom:none;}
+.season-table tbody tr:active{background:rgba(255,255,255,0.07)!important;}
+.season-table tbody tr.rank-1-row{background:var(--table-rank1-bg);}
+
+@keyframes rowIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+
+.season-table td {
+    padding:12px 0;
+    font-size:0.78rem;
+    text-align:center;
+    white-space:nowrap;
+    vertical-align:middle;
+}
+.td-rank { font-size:0.72rem; color:#6b7280; font-weight:800; font-family:monospace; }
+.td-team {
+    text-align:left!important;
+    padding-left:8px!important;
+}
+.td-team-inner { display:flex; align-items:center; gap:7px; }
+.td-team-inner img { width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,0.18);flex-shrink:0; }
+.td-team-inner span { font-size:0.76rem;font-weight:700; overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.td-pts { font-size:0.95rem!important;font-weight:900!important;color:#fbbf24;padding-right:8px!important;text-align:right!important; }
+.td-w   { color:#4ade80;font-weight:700; }
+.td-l   { color:#f87171;font-weight:700; }
+.td-gf  { color:#86efac; }
+.td-ga  { color:#fca5a5; }
+.td-gd  { color:#d1d5db;font-weight:600; }
+
+/* =====================================================
+   MATCH HISTORY
+   ===================================================== */
+.match-card{
+    background:rgba(10,18,30,0.65);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:20px;overflow:hidden;
+    position:relative;margin-bottom:12px;
+    transition:transform 0.2s;
+    animation:cardIn 0.4s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.match-card:active{transform:scale(0.98);}
+.match-card-bar{height:3px;width:100%;}
+.match-card-inner{padding:12px 14px 14px;}
+.match-team-logo{
+    width:46px;height:46px;border-radius:50%;object-fit:cover;
+    border:2px solid rgba(255,255,255,0.1);
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+.match-score-box{
+    background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;padding:8px 14px;
+    font-size:1.5rem;font-weight:900;letter-spacing:4px;
+    color:var(--gold);text-shadow:0 0 10px rgba(251,191,36,0.4);
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.3);
+    min-width:90px;text-align:center;
+}
+.match-badge{padding:3px 8px;border-radius:6px;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
+.badge-win{background:rgba(16,185,129,0.14);color:#34d399;border:1px solid rgba(16,185,129,0.3);}
+.badge-loss{background:rgba(239,68,68,0.14);color:#f87171;border:1px solid rgba(239,68,68,0.3);}
+.badge-draw{background:rgba(156,163,175,0.14);color:#d1d5db;border:1px solid rgba(156,163,175,0.25);}
+
+/* =====================================================
+   GLASS CONTROLS
+   ===================================================== */
+.glass-button{
+    background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.13);color:white;
+    padding:12px 24px;border-radius:16px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.14),inset 0 1px 0 rgba(255,255,255,0.09);
+    transition:all 0.2s;cursor:pointer;
+}
+.glass-button:active{transform:scale(0.96);background:rgba(255,255,255,0.13);}
+.glass-input{
+    background:rgba(255,255,255,0.07);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.11);color:white;outline:none;
+    transition:all 0.3s;
+}
+.glass-input:focus{border-color:var(--primary);box-shadow:0 0 12px var(--primary-glow);}
+
+/* =====================================================
+   SCORE CONTROLS
+   ===================================================== */
+.score-display{
+    font-size:2.2rem;font-weight:900;color:var(--gold);line-height:1;
+    text-shadow:0 0 12px rgba(251,191,36,0.4);min-width:36px;text-align:center;
+}
+.score-btn{
+    width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+    font-size:1.1rem;font-weight:900;display:flex;align-items:center;justify-content:center;
+    transition:all 0.15s cubic-bezier(0.34,1.56,0.64,1);color:white;
+}
+.score-btn-plus{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 12px rgba(34,197,94,0.35);}
+.score-btn-minus{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 4px 12px rgba(239,68,68,0.35);}
+.score-btn:active{transform:scale(0.88);}
+
+/* =====================================================
+   MODALS
+   ===================================================== */
+.modal-overlay{
+    position:fixed;inset:0;z-index:500;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);padding:20px;
+    opacity:0;transition:opacity 0.25s;pointer-events:none;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-content{
+    background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
+    backdrop-filter:blur(30px);
+    border:1px solid rgba(255,255,255,0.09);
+    border-top:1px solid rgba(255,255,255,0.16);
+    border-radius:28px;padding:24px;
+    width:100%;max-width:360px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.6);
+    transform:scale(0.92) translateY(20px);
+    transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.modal-overlay.open .modal-content{transform:scale(1) translateY(0);}
+.confirm-modal .confirm-icon{font-size:2.4rem;margin-bottom:12px;}
+.confirm-modal h3{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+.confirm-modal p{font-size:0.8rem;color:#9ca3af;margin-bottom:20px;line-height:1.5;}
+.confirm-btn-row{display:flex;gap:10px;}
+.confirm-btn{flex:1;padding:12px;border-radius:14px;font-weight:700;font-size:0.85rem;cursor:pointer;border:none;transition:all 0.2s;}
+.confirm-btn-cancel{background:rgba(255,255,255,0.07);color:#9ca3af;border:1px solid rgba(255,255,255,0.1);}
+.confirm-btn-cancel:active{background:rgba(255,255,255,0.12);}
+.confirm-btn-ok{color:white;}
+.confirm-btn-ok.green{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 14px rgba(34,197,94,0.35);}
+.confirm-btn-ok.red{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 4px 14px rgba(239,68,68,0.35);}
+.confirm-btn-ok.purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed);box-shadow:0 4px 14px rgba(139,92,246,0.35);}
+.confirm-btn-ok:active{transform:scale(0.96);}
+
+/* team profile */
+#team-profile-modal .modal-content{padding:0;overflow:hidden;max-width:320px;}
+.profile-header{height:100px;position:relative;overflow:visible;}
+.profile-header-bg{
+    position:absolute;inset:0;height:100px;
+    background:linear-gradient(135deg,rgba(30,58,138,0.8),rgba(109,40,217,0.6));
+    border-radius:0;overflow:hidden;
+}
+body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.8),rgba(153,27,27,0.7));}
+.profile-avatar{
+    width:80px;height:80px;border-radius:50%;object-fit:cover;
+    border:3px solid rgba(255,255,255,0.35);
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);z-index:10;
+}
+.profile-body{padding:50px 20px 20px;}
+.stat-card{
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px;padding:12px 8px;text-align:center;
+}
+.stat-card .stat-val{font-size:1.6rem;font-weight:900;line-height:1.1;}
+.stat-card .stat-lbl{font-size:0.6rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+
+/* =====================================================
+   TEAM PICKER — custom replacement for native <select>
+   ===================================================== */
+.team-picker-trigger{
+    background:rgba(255,255,255,0.07);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.11);color:white;
+    border-radius:14px;padding:8px 10px;
+    display:flex;align-items:center;gap:8px;
+    cursor:pointer;transition:all 0.2s;flex:1;
+    min-width:0;
+}
+.team-picker-trigger:active{transform:scale(0.97);background:rgba(255,255,255,0.11);}
+.team-picker-trigger.open{border-color:var(--primary);box-shadow:0 0 12px var(--primary-glow);}
+.team-picker-trigger img{
+    width:22px;height:22px;border-radius:50%;object-fit:cover;
+    flex-shrink:0;background:rgba(255,255,255,0.08);
+}
+.team-picker-trigger span{
+    font-size:0.72rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;flex:1;text-align:center;
+}
+.team-picker-trigger i.chevron{font-size:0.6rem;color:#6b7280;flex-shrink:0;transition:transform 0.2s;}
+.team-picker-trigger.open i.chevron{transform:rotate(180deg);color:var(--primary);}
+
+.team-picker-sheet{
+    position:fixed;inset:0;z-index:600;
+    display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.team-picker-sheet.open{opacity:1;pointer-events:auto;}
+.team-picker-panel{
+    background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
+    backdrop-filter:blur(30px);
+    border:1px solid rgba(255,255,255,0.09);
+    border-bottom:none;
+    border-radius:26px 26px 0 0;
+    padding:10px 18px calc(20px + env(safe-area-inset-bottom,0px));
+    width:100%;max-width:460px;
+    max-height:72vh;display:flex;flex-direction:column;
+    box-shadow:0 -16px 50px rgba(0,0,0,0.5);
+    transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+}
+.team-picker-sheet.open .team-picker-panel{transform:translateY(0);}
+.team-picker-handle{
+    width:38px;height:4px;border-radius:99px;background:rgba(255,255,255,0.18);
+    margin:6px auto 14px;flex-shrink:0;
+}
+.team-picker-title{
+    font-size:0.7rem;font-weight:700;color:#6b7280;text-transform:uppercase;
+    letter-spacing:1px;margin-bottom:12px;text-align:center;flex-shrink:0;
+}
+.team-picker-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+    overflow-y:auto;padding-bottom:4px;
+}
+.team-picker-grid::-webkit-scrollbar{display:none;}
+.team-picker-option{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:12px 6px;border-radius:16px;cursor:pointer;
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+    transition:all 0.2s;
+}
+.team-picker-option:active{transform:scale(0.94);}
+.team-picker-option.selected{
+    background:var(--nav-active-bg);border-color:var(--nav-active-border);
+}
+.team-picker-option img{
+    width:42px;height:42px;border-radius:50%;object-fit:cover;
+    background:rgba(255,255,255,0.08);
+}
+.team-picker-option span{
+    font-size:0.65rem;font-weight:700;text-align:center;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+}
+.team-picker-option.selected span{color:var(--nav-active-color);}
+.team-picker-option.disabled{opacity:0.32;pointer-events:none;}
+
+/* =====================================================
+   TOAST — pill style matching song notification
+   ===================================================== */
+#toast-container{
+    position:fixed;top:74px;left:50%;transform:translateX(-50%);
+    z-index:1000;display:flex;flex-direction:column;align-items:center;gap:8px;
+    pointer-events:none;width:90%;max-width:380px;
+}
+.toast{
+    background:rgba(10,18,30,0.92);
+    border:1px solid rgba(255,255,255,0.09);
+    border-radius:99px;
+    padding:9px 20px 9px 10px;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    backdrop-filter:blur(20px);
+    font-size:0.8rem;font-weight:700;
+    white-space:nowrap;
+    animation:toastIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.toast.hide{animation:toastOut 0.3s ease forwards;}
+/* icon bubble */
+.toast .toast-icon-bubble{
+    width:28px;height:28px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+}
+.toast .toast-icon-bubble i{font-size:0.65rem;color:white;}
+/* text column */
+.toast .toast-body{display:flex;flex-direction:column;overflow:hidden;}
+.toast .toast-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;line-height:1.2;}
+.toast .toast-msg{font-size:0.8rem;font-weight:800;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;}
+/* type colours */
+.toast.success{border-color:rgba(34,197,94,0.35);}
+.toast.success .toast-icon-bubble{background:linear-gradient(135deg,#22c55e,#16a34a);}
+.toast.success .toast-label{color:#4ade80;}
+.toast.error{border-color:rgba(239,68,68,0.35);}
+.toast.error .toast-icon-bubble{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.toast.error .toast-label{color:#f87171;}
+.toast.info{border-color:rgba(96,165,250,0.3);}
+.toast.info .toast-icon-bubble{background:linear-gradient(135deg,var(--primary),var(--accent));}
+.toast.info .toast-label{color:var(--primary);}
+.toast.music{border-color:rgba(96,165,250,0.3);}
+.toast.music .toast-icon-bubble{background:linear-gradient(135deg,var(--primary),var(--accent));animation:musicPulse 1.5s infinite ease-in-out;}
+.toast.music .toast-label{color:var(--primary);}
+@keyframes musicPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
+@keyframes toastIn{from{opacity:0;transform:translateY(-18px) scale(0.88);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-12px) scale(0.93);}}
+@keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+
+/* =====================================================
+   FILTER CHIPS
+   ===================================================== */
+.chip-bar{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;}
+.chip-bar::-webkit-scrollbar{display:none;}
+.chip{
+    flex-shrink:0;padding:5px 13px;border-radius:9999px;
+    font-size:0.68rem;font-weight:700;cursor:pointer;
+    border:1px solid rgba(255,255,255,0.09);
+    background:rgba(255,255,255,0.05);color:#6b7280;
+    transition:all 0.2s;white-space:nowrap;
+}
+.chip.active{background:rgba(96,165,250,0.18);color:var(--primary);border-color:var(--primary);}
+.chip:active{transform:scale(0.95);}
+
+/* =====================================================
+   ADMIN SECTIONS
+   ===================================================== */
+.admin-section{
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;overflow:hidden;margin-bottom:14px;
+}
+.admin-section-bar{height:3px;width:100%;}
+.admin-section-body{padding:14px;}
+.admin-section h3{font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;}
+#match-preview{
+    background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;padding:10px 14px;margin-top:12px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.preview-team{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+.preview-team img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);}
+.preview-team span{font-size:0.63rem;font-weight:700;text-align:center;color:#d1d5db;}
+.preview-score{font-size:1.3rem;font-weight:900;color:var(--gold);letter-spacing:2px;text-align:center;}
+
+/* =====================================================
+   MISC
+   ===================================================== */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--primary);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.match-card.hidden-by-filter{display:none;}
+
+/* =====================================================
+   GOLDEN MOMENTS SECTION
+   ===================================================== */
+.weird-card {
+    background:rgba(10,18,30,0.72);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;overflow:hidden;
+    position:relative;margin-bottom:14px;
+    transition:transform 0.2s;
+    animation:cardIn 0.4s ease both;
+    width:100%;
+}
+.weird-card:active{transform:scale(0.98);}
+.weird-card-bar{height:4px;width:100%;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);}
+.weird-card-body{padding:14px 16px 16px;}
+.weird-card-date{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:0.62rem;color:#6b7280;font-family:monospace;
+    background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:999px;
+    margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);
+}
+.weird-card-text{
+    font-size:0.82rem;line-height:1.6;color:#d1d5db;
+    margin-bottom:12px;white-space:pre-wrap;
+}
+.weird-card-images{display:flex;gap:8px;}
+.weird-img-thumb{
+    flex:1;border-radius:14px;overflow:hidden;
+    cursor:pointer;position:relative;
+    background:rgba(0,0,0,0.3);
+    border:1px solid rgba(255,255,255,0.08);
+    aspect-ratio:16/9;
+    transition:transform 0.2s;
+}
+.weird-img-thumb:active{transform:scale(0.96);}
+.weird-img-thumb img{
+    width:100%;height:100%;object-fit:cover;display:block;
+}
+.weird-img-thumb::after{
+    content:'\f00e';font-family:'Font Awesome 6 Free';font-weight:900;
+    position:absolute;bottom:6px;right:8px;
+    font-size:0.72rem;color:rgba(255,255,255,0.6);
+    background:rgba(0,0,0,0.45);padding:3px 6px;border-radius:6px;
+}
+/* Image lightbox */
+#weird-lightbox{
+    position:fixed;inset:0;z-index:800;
+    background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity 0.25s;pointer-events:none;
+}
+#weird-lightbox.open{opacity:1;pointer-events:auto;}
+#weird-lightbox img{
+    max-width:92%;max-height:88vh;border-radius:16px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.7);
+    transform:scale(0.9);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+#weird-lightbox.open img{transform:scale(1);}
+#weird-lightbox-close{
+    position:absolute;top:20px;right:20px;
+    width:40px;height:40px;border-radius:50%;
+    background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:1rem;color:white;
+    transition:all 0.2s;
+}
+#weird-lightbox-close:active{transform:scale(0.9);}
+
+/* Admin form for weird events */
+.weird-admin-section{
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;overflow:hidden;margin-bottom:14px;
+}
+.weird-upload-box{
+    border:2px dashed rgba(251,191,36,0.3);border-radius:14px;
+    padding:14px;text-align:center;cursor:pointer;
+    transition:all 0.2s;background:rgba(251,191,36,0.04);
+    position:relative;
+}
+.weird-upload-box:hover{border-color:rgba(251,191,36,0.5);background:rgba(251,191,36,0.07);}
+.weird-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.weird-img-preview-row{display:flex;gap:8px;margin-top:10px;}
+.weird-img-preview{
+    flex:1;border-radius:10px;overflow:hidden;
+    border:1px solid rgba(255,255,255,0.1);
+    aspect-ratio:16/9;background:rgba(0,0,0,0.3);
+    position:relative;display:flex;align-items:center;justify-content:center;
+}
+.weird-img-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.weird-img-remove{
+    position:absolute;top:4px;right:4px;
+    background:rgba(239,68,68,0.7);color:white;border:none;
+    border-radius:50%;width:20px;height:20px;font-size:0.65rem;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+
+/* ============ NAV ADMIN → WEIRD EVENTS TRANSITION ============ */
+#nav-admin{transition:all 0.4s ease;}
+#nav-admin.admin-revealed{
+    background:rgba(139,92,246,0.2)!important;
+    color:#c4b5fd!important;
+    border:1px solid rgba(139,92,246,0.4)!important;
+    box-shadow:0 0 14px rgba(139,92,246,0.3)!important;
+}
+
+/* overall hold — no visual ring, silent */
+#nav-main{position:relative;}
+
+/* =====================================================
+   HERO HEADER CLICKABLE HINT
+   ===================================================== */
+/* Hero header clickable hint */
+#hero-logo-container.in-header:hover {
+    background:rgba(255,255,255,0.07) !important;
+    box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 0 12px rgba(255,255,255,0.05) !important;
+}
+#hero-logo-container.in-header:active {
+    transform:translate(-50%,0) scale(0.97);
+}
+body.wc26 .app-container::before {
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(74,222,128,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.05) 0%, transparent 60%);
+}
+
+/* =====================================================
+   SPLASH VIDEO SCREEN
+   ===================================================== */
+#splash-video-screen {
+    position:fixed; inset:0; z-index:9999;
+    background:#000;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity 0.9s ease;
+}
+#splash-video-screen.fade-out {
+    opacity:0; pointer-events:none;
+}
+
+/*
+ * wrapper دقیقاً همون ابعاد app-container رو داره:
+ * موبایل  → 100vw × 100vh  (تمام صفحه عمودی)
+ * دسکتاپ → 420px × 90vh   با گوشه‌های گرد و border
+ */
+#splash-video-wrapper {
+    position:relative;
+    width:100%;
+    height:100vh;
+    background:#000;
+    overflow:hidden;
+    border-radius:0;
+}
+@media(min-width:768px){
+    #splash-video-wrapper {
+        width:420px;
+        height:90vh;
+        border-radius:40px;
+        border:8px solid #1e293b;
+        box-shadow:0 0 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+}
+#splash-video {
+    width:100%; height:100%;
+    object-fit:cover;
+    object-position:center;
+    display:block;
+}
+#splash-skip-btn {
+    position:absolute; bottom:40px; right:20px;
+    background:rgba(0,0,0,0.55);
+    border:1px solid rgba(255,255,255,0.2);
+    color:rgba(255,255,255,0.75);
+    font-size:0.72rem; font-weight:700; letter-spacing:1px;
+    padding:8px 18px; border-radius:9999px;
+    cursor:pointer; backdrop-filter:blur(8px);
+    transition:all 0.2s;
+    display:flex; align-items:center; gap:6px;
+}
+#splash-skip-btn:active { transform:scale(0.95); background:rgba(0,0,0,0.8); }
+</style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<div class="ambient-orb orb-1"></div>
+<div class="ambient-orb orb-2"></div>
+<div class="ambient-orb orb-3"></div>
+
+<!-- Splash Video Screen -->
+<div id="splash-video-screen">
+    <div id="splash-video-wrapper">
+        <video id="splash-video" src="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/intro.mp4" playsinline autoplay muted preload="auto"></video>
+        <button id="splash-skip-btn" onclick="skipSplash()">
+            <i class="fas fa-forward"></i> SKIP
+        </button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<!-- Theme toggle -->
+<div id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle World Cup 2026 theme">
+    <span class="wc26-tooltip">Switch theme</span>
+    <i class="fas fa-futbol" id="theme-icon"></i>
+</div>
+
+<!-- Hero Logo (clickable in header state to toggle theme) -->
+<div id="hero-logo-container" onclick="if(this.classList.contains('in-header')) toggleTheme()">
+    <div class="hero-text" id="harfs-text">HARFS</div>
+    <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
+    <!-- WC26 logo badge shown in header and hero state -->
+    <img class="wc26-logo-badge" src="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/logo.png" alt="WC26 Logo">
+</div>
+
+<div class="app-container" id="app-container">
+
+    <nav class="bottom-nav" id="bottom-navigation">
+        <div class="nav-item" id="nav-main">
+            <i class="fas fa-trophy"></i><span>Overall</span>
+        </div>
+        <div class="nav-item active" onclick="navigate('league')" id="nav-season">
+            <i class="fas fa-futbol"></i><span>Season</span>
+        </div>
+        <div class="nav-item" onclick="navigate('history')" id="nav-history">
+            <i class="fas fa-history"></i><span>History</span>
+        </div>
+        <div class="nav-item" onclick="handleWeirdOrAdminNav()" id="nav-admin">
+            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Moments</span>
+        </div>
+    </nav>
+
+    <!-- ============ MAIN LEAGUE ============ -->
+    <div id="main-league-screen" class="page-screen">
+
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 Championship</h2>
+        </div>
+
+        <div class="w-full px-4">
+            <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
+            <div id="main-league-body" class="flex flex-col gap-2"></div>
+            <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
+                <span class="spinner"></span> Loading...
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SEASON TABLE ============ -->
+    <div id="league-table-screen" class="page-screen">
+
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Season Table</h2>
+            <div class="text-[10px] text-gray-500 font-mono mb-2" id="current-datetime">...</div>
+            <!-- Season Navigation Pills -->
+            <div id="season-nav-wrapper" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                <button id="season-prev-btn" onclick="navigateSeason(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="season-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;min-width:130px;" onclick="openSeasonPicker()">
+                    <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="season-pill-label">Current Season</span>
+                </div>
+                <button id="season-next-btn" onclick="navigateSeason(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <!-- Hidden original select (for compatibility) -->
+            <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
+                <option value="current">Current Season</option>
+            </select>
+        </div>
+
+        <div class="w-full px-3">
+            <div class="table-wrap">
+                <table class="season-table">
+                    <colgroup>
+                        <col class="c-rank">
+                        <col class="c-team">
+                        <col class="c-num"><!-- P -->
+                        <col class="c-num"><!-- W -->
+                        <col class="c-num"><!-- D -->
+                        <col class="c-num"><!-- L -->
+                        <col class="c-num"><!-- GF -->
+                        <col class="c-num"><!-- GA -->
+                        <col class="c-num"><!-- GD -->
+                        <col class="c-pts"> <!-- PT -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="th-team">Team</th>
+                            <th>P</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th class="th-gf">GF</th>
+                            <th class="th-ga">GA</th>
+                            <th>GD</th>
+                            <th class="th-pts" style="text-align:right;padding-right:6px;">PT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="league-table-body"></tbody>
+                </table>
+            </div>
+            <div id="loading-message" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                <span class="spinner"></span> Loading...
+            </div>
+        </div>
+
+        <!-- Archive match history (shown only when viewing archived season) -->
+        <div class="w-full px-3 mt-2" id="archive-history-section" style="display:none;">
+            <div style="background:rgba(10,18,30,0.65);border:1px solid rgba(255,255,255,0.07);border-radius:22px;overflow:hidden;margin-bottom:14px;">
+                <div style="height:3px;background:linear-gradient(90deg,#374151,#4b5563);"></div>
+                <div style="padding:14px;">
+                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;color:#6b7280;">
+                        <i class="fas fa-history mr-1"></i> Season Matches
+                    </h3>
+                    <div id="archive-history-list" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /league-table-screen -->
+
+    <!-- ============ MATCH HISTORY ============ -->
+    <div id="match-history-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Match Feed</h2>
+            <div class="chip-bar w-full" id="history-filter-bar">
+                <div class="chip active" onclick="filterHistory('all',this)">All</div>
+            </div>
+        </div>
+        <div class="w-full px-4">
+            <div id="history-list">
+                <div id="history-loading" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ADMIN ============ -->
+    <div id="admin-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black text-purple-300 uppercase tracking-widest">Admin Panel</h2>
+            <button onclick="exitAdmin()" style="margin-top:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Exit Admin
+            </button>
+        </div>
+
+        <div id="admin-login-section" class="w-full px-6 flex flex-col items-center gap-5">
+            <div style="background:rgba(255,255,255,0.04);padding:32px;border-radius:24px;border:1px solid rgba(255,255,255,0.09);display:flex;flex-direction:column;align-items:center;width:100%;max-width:280px;backdrop-filter:blur(20px);">
+                <i class="fas fa-user-shield" style="font-size:2.8rem;color:#a78bfa;margin-bottom:20px;"></i>
+                <input type="password" id="admin-pwd-input" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg mb-4" placeholder="Enter PIN" onkeyup="if(event.key==='Enter')verifyAdmin()">
+                <button class="glass-button w-full font-bold" style="border-color:rgba(167,139,250,0.4);color:#c4b5fd;" onclick="verifyAdmin()">Unlock Panel</button>
+                <p id="admin-error" class="text-xs text-red-400 mt-3 font-semibold" style="display:none;">Incorrect PIN</p>
+            </div>
+        </div>
+
+        <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:none;">
+            <!-- Register Match -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#06b6d4);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#86efac,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Register Match</h3>
+                    <div class="flex justify-between items-center gap-3 mb-5">
+                        <div id="home-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('home')">
+                            <img id="home-team-select-icon" src="" style="display:none;">
+                            <span id="home-team-select-label">Select team</span>
+                            <i class="fas fa-chevron-down chevron"></i>
+                        </div>
+                        <span style="color:#4b5563;font-weight:800;font-size:0.85rem;">vs</span>
+                        <div id="away-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('away')">
+                            <img id="away-team-select-icon" src="" style="display:none;">
+                            <span id="away-team-select-label">Select team</span>
+                            <i class="fas fa-chevron-down chevron"></i>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex-1 flex flex-col items-center gap-2">
+                            <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('home',1)"><i class="fas fa-plus"></i></button>
+                            <div class="score-display" id="home-score-display">0</div>
+                            <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('home',-1)"><i class="fas fa-minus"></i></button>
+                        </div>
+                        <div style="font-size:1.8rem;font-weight:900;color:#374151;">:</div>
+                        <div class="flex-1 flex flex-col items-center gap-2">
+                            <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('away',1)"><i class="fas fa-plus"></i></button>
+                            <div class="score-display" id="away-score-display">0</div>
+                            <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('away',-1)"><i class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div id="match-preview">
+                        <div class="preview-team">
+                            <img id="preview-home-logo" src="" style="opacity:0.6;">
+                            <span id="preview-home-name">Home</span>
+                        </div>
+                        <div class="preview-score" id="preview-score-text">0 : 0</div>
+                        <div class="preview-team">
+                            <img id="preview-away-logo" src="" style="opacity:0.6;">
+                            <span id="preview-away-name">Away</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-red-400 text-center mt-3 font-semibold" id="admin-match-error" style="display:none;">Teams must be different.</p>
+                    <button class="glass-button w-full mt-4 font-bold text-sm py-3" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="registerMatchResult()">
+                        <i class="fas fa-check-circle mr-2"></i> Save Match
+                    </button>
+                </div>
+            </div>
+
+            <!-- League Management -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#8b5cf6,#ec4899);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#c4b5fd,#f9a8d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">League Management</h3>
+                    <div class="flex gap-3">
+                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(139,92,246,0.3);color:#c4b5fd;" onclick="finishSeason()">
+                            <i class="fas fa-flag-checkered text-lg"></i><span>End Season</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weird Event Registration -->
+            <div class="weird-admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
+                <div class="admin-section-body" style="padding:14px;">
+                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
+                    <textarea id="weird-event-text" class="glass-input w-full p-3 rounded-xl text-sm mb-3" rows="3" placeholder="Describe this special moment..." style="resize:none;font-family:inherit;line-height:1.5;"></textarea>
+                    <!-- Image upload -->
+                    <div class="weird-upload-box" id="weird-upload-box">
+                        <input type="file" id="weird-file-input" accept="image/*" multiple onchange="handleWeirdImageSelect(event)">
+                        <i class="fas fa-camera" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                        <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos <span style="color:#4b5563;">(max 2)</span></p>
+                    </div>
+                    <div class="weird-img-preview-row" id="weird-preview-row" style="display:none;"></div>
+                    <button class="glass-button w-full mt-3 font-bold text-sm py-3" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;" onclick="saveWeirdEvent()">
+                        <i class="fas fa-bolt mr-2"></i> Save Event
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Matches -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#374151,#4b5563);"></div>
+                <div class="admin-section-body">
+                    <h3 style="color:#6b7280;">Recent Matches</h3>
+                    <div id="admin-history-list" class="overflow-y-auto space-y-2" style="max-height:200px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GOLDEN MOMENTS ============ -->
+    <div id="weird-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments</h2>
+            <p class="text-xs mt-1" style="color:#6b7280;">Special memories — forever preserved</p>
+        </div>
+        <div class="w-full px-4">
+            <div id="weird-events-list">
+                <div id="weird-loading" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ IMAGE LIGHTBOX ============ -->
+    <div id="weird-lightbox" onclick="closeWeirdLightbox()">
+        <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
+        <img id="weird-lightbox-img" src="" alt="">
+    </div>
+    <div id="team-profile-modal" class="modal-overlay">
+        <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;">
+            <div class="profile-header">
+                <div class="profile-header-bg"></div>
+                <img id="profile-team-logo" src="" class="profile-avatar">
+            </div>
+            <div class="profile-body">
+                <h4 id="profile-team-name" class="text-xl font-black text-white mb-0.5">Team</h4>
+                <div class="text-[10px] uppercase tracking-widest mb-4" style="color:var(--primary);">Season Stats</div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div class="stat-card"><div class="stat-val text-yellow-400" id="profile-stat-pts">0</div><div class="stat-lbl">Points</div></div>
+                    <div class="stat-card"><div class="stat-val text-white" id="profile-stat-p">0</div><div class="stat-lbl">Played</div></div>
+                    <div class="stat-card"><div class="stat-val text-green-400" id="profile-stat-gf">0</div><div class="stat-lbl">Goal Diff</div></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="stat-card" style="background:rgba(34,197,94,0.07);border-color:rgba(34,197,94,0.14);"><div class="stat-val text-green-400" id="profile-stat-w">0</div><div class="stat-lbl" style="color:#4ade80;">Wins</div></div>
+                    <div class="stat-card"><div class="stat-val text-gray-300" id="profile-stat-d">0</div><div class="stat-lbl">Draws</div></div>
+                    <div class="stat-card" style="background:rgba(239,68,68,0.07);border-color:rgba(239,68,68,0.14);"><div class="stat-val text-red-400" id="profile-stat-l">0</div><div class="stat-lbl" style="color:#f87171;">Losses</div></div>
+                </div>
+                <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+                    <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Last Match</div>
+                    <div class="flex items-center justify-between">
+                        <div id="last-match-result-badge" class="match-badge badge-draw">N/A</div>
+                        <div id="last-match-detail" class="text-xs font-semibold text-gray-200">No matches yet</div>
+                    </div>
+                </div>
+                <!-- Last 5 matches form -->
+                <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+                    <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Form (Last 5)</div>
+                    <div id="team-form-dots" style="display:flex;gap:7px;justify-content:center;align-items:center;"></div>
+                </div>
+                <button class="glass-button w-full text-sm" onclick="hideTeamProfile()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CUSTOM CONFIRM ============ -->
+    <div id="custom-confirm-modal" class="modal-overlay">
+        <div class="modal-content confirm-modal text-center" style="max-width:300px;">
+            <div class="confirm-icon" id="confirm-icon">⚠️</div>
+            <h3 id="confirm-title">Are you sure?</h3>
+            <p id="confirm-message">This action cannot be undone.</p>
+            <div class="confirm-btn-row">
+                <button class="confirm-btn confirm-btn-cancel" onclick="resolveConfirm(false)">Cancel</button>
+                <button class="confirm-btn confirm-btn-ok green" id="confirm-ok-btn" onclick="resolveConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TEAM PICKER SHEET ============ -->
+    <div id="team-picker-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeTeamPicker()">
+        <div class="team-picker-panel">
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title" id="team-picker-title">Select Team</div>
+            <div class="team-picker-grid" id="team-picker-grid"></div>
+        </div>
+    </div>
+
+</div><!-- /app-container -->
+
+<audio id="background-music" style="display:none;"></audio>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const J_MONTHS_EN=["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"];
+function toEnglishDigits(s){if(!s)return s;return s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
+
+const GITHUB_REPO="Harfsleague/HARFS_Data";
+const GITHUB_LEAGUE_BRANCH="main";
+const GITHUB_LEAGUE_FILE="league_data.json";
+const GITHUB_MAIN_LEAGUE_FILE="main_league_data.json";
+const GITHUB_MATCHES_FILE="match_history.json";
+const GITHUB_ARCHIVE_FILE="seasons_archive.json";
+const GITHUB_WEIRD_FILE="weird_events.json";
+const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
+const ADMIN_PASSWORD="0000";
+const TEAM_NAMES=["HOSI","Sajsfi","Bayern","Yellow"];
+const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sajsfi":"Sajsfi","Bayern":"Bayern","Yellow":"Yellow"};
+const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
+
+let leagueData={},mainLeagueData={};
+let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null;
+let matchHistory=[],archivedSeasons=[],weirdEvents=[];
+let isAdminUnlocked=false,isViewingArchive=false;
+let homeScore=0,awayScore=0,currentFilter='all';
+let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
+let weirdImages=[]; // base64 images for new event
+let adminRevealed=false; // whether admin button is shown
+let overallHoldTimer=null,overallHoldStart=null;
+
+function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
+function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,totalPoints:0});}
+function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
+
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+let isWC26 = localStorage.getItem('theme') === null ? true : (localStorage.getItem('theme') === 'wc26');
+
+function applyTheme(){
+    if(isWC26){
+        document.body.classList.add('wc26');
+        document.getElementById('theme-icon').className='fas fa-globe';
+        document.getElementById('hero-sub-label').textContent='WORLD CUP 26';
+        // Show WC26 badge
+        const badge=document.querySelector('.wc26-logo-badge');
+        if(badge){ badge.style.display=''; badge.style.opacity=''; }
+    } else {
+        document.body.classList.remove('wc26');
+        document.getElementById('theme-icon').className='fas fa-futbol';
+        document.getElementById('hero-sub-label').textContent='LEAGUE SYSTEM';
+        // Hide WC26 badge when in default theme
+        const badge=document.querySelector('.wc26-logo-badge');
+        if(badge){ badge.style.display='none'; }
+    }
+}
+
+function toggleTheme(){
+    haptic([8,30,8]);
+    isWC26=!isWC26;
+    localStorage.setItem('theme', isWC26?'wc26':'default');
+    applyTheme();
+    showToast(isWC26?'⚽ World Cup 2026 theme ON':'🔵 Classic theme restored','info');
+    // When switching BACK to default (non-WC26): hide logo badge instantly
+    if(!isWC26){
+        const badge=document.querySelector('.wc26-logo-badge');
+        if(badge){
+            badge.style.transition='opacity 0.4s ease';
+            badge.style.opacity='0';
+            setTimeout(()=>{ badge.style.display='none'; badge.style.opacity=''; badge.style.transition=''; },450);
+        }
+    }
+}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+(function(){
+    const canvas=document.getElementById('particle-canvas');
+    const ctx=canvas.getContext('2d');
+    let W,H;
+    const particles=[];
+    function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+    resize();window.addEventListener('resize',resize);
+    for(let i=0;i<55;i++){
+        particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+            r:Math.random()*1.5+0.3,dx:(Math.random()-0.5)*0.25,dy:(Math.random()-0.5)*0.25,
+            o:Math.random()*0.38+0.08,pulse:Math.random()*Math.PI*2});
+    }
+    function getColor(){
+        const s=getComputedStyle(document.documentElement);
+        return s.getPropertyValue('--particle-color').trim()||'147,197,253';
+    }
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        const col=getColor();
+        particles.forEach(p=>{
+            p.pulse+=0.012;
+            const o=p.o*(0.6+0.4*Math.sin(p.pulse));
+            ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=`rgba(${col},${o})`;ctx.fill();
+            p.x+=p.dx;p.y+=p.dy;
+            if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+            if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+// ============================================================
+// MUSIC TOGGLE (hold on HARFS capsule)
+// ============================================================
+let musicMuted = localStorage.getItem('music') === 'off';
+
+function haptic(pattern=[10]){ /* vibrate removed — no-op */ }
+
+function toggleMusic(){
+    musicMuted = !musicMuted;
+    localStorage.setItem('music', musicMuted ? 'off' : 'on');
+    const bg = document.getElementById('background-music');
+    if(musicMuted){
+        if(bg) bg.pause();
+    } else {
+        if(bg && bg.src){
+            bg.play().catch(()=>{});
+        } else {
+            loadPlaylistFromGitHub().then(()=>{
+                const startIndex = Math.floor(Math.random()*PLAYLIST.length);
+                playTrack(startIndex);
+            });
+        }
+        backgroundMusicStarted = true;
+    }
+    showToast(musicMuted ? 'Music off' : 'Music on', 'info', 1800);
+}
+
+// Long-press on HARFS logo capsule → toggle music
+// Swipe on HARFS logo capsule → next/prev track
+// Combined handler to avoid event conflicts
+(function setupLogoInteractions(){
+    let holdTimer = null;
+    let didFire   = false;
+    let swipeStartX = 0, swipeStartY = 0, swipeTime = 0;
+    let isMoving = false;
+    const logo = document.getElementById('hero-logo-container');
+
+    function onStart(e){
+        if(!logo.classList.contains('in-header')) return;
+        const touch = e.touches ? e.touches[0] : e;
+        swipeStartX = touch.clientX;
+        swipeStartY = touch.clientY;
+        swipeTime = Date.now();
+        isMoving = false;
+        didFire = false;
+        holdTimer = setTimeout(()=>{
+            if(!isMoving){
+                didFire = true;
+                toggleMusic();
+            }
+        }, 600);
+    }
+
+    function onMove(e){
+        if(!logo.classList.contains('in-header')) return;
+        const touch = e.touches ? e.touches[0] : e;
+        const dx = touch.clientX - swipeStartX;
+        const dy = touch.clientY - swipeStartY;
+        if(Math.abs(dx) > 8 || Math.abs(dy) > 8){
+            isMoving = true;
+            if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+        }
+    }
+
+    function onEnd(e){
+        if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+        if(!logo.classList.contains('in-header')) return;
+        const touch = e.changedTouches ? e.changedTouches[0] : e;
+        const dx = touch.clientX - swipeStartX;
+        const dy = touch.clientY - swipeStartY;
+        const dt = Date.now() - swipeTime;
+        // Horizontal swipe: min 40px, faster than 400ms, horizontal dominant
+        if(Math.abs(dx) > 40 && Math.abs(dy) < 35 && dt < 400 && !didFire){
+            if(!musicMuted && backgroundMusicStarted){
+                if(dx < 0){ playNextTrack(); }
+                else { playPrevTrack(); }
+            } else if(!musicMuted && !backgroundMusicStarted){
+                // Not started yet — just initAudio
+            }
+        }
+    }
+
+    logo.addEventListener('touchstart', onStart,  {passive:true});
+    logo.addEventListener('touchmove',  onMove,   {passive:true});
+    logo.addEventListener('touchend',   onEnd,    {passive:true});
+    logo.addEventListener('touchcancel',()=>{ if(holdTimer){clearTimeout(holdTimer);holdTimer=null;} });
+    logo.addEventListener('mousedown',  onStart);
+    logo.addEventListener('mousemove',  onMove);
+    logo.addEventListener('mouseup',    onEnd);
+    logo.addEventListener('mouseleave', ()=>{ if(holdTimer){clearTimeout(holdTimer);holdTimer=null;} });
+    // prevent hold from also triggering the click → theme toggle
+    logo.addEventListener('click', e=>{ if(didFire){ e.stopImmediatePropagation(); didFire=false; } });
+})();
+
+// ============================================================
+// TOAST — pill style matching song notification
+// ============================================================
+const TOAST_META = {
+    success: { icon:'fa-check-circle',   label:'Success' },
+    error:   { icon:'fa-exclamation-circle', label:'Error' },
+    info:    { icon:'fa-info-circle',    label:'Info' },
+    music:   { icon:'fa-music',          label:'Now Playing' },
+};
+function showToast(msg, type='info', dur=2800){
+    haptic(type==='success'?[8,40,8]:[12]);
+    const meta = TOAST_META[type] || TOAST_META.info;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `
+        <div class="toast-icon-bubble"><i class="fas ${meta.icon}"></i></div>
+        <div class="toast-body">
+            <div class="toast-label">${meta.label}</div>
+            <div class="toast-msg">${msg}</div>
+        </div>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(()=>{ el.classList.add('hide'); setTimeout(()=>el.remove(),350); }, dur);
+}
+
+// ============================================================
+// CUSTOM CONFIRM
+// ============================================================
+let confirmResolve=null;
+function showConfirm({icon='⚠️',title='Are you sure?',message='',okLabel='Confirm',okColor='green'}){
+    document.getElementById('confirm-icon').textContent=icon;
+    document.getElementById('confirm-title').textContent=title;
+    document.getElementById('confirm-message').textContent=message;
+    const btn=document.getElementById('confirm-ok-btn');
+    btn.textContent=okLabel;btn.className=`confirm-btn confirm-btn-ok ${okColor}`;
+    document.getElementById('custom-confirm-modal').classList.add('open');
+    haptic([8]);
+    return new Promise(res=>{confirmResolve=res;});
+}
+function resolveConfirm(val){
+    document.getElementById('custom-confirm-modal').classList.remove('open');
+    if(confirmResolve){confirmResolve(val);confirmResolve=null;}
+}
+
+// ============================================================
+// DATE / TIME
+// ============================================================
+function updateCurrentDateTime(){
+    if(isViewingArchive)return;
+    const now=new Date();
+    const t=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const fa=now.toLocaleDateString('fa-IR',{year:'numeric',month:'numeric',day:'numeric'});
+    const parts=toEnglishDigits(fa).split('/');
+    const mon=J_MONTHS_EN[parseInt(parts[1],10)-1]||'?';
+    const el=document.getElementById('current-datetime');
+    if(el)el.innerHTML=`<i class="far fa-clock mr-1"></i>${t} &nbsp;|&nbsp; <i class="far fa-calendar-alt mr-1"></i>${parts[2]} ${mon}`;
+}
+function formatShamsiDateTime(ts){
+    const d=new Date(ts);
+    const t=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const fa=d.toLocaleDateString('fa-IR',{month:'numeric',day:'numeric'});
+    return{date:toEnglishDigits(fa),time:t};
+}
+
+// ============================================================
+// SWIPE + ROUTES
+// ============================================================
+const ROUTES=['main-league','league','history','weird'];
+let currentRouteIndex=1;
+
+// ============================================================
+// SPLASH VIDEO
+// ============================================================
+function skipSplash(){
+    const screen = document.getElementById('splash-video-screen');
+    const video  = document.getElementById('splash-video');
+    video.pause();
+    screen.classList.add('fade-out');
+    // بعد از اتمام انیمیشن fade، عنصر رو کاملاً پنهان کن
+    screen.addEventListener('transitionend', function handler(){
+        screen.style.display = 'none';
+        screen.removeEventListener('transitionend', handler);
+    });
+    // fallback اگر transitionend کار نکرد
+    setTimeout(()=>{ screen.style.display='none'; }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+    const video  = document.getElementById('splash-video');
+    const screen = document.getElementById('splash-video-screen');
+
+    // If NOT in WC26 theme, skip intro immediately
+    if(!isWC26){
+        screen.style.display='none';
+        return;
+    }
+
+    // Try to play (may be blocked on some browsers without muted)
+    const playPromise = video.play();
+    if(playPromise !== undefined){
+        playPromise.catch(()=>{
+            // If autoplay fails, just skip immediately
+            skipSplash();
+        });
+    }
+
+    // Auto-dismiss when video ends
+    video.addEventListener('ended', skipSplash);
+
+    // Safety timeout fallback — dismiss after 30s max
+    setTimeout(skipSplash, 30000);
+});
+
+function startApp(){
+    const logo = document.getElementById('hero-logo-container');
+
+    if(!isWC26){
+        // Default theme: phase 1 — box + text fade in at center
+        setTimeout(()=>{
+            logo.classList.add('box-forming');
+        }, 200);
+
+        // Phase 2 — after 1.6s, glide smoothly to header
+        setTimeout(()=>{
+            logo.classList.remove('box-forming');
+            logo.classList.add('in-header');
+            setTimeout(()=>{
+                document.getElementById('bottom-navigation').classList.add('active');
+                navigate('league');
+            }, 750);
+        }, 1800);
+    } else {
+        // WC26 theme: keep existing fast transition
+        setTimeout(()=>{
+            logo.classList.add('in-header');
+            setTimeout(()=>{document.getElementById('bottom-navigation').classList.add('active');navigate('league');},800);
+        },1500);
+    }
+}
+
+(function(){
+    let sx=0,sy=0,st=0;
+    const app=document.getElementById('app-container');
+    app.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();},{passive:true});
+    app.addEventListener('touchend',e=>{
+        const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy,dt=Date.now()-st;
+        if(Math.abs(dx)>55&&Math.abs(dy)<50&&dt<350){
+            if(dx<0&&currentRouteIndex<ROUTES.length-1){haptic([6]);navigate(ROUTES[currentRouteIndex+1]);}
+            else if(dx>0&&currentRouteIndex>0){haptic([6]);navigate(ROUTES[currentRouteIndex-1]);}
+        }
+    },{passive:true});
+})();
+
+// ============================================================
+// OVERALL LONG-PRESS → REVEAL ADMIN
+// ============================================================
+function setupOverallHold(){
+    const navMain=document.getElementById('nav-main');
+
+    function startHold(e){
+        e.preventDefault&&e.preventDefault();
+        overallHoldStart=Date.now();
+        overallHoldTimer=setTimeout(()=>{
+            haptic([20,50,20,50,60]);
+            revealAdminButton();
+        },3000);
+    }
+    function cancelHold(){
+        if(overallHoldTimer){clearTimeout(overallHoldTimer);overallHoldTimer=null;}
+        // If held less than 5s, navigate to main-league normally
+        if(overallHoldStart&&(Date.now()-overallHoldStart)<4800&&!adminRevealed){
+            navigate('main-league');
+        }
+        overallHoldStart=null;
+    }
+
+    navMain.addEventListener('mousedown',startHold);
+    navMain.addEventListener('touchstart',startHold,{passive:false});
+    navMain.addEventListener('mouseup',cancelHold);
+    navMain.addEventListener('mouseleave',cancelHold);
+    navMain.addEventListener('touchend',cancelHold);
+    navMain.addEventListener('touchcancel',cancelHold);
+
+    // Short tap (no hold) navigates to main-league when admin not revealed
+    navMain.addEventListener('click',()=>{
+        if(!adminRevealed && (!overallHoldStart || (Date.now()-overallHoldStart)<300)){
+            navigate('main-league');
+        }
+    });
+}
+
+function revealAdminButton(){
+    if(adminRevealed)return;
+    adminRevealed=true;
+    const navBtn=document.getElementById('nav-admin');
+    const icon=document.getElementById('nav-admin-icon');
+    const label=document.getElementById('nav-admin-label');
+    navBtn.classList.add('admin-revealed');
+    icon.className='fas fa-user-shield';
+    label.textContent='Admin';
+    showToast('Admin button revealed! Tap it to enter.','info',3000);
+    // Auto-hide after 90 seconds if not used
+    setTimeout(()=>{
+        if(adminRevealed)hideAdminButton();
+    },90000);
+}
+
+function hideAdminButton(){
+    adminRevealed=false;
+    const navBtn=document.getElementById('nav-admin');
+    const icon=document.getElementById('nav-admin-icon');
+    const label=document.getElementById('nav-admin-label');
+    navBtn.classList.remove('admin-revealed');
+    icon.className='fas fa-star';
+    label.textContent='Moments';
+    // If we were on admin screen, go back to golden moments
+    const adminScreen=document.getElementById('admin-screen');
+    if(adminScreen&&adminScreen.classList.contains('active')){
+        navigate('weird');
+    }
+}
+
+function handleWeirdOrAdminNav(){
+    if(adminRevealed){
+        // Enter admin panel
+        navigate('admin');
+        // After entering admin, hide admin reveal (will return to weird on exit)
+    } else {
+        navigate('weird');
+    }
+}
+
+// ============================================================
+// GOLDEN MOMENTS — IMAGE COMPRESSION
+// ============================================================
+function compressImage(base64,maxW,maxH,quality){
+    return new Promise(resolve=>{
+        const img=new Image();
+        img.onload=()=>{
+            let w=img.width,h=img.height;
+            if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+            if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+            const canvas=document.createElement('canvas');
+            canvas.width=w;canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            resolve(canvas.toDataURL('image/jpeg',quality));
+        };
+        img.onerror=()=>resolve(base64);
+        img.src=base64;
+    });
+}
+
+// ============================================================
+// GOLDEN MOMENTS — IMAGE HANDLING
+// ============================================================
+function handleWeirdImageSelect(e){
+    const files=Array.from(e.target.files).slice(0,2-weirdImages.length);
+    files.forEach(file=>{
+        if(weirdImages.length>=2)return;
+        const reader=new FileReader();
+        reader.onload=async ev=>{
+            // Compress before storing
+            const compressed=await compressImage(ev.target.result,900,900,0.7);
+            weirdImages.push(compressed);
+            renderWeirdPreview();
+        };
+        reader.readAsDataURL(file);
+    });
+    e.target.value='';
+}
+function renderWeirdPreview(){
+    const row=document.getElementById('weird-preview-row');
+    const box=document.getElementById('weird-upload-box');
+    if(!row||!box)return;
+    if(weirdImages.length===0){row.style.display='none';box.style.display='block';return;}
+    row.style.display='flex';
+    row.innerHTML=weirdImages.map((src,i)=>`
+        <div class="weird-img-preview">
+            <img src="${src}" alt="preview">
+            <button class="weird-img-remove" onclick="removeWeirdImage(${i})"><i class="fas fa-times"></i></button>
+        </div>`).join('');
+    if(weirdImages.length>=2)box.style.display='none';
+    else box.style.display='block';
+}
+function removeWeirdImage(i){
+    weirdImages.splice(i,1);
+    renderWeirdPreview();
+}
+
+// ============================================================
+// GOLDEN MOMENTS — SAVE
+// ============================================================
+async function saveWeirdEvent(){
+    const text=document.getElementById('weird-event-text').value.trim();
+    if(!text){showToast('Please write a description','error');return;}
+    const ok=await showConfirm({icon:'⭐',title:'Save Golden Moment?',message:'This will be permanently stored in the league archive.',okLabel:'Save',okColor:'purple'});
+    if(!ok)return;
+    const event={
+        id:Date.now(),
+        text:text,
+        images:[...weirdImages],
+        timestamp:new Date().toISOString()
+    };
+    weirdEvents.unshift(event);
+    const saved=await saveWeirdEventsToGitHub(weirdEvents,'New golden moment');
+    if(saved){
+        showToast('Golden Moment saved! ⭐','success');
+        document.getElementById('weird-event-text').value='';
+        weirdImages=[];renderWeirdPreview();
+        showAdminDashboard();
+    } else {
+        showToast('Save failed — check network','error');
+        weirdEvents.shift();
+    }
+}
+
+// ============================================================
+// GOLDEN MOMENTS — RENDER
+// ============================================================
+function renderWeirdEvents(){
+    const list=document.getElementById('weird-events-list');
+    const loadingEl=document.getElementById('weird-loading');
+    if(loadingEl)loadingEl.style.display='none';
+    if(!list)return;
+    if(!weirdEvents||weirdEvents.length===0){
+        list.innerHTML='<div style="text-align:center;margin-top:50px;"><div style="font-size:2.5rem;margin-bottom:12px;">⭐</div><p style="font-size:0.85rem;color:#4b5563;">No golden moments yet...</p></div>';
+        return;
+    }
+    list.innerHTML=weirdEvents.map(ev=>{
+        const dt=formatShamsiDateTime(ev.timestamp);
+        const imgs=ev.images&&ev.images.length>0
+            ?`<div class="weird-card-images">
+                ${ev.images.map((src,i)=>`
+                    <div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${i})">
+                        <img src="${src}" alt="photo ${i+1}">
+                    </div>`).join('')}
+               </div>`:'';
+        return`<div class="weird-card">
+            <div class="weird-card-bar"></div>
+            <div class="weird-card-body">
+                <div class="weird-card-date">
+                    <i class="far fa-calendar-alt"></i>${dt.date} · ${dt.time}
+                </div>
+                <div class="weird-card-text">${ev.text}</div>
+                ${imgs}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ============================================================
+// GOLDEN MOMENTS — LIGHTBOX
+// ============================================================
+function openWeirdLightbox(eventId,imgIndex){
+    haptic([8]);
+    const ev=weirdEvents.find(e=>e.id===eventId);
+    if(!ev||!ev.images[imgIndex])return;
+    document.getElementById('weird-lightbox-img').src=ev.images[imgIndex];
+    document.getElementById('weird-lightbox').classList.add('open');
+}
+function closeWeirdLightbox(){
+    document.getElementById('weird-lightbox').classList.remove('open');
+    setTimeout(()=>{document.getElementById('weird-lightbox-img').src='';},300);
+}
+
+// ============================================================
+// WEIRD EVENTS — GITHUB LOADER / SAVER
+// ============================================================
+async function loadWeirdEventsFromGitHub(){
+    try{
+        const r=await fetch(`${BASE_API}${GITHUB_WEIRD_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();
+            weirdSha=d.sha;
+            weirdEvents=await(await fetch(d.download_url+'?t='+Date.now())).json();
+        } else {
+            // 404 = file not created yet in GitHub, treat as empty
+            weirdEvents=[];
+            weirdSha=null;
+        }
+    }catch(e){weirdEvents=[];weirdSha=null;}
+    return weirdEvents;
+}
+async function saveWeirdEventsToGitHub(data,msg){
+    return saveFile(GITHUB_WEIRD_FILE,data,msg,weirdSha);
+}
+
+// Hook into saveFile to track weirdSha
+async function saveFile(filename,data,msg,curSha){
+    const token=localStorage.getItem('github_pat');if(!token)return false;
+    let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
+    if(curSha)body.sha=curSha;
+    try{
+        const r=await fetch(`${BASE_API}${filename}`,{method:'PUT',headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(r.ok){const d=await r.json();
+            if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
+            else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
+            else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
+            else if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;
+            else sha=d.content.sha;
+            return true;}
+    }catch(e){console.error(e);}return false;
+}
+
+// ============================================================
+// PATCH verifyAdmin to hide admin button after unlock + go back on exit
+// ============================================================
+function verifyAdmin(){
+    const input=document.getElementById('admin-pwd-input').value;
+    if(input===ADMIN_PASSWORD){
+        document.getElementById('admin-error').style.display='none';
+        isAdminUnlocked=true;document.getElementById('admin-pwd-input').value='';
+        haptic([8,40,8]);
+        let t=localStorage.getItem('github_pat');
+        if(!t){t=prompt("Enter GitHub PAT:");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;}
+        showAdminDashboard();showToast('Admin panel unlocked','success');
+    } else {
+        haptic([60,30,60]);document.getElementById('admin-error').style.display='block';
+        showToast('Incorrect PIN','error');
+    }
+}
+function showAdminDashboard(){
+    document.getElementById('admin-login-section').style.display='none';
+    document.getElementById('admin-dashboard-section').style.display='flex';
+    selectedHomeTeam=TEAM_NAMES[0]||null;
+    selectedAwayTeam=TEAM_NAMES.length>1?TEAM_NAMES[1]:(TEAM_NAMES[0]||null);
+    setTeamPickerValue('home',selectedHomeTeam);
+    setTeamPickerValue('away',selectedAwayTeam);
+    homeScore=0;awayScore=0;
+    document.getElementById('home-score-display').textContent='0';
+    document.getElementById('away-score-display').textContent='0';
+    updateMatchPreview();
+    loadMatchHistoryFromGitHub().then(h=>renderAdminHistory(h));
+    // reset weird image upload
+    weirdImages=[];renderWeirdPreview();
+}
+
+// Called when admin navigates away or finishes — restore nav
+function exitAdmin(){
+    isAdminUnlocked=false;
+    hideAdminButton();
+    navigate('weird');
+}
+function navigate(route){
+    haptic([8]);
+
+    // اگر داریم از صفحه league (season) خارج می‌شیم، برگرد به current season
+    const prevRoute = ROUTES[currentRouteIndex];
+    if(prevRoute === 'league' && route !== 'league' && isViewingArchive){
+        // Reset to current season silently before leaving
+        currentSeasonIdx = 0;
+        isViewingArchive = false;
+        syncSeasonPill();
+        const sel = document.getElementById('season-selector');
+        if(sel) sel.value = 'current';
+        const archSec = document.getElementById('archive-history-section');
+        if(archSec) archSec.style.display = 'none';
+        updateCurrentDateTime();
+    }
+
+    currentRouteIndex=ROUTES.indexOf(route);
+    const navMap={
+        'main-league':'nav-main','league':'nav-season',
+        'history':'nav-history','weird':'nav-admin','admin':'nav-admin'
+    };
+    document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+    document.getElementById(navMap[route])?.classList.add('active');
+
+    const idMap={
+        'main-league':'main-league-screen','league':'league-table-screen',
+        'history':'match-history-screen','weird':'weird-screen','admin':'admin-screen'
+    };
+    const targetId=idMap[route];
+    document.querySelectorAll('.page-screen').forEach(s=>{
+        if(s.id!==targetId){
+            s.classList.remove('active');
+            setTimeout(()=>{if(!s.classList.contains('active'))s.style.display='none';},370);
+        }
+    });
+    const target=document.getElementById(targetId);
+    if(target){target.style.display='flex';setTimeout(()=>target.classList.add('active'),40);}
+
+    if(route==='main-league')loadMainLeagueDataFromGitHub().then(renderMainLeagueTable);
+    if(route==='league')Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([d])=>{
+        const sel=document.getElementById('season-selector');if(sel)sel.value='current';
+        isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
+        const archSec=document.getElementById('archive-history-section');
+        if(archSec)archSec.style.display='none';
+    });
+    if(route==='history')loadMatchHistoryFromGitHub().then(renderMatchHistory);
+    if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
+    if(route==='admin'){
+        if(isAdminUnlocked)showAdminDashboard();
+        else{document.getElementById('admin-login-section').style.display='flex';document.getElementById('admin-dashboard-section').style.display='none';}
+    }
+}
+
+// ============================================================
+// RENDER — MAIN LEAGUE (unified ranking cards)
+// ============================================================
+function renderMainLeagueTable(){
+    document.getElementById('main-loading-message').style.display='none';
+    const table=Object.values(mainLeagueData).sort((a,b)=>b.totalPoints-a.totalPoints);
+    const pod=document.getElementById('podium-container');
+
+    if(!table.length){ pod.style.display='none'; return; }
+
+    pod.style.display='flex';
+
+    const rankClasses=['rank-1','rank-2','rank-3'];
+
+    pod.innerHTML=table.map((t,i)=>{
+        const rankClass = i < 3 ? rankClasses[i] : 'rank-other';
+        const rankNum   = i + 1;
+        const delay     = i * 55;
+
+        // Modern rank badge: icons for top3, number for rest
+        const rankBadgeContent = i === 0 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
+                                : i === 1 ? '<span style="font-size:1rem;font-weight:900;">2</span>'
+                                : i === 2 ? '<span style="font-size:1rem;font-weight:900;">3</span>'
+                                : `<span>${rankNum}</span>`;
+
+        return `
+            <div class="ranking-card ${rankClass}" style="animation-delay:${delay}ms">
+                <div class="ranking-badge">${rankBadgeContent}</div>
+                <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" class="ranking-avatar" onerror="this.style.opacity='0.3'">
+                <div class="ranking-info">
+                    <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${TEAM_DISPLAY_NAMES[t.name]}</div>
+                </div>
+                <div class="ranking-pts-block">
+                    <div class="ranking-pts-num">${t.totalPoints}</div>
+                    <div class="ranking-pts-lbl">PTS</div>
+                </div>
+            </div>`;
+    }).join('');
+
+    // clear the old separate body — all cards go inside pod now
+    document.getElementById('main-league-body').innerHTML='';
+}
+
+// ============================================================
+// RENDER — SEASON TABLE  (uses <table> now — no grid bug)
+// ============================================================
+function renderLeagueTable(dataToRender){
+    const loadingEl=document.getElementById('loading-message');
+    if(loadingEl)loadingEl.style.display='none';
+    const table=Object.values(dataToRender).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
+    const tbody=document.getElementById('league-table-body');
+    tbody.innerHTML=table.map((t,i)=>{
+        const isFirst=i===0;
+        const delay=i*55;
+        return`<tr class="${isFirst?'rank-1-row':''}" style="animation-delay:${delay}ms" onclick="showTeamProfile('${t.name}')">
+            <td class="td-rank" style="${isFirst?'color:#fbbf24;':''}">${i+1}</td>
+            <td class="td-team">
+                <div class="td-team-inner">
+                    <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" onerror="this.style.opacity='0.3'">
+                    <span style="${isFirst?'color:#fef3c7;':''}">${TEAM_DISPLAY_NAMES[t.name]}</span>
+                </div>
+            </td>
+            <td>${t.P}</td>
+            <td class="td-w">${t.W}</td>
+            <td>${t.D}</td>
+            <td class="td-l">${t.L}</td>
+            <td class="td-gf">${t.GF}</td>
+            <td class="td-ga">${t.GA}</td>
+            <td class="td-gd">${t.GF-t.GA}</td>
+            <td class="td-pts">${t.Pts}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ============================================================
+// RENDER — MATCH HISTORY
+// ============================================================
+function buildFilterChips(){
+    const bar=document.getElementById('history-filter-bar');
+    bar.innerHTML=`<div class="chip active" onclick="filterHistory('all',this)">All</div>`;
+    TEAM_NAMES.forEach(t=>{
+        const c=document.createElement('div');
+        c.className='chip';c.textContent=TEAM_DISPLAY_NAMES[t];
+        c.onclick=function(){filterHistory(t,this);};bar.appendChild(c);
+    });
+}
+function filterHistory(filter,chip){
+    haptic([6]);currentFilter=filter;
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    document.querySelectorAll('.match-card').forEach(card=>{
+        const show=filter==='all'||card.dataset.home===filter||card.dataset.away===filter;
+        card.classList.toggle('hidden-by-filter',!show);
+    });
+}
+function renderMatchHistory(history){
+    matchHistory=history;
+    const loadingEl=document.getElementById('history-loading');
+    if(loadingEl)loadingEl.style.display='none';
+    buildFilterChips();
+    const list=document.getElementById('history-list');
+    if(!list)return;
+    if(!history.length){
+        list.innerHTML='<div style="text-align:center;margin-top:40px;color:#374151;"><i class="fas fa-futbol" style="font-size:2rem;display:block;margin-bottom:8px;opacity:0.3;"></i><p style="font-size:0.85rem;">No matches yet</p></div>';
+        return;
+    }
+    list.innerHTML=history.map((m,idx)=>{
+        const dt=formatShamsiDateTime(m.timestamp);
+        const parts=m.score.split('-');
+        const hs=parseInt(parts[0]),as=parseInt(parts[1]);
+        let bar='from-blue-600 to-purple-600';
+        if(hs>as)bar='from-green-500 to-emerald-600';
+        else if(as>hs)bar='from-red-500 to-rose-600';
+        const delay=Math.min(idx,8)*50;
+        return`<div class="match-card" data-home="${m.home}" data-away="${m.away}" style="animation-delay:${delay}ms">
+            <div class="match-card-bar bg-gradient-to-r ${bar}"></div>
+            <div class="match-card-inner">
+                <div style="text-align:center;margin-bottom:10px;">
+                    <span style="font-size:0.62rem;color:#4b5563;background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:999px;font-family:monospace;">
+                        <i class="far fa-calendar-alt" style="margin-right:4px;"></i>${dt.date} · ${dt.time}
+                    </span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+                    <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:6px;">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" class="match-team-logo" onerror="this.style.opacity='0.3'">
+                        <span style="font-weight:700;font-size:0.72rem;text-align:center;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.home]}</span>
+                    </div>
+                    <div class="match-score-box">${m.score}</div>
+                    <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:6px;">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" class="match-team-logo" onerror="this.style.opacity='0.3'">
+                        <span style="font-weight:700;font-size:0.72rem;text-align:center;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.away]}</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+    if(currentFilter!=='all'){
+        document.querySelectorAll('.match-card').forEach(c=>{
+            if(c.dataset.home!==currentFilter&&c.dataset.away!==currentFilter)c.classList.add('hidden-by-filter');
+        });
+    }
+}
+
+// ============================================================
+// SCORE CONTROLS
+// ============================================================
+function changeScore(side,delta){
+    haptic([6]);
+    if(side==='home'){homeScore=Math.max(0,homeScore+delta);document.getElementById('home-score-display').textContent=homeScore;}
+    else{awayScore=Math.max(0,awayScore+delta);document.getElementById('away-score-display').textContent=awayScore;}
+    updateMatchPreview();
+}
+function updateMatchPreview(){
+    const h=selectedHomeTeam;
+    const a=selectedAwayTeam;
+    const hl=document.getElementById('preview-home-logo');
+    const al=document.getElementById('preview-away-logo');
+    if(!h||!a)return;
+    hl.src=`${GITHUB_IMAGE_BASE_URL}${h}.png`;hl.style.opacity='1';
+    al.src=`${GITHUB_IMAGE_BASE_URL}${a}.png`;al.style.opacity='1';
+    document.getElementById('preview-home-name').textContent=TEAM_DISPLAY_NAMES[h]||'Home';
+    document.getElementById('preview-away-name').textContent=TEAM_DISPLAY_NAMES[a]||'Away';
+    document.getElementById('preview-score-text').textContent=`${homeScore} : ${awayScore}`;
+}
+
+// ============================================================
+// TEAM PICKER — custom bottom-sheet replacing native <select>
+// ============================================================
+function setTeamPickerValue(side,teamKey){
+    const icon=document.getElementById(`${side}-team-select-icon`);
+    const label=document.getElementById(`${side}-team-select-label`);
+    if(!teamKey){
+        icon.style.display='none';
+        label.textContent='Select team';
+        return;
+    }
+    icon.src=`${GITHUB_IMAGE_BASE_URL}${teamKey}.png`;
+    icon.style.display='block';
+    label.textContent=TEAM_DISPLAY_NAMES[teamKey]||teamKey;
+}
+function openTeamPicker(side){
+    haptic([6]);
+    activeTeamPickerSide=side;
+    document.getElementById('home-team-select-trigger').classList.toggle('open',side==='home');
+    document.getElementById('away-team-select-trigger').classList.toggle('open',side==='away');
+    document.getElementById('team-picker-title').textContent=side==='home'?'Select Home Team':'Select Away Team';
+    const otherSelected=side==='home'?selectedAwayTeam:selectedHomeTeam;
+    const currentSelected=side==='home'?selectedHomeTeam:selectedAwayTeam;
+    const grid=document.getElementById('team-picker-grid');
+    grid.innerHTML=TEAM_NAMES.map(t=>{
+        const isSelected=t===currentSelected;
+        const isDisabled=t===otherSelected;
+        return `<div class="team-picker-option ${isSelected?'selected':''} ${isDisabled?'disabled':''}" onclick="selectTeamInPicker('${t}')">
+            <img src="${GITHUB_IMAGE_BASE_URL}${t}.png">
+            <span>${TEAM_DISPLAY_NAMES[t]||t}</span>
+        </div>`;
+    }).join('');
+    document.getElementById('team-picker-sheet').classList.add('open');
+}
+function closeTeamPicker(){
+    haptic([6]);
+    document.getElementById('team-picker-sheet').classList.remove('open');
+    document.getElementById('home-team-select-trigger').classList.remove('open');
+    document.getElementById('away-team-select-trigger').classList.remove('open');
+    activeTeamPickerSide=null;
+}
+function selectTeamInPicker(teamKey){
+    if(!activeTeamPickerSide)return;
+    haptic([8,30,8]);
+    if(activeTeamPickerSide==='home'){selectedHomeTeam=teamKey;}
+    else{selectedAwayTeam=teamKey;}
+    setTeamPickerValue(activeTeamPickerSide,teamKey);
+    updateMatchPreview();
+    document.getElementById('admin-match-error').style.display='none';
+    closeTeamPicker();
+}
+
+// ============================================================
+// TEAM PROFILE
+// ============================================================
+function showTeamProfile(key){
+    haptic([8]);
+    const t=leagueData[key];if(!t)return;
+    document.getElementById('profile-team-logo').src=`${GITHUB_IMAGE_BASE_URL}${key}.png`;
+    document.getElementById('profile-team-name').textContent=TEAM_DISPLAY_NAMES[key];
+    document.getElementById('profile-stat-pts').textContent=t.Pts;
+    document.getElementById('profile-stat-p').textContent=t.P;
+    document.getElementById('profile-stat-w').textContent=t.W;
+    document.getElementById('profile-stat-d').textContent=t.D;
+    document.getElementById('profile-stat-l').textContent=t.L;
+    const gd=t.GF-t.GA;
+    document.getElementById('profile-stat-gf').textContent=gd>0?`+${gd}`:gd;
+    const last=matchHistory.find(m=>m.home===key||m.away===key);
+    const badge=document.getElementById('last-match-result-badge');
+    const detail=document.getElementById('last-match-detail');
+    badge.className='match-badge';
+    if(last){
+        const isH=last.home===key;const opp=isH?last.away:last.home;
+        const p=last.score.split('-');const myS=isH?parseInt(p[0]):parseInt(p[1]);const opS=isH?parseInt(p[1]):parseInt(p[0]);
+        detail.textContent=`vs ${TEAM_DISPLAY_NAMES[opp]} (${myS}-${opS})`;
+        if(myS>opS){badge.textContent='WON';badge.classList.add('badge-win');}
+        else if(myS<opS){badge.textContent='LOST';badge.classList.add('badge-loss');}
+        else{badge.textContent='DRAW';badge.classList.add('badge-draw');}
+    } else {badge.textContent='N/A';badge.classList.add('badge-draw');detail.textContent='No matches yet';}
+    // Render last 5 matches form dots
+    renderFormDots(key);
+    document.getElementById('team-profile-modal').classList.add('open');
+}
+function hideTeamProfile(){haptic([6]);document.getElementById('team-profile-modal').classList.remove('open');}
+
+// ============================================================
+// ADMIN HISTORY
+// ============================================================
+function renderAdminHistory(h){
+    document.getElementById('admin-history-list').innerHTML=h.length
+        ?h.map((m,i)=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;border-radius:12px;">
+                <span style="font-size:0.75rem;font-weight:700;color:#d1d5db;">${TEAM_DISPLAY_NAMES[m.home]}
+                    <span style="color:#fbbf24;margin:0 6px;padding:2px 6px;background:rgba(0,0,0,0.3);border-radius:6px;">${m.score}</span>
+                ${TEAM_DISPLAY_NAMES[m.away]}</span>
+                <button style="background:rgba(239,68,68,0.12);color:#f87171;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:0.7rem;" onclick="deleteMatch(${i})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>`).join('')
+        :'<div style="text-align:center;color:#374151;font-size:0.75rem;padding:16px 0;">No matches yet</div>';
+}
+
+// ============================================================
+// SEASON PILL NAVIGATION
+// ============================================================
+let seasonOptions=[{value:'current',label:'Current Season'}]; // built from archive
+let currentSeasonIdx=0; // index into seasonOptions
+
+function syncSeasonPill(){
+    const opt=seasonOptions[currentSeasonIdx];
+    const lbl=document.getElementById('season-pill-label');
+    if(lbl)lbl.textContent=opt?opt.label:'Current Season';
+    const prevBtn=document.getElementById('season-prev-btn');
+    const nextBtn=document.getElementById('season-next-btn');
+    if(prevBtn)prevBtn.style.opacity=currentSeasonIdx===0?'0.3':'1';
+    if(nextBtn)nextBtn.style.opacity=currentSeasonIdx===seasonOptions.length-1?'0.3':'1';
+}
+
+function navigateSeason(dir){
+    haptic([6]);
+    const newIdx=currentSeasonIdx+dir;
+    if(newIdx<0||newIdx>=seasonOptions.length)return;
+    currentSeasonIdx=newIdx;
+    syncSeasonPill();
+    const opt=seasonOptions[currentSeasonIdx];
+    // sync hidden select
+    const sel=document.getElementById('season-selector');
+    if(sel)sel.value=opt.value;
+    loadSelectedSeason(opt.value);
+}
+
+function openSeasonPicker(){
+    haptic([6]);
+    if(seasonOptions.length<=1){showToast('No archived seasons yet','info');return;}
+    // Build a quick picker overlay
+    const existing=document.getElementById('season-picker-overlay');
+    if(existing){existing.remove();return;}
+    const overlay=document.createElement('div');
+    overlay.id='season-picker-overlay';
+    overlay.style.cssText=`
+        position:fixed;inset:0;z-index:450;
+        display:flex;align-items:flex-end;justify-content:center;
+        background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);
+    `;
+    const sheet=document.createElement('div');
+    sheet.style.cssText=`
+        width:100%;max-width:420px;background:rgba(10,18,30,0.98);
+        border-radius:28px 28px 0 0;padding:20px;
+        border-top:1px solid rgba(255,255,255,0.1);
+        max-height:60vh;overflow-y:auto;
+        animation:sheetUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    `;
+    sheet.innerHTML=`
+        <div style="text-align:center;margin-bottom:16px;">
+            <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 12px;"></div>
+            <div style="font-size:0.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;">Select Season</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            ${seasonOptions.map((opt,idx)=>`
+                <div onclick="selectSeasonFromPicker(${idx})" style="
+                    padding:14px 16px;border-radius:16px;cursor:pointer;
+                    background:${idx===currentSeasonIdx?'rgba(96,165,250,0.14)':'rgba(255,255,255,0.04)'};
+                    border:1px solid ${idx===currentSeasonIdx?'var(--primary)':'rgba(255,255,255,0.07)'};
+                    display:flex;justify-content:space-between;align-items:center;
+                    transition:all 0.2s;
+                ">
+                    <span style="font-size:0.82rem;font-weight:700;color:${idx===currentSeasonIdx?'var(--primary)':'#d1d5db'};">${opt.label}</span>
+                    ${idx===currentSeasonIdx?'<i class="fas fa-check" style="color:var(--primary);font-size:0.75rem;"></i>':''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+    overlay.appendChild(sheet);
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+    document.body.appendChild(overlay);
+}
+
+function selectSeasonFromPicker(idx){
+    haptic([8]);
+    currentSeasonIdx=idx;
+    syncSeasonPill();
+    const opt=seasonOptions[idx];
+    const sel=document.getElementById('season-selector');
+    if(sel)sel.value=opt.value;
+    loadSelectedSeason(opt.value);
+    const ov=document.getElementById('season-picker-overlay');
+    if(ov)ov.remove();
+}
+
+// ============================================================
+// TEAM FORM DOTS (last 5 matches)
+// ============================================================
+function renderFormDots(teamKey){
+    const games=matchHistory.filter(m=>m.home===teamKey||m.away===teamKey).slice(0,5);
+    const container=document.getElementById('team-form-dots');
+    if(!container)return;
+    if(!games.length){
+        container.innerHTML='<span style="font-size:0.7rem;color:#4b5563;">No matches yet</span>';
+        return;
+    }
+    container.innerHTML=games.map(m=>{
+        const isHome=m.home===teamKey;
+        const p=m.score.split('-');
+        const myS=isHome?parseInt(p[0]):parseInt(p[1]);
+        const opS=isHome?parseInt(p[1]):parseInt(p[0]);
+        let color,letter,title;
+        if(myS>opS){ color='#22c55e'; letter='W'; title='Win'; }
+        else if(myS<opS){ color='#ef4444'; letter='L'; title='Loss'; }
+        else{ color='#9ca3af'; letter='D'; title='Draw'; }
+        return `<div title="${title}" style="
+            width:30px;height:30px;border-radius:50%;
+            background:${color}22;border:2px solid ${color};
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.62rem;font-weight:900;color:${color};
+            box-shadow:0 0 8px ${color}44;
+            flex-shrink:0;
+        ">${letter}</div>`;
+    }).join('');
+}
+
+// ============================================================
+// GITHUB LOADERS
+// ============================================================
+async function loadArchiveDropdown(){
+    try{
+        const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();archiveSha=d.sha;
+            archivedSeasons=await(await fetch(d.download_url)).json();
+            const sel=document.getElementById('season-selector');
+            sel.innerHTML='<option value="current">Current Season</option>';
+            // Build seasonOptions for pill nav (current first, then archived newest→oldest)
+            seasonOptions=[{value:'current',label:'Current Season'}];
+            [...archivedSeasons].reverse().forEach(s=>{
+                sel.innerHTML+=`<option value="${s.seasonId}">Season ${s.seasonId}</option>`;
+                seasonOptions.push({value:String(s.seasonId),label:`Season ${s.seasonId}`});
+            });
+            currentSeasonIdx=0;
+            syncSeasonPill();
+        }
+    }catch(e){console.log("No archives yet");}
+}
+function loadSelectedSeason(val){
+    const archiveHistSection=document.getElementById('archive-history-section');
+    if(val==='current'){
+        isViewingArchive=false;
+        updateCurrentDateTime();
+        renderLeagueTable(leagueData);
+        if(archiveHistSection)archiveHistSection.style.display='none';
+    } else {
+        isViewingArchive=true;
+        const s=archivedSeasons.find(s=>s.seasonId==val);
+        if(s){
+            const d=new Date(s.date);
+            const fa=d.toLocaleDateString('fa-IR',{year:'numeric',month:'numeric',day:'numeric'});
+            const parts=toEnglishDigits(fa).split('/');
+            const el=document.getElementById('current-datetime');
+            if(el)el.innerHTML=`<i class="far fa-calendar-check mr-1"></i>Ended: ${parts[2]} ${J_MONTHS_EN[parseInt(parts[1],10)-1]} ${parts[0]}`;
+            const ld={};s.table.forEach(t=>ld[t.name]=t);
+            renderLeagueTable(ld);
+            // Show archived season match history
+            if(archiveHistSection){
+                const history=s.history||[];
+                if(history.length>0){
+                    archiveHistSection.style.display='block';
+                    renderArchiveHistory(history);
+                } else {
+                    archiveHistSection.style.display='none';
+                }
+            }
+        }
+    }
+}
+
+function renderArchiveHistory(history){
+    const list=document.getElementById('archive-history-list');
+    if(!list)return;
+    list.innerHTML=history.map((m,idx)=>{
+        const dt=formatShamsiDateTime(m.timestamp);
+        const parts=m.score.split('-');
+        const hs=parseInt(parts[0]),as=parseInt(parts[1]);
+        let barColor='#6366f1';
+        if(hs>as)barColor='#22c55e';
+        else if(as>hs)barColor='#ef4444';
+        return`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;">
+            <div style="height:2px;background:${barColor};"></div>
+            <div style="padding:10px 12px;">
+                <div style="text-align:center;margin-bottom:8px;">
+                    <span style="font-size:0.58rem;color:#4b5563;background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:999px;font-family:monospace;">
+                        <i class="far fa-calendar-alt" style="margin-right:3px;"></i>${dt.date} · ${dt.time}
+                    </span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.opacity='0.3'">
+                        <span style="font-size:0.65rem;font-weight:700;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.home]||m.home}</span>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:5px 12px;font-size:1.1rem;font-weight:900;color:#fbbf24;letter-spacing:3px;min-width:70px;text-align:center;">
+                        ${m.score}
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                        <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.opacity='0.3'">
+                        <span style="font-size:0.65rem;font-weight:700;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.away]||m.away}</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+async function loadMainLeagueDataFromGitHub(){
+    if(!Object.keys(mainLeagueData).length)initializeMainLeagueData();
+    try{const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();mainSha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});}}catch(e){}return mainLeagueData;
+}
+async function loadLeagueDataFromGitHub(){
+    if(!Object.keys(leagueData).length)initializeLeagueData();
+    try{const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();sha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...c[k]};});}}catch(e){}return leagueData;
+}
+async function loadMatchHistoryFromGitHub(){
+    try{const r=await fetch(`${BASE_API}${GITHUB_MATCHES_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();matchesSha=d.sha;matchHistory=await(await fetch(d.download_url)).json();}}catch(e){matchHistory=[];}return matchHistory;
+}
+
+// ============================================================
+// GITHUB SAVERS
+// ============================================================
+async function saveMainLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_MAIN_LEAGUE_FILE,ts,m,mainSha);}
+async function saveLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_LEAGUE_FILE,ts,m,sha);}
+async function saveMatchHistoryToGitHub(d,m){return saveFile(GITHUB_MATCHES_FILE,d,m,matchesSha);}
+
+function updateTeamStats(t,gf,ga){t.P++;t.GF+=gf;t.GA+=ga;if(gf>ga){t.W++;t.Pts+=3;}else if(gf===ga){t.D++;t.Pts++;}else t.L++;}
+function revertTeamStats(t,gf,ga){t.P--;t.GF-=gf;t.GA-=ga;if(gf>ga){t.W--;t.Pts-=3;}else if(gf===ga){t.D--;t.Pts--;}else t.L--;}
+
+async function registerMatchResult(){
+    const h=selectedHomeTeam;
+    const a=selectedAwayTeam;
+    if(!h||!a||h===a){document.getElementById('admin-match-error').style.display='block';haptic([60]);return;}
+    document.getElementById('admin-match-error').style.display='none';
+    const ok=await showConfirm({icon:'⚽',title:'Save Match?',message:`${TEAM_DISPLAY_NAMES[h]} ${homeScore} – ${awayScore} ${TEAM_DISPLAY_NAMES[a]}`,okLabel:'Save',okColor:'green'});
+    if(!ok)return;
+    updateTeamStats(leagueData[h],homeScore,awayScore);
+    updateTeamStats(leagueData[a],awayScore,homeScore);
+    const m={home:h,away:a,score:`${homeScore}-${awayScore}`,timestamp:new Date().toISOString()};
+    matchHistory.unshift(m);
+    const s1=await saveLeagueDataToGitHub(leagueData,`Match ${m.score}`);
+    const s2=await saveMatchHistoryToGitHub(matchHistory,`History ${m.score}`);
+    homeScore=0;awayScore=0;
+    document.getElementById('home-score-display').textContent='0';
+    document.getElementById('away-score-display').textContent='0';
+    updateMatchPreview();
+    showToast(s1&&s2?`Saved: ${h} ${m.score} ${a}`:'Saved locally — check network',s1&&s2?'success':'info');
+    showAdminDashboard();
+}
+async function deleteMatch(i){
+    const m=matchHistory[i];
+    const ok=await showConfirm({icon:'🗑️',title:'Delete Match?',message:`${TEAM_DISPLAY_NAMES[m.home]} ${m.score} ${TEAM_DISPLAY_NAMES[m.away]} — Stats will revert.`,okLabel:'Delete',okColor:'red'});
+    if(!ok)return;
+    const p=m.score.split('-');const hs=parseInt(p[0]),as=parseInt(p[1]);
+    revertTeamStats(leagueData[m.home],hs,as);revertTeamStats(leagueData[m.away],as,hs);
+    matchHistory.splice(i,1);
+    const s1=await saveLeagueDataToGitHub(leagueData,"Reverted stats");
+    const s2=await saveMatchHistoryToGitHub(matchHistory,"Deleted match");
+    if(s1&&s2)showToast('Match deleted & stats reverted','success');
+    showAdminDashboard();
+}
+async function archiveCurrentSeason(finalTable,finalHistory){
+    try{const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();archiveSha=d.sha;archivedSeasons=await(await fetch(d.download_url)).json();}}catch(e){}
+    const n=archivedSeasons.length+1;
+    archivedSeasons.push({seasonId:n,date:new Date().toISOString(),table:finalTable,history:finalHistory||[]});
+    await saveFile(GITHUB_ARCHIVE_FILE,archivedSeasons,`Archived Season ${n}`,archiveSha);
+    loadArchiveDropdown();
+}
+async function finishSeason(){
+    const ok=await showConfirm({icon:'🏆',title:'End the Season?',message:'Top 3 teams earn championship points and the season will be archived. Match history will be preserved.',okLabel:'End Season',okColor:'purple'});
+    if(!ok)return;
+    await loadMainLeagueDataFromGitHub();
+    const sorted=Object.values(leagueData).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
+    [3,2,1].forEach((pts,idx)=>{if(sorted[idx]&&mainLeagueData[sorted[idx].name])mainLeagueData[sorted[idx].name].totalPoints+=pts;});
+    await archiveCurrentSeason(sorted,matchHistory);
+    await saveMainLeagueDataToGitHub(mainLeagueData,"Season End");
+    // فقط جدول فصل ریست می‌شه — تاریخچه بازی‌ها حفظ می‌مونه
+    initializeLeagueData();
+    await saveLeagueDataToGitHub(leagueData,"Reset Season Table");
+    showToast('Season ended & archived! 🏆 History preserved.','success',4000);navigate('main-league');
+}
+async function resetLeagueConfirm(){
+    const ok=await showConfirm({icon:'💀',title:'Full Reset?',message:"All season data will be permanently deleted. Won't be archived.",okLabel:'Reset',okColor:'red'});
+    if(!ok)return;
+    matchHistory=[];initializeLeagueData();
+    await saveMatchHistoryToGitHub(matchHistory,"Reset");await saveLeagueDataToGitHub(leagueData,"Reset");
+    showToast('League has been reset','info');navigate('league');
+}
+
+// ============================================================
+// AUDIO — PLAYLIST SYSTEM (auto-loaded from GitHub music folder)
+// ============================================================
+
+// 📁 فقط کافیه فایل‌های mp3/m4a/wav رو داخل این پوشه از ریپازیتوری بریزی،
+//    برنامه خودش لیستشونو میخونه و بصورت رندوم پخش میکنه — نیازی به نوشتن اسم نیست.
+const MUSIC_FOLDER = "music"; // مسیر پوشه موسیقی داخل ریپازیتوری
+const MUSIC_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/${MUSIC_FOLDER}?ref=${GITHUB_LEAGUE_BRANCH}`;
+const MUSIC_RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/${MUSIC_FOLDER}/`;
+const AUDIO_EXTENSIONS = ['.mp3', '.m4a', '.wav', '.ogg', '.aac'];
+
+// Fallback track used only if the music folder can't be reached (e.g. empty/offline)
+const FALLBACK_TRACK = { title: "HARFS Theme", src: "https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/HARFS_background.mp3" };
+
+let PLAYLIST = [];
+let playlistLoadPromise = null;
+
+// Turns a filename like "01 - Night Drive (Remix).mp3" into a clean display title
+function filenameToTitle(filename) {
+    let name = filename.replace(/\.[^/.]+$/, '');      // strip extension
+    name = name.replace(/^\d+[\s._\-]*/, '');           // strip leading track numbers like "01 - "
+    name = name.replace(/[_]+/g, ' ');                  // underscores → spaces
+    name = name.replace(/\s+/g, ' ').trim();             // collapse spaces
+    return name || filename;
+}
+
+async function loadPlaylistFromGitHub() {
+    if (playlistLoadPromise) return playlistLoadPromise;
+    playlistLoadPromise = (async () => {
+        try {
+            const res = await fetch(MUSIC_API_URL);
+            if (!res.ok) throw new Error('music folder not found');
+            const items = await res.json();
+            const tracks = (Array.isArray(items) ? items : [])
+                .filter(it => it.type === 'file' && AUDIO_EXTENSIONS.some(ext => it.name.toLowerCase().endsWith(ext)))
+                .map(it => ({ title: filenameToTitle(it.name), src: MUSIC_RAW_BASE + encodeURIComponent(it.name) }));
+            PLAYLIST = tracks.length ? tracks : [FALLBACK_TRACK];
+        } catch (e) {
+            PLAYLIST = [FALLBACK_TRACK];
+        }
+        return PLAYLIST;
+    })();
+    return playlistLoadPromise;
+}
+
+let currentTrackIndex = 0;
+let backgroundMusicStarted = false;
+
+const bgMusic = document.getElementById('background-music');
+
+function showSongNotification(title) {
+    showToast(title, 'music', 3000);
+}
+
+function playTrack(index) {
+    if (!bgMusic || PLAYLIST.length === 0) return;
+    currentTrackIndex = ((index % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length;
+    const track = PLAYLIST[currentTrackIndex];
+    bgMusic.src = track.src;
+    bgMusic.volume = 0.15;
+    bgMusic.play()
+        .then(() => {
+            showSongNotification(track.title);
+        })
+        .catch(() => {});
+}
+
+function playNextTrack() {
+    playTrack(currentTrackIndex + 1);
+}
+
+function playPrevTrack() {
+    playTrack(currentTrackIndex - 1);
+}
+
+// When a song ends, pick a NEW random track (not the same one)
+if (bgMusic) {
+    bgMusic.addEventListener('ended', () => {
+        if (PLAYLIST.length <= 1) {
+            playTrack(0);
+        } else {
+            let next;
+            do { next = Math.floor(Math.random() * PLAYLIST.length); }
+            while (next === currentTrackIndex);
+            playTrack(next);
+        }
+    });
+}
+
+async function initAudio() {
+    if (!backgroundMusicStarted && bgMusic) {
+        backgroundMusicStarted = true;
+        removeAudioListeners();
+        if (!musicMuted) {
+            await loadPlaylistFromGitHub();
+            // Pick a random starting track
+            const startIndex = Math.floor(Math.random() * PLAYLIST.length);
+            playTrack(startIndex);
+        }
+    }
+}
+function removeAudioListeners() {
+    document.removeEventListener('click', initAudio);
+    document.removeEventListener('touchstart', initAudio);
+}
+document.addEventListener('click', initAudio);
+document.addEventListener('touchstart', initAudio, {passive: true});
+
+// (swipe handling is merged into setupLogoInteractions above)
+
+// ============================================================
+// INIT
+// ============================================================
+initializeLeagueData();
+initializeMainLeagueData();
+applyTheme();   // apply saved theme before first paint
+
+document.addEventListener('DOMContentLoaded',()=>{
+    updateCurrentDateTime();
+    setInterval(updateCurrentDateTime,60000);
+    loadArchiveDropdown();
+    setupOverallHold();
+    startApp();
+});
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('/sw.js')
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.error(e));
+    });
+}
+</script>
+</body>
+</html>
