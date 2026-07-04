@@ -849,7 +849,27 @@ body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.
     font-size:0.72rem;color:rgba(255,255,255,0.6);
     background:rgba(0,0,0,0.45);padding:3px 6px;border-radius:6px;
 }
-/* Image lightbox */
+.weird-img-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+.weird-thumb-video::after{content:none;}
+.weird-video-play-icon{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:1.4rem;color:rgba(255,255,255,0.9);
+    background:rgba(0,0,0,0.45);width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+}
+.weird-card-audio-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.weird-audio-card{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px;padding:8px 10px;
+}
+.weird-audio-card i{color:#fbbf24;font-size:0.9rem;flex-shrink:0;}
+.weird-audio-card span{
+    font-size:0.7rem;color:#d1d5db;flex-shrink:0;max-width:90px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.weird-audio-card audio{flex:1;height:32px;min-width:0;}
+/* Media lightbox */
 #weird-lightbox{
     position:fixed;inset:0;z-index:800;
     background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);
@@ -857,12 +877,12 @@ body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.
     opacity:0;transition:opacity 0.25s;pointer-events:none;
 }
 #weird-lightbox.open{opacity:1;pointer-events:auto;}
-#weird-lightbox img{
+#weird-lightbox img,#weird-lightbox video{
     max-width:92%;max-height:88vh;border-radius:16px;
     box-shadow:0 24px 60px rgba(0,0,0,0.7);
     transform:scale(0.9);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
-#weird-lightbox.open img{transform:scale(1);}
+#weird-lightbox.open img,#weird-lightbox.open video{transform:scale(1);}
 #weird-lightbox-close{
     position:absolute;top:20px;right:20px;
     width:40px;height:40px;border-radius:50%;
@@ -885,20 +905,32 @@ body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.
     position:relative;
 }
 .weird-upload-box:hover{border-color:rgba(251,191,36,0.5);background:rgba(251,191,36,0.07);}
-.weird-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.weird-img-preview-row{display:flex;gap:8px;margin-top:10px;}
+.weird-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2;}
+#weird-upload-processing{position:relative;z-index:1;}
+.weird-img-preview-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .weird-img-preview{
-    flex:1;border-radius:10px;overflow:hidden;
+    flex:1;min-width:70px;border-radius:10px;overflow:hidden;
     border:1px solid rgba(255,255,255,0.1);
     aspect-ratio:16/9;background:rgba(0,0,0,0.3);
     position:relative;display:flex;align-items:center;justify-content:center;
 }
-.weird-img-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.weird-img-preview img,.weird-img-preview video{width:100%;height:100%;object-fit:cover;display:block;}
+.weird-media-audio{
+    flex-direction:column;gap:4px;background:rgba(251,191,36,0.06);
+}
+.weird-media-audio i{font-size:1.1rem;color:#fbbf24;}
+.weird-media-audio span{font-size:0.6rem;color:#d1d5db;padding:0 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.weird-preview-badge{
+    position:absolute;bottom:4px;left:4px;
+    font-size:0.6rem;color:#fff;background:rgba(0,0,0,0.55);
+    padding:2px 6px;border-radius:6px;display:flex;align-items:center;gap:3px;
+}
 .weird-img-remove{
     position:absolute;top:4px;right:4px;
     background:rgba(239,68,68,0.7);color:white;border:none;
     border-radius:50%;width:20px;height:20px;font-size:0.65rem;
     cursor:pointer;display:flex;align-items:center;justify-content:center;
+    z-index:3;
 }
 
 /* ============ NAV ADMIN → WEIRD EVENTS TRANSITION ============ */
@@ -1391,7 +1423,11 @@ body.lite-mode .hero-subtext {
                         <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(139,92,246,0.3);color:#c4b5fd;" onclick="finishSeason()">
                             <i class="fas fa-flag-checkered text-lg"></i><span>End Season</span>
                         </button>
+                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(59,130,246,0.3);color:#93c5fd;" onclick="recalculateLeagueTable()">
+                            <i class="fas fa-shield-halved text-lg"></i><span>Verify Table</span>
+                        </button>
                     </div>
+                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history — use after any edit to double-check everything lines up.</p>
                 </div>
             </div>
 
@@ -1401,11 +1437,18 @@ body.lite-mode .hero-subtext {
                 <div class="admin-section-body" style="padding:14px;">
                     <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
                     <textarea id="weird-event-text" class="glass-input w-full p-3 rounded-xl text-sm mb-3" rows="3" placeholder="Describe this special moment..." style="resize:none;font-family:inherit;line-height:1.5;"></textarea>
-                    <!-- Image upload -->
+                    <!-- Media upload (photo / video / song) -->
                     <div class="weird-upload-box" id="weird-upload-box">
-                        <input type="file" id="weird-file-input" accept="image/*" multiple onchange="handleWeirdImageSelect(event)">
-                        <i class="fas fa-camera" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
-                        <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos <span style="color:#4b5563;">(max 2)</span></p>
+                        <input type="file" id="weird-file-input" accept="image/*,video/*,audio/*" multiple onchange="handleWeirdMediaSelect(event)">
+                        <div id="weird-upload-idle">
+                            <i class="fas fa-photo-video" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                            <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos, videos or a song <span style="color:#4b5563;">(max 4)</span></p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">Videos are auto-trimmed to 10s &amp; compressed</p>
+                        </div>
+                        <div id="weird-upload-processing" style="display:none;">
+                            <span class="spinner"></span>
+                            <p style="font-size:0.68rem;color:#9ca3af;margin:6px 0 0;">Processing video…</p>
+                        </div>
                     </div>
                     <div class="weird-img-preview-row" id="weird-preview-row" style="display:none;"></div>
                     <button class="glass-button w-full mt-3 font-bold text-sm py-3" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;" onclick="saveWeirdEvent()">
@@ -1442,10 +1485,11 @@ body.lite-mode .hero-subtext {
         </div>
     </div>
 
-    <!-- ============ IMAGE LIGHTBOX ============ -->
+    <!-- ============ MEDIA LIGHTBOX ============ -->
     <div id="weird-lightbox" onclick="closeWeirdLightbox()">
         <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
         <img id="weird-lightbox-img" src="" alt="">
+        <video id="weird-lightbox-video" src="" controls playsinline onclick="event.stopPropagation()" style="display:none;"></video>
     </div>
     <div id="team-profile-modal" class="modal-overlay">
         <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;">
@@ -1496,6 +1540,32 @@ body.lite-mode .hero-subtext {
         </div>
     </div>
 
+    <!-- ============ EDIT MATCH RESULT MODAL ============ -->
+    <div id="edit-match-modal" class="modal-overlay">
+        <div class="modal-content confirm-modal text-center" style="max-width:300px;">
+            <div class="confirm-icon">✏️</div>
+            <h3>Edit Match Result</h3>
+            <p id="edit-match-teams" style="margin-bottom:14px;">Home vs Away</p>
+            <div class="flex justify-between items-center gap-4" style="margin-bottom:6px;">
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('home',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="edit-home-score-display">0</div>
+                    <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('home',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+                <div style="font-size:1.6rem;font-weight:900;color:#374151;">:</div>
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('away',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="edit-away-score-display">0</div>
+                    <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('away',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+            </div>
+            <div class="confirm-btn-row" style="margin-top:14px;">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeEditMatchModal()">Cancel</button>
+                <button class="confirm-btn confirm-btn-ok green" onclick="saveEditedMatch()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ TEAM PICKER SHEET ============ -->
     <div id="team-picker-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeTeamPicker()">
         <div class="team-picker-panel">
@@ -1535,7 +1605,12 @@ let matchHistory=[],archivedSeasons=[],weirdEvents=[];
 let isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
 let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
-let weirdImages=[]; // base64 images for new event
+let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for new event
+const MAX_MOMENT_MEDIA=4;
+const MAX_MOMENT_VIDEO_SECONDS=10;
+const MOMENT_VIDEO_MAX_WIDTH=480;
+const MOMENT_VIDEO_BITRATE=700000; // ~700kbps target — keeps a 10s clip small
+const MOMENT_AUDIO_MAX_MB=8;
 let adminRevealed=false; // whether admin button is shown
 let overallHoldTimer=null,overallHoldStart=null;
 
@@ -2045,39 +2120,147 @@ function compressImage(base64,maxW,maxH,quality){
 }
 
 // ============================================================
-// GOLDEN MOMENTS — IMAGE HANDLING
+// GOLDEN MOMENTS — VIDEO TRIM + COMPRESSION (client-side, in-app)
+// Re-encodes the clip through a canvas so it is capped at
+// MAX_MOMENT_VIDEO_SECONDS, downscaled, and bitrate-limited —
+// admin never has to trim or shrink the file themselves.
 // ============================================================
-function handleWeirdImageSelect(e){
-    const files=Array.from(e.target.files).slice(0,2-weirdImages.length);
-    files.forEach(file=>{
-        if(weirdImages.length>=2)return;
-        const reader=new FileReader();
-        reader.onload=async ev=>{
-            // Compress before storing
-            const compressed=await compressImage(ev.target.result,900,900,0.7);
-            weirdImages.push(compressed);
-            renderWeirdPreview();
+function processMomentVideo(file){
+    return new Promise((resolve,reject)=>{
+        if(typeof MediaRecorder==='undefined'){reject(new Error('unsupported'));return;}
+        const url=URL.createObjectURL(file);
+        const video=document.createElement('video');
+        video.muted=false;video.playsInline=true;video.preload='auto';video.src=url;
+        let settled=false;
+        const fail=err=>{if(settled)return;settled=true;URL.revokeObjectURL(url);reject(err);};
+        const finish=val=>{if(settled)return;settled=true;resolve(val);};
+        video.onloadedmetadata=()=>{
+            const clipSeconds=Math.min(video.duration||MAX_MOMENT_VIDEO_SECONDS,MAX_MOMENT_VIDEO_SECONDS);
+            let w=video.videoWidth||640,h=video.videoHeight||360;
+            if(w>MOMENT_VIDEO_MAX_WIDTH){h=Math.round(h*MOMENT_VIDEO_MAX_WIDTH/w);w=MOMENT_VIDEO_MAX_WIDTH;}
+            const canvas=document.createElement('canvas');
+            canvas.width=w;canvas.height=h;
+            const ctx=canvas.getContext('2d');
+            let canvasStream;
+            try{canvasStream=canvas.captureStream(24);}catch(e){fail(e);return;}
+            try{
+                const srcStream=video.captureStream?video.captureStream():(video.mozCaptureStream?video.mozCaptureStream():null);
+                if(srcStream)srcStream.getAudioTracks().forEach(t=>canvasStream.addTrack(t));
+            }catch(e){/* audio track is optional */}
+            let mimeType='video/webm;codecs=vp8,opus';
+            if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
+            let recorder;
+            try{recorder=new MediaRecorder(canvasStream,{mimeType,videoBitsPerSecond:MOMENT_VIDEO_BITRATE});}
+            catch(e){fail(e);return;}
+            const chunks=[];
+            let drawTimer=null;
+            recorder.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
+            recorder.onerror=e=>{if(drawTimer)clearInterval(drawTimer);video.pause();fail(e.error||new Error('recording failed'));};
+            recorder.onstop=()=>{
+                if(drawTimer)clearInterval(drawTimer);
+                video.pause();URL.revokeObjectURL(url);
+                const blob=new Blob(chunks,{type:'video/webm'});
+                const reader=new FileReader();
+                reader.onload=()=>finish({src:reader.result,duration:Math.round(clipSeconds)});
+                reader.onerror=()=>fail(new Error('read failed'));
+                reader.readAsDataURL(blob);
+            };
+            video.currentTime=0;
+            video.play().then(()=>{
+                recorder.start();
+                drawTimer=setInterval(()=>{try{ctx.drawImage(video,0,0,w,h);}catch(e){}},1000/24);
+                setTimeout(()=>{if(recorder.state!=='inactive')recorder.stop();},clipSeconds*1000);
+            }).catch(fail);
         };
-        reader.readAsDataURL(file);
+        video.onerror=()=>fail(new Error('could not read video'));
     });
+}
+
+// ============================================================
+// GOLDEN MOMENTS — MEDIA HANDLING (photo / video / song)
+// ============================================================
+function momentFileType(file){
+    if(file.type.startsWith('image/'))return'image';
+    if(file.type.startsWith('video/'))return'video';
+    if(file.type.startsWith('audio/'))return'audio';
+    return null;
+}
+function setMomentUploadBusy(busy){
+    const idle=document.getElementById('weird-upload-idle');
+    const proc=document.getElementById('weird-upload-processing');
+    if(idle)idle.style.display=busy?'none':'block';
+    if(proc)proc.style.display=busy?'block':'none';
+}
+async function handleWeirdMediaSelect(e){
+    const files=Array.from(e.target.files).slice(0,MAX_MOMENT_MEDIA-weirdMedia.length);
     e.target.value='';
+    for(const file of files){
+        if(weirdMedia.length>=MAX_MOMENT_MEDIA)break;
+        const type=momentFileType(file);
+        if(!type){showToast('Unsupported file type','error');continue;}
+        if(type==='image'){
+            await new Promise(res=>{
+                const reader=new FileReader();
+                reader.onload=async ev=>{
+                    const compressed=await compressImage(ev.target.result,900,900,0.7);
+                    weirdMedia.push({type:'image',src:compressed});
+                    renderWeirdPreview();res();
+                };
+                reader.onerror=()=>res();
+                reader.readAsDataURL(file);
+            });
+        } else if(type==='video'){
+            setMomentUploadBusy(true);
+            try{
+                const {src,duration}=await processMomentVideo(file);
+                weirdMedia.push({type:'video',src,duration});
+                renderWeirdPreview();
+            }catch(err){
+                showToast('Video processing not supported on this device — try a shorter clip','error',3500);
+            }
+            setMomentUploadBusy(false);
+        } else if(type==='audio'){
+            if(file.size>MOMENT_AUDIO_MAX_MB*1024*1024){
+                showToast(`Song too large — max ${MOMENT_AUDIO_MAX_MB}MB`,'error');
+                continue;
+            }
+            await new Promise(res=>{
+                const reader=new FileReader();
+                reader.onload=ev=>{
+                    weirdMedia.push({type:'audio',src:ev.target.result,name:file.name.replace(/\.[^/.]+$/,'')});
+                    renderWeirdPreview();res();
+                };
+                reader.onerror=()=>res();
+                reader.readAsDataURL(file);
+            });
+        }
+    }
 }
 function renderWeirdPreview(){
     const row=document.getElementById('weird-preview-row');
     const box=document.getElementById('weird-upload-box');
     if(!row||!box)return;
-    if(weirdImages.length===0){row.style.display='none';box.style.display='block';return;}
+    if(weirdMedia.length===0){row.style.display='none';box.style.display='block';return;}
     row.style.display='flex';
-    row.innerHTML=weirdImages.map((src,i)=>`
-        <div class="weird-img-preview">
-            <img src="${src}" alt="preview">
-            <button class="weird-img-remove" onclick="removeWeirdImage(${i})"><i class="fas fa-times"></i></button>
-        </div>`).join('');
-    if(weirdImages.length>=2)box.style.display='none';
+    row.innerHTML=weirdMedia.map((m,i)=>{
+        let inner='';
+        if(m.type==='image'){
+            inner=`<img src="${m.src}" alt="preview">`;
+        } else if(m.type==='video'){
+            inner=`<video src="${m.src}" muted playsinline></video><div class="weird-preview-badge"><i class="fas fa-play"></i>${m.duration||MAX_MOMENT_VIDEO_SECONDS}s</div>`;
+        } else {
+            inner=`<i class="fas fa-music"></i><span>${(m.name||'Track')}</span>`;
+        }
+        return `<div class="weird-img-preview${m.type==='audio'?' weird-media-audio':''}">
+            ${inner}
+            <button class="weird-img-remove" onclick="removeWeirdMedia(${i})"><i class="fas fa-times"></i></button>
+        </div>`;
+    }).join('');
+    if(weirdMedia.length>=MAX_MOMENT_MEDIA)box.style.display='none';
     else box.style.display='block';
 }
-function removeWeirdImage(i){
-    weirdImages.splice(i,1);
+function removeWeirdMedia(i){
+    weirdMedia.splice(i,1);
     renderWeirdPreview();
 }
 
@@ -2092,7 +2275,7 @@ async function saveWeirdEvent(){
     const event={
         id:Date.now(),
         text:text,
-        images:[...weirdImages],
+        media:[...weirdMedia],
         timestamp:new Date().toISOString()
     };
     weirdEvents.unshift(event);
@@ -2100,7 +2283,7 @@ async function saveWeirdEvent(){
     if(saved){
         showToast('Golden Moment saved! ⭐','success');
         document.getElementById('weird-event-text').value='';
-        weirdImages=[];renderWeirdPreview();
+        weirdMedia=[];renderWeirdPreview();
         showAdminDashboard();
     } else {
         showToast('Save failed — check network','error');
@@ -2111,6 +2294,13 @@ async function saveWeirdEvent(){
 // ============================================================
 // GOLDEN MOMENTS — RENDER
 // ============================================================
+// Normalizes an event's media, whether it was saved in the new
+// mixed-media format or the legacy images-only format.
+function getMomentMedia(ev){
+    if(ev.media)return ev.media;
+    if(ev.images)return ev.images.map(src=>({type:'image',src}));
+    return [];
+}
 function renderWeirdEvents(){
     const list=document.getElementById('weird-events-list');
     const loadingEl=document.getElementById('weird-loading');
@@ -2122,11 +2312,27 @@ function renderWeirdEvents(){
     }
     list.innerHTML=weirdEvents.map(ev=>{
         const dt=formatShamsiDateTime(ev.timestamp);
-        const imgs=ev.images&&ev.images.length>0
+        const media=getMomentMedia(ev);
+        const visual=media.map((m,i)=>({...m,idx:i})).filter(m=>m.type!=='audio');
+        const audios=media.map((m,i)=>({...m,idx:i})).filter(m=>m.type==='audio');
+        const imgs=visual.length>0
             ?`<div class="weird-card-images">
-                ${ev.images.map((src,i)=>`
-                    <div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${i})">
-                        <img src="${src}" alt="photo ${i+1}">
+                ${visual.map(m=>m.type==='video'
+                    ?`<div class="weird-img-thumb weird-thumb-video" onclick="openWeirdLightbox(${ev.id},${m.idx})">
+                        <video src="${m.src}" muted playsinline preload="metadata"></video>
+                        <i class="fas fa-play weird-video-play-icon"></i>
+                       </div>`
+                    :`<div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${m.idx})">
+                        <img src="${m.src}" alt="photo">
+                       </div>`
+                ).join('')}
+               </div>`:'';
+        const audioList=audios.length>0
+            ?`<div class="weird-card-audio-list">
+                ${audios.map(m=>`
+                    <div class="weird-audio-card">
+                        <i class="fas fa-music"></i><span>${m.name||'Track'}</span>
+                        <audio src="${m.src}" controls></audio>
                     </div>`).join('')}
                </div>`:'';
         return`<div class="weird-card">
@@ -2137,24 +2343,42 @@ function renderWeirdEvents(){
                 </div>
                 <div class="weird-card-text">${ev.text}</div>
                 ${imgs}
+                ${audioList}
             </div>
         </div>`;
     }).join('');
 }
 
 // ============================================================
-// GOLDEN MOMENTS — LIGHTBOX
+// GOLDEN MOMENTS — LIGHTBOX (photo + video)
 // ============================================================
-function openWeirdLightbox(eventId,imgIndex){
+function openWeirdLightbox(eventId,mediaIndex){
     haptic([8]);
     const ev=weirdEvents.find(e=>e.id===eventId);
-    if(!ev||!ev.images[imgIndex])return;
-    document.getElementById('weird-lightbox-img').src=ev.images[imgIndex];
-    document.getElementById('weird-lightbox').classList.add('open');
+    if(!ev)return;
+    const m=getMomentMedia(ev)[mediaIndex];
+    if(!m)return;
+    const imgEl=document.getElementById('weird-lightbox-img');
+    const vidEl=document.getElementById('weird-lightbox-video');
+    if(m.type==='video'){
+        imgEl.style.display='none';imgEl.src='';
+        vidEl.style.display='block';vidEl.src=m.src;vidEl.currentTime=0;
+        document.getElementById('weird-lightbox').classList.add('open');
+        vidEl.play().catch(()=>{});
+    } else {
+        if(vidEl){vidEl.pause();vidEl.style.display='none';vidEl.src='';}
+        imgEl.style.display='block';imgEl.src=m.src;
+        document.getElementById('weird-lightbox').classList.add('open');
+    }
 }
 function closeWeirdLightbox(){
     document.getElementById('weird-lightbox').classList.remove('open');
-    setTimeout(()=>{document.getElementById('weird-lightbox-img').src='';},300);
+    const vidEl=document.getElementById('weird-lightbox-video');
+    if(vidEl)vidEl.pause();
+    setTimeout(()=>{
+        document.getElementById('weird-lightbox-img').src='';
+        if(vidEl)vidEl.src='';
+    },300);
 }
 
 // ============================================================
@@ -2224,9 +2448,10 @@ function showAdminDashboard(){
     document.getElementById('home-score-display').textContent='0';
     document.getElementById('away-score-display').textContent='0';
     updateMatchPreview();
-    loadMatchHistoryFromGitHub().then(h=>renderAdminHistory(h));
-    // reset weird image upload
-    weirdImages=[];renderWeirdPreview();
+    // keep leagueData in sync with GitHub before any admin edit/delete/verify happens
+    Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([,h])=>renderAdminHistory(h));
+    // reset weird media upload
+    weirdMedia=[];renderWeirdPreview();
 }
 
 // Called when admin navigates away or finishes — restore nav
@@ -2552,13 +2777,18 @@ function hideTeamProfile(){haptic([6]);document.getElementById('team-profile-mod
 function renderAdminHistory(h){
     document.getElementById('admin-history-list').innerHTML=h.length
         ?h.map((m,i)=>`
-            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;border-radius:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;border-radius:12px;gap:8px;">
                 <span style="font-size:0.75rem;font-weight:700;color:#d1d5db;">${TEAM_DISPLAY_NAMES[m.home]}
                     <span style="color:#fbbf24;margin:0 6px;padding:2px 6px;background:rgba(0,0,0,0.3);border-radius:6px;">${m.score}</span>
                 ${TEAM_DISPLAY_NAMES[m.away]}</span>
-                <button style="background:rgba(239,68,68,0.12);color:#f87171;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:0.7rem;" onclick="deleteMatch(${i})">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <button style="background:rgba(96,165,250,0.12);color:#93c5fd;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:0.7rem;" onclick="editMatch(${i})">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button style="background:rgba(239,68,68,0.12);color:#f87171;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:0.7rem;" onclick="deleteMatch(${i})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>`).join('')
         :'<div style="text-align:center;color:#374151;font-size:0.75rem;padding:16px 0;">No matches yet</div>';
 }
@@ -2810,6 +3040,7 @@ async function registerMatchResult(){
     document.getElementById('away-score-display').textContent='0';
     updateMatchPreview();
     showToast(s1&&s2?`Saved: ${h} ${m.score} ${a}`:'Saved locally — check network',s1&&s2?'success':'info');
+    await refreshAllLeagueViews();
     showAdminDashboard();
 }
 async function deleteMatch(i){
@@ -2822,7 +3053,88 @@ async function deleteMatch(i){
     const s1=await saveLeagueDataToGitHub(leagueData,"Reverted stats");
     const s2=await saveMatchHistoryToGitHub(matchHistory,"Deleted match");
     if(s1&&s2)showToast('Match deleted & stats reverted','success');
+    await refreshAllLeagueViews();
     showAdminDashboard();
+}
+
+// ============================================================
+// EDIT MATCH RESULT
+// ============================================================
+let editMatchIndex=null,editHomeScore=0,editAwayScore=0;
+function editMatch(i){
+    const m=matchHistory[i];
+    if(!m)return;
+    haptic([8]);
+    editMatchIndex=i;
+    const p=m.score.split('-');
+    editHomeScore=parseInt(p[0])||0;editAwayScore=parseInt(p[1])||0;
+    document.getElementById('edit-match-teams').textContent=`${TEAM_DISPLAY_NAMES[m.home]} vs ${TEAM_DISPLAY_NAMES[m.away]}`;
+    document.getElementById('edit-home-score-display').textContent=editHomeScore;
+    document.getElementById('edit-away-score-display').textContent=editAwayScore;
+    document.getElementById('edit-match-modal').classList.add('open');
+}
+function changeEditScore(side,delta){
+    haptic([6]);
+    if(side==='home'){editHomeScore=Math.max(0,editHomeScore+delta);document.getElementById('edit-home-score-display').textContent=editHomeScore;}
+    else{editAwayScore=Math.max(0,editAwayScore+delta);document.getElementById('edit-away-score-display').textContent=editAwayScore;}
+}
+function closeEditMatchModal(){
+    document.getElementById('edit-match-modal').classList.remove('open');
+    editMatchIndex=null;
+}
+async function saveEditedMatch(){
+    if(editMatchIndex===null)return;
+    const m=matchHistory[editMatchIndex];
+    if(!m){closeEditMatchModal();return;}
+    const p=m.score.split('-');
+    const oldHs=parseInt(p[0])||0,oldAs=parseInt(p[1])||0;
+    if(editHomeScore===oldHs&&editAwayScore===oldAs){closeEditMatchModal();return;}
+    // revert the old result then apply the new one, so the table always reflects what's on screen
+    if(leagueData[m.home])revertTeamStats(leagueData[m.home],oldHs,oldAs);
+    if(leagueData[m.away])revertTeamStats(leagueData[m.away],oldAs,oldHs);
+    if(leagueData[m.home])updateTeamStats(leagueData[m.home],editHomeScore,editAwayScore);
+    if(leagueData[m.away])updateTeamStats(leagueData[m.away],editAwayScore,editHomeScore);
+    m.score=`${editHomeScore}-${editAwayScore}`;
+    m.editedAt=new Date().toISOString();
+    closeEditMatchModal();
+    const s1=await saveLeagueDataToGitHub(leagueData,`Edited match result: ${m.score}`);
+    const s2=await saveMatchHistoryToGitHub(matchHistory,'Edited match result');
+    showToast(s1&&s2?'Match result updated ✏️':'Saved locally — check network',s1&&s2?'success':'info');
+    await refreshAllLeagueViews();
+    showAdminDashboard();
+}
+
+// ============================================================
+// TABLE VERIFICATION — rebuilds standings straight from match
+// history, so admin can fix any drift with a single tap.
+// ============================================================
+async function recalculateLeagueTable(){
+    const ok=await showConfirm({icon:'🛡️',title:'Verify Table?',message:'The season table will be fully rebuilt from match history to catch and fix any inconsistency.',okLabel:'Verify',okColor:'purple'});
+    if(!ok)return;
+    await loadMatchHistoryFromGitHub();
+    initializeLeagueData();
+    matchHistory.forEach(m=>{
+        const p=m.score.split('-');
+        const hs=parseInt(p[0])||0,as=parseInt(p[1])||0;
+        if(leagueData[m.home])updateTeamStats(leagueData[m.home],hs,as);
+        if(leagueData[m.away])updateTeamStats(leagueData[m.away],as,hs);
+    });
+    const saved=await saveLeagueDataToGitHub(leagueData,'Verified & rebuilt table from match history');
+    showToast(saved?'Table verified & synced ✅':'Verified locally — check network',saved?'success':'info');
+    await refreshAllLeagueViews();
+    showAdminDashboard();
+}
+
+// ============================================================
+// REFRESH — keeps every screen (table, history, admin list,
+// main leaderboard) in sync right after any admin change.
+// ============================================================
+async function refreshAllLeagueViews(){
+    renderLeagueTable(leagueData);
+    renderMatchHistory(matchHistory);
+    renderAdminHistory(matchHistory);
+    await loadMainLeagueDataFromGitHub();
+    renderMainLeagueTable();
 }
 async function archiveCurrentSeason(finalTable,finalHistory){
     try{const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();archiveSha=d.sha;archivedSeasons=await(await fetch(d.download_url)).json();}}catch(e){}
@@ -2842,14 +3154,18 @@ async function finishSeason(){
     // only the season table resets — match history is preserved
     initializeLeagueData();
     await saveLeagueDataToGitHub(leagueData,"Reset Season Table");
-    showToast('Season ended & archived! 🏆 History preserved.','success',4000);navigate('main-league');
+    showToast('Season ended & archived! 🏆 History preserved.','success',4000);
+    await refreshAllLeagueViews();
+    navigate('main-league');
 }
 async function resetLeagueConfirm(){
     const ok=await showConfirm({icon:'💀',title:'Full Reset?',message:"All season data will be permanently deleted. Won't be archived.",okLabel:'Reset',okColor:'red'});
     if(!ok)return;
     matchHistory=[];initializeLeagueData();
     await saveMatchHistoryToGitHub(matchHistory,"Reset");await saveLeagueDataToGitHub(leagueData,"Reset");
-    showToast('League has been reset','info');navigate('league');
+    showToast('League has been reset','info');
+    await refreshAllLeagueViews();
+    navigate('league');
 }
 
 // ============================================================
