@@ -1842,6 +1842,13 @@ const GITHUB_MAIN_LEAGUE_FILE="main_league_data.json";
 const GITHUB_MATCHES_FILE="match_history.json";
 const GITHUB_ARCHIVE_FILE="seasons_archive.json";
 const GITHUB_WEIRD_FILE="weird_events.json";
+// Golden Moments are split across multiple "shard" files once the current
+// one gets close to GitHub's practical PUT size limit (~50MB). The manifest
+// lists every shard filename in creation order; the last one is always the
+// active shard new events get appended to. Older shards are never rewritten,
+// so past media is never at risk when a new shard is created.
+const GITHUB_WEIRD_MANIFEST_FILE="weird_events_manifest.json";
+const WEIRD_SHARD_SIZE_LIMIT=40*1024*1024; // 40MB safety margin under GitHub's ~50MB practical limit
 const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
 const ADMIN_PASSWORD="0000";
 const TEAM_NAMES=["HOSI","Sajsfi","Bayern","Yellow"];
@@ -1851,14 +1858,18 @@ const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 let leagueData={},mainLeagueData={};
 let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null;
 let matchHistory=[],archivedSeasons=[],weirdEvents=[];
+// Per-shard bookkeeping for Golden Moments: which shard files exist, each
+// one's GitHub blob sha (needed to update it), and each one's own event
+// array (only the active shard is ever rewritten when saving).
+let weirdShardFiles=[GITHUB_WEIRD_FILE],weirdShardShas={},weirdShardData={},weirdManifestSha=null;
 let isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
 let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
 let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for new event
 const MAX_MOMENT_MEDIA=4;
-const MAX_MOMENT_VIDEO_SECONDS=30;
+const MAX_MOMENT_VIDEO_SECONDS=120;
 const MOMENT_VIDEO_MAX_WIDTH=480;
-const MOMENT_VIDEO_BITRATE=200000; // ~200kbps target — keeps a 30s clip small
+const MOMENT_VIDEO_BITRATE=700000; // ~700kbps — sharding (below) absorbs the larger files instead of shrinking quality
 const MOMENT_AUDIO_MAX_MB=8;
 let adminRevealed=false; // whether admin button is shown
 let overallHoldTimer=null,overallHoldStart=null;
@@ -2587,30 +2598,9 @@ function removeWeirdMedia(i){
 
 // ============================================================
 // GOLDEN MOMENTS — SAVE
+// (implementation lives below, next to the shard-aware GitHub
+// loader/saver, since saving now needs shard bookkeeping)
 // ============================================================
-async function saveWeirdEvent(){
-    const text=document.getElementById('weird-event-text').value.trim();
-    if(!text){showToast('Please write a description','error');return;}
-    const ok=await showConfirm({icon:'⭐',title:'Save Golden Moment?',message:'This will be permanently stored in the league archive.',okLabel:'Save',okColor:'purple'});
-    if(!ok)return;
-    const event={
-        id:Date.now(),
-        text:text,
-        media:[...weirdMedia],
-        timestamp:new Date().toISOString()
-    };
-    weirdEvents.unshift(event);
-    const saved=await saveWeirdEventsToGitHub(weirdEvents,'New golden moment');
-    if(saved){
-        showToast('Golden Moment saved! ⭐','success');
-        document.getElementById('weird-event-text').value='';
-        weirdMedia=[];renderWeirdPreview();
-        showAdminDashboard();
-    } else {
-        showToast('Save failed — check network','error');
-        weirdEvents.shift();
-    }
-}
 
 // ============================================================
 // GOLDEN MOMENTS — RENDER
@@ -2703,25 +2693,109 @@ function closeWeirdLightbox(){
 }
 
 // ============================================================
-// WEIRD EVENTS — GITHUB LOADER / SAVER
+// WEIRD EVENTS — GITHUB LOADER / SAVER (multi-shard)
+// Golden Moments are stored across one or more "shard" files
+// instead of a single ever-growing JSON file. A small manifest
+// lists every shard in creation order; only the LAST shard is
+// ever written to. When it gets close to GitHub's practical PUT
+// size limit, a brand-new shard is created automatically and
+// becomes the new write target — older shards are left untouched.
+// All shards are loaded and merged for display, so the Golden
+// Moments screen always shows the full history regardless of how
+// many shard files exist behind the scenes.
 // ============================================================
 async function loadWeirdEventsFromGitHub(){
+    weirdShardFiles=[GITHUB_WEIRD_FILE];
+    weirdShardShas={};
+    weirdShardData={};
+    weirdManifestSha=null;
     try{
-        const r=await fetch(`${BASE_API}${GITHUB_WEIRD_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-        if(r.ok){
-            const d=await r.json();
-            weirdSha=d.sha;
-            weirdEvents=await(await fetch(d.download_url+'?t='+Date.now())).json();
-        } else {
-            // 404 = file not created yet in GitHub, treat as empty
-            weirdEvents=[];
-            weirdSha=null;
+        const mr=await fetch(`${BASE_API}${GITHUB_WEIRD_MANIFEST_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(mr.ok){
+            const md=await mr.json();
+            weirdManifestSha=md.sha;
+            const manifest=await(await fetch(md.download_url+'?t='+Date.now())).json();
+            if(manifest&&Array.isArray(manifest.shards)&&manifest.shards.length)weirdShardFiles=manifest.shards;
         }
-    }catch(e){weirdEvents=[];weirdSha=null;}
+        // No manifest yet = this repo predates sharding, so we just fall
+        // back to the single legacy file (weirdShardFiles default above).
+    }catch(e){weirdManifestSha=null;}
+
+    weirdEvents=[];
+    for(const filename of weirdShardFiles){
+        try{
+            const r=await fetch(`${BASE_API}${filename}?ref=${GITHUB_LEAGUE_BRANCH}`);
+            if(r.ok){
+                const d=await r.json();
+                weirdShardShas[filename]=d.sha;
+                const arr=await(await fetch(d.download_url+'?t='+Date.now())).json();
+                weirdShardData[filename]=Array.isArray(arr)?arr:[];
+            } else {
+                // 404 = shard not created yet, treat as empty
+                weirdShardShas[filename]=null;
+                weirdShardData[filename]=[];
+            }
+        }catch(e){
+            weirdShardShas[filename]=null;
+            weirdShardData[filename]=[];
+        }
+        weirdEvents=weirdEvents.concat(weirdShardData[filename]);
+    }
+    weirdEvents.sort((a,b)=>b.id-a.id); // newest first, independent of shard order
+    weirdSha=weirdShardShas[GITHUB_WEIRD_FILE]||null; // kept in sync for any legacy references
     return weirdEvents;
 }
-async function saveWeirdEventsToGitHub(data,msg){
-    return saveFile(GITHUB_WEIRD_FILE,data,msg,weirdSha);
+
+async function saveWeirdEvent(){
+    const text=document.getElementById('weird-event-text').value.trim();
+    if(!text){showToast('Please write a description','error');return;}
+    const ok=await showConfirm({icon:'⭐',title:'Save Golden Moment?',message:'This will be permanently stored in the league archive.',okLabel:'Save',okColor:'purple'});
+    if(!ok)return;
+    const event={
+        id:Date.now(),
+        text:text,
+        media:[...weirdMedia],
+        timestamp:new Date().toISOString()
+    };
+
+    // Try appending to the current (last) shard first. Only roll over to a
+    // brand-new shard file if that would push the shard past the safe size
+    // limit — this keeps everything in as few files as possible while still
+    // guaranteeing we never hit GitHub's ~50MB practical PUT ceiling.
+    let targetFile=weirdShardFiles[weirdShardFiles.length-1];
+    let targetArr=[event,...(weirdShardData[targetFile]||[])];
+    let projectedSize=b64Encode(JSON.stringify(targetArr,null,2)).length;
+
+    let usingNewShard=false;
+    if(projectedSize>WEIRD_SHARD_SIZE_LIMIT&&(weirdShardData[targetFile]||[]).length>0){
+        usingNewShard=true;
+        targetFile=`weird_events_${weirdShardFiles.length+1}.json`;
+        targetArr=[event];
+    }
+
+    const saved=await saveFile(targetFile,targetArr,'New golden moment',weirdShardShas[targetFile]||null);
+    if(!saved){
+        showToast('Save failed — check network','error');
+        return;
+    }
+
+    if(usingNewShard){
+        weirdShardFiles.push(targetFile);
+        const manifestSaved=await saveFile(GITHUB_WEIRD_MANIFEST_FILE,{shards:weirdShardFiles},'New golden-moment shard',weirdManifestSha);
+        if(!manifestSaved){
+            // The moment itself is safely saved in the new shard either way —
+            // only the shard index failed to update, so the new shard just
+            // won't be picked up on next load until this succeeds.
+            showToast('Saved, but shard index update failed — try refreshing shortly', 'error');
+        }
+    }
+    weirdShardData[targetFile]=targetArr;
+    weirdEvents.unshift(event);
+
+    showToast('Golden Moment saved! ⭐','success');
+    document.getElementById('weird-event-text').value='';
+    weirdMedia=[];renderWeirdPreview();
+    showAdminDashboard();
 }
 
 // Hook into saveFile to track weirdSha
@@ -2735,7 +2809,8 @@ async function saveFile(filename,data,msg,curSha){
             if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
             else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
             else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
-            else if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;
+            else if(filename===GITHUB_WEIRD_MANIFEST_FILE)weirdManifestSha=d.content.sha;
+            else if(filename===GITHUB_WEIRD_FILE||filename.startsWith('weird_events_')){weirdShardShas[filename]=d.content.sha;if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;}
             else sha=d.content.sha;
             return true;}
     }catch(e){console.error(e);}return false;
