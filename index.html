@@ -1856,9 +1856,9 @@ let homeScore=0,awayScore=0,currentFilter='all';
 let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
 let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for new event
 const MAX_MOMENT_MEDIA=4;
-const MAX_MOMENT_VIDEO_SECONDS=10;
+const MAX_MOMENT_VIDEO_SECONDS=30;
 const MOMENT_VIDEO_MAX_WIDTH=480;
-const MOMENT_VIDEO_BITRATE=700000; // ~700kbps target — keeps a 10s clip small
+const MOMENT_VIDEO_BITRATE=200000; // ~200kbps target — keeps a 30s clip small
 const MOMENT_AUDIO_MAX_MB=8;
 let adminRevealed=false; // whether admin button is shown
 let overallHoldTimer=null,overallHoldStart=null;
