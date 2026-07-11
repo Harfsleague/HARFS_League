@@ -2415,10 +2415,9 @@ function revealAdminButton(){
     icon.className='fas fa-user-shield';
     label.textContent='Admin';
     showToast('Admin button revealed! Tap it to enter.','info',3000);
-    // Auto-hide after 90 seconds if not used
-    setTimeout(()=>{
-        if(adminRevealed)hideAdminButton();
-    },90000);
+    // No auto-hide timer: the admin entry point stays revealed until the
+    // admin manually exits (exitAdmin) or the app is reloaded — nothing
+    // should silently kick the admin out mid-task (e.g. mid-upload).
 }
 
 function hideAdminButton(){
