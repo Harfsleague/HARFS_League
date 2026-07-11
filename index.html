@@ -13,7 +13,7 @@
 
 <style>
 /* =====================================================
-   CSS VARIABLES — DEFAULT (HARFS) THEME
+   CSS VARIABLES — BASE (fallback = Ocean palette, dark)
    ===================================================== */
 :root {
     --bg-from: #1e1b4b;
@@ -39,26 +39,105 @@
 }
 
 /* =====================================================
-   WORLD CUP 2026 THEME
+   COLOR PALETTES — 8 presets, selected via body[data-palette].
+   Gold/silver/bronze stay fixed across all of them (medal
+   semantics shouldn't change with the color scheme).
+   "Custom" has no block here — it's applied as inline CSS
+   variables from JS (see applyCustomPalette()).
+   Light appearance is derived automatically from whichever
+   palette is active — see the LIGHT SCHEME rule further down —
+   so every palette below is dark-native and gets light for free.
    ===================================================== */
-body.wc26 {
-    --bg-from: #0a2a1a;
-    --bg-mid:  #08150e;
-    --bg-to:   #020a05;
-    --orb1: #166534;
-    --orb2: #991b1b;
-    --orb3: #854d0e;
-    --primary: #4ade80;
-    --primary-glow: rgba(74,222,128,0.35);
-    --accent: #fbbf24;
-    --header-text: #bbf7d0;
-    --nav-active-bg: rgba(74,222,128,0.18);
-    --nav-active-color: #4ade80;
-    --nav-active-border: rgba(74,222,128,0.4);
-    --hero-grad: linear-gradient(135deg,#fff 0%,#86efac 50%,#fbbf24 100%);
-    --hero-sub: #86efac;
-    --table-rank1-bg: rgba(74,222,128,0.08);
-    --particle-color: 134,239,172;
+body[data-palette="ocean"] {
+    --bg-from: #1e1b4b; --bg-mid: #0f172a; --bg-to: #020617;
+    --orb1: #1d4ed8; --orb2: #7c3aed; --orb3: #0ea5e9;
+    --primary: #60a5fa; --primary-glow: rgba(96,165,250,0.35); --accent: #818cf8;
+    --header-text: #bfdbfe;
+    --nav-active-bg: rgba(9,130,246,0.22); --nav-active-color: #60a5fa; --nav-active-border: rgba(96,165,250,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#93c5fd 50%,#818cf8 100%); --hero-sub: #93c5fd;
+    --table-rank1-bg: rgba(251,191,36,0.07); --particle-color: 147,197,253;
+}
+body[data-palette="emerald"] {
+    --bg-from: #022c22; --bg-mid: #0a1f1a; --bg-to: #020805;
+    --orb1: #059669; --orb2: #0d9488; --orb3: #22c55e;
+    --primary: #34d399; --primary-glow: rgba(52,211,153,0.35); --accent: #2dd4bf;
+    --header-text: #a7f3d0;
+    --nav-active-bg: rgba(16,185,129,0.22); --nav-active-color: #34d399; --nav-active-border: rgba(52,211,153,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#6ee7b7 50%,#2dd4bf 100%); --hero-sub: #6ee7b7;
+    --table-rank1-bg: rgba(251,191,36,0.07); --particle-color: 110,231,183;
+}
+body[data-palette="crimson"] {
+    --bg-from: #450a0a; --bg-mid: #1c0a0a; --bg-to: #050202;
+    --orb1: #b91c1c; --orb2: #9f1239; --orb3: #ea580c;
+    --primary: #f87171; --primary-glow: rgba(248,113,113,0.35); --accent: #fb7185;
+    --header-text: #fecaca;
+    --nav-active-bg: rgba(239,68,68,0.20); --nav-active-color: #f87171; --nav-active-border: rgba(248,113,113,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#fca5a5 50%,#fb7185 100%); --hero-sub: #fca5a5;
+    --table-rank1-bg: rgba(251,191,36,0.07); --particle-color: 252,165,165;
+}
+body[data-palette="sunset"] {
+    --bg-from: #451a03; --bg-mid: #1c1006; --bg-to: #050301;
+    --orb1: #c2410c; --orb2: #be185d; --orb3: #d97706;
+    --primary: #fb923c; --primary-glow: rgba(251,146,60,0.35); --accent: #f472b6;
+    --header-text: #fed7aa;
+    --nav-active-bg: rgba(251,146,60,0.20); --nav-active-color: #fb923c; --nav-active-border: rgba(251,146,60,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#fdba74 50%,#f472b6 100%); --hero-sub: #fdba74;
+    --table-rank1-bg: rgba(251,191,36,0.09); --particle-color: 253,186,116;
+}
+body[data-palette="violet"] {
+    --bg-from: #2e1065; --bg-mid: #160c29; --bg-to: #050208;
+    --orb1: #6d28d9; --orb2: #a21caf; --orb3: #4338ca;
+    --primary: #a78bfa; --primary-glow: rgba(167,139,250,0.35); --accent: #e879f9;
+    --header-text: #ddd6fe;
+    --nav-active-bg: rgba(167,139,250,0.22); --nav-active-color: #a78bfa; --nav-active-border: rgba(167,139,250,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#d8b4fe 50%,#e879f9 100%); --hero-sub: #d8b4fe;
+    --table-rank1-bg: rgba(251,191,36,0.07); --particle-color: 216,180,254;
+}
+body[data-palette="cyan"] {
+    --bg-from: #052e2e; --bg-mid: #0a1a1f; --bg-to: #020608;
+    --orb1: #0891b2; --orb2: #0e7490; --orb3: #2563eb;
+    --primary: #22d3ee; --primary-glow: rgba(34,211,238,0.35); --accent: #38bdf8;
+    --header-text: #a5f3fc;
+    --nav-active-bg: rgba(34,211,238,0.20); --nav-active-color: #22d3ee; --nav-active-border: rgba(34,211,238,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#67e8f9 50%,#38bdf8 100%); --hero-sub: #67e8f9;
+    --table-rank1-bg: rgba(251,191,36,0.07); --particle-color: 103,232,249;
+}
+body[data-palette="rosegold"] {
+    --bg-from: #3f1728; --bg-mid: #1c1013; --bg-to: #080304;
+    --orb1: #be123c; --orb2: #a16207; --orb3: #db2777;
+    --primary: #fb7185; --primary-glow: rgba(251,113,133,0.35); --accent: #fbbf24;
+    --header-text: #fecdd3;
+    --nav-active-bg: rgba(251,113,133,0.20); --nav-active-color: #fb7185; --nav-active-border: rgba(251,113,133,0.45);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#fda4af 50%,#fbbf24 100%); --hero-sub: #fda4af;
+    --table-rank1-bg: rgba(251,191,36,0.10); --particle-color: 253,164,175;
+}
+body[data-palette="graphite"] {
+    --bg-from: #1f2937; --bg-mid: #0f1115; --bg-to: #020203;
+    --orb1: #475569; --orb2: #334155; --orb3: #64748b;
+    --primary: #e2e8f0; --primary-glow: rgba(226,232,240,0.25); --accent: #94a3b8;
+    --header-text: #e2e8f0;
+    --nav-active-bg: rgba(226,232,240,0.14); --nav-active-color: #e2e8f0; --nav-active-border: rgba(226,232,240,0.35);
+    --hero-grad: linear-gradient(135deg,#fff 0%,#e2e8f0 50%,#94a3b8 100%); --hero-sub: #cbd5e1;
+    --table-rank1-bg: rgba(251,191,36,0.07); --particle-color: 203,213,225;
+}
+
+/* =====================================================
+   LIGHT SCHEME — derived automatically from whichever palette
+   is active, by inverting lightness while preserving hue
+   (the standard invert+hue-rotate technique). This means every
+   palette above automatically gets a coherent light look with
+   zero extra variables to maintain. Photos/videos and the
+   custom-palette color pickers are inverted back so they always
+   show true colors.
+   ===================================================== */
+body.scheme-light {
+    filter: invert(1) hue-rotate(180deg);
+    color-scheme: light;
+}
+body.scheme-light img,
+body.scheme-light video,
+body.scheme-light input[type="color"] {
+    filter: invert(1) hue-rotate(180deg);
 }
 
 /* =====================================================
@@ -205,42 +284,6 @@ body {
 }
 #hero-logo-container.in-header .hero-text{font-size:1.8rem;letter-spacing:4px;}
 #hero-logo-container.in-header .hero-subtext{font-size:0.65rem;margin-top:-2px;}
-
-/* WC26 logo badge in header - shown next to HARFS text */
-.wc26-logo-badge {
-    display:none;
-    width:36px; height:36px;
-    flex-shrink:0;
-    margin-left:8px;
-    vertical-align:middle;
-    filter:drop-shadow(0 0 6px rgba(74,222,128,0.5));
-    transition:all 0.4s ease;
-}
-/* Badge in hero (splash) state - larger */
-#hero-logo-container:not(.in-header) .wc26-logo-badge {
-    display:block;
-    width:72px; height:72px;
-    margin-top:12px;
-    margin-left:0;
-}
-/* Badge in header state - inline next to HARFS */
-#hero-logo-container.in-header .wc26-logo-badge {
-    display:inline-block;
-    width:32px; height:32px;
-    position:absolute; right:10px; top:50%; transform:translateY(-50%);
-}
-body.wc26 .wc26-logo-badge { display:block; }
-body.wc26 #hero-logo-container.in-header { padding-right:52px; }
-
-
-
-/* =====================================================
-   THEME TOGGLE BUTTON
-   ===================================================== */
-/* Theme toggle button hidden — merged into hero logo block */
-#theme-toggle-btn {
-    display: none !important;
-}
 
 /* =====================================================
    BOTTOM NAV
@@ -620,7 +663,6 @@ body.wc26 #hero-logo-container.in-header { padding-right:52px; }
     background:linear-gradient(135deg,rgba(30,58,138,0.8),rgba(109,40,217,0.6));
     border-radius:0;overflow:hidden;
 }
-body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.8),rgba(153,27,27,0.7));}
 .profile-avatar{
     width:80px;height:80px;border-radius:50%;object-fit:cover;
     border:3px solid rgba(255,255,255,0.35);
@@ -666,6 +708,10 @@ body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.
     opacity:0;pointer-events:none;transition:opacity 0.25s;
 }
 .team-picker-sheet.open{opacity:1;pointer-events:auto;}
+/* AI settings modal must render above the AI chat panel (which uses
+   .team-picker-sheet, z-index:600), otherwise it opens invisibly/unclickable
+   behind the chat panel. */
+#ai-settings-modal{z-index:650;}
 .team-picker-panel{
     background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
     backdrop-filter:blur(30px);
@@ -956,67 +1002,6 @@ body.wc26 .profile-header-bg{background:linear-gradient(135deg,rgba(22,101,52,0.
 #hero-logo-container.in-header:active {
     transform:translate(-50%,0) scale(0.97);
 }
-body.wc26 .app-container::before {
-    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-    background:
-        radial-gradient(ellipse at 50% 0%, rgba(74,222,128,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.05) 0%, transparent 60%);
-}
-
-/* =====================================================
-   SPLASH VIDEO SCREEN
-   ===================================================== */
-#splash-video-screen {
-    position:fixed; inset:0; z-index:9999;
-    background:#000;
-    display:flex; align-items:center; justify-content:center;
-    transition:opacity 0.9s ease;
-}
-#splash-video-screen.fade-out {
-    opacity:0; pointer-events:none;
-}
-
-/*
- * wrapper matches the exact dimensions of app-container:
- * mobile  -> 100vw x 100vh (full vertical screen)
- * desktop -> 420px x 90vh with rounded corners and border
- */
-#splash-video-wrapper {
-    position:relative;
-    width:100%;
-    height:100vh;
-    background:#000;
-    overflow:hidden;
-    border-radius:0;
-}
-@media(min-width:768px){
-    #splash-video-wrapper {
-        width:420px;
-        height:90vh;
-        border-radius:40px;
-        border:8px solid #1e293b;
-        box-shadow:0 0 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
-    }
-}
-#splash-video {
-    width:100%; height:100%;
-    object-fit:cover;
-    object-position:center;
-    display:block;
-}
-#splash-skip-btn {
-    position:absolute; bottom:40px; right:20px;
-    background:rgba(0,0,0,0.55);
-    border:1px solid rgba(255,255,255,0.2);
-    color:rgba(255,255,255,0.75);
-    font-size:0.72rem; font-weight:700; letter-spacing:1px;
-    padding:8px 18px; border-radius:9999px;
-    cursor:pointer; backdrop-filter:blur(8px);
-    transition:all 0.2s;
-    display:flex; align-items:center; gap:6px;
-}
-#splash-skip-btn:active { transform:scale(0.95); background:rgba(0,0,0,0.8); }
-
 /* =====================================================
    LIQUID GLASS — enhanced capsule look (normal / non-LITE mode)
    ===================================================== */
@@ -1040,60 +1025,64 @@ body.wc26 .app-container::before {
 }
 
 /* =====================================================
-   LITE MODE (POWER SAVE) — flat, static, dark, no effects
+   LITE MODE (PERFORMANCE SAVER) — flat surfaces, no blur,
+   no continuous/looping effects. Short one-shot transitions
+   (tap feedback, card entrances, page fades) are intentionally
+   NOT killed here — a little motion stays, per design. Surfaces
+   use the active palette's own tone (--bg-mid) instead of a
+   fixed color, so palette identity carries through in Lite mode
+   too, under both dark and light scheme.
    ===================================================== */
 body.lite-mode {
-    background:#000000 !important;
+    background:var(--bg-mid) !important;
 }
 body.lite-mode .ambient-orb,
 body.lite-mode #particle-canvas {
     display:none !important;
 }
+/* only the expensive-to-render effects are cut, broadly and cheaply */
 body.lite-mode * {
-    animation-duration: 0.001s !important;
-    animation-delay: 0s !important;
-    transition-duration: 0.001s !important;
-    box-shadow: none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    box-shadow:none !important;
 }
 body.lite-mode .app-container,
 body.lite-mode .bottom-nav,
 body.lite-mode .league-header,
 body.lite-mode .match-card,
+body.lite-mode .weird-card,
+body.lite-mode .admin-section,
 body.lite-mode .modal-content,
 body.lite-mode .settings-panel,
+body.lite-mode .appearance-panel,
+body.lite-mode .ai-panel,
 body.lite-mode .glass-button,
 body.lite-mode .glass-input,
 body.lite-mode .ranking-card,
 body.lite-mode .team-picker-panel,
 body.lite-mode .stat-card,
 body.lite-mode .toast {
-    backdrop-filter:none !important;
-    -webkit-backdrop-filter:none !important;
-    background-color:#0a0a0a !important;
+    background-color:var(--bg-mid) !important;
     background-image:none !important;
 }
 body.lite-mode #hero-logo-container.in-header,
 body.lite-mode #hero-logo-container.box-forming {
-    background:#000000 !important;
-    backdrop-filter:none !important;
-    -webkit-backdrop-filter:none !important;
+    background:var(--bg-mid) !important;
     border-color:rgba(255,255,255,0.10) !important;
 }
+/* liquid sheen shimmer — continuous decorative loop, cut for perf */
 body.lite-mode #hero-logo-container.in-header::after {
     display:none !important;
 }
+/* hero glow-pulse — continuous decorative loop, cut for perf.
+   The one-shot fade/scale entrance transition (box-forming → in-header)
+   is untouched, so the startup animation still plays. */
 body.lite-mode .hero-text {
     animation:none !important;
     background:none !important;
     -webkit-text-fill-color:#ffffff !important;
     color:#ffffff !important;
     filter:none !important;
-    opacity:1 !important;
-    transform:none !important;
-}
-body.lite-mode .hero-subtext {
-    opacity:1 !important;
-    transform:none !important;
 }
 
 /* =====================================================
@@ -1152,6 +1141,199 @@ body.lite-mode .hero-subtext {
     pointer-events:none !important;
     filter:grayscale(60%);
 }
+
+/* =====================================================
+   APPEARANCE SHEET — performance mode, color scheme, palettes
+   ===================================================== */
+.appearance-panel{
+    max-height:86vh;
+    overflow-y:auto;
+    -ms-overflow-style:none; scrollbar-width:none;
+}
+.appearance-panel::-webkit-scrollbar{ display:none; }
+.appearance-section-label{
+    font-size:0.66rem; font-weight:800; color:#6b7280;
+    text-transform:uppercase; letter-spacing:1.2px;
+    margin:16px 2px 9px;
+}
+.appearance-section-label:first-of-type{ margin-top:2px; }
+.segmented-control{
+    display:flex; background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08); border-radius:14px;
+    padding:3px; gap:3px;
+}
+.segmented-btn{
+    flex:1; border:none; background:transparent; color:#9ca3af;
+    font-size:0.72rem; font-weight:700; padding:10px 6px; border-radius:11px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+    transition:all 0.2s; font-family:inherit;
+}
+.segmented-btn.active{
+    background:var(--nav-active-bg); color:var(--nav-active-color);
+    border:1px solid var(--nav-active-border);
+    box-shadow:0 0 10px var(--primary-glow);
+}
+.segmented-btn:active{ transform:scale(0.96); }
+.palette-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px 8px;
+}
+.palette-swatch{
+    display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+}
+.palette-swatch-circle{
+    width:46px; height:46px; border-radius:15px;
+    border:2px solid rgba(255,255,255,0.10);
+    transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.palette-swatch.selected .palette-swatch-circle{
+    border-color:#fff; box-shadow:0 0 0 2px var(--primary),0 4px 14px var(--primary-glow);
+    transform:scale(1.06);
+}
+.palette-swatch:active .palette-swatch-circle{ transform:scale(0.92); }
+.palette-swatch span{
+    font-size:0.58rem; font-weight:700; color:#9ca3af; text-align:center;
+    max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.palette-swatch.selected span{ color:#fff; }
+.palette-swatch-circle.custom-circle{
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.05); color:#9ca3af; font-size:1.15rem;
+}
+#custom-palette-editor{
+    margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);
+}
+.custom-color-row{ display:flex; justify-content:space-between; gap:10px; }
+.custom-color-row label{
+    display:flex; flex-direction:column; align-items:center; gap:7px;
+    font-size:0.6rem; color:#9ca3af; font-weight:700; flex:1;
+}
+.custom-color-row input[type=color]{
+    width:100%; height:36px; border-radius:11px;
+    border:1px solid rgba(255,255,255,0.12); background:none; cursor:pointer; padding:2px;
+}
+
+/* =====================================================
+   AI ASSISTANT — floating entry button (Season screen only)
+   ===================================================== */
+.ai-fab{
+    position:fixed; bottom:84px; left:50%; transform:translateX(-50%);
+    z-index:99; display:flex; align-items:center; gap:8px;
+    padding:11px 22px; border-radius:9999px;
+    background:linear-gradient(135deg, var(--primary), var(--accent));
+    color:#0b1220; font-weight:800; font-size:0.78rem; font-family:inherit;
+    box-shadow:0 8px 26px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    cursor:pointer; border:1px solid rgba(255,255,255,0.3);
+    transition:transform 0.15s ease;
+    white-space:nowrap;
+}
+.ai-fab:active{ transform:translateX(-50%) scale(0.94); }
+.ai-fab i{ font-size:0.95rem; }
+body.lite-mode .ai-fab{ box-shadow:none; }
+
+/* =====================================================
+   AI ASSISTANT — chat panel
+   ===================================================== */
+.ai-panel{
+    background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
+    backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+    border:1px solid rgba(255,255,255,0.09); border-bottom:none;
+    border-radius:26px 26px 0 0;
+    width:100%; max-width:460px; height:88vh;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 -16px 50px rgba(0,0,0,0.5);
+    transform:translateY(100%);
+    transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+}
+#ai-panel-overlay.open .ai-panel{ transform:translateY(0); }
+.ai-panel-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px 12px; border-bottom:1px solid rgba(255,255,255,0.06);
+    flex-shrink:0;
+}
+.ai-panel-title{
+    font-size:0.88rem; font-weight:900; display:flex; align-items:center; gap:8px;
+    color:var(--primary);
+}
+.ai-panel-header-actions{ display:flex; gap:8px; }
+.ai-icon-btn{
+    width:30px; height:30px; border-radius:50%; border:none;
+    background:rgba(255,255,255,0.06); color:#9ca3af;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:0.75rem;
+}
+.ai-icon-btn:active{ transform:scale(0.9); }
+.ai-chat-scroll{
+    flex:1; overflow-y:auto; padding:16px;
+    display:flex; flex-direction:column; gap:12px;
+    -ms-overflow-style:none; scrollbar-width:none;
+}
+.ai-chat-scroll::-webkit-scrollbar{ display:none; }
+.ai-msg{
+    max-width:84%; padding:11px 15px; border-radius:18px;
+    font-size:0.82rem; line-height:1.75; white-space:pre-wrap;
+    animation:cardIn 0.3s ease both; word-break:break-word;
+}
+.ai-msg.user{
+    align-self:flex-start;
+    background:linear-gradient(135deg, var(--primary), var(--accent));
+    color:#0b1220; font-weight:600; border-bottom-right-radius:6px;
+}
+.ai-msg.model{
+    align-self:flex-end;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);
+    color:#e5e7eb; border-bottom-left-radius:6px;
+}
+.ai-msg.system-hint{
+    align-self:center; background:rgba(255,255,255,0.03); color:#6b7280;
+    font-size:0.68rem; text-align:center; border-radius:12px; max-width:92%;
+}
+.ai-typing-row{ align-self:flex-end; display:flex; }
+.ai-typing-dots{
+    display:flex; gap:4px; padding:14px 16px; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08); border-radius:18px; border-bottom-right-radius:6px;
+}
+.ai-typing-dots span{
+    width:6px; height:6px; border-radius:50%; background:#6b7280;
+    animation:aiTypingBounce 1.2s infinite ease-in-out;
+}
+.ai-typing-dots span:nth-child(2){ animation-delay:0.15s; }
+.ai-typing-dots span:nth-child(3){ animation-delay:0.3s; }
+@keyframes aiTypingBounce{
+    0%,60%,100%{ transform:translateY(0); opacity:0.4; }
+    30%{ transform:translateY(-4px); opacity:1; }
+}
+.ai-input-bar{
+    display:flex; gap:8px; padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));
+    border-top:1px solid rgba(255,255,255,0.06); flex-shrink:0;
+}
+#ai-chat-input{
+    flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px; padding:11px 15px; color:#fff; font-size:0.82rem;
+    outline:none; font-family:inherit;
+}
+#ai-chat-input:focus{ border-color:var(--primary); box-shadow:0 0 10px var(--primary-glow); }
+.ai-send-btn{
+    width:42px; height:42px; border-radius:14px; border:none;
+    background:linear-gradient(135deg, var(--primary), var(--accent)); color:#0b1220;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    transition:transform 0.15s;
+}
+.ai-send-btn:active{ transform:scale(0.92); }
+.ai-send-btn:disabled{ opacity:0.4; pointer-events:none; }
+
+/* AI settings mini-sheet toggle switch */
+.ai-toggle-switch{ position:relative; display:inline-block; width:42px; height:24px; flex-shrink:0; }
+.ai-toggle-switch input{ opacity:0; width:0; height:0; position:absolute; }
+.ai-toggle-slider{
+    position:absolute; inset:0; background:rgba(255,255,255,0.15);
+    border-radius:999px; transition:0.2s; cursor:pointer;
+}
+.ai-toggle-slider::before{
+    content:''; position:absolute; width:18px; height:18px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:0.2s;
+}
+.ai-toggle-switch input:checked + .ai-toggle-slider{ background:var(--primary); }
+.ai-toggle-switch input:checked + .ai-toggle-slider::before{ transform:translateX(18px); }
 </style>
 </head>
 <body>
@@ -1161,31 +1343,13 @@ body.lite-mode .hero-subtext {
 <div class="ambient-orb orb-2"></div>
 <div class="ambient-orb orb-3"></div>
 
-<!-- Splash Video Screen -->
-<div id="splash-video-screen">
-    <div id="splash-video-wrapper">
-        <video id="splash-video" src="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/intro.mp4" playsinline autoplay muted preload="auto"></video>
-        <button id="splash-skip-btn" onclick="skipSplash()">
-            <i class="fas fa-forward"></i> SKIP
-        </button>
-    </div>
-</div>
-
 <!-- Toast -->
 <div id="toast-container"></div>
-
-<!-- Theme toggle -->
-<div id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle World Cup 2026 theme">
-    <span class="wc26-tooltip">Switch theme</span>
-    <i class="fas fa-futbol" id="theme-icon"></i>
-</div>
 
 <!-- Hero Logo (hold in header state to open Settings) -->
 <div id="hero-logo-container">
     <div class="hero-text" id="harfs-text">HARFS</div>
     <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
-    <!-- WC26 logo badge shown in header and hero state -->
-    <img class="wc26-logo-badge" src="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/logo.png" alt="WC26 Logo">
 </div>
 
 <!-- Settings Panel (opened by holding the HARFS capsule) -->
@@ -1196,13 +1360,9 @@ body.lite-mode .hero-subtext {
             <button class="settings-close-btn" onclick="closeSettings()"><i class="fas fa-times"></i></button>
         </div>
         <div class="settings-grid">
-            <div class="settings-tile" id="settings-theme-tile" onclick="settingsToggleTheme()">
-                <i class="fas fa-futbol" id="settings-theme-icon"></i>
-                <span id="settings-theme-label">Classic</span>
-            </div>
-            <div class="settings-tile" id="settings-lite-tile" onclick="settingsToggleLite()">
-                <i class="fas fa-bolt" id="settings-lite-icon"></i>
-                <span id="settings-lite-label">Lite: Off</span>
+            <div class="settings-tile wide" id="settings-appearance-tile" onclick="openAppearanceSheet()">
+                <i class="fas fa-palette"></i>
+                <span>Appearance</span>
             </div>
             <div class="settings-tile" id="settings-music-tile" onclick="settingsToggleMusic()">
                 <i class="fas fa-music" id="settings-music-icon"></i>
@@ -1215,6 +1375,37 @@ body.lite-mode .hero-subtext {
             <div class="settings-tile wide" onclick="settingsNextTrack()">
                 <i class="fas fa-forward-step"></i>
                 <span>Next Track</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appearance Sheet (Performance mode + Color scheme + Palette) -->
+<div class="team-picker-sheet" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
+    <div class="team-picker-panel appearance-panel">
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Appearance</div>
+
+        <div class="appearance-section-label">Performance</div>
+        <div class="segmented-control" id="perf-segmented">
+            <button class="segmented-btn" data-value="full" onclick="setPerformance('full')"><i class="fas fa-bolt"></i> Full</button>
+            <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
+        </div>
+
+        <div class="appearance-section-label">Color Scheme</div>
+        <div class="segmented-control" id="scheme-segmented">
+            <button class="segmented-btn" data-value="dark" onclick="setScheme('dark')"><i class="fas fa-moon"></i> Dark</button>
+            <button class="segmented-btn" data-value="light" onclick="setScheme('light')"><i class="fas fa-sun"></i> Light</button>
+        </div>
+
+        <div class="appearance-section-label">Palette</div>
+        <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
+
+        <div id="custom-palette-editor" style="display:none;">
+            <div class="custom-color-row">
+                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()"></label>
+                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()"></label>
+                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()"></label>
             </div>
         </div>
     </div>
@@ -1255,6 +1446,14 @@ body.lite-mode .hero-subtext {
 
     <!-- ============ SEASON TABLE ============ -->
     <div id="league-table-screen" class="page-screen">
+
+        <!-- AI Assistant entry point — lives on the Season screen, floats above the bottom nav -->
+        <div class="ai-fab" onclick="openAiPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 flex-shrink-0 text-gray-900 dark:text-slate-100">
+  <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+  <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
+</svg>
+        </div>
 
         <div class="league-header">
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Season Table</h2>
@@ -1575,6 +1774,55 @@ body.lite-mode .hero-subtext {
         </div>
     </div>
 
+    <!-- ============ AI ASSISTANT CHAT PANEL ============ -->
+    <div id="ai-panel-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeAiPanel()">
+        <div class="ai-panel" dir="ltr">
+            <div class="ai-panel-header">
+                <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
+                <div class="ai-panel-header-actions">
+                    <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
+                    <button class="ai-icon-btn" onclick="closeAiPanel()" title="Close"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="ai-chat-scroll" id="ai-chat-scroll">
+                <div id="ai-chat-messages"></div>
+                <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
+                    <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+                </div>
+            </div>
+            <div class="ai-input-bar">
+                <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
+                <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AI ASSISTANT SETTINGS ============ -->
+    <div id="ai-settings-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:320px;" dir="ltr">
+            <h3 style="font-size:0.95rem;font-weight:800;margin-bottom:16px;text-align:center;">
+                <i class="fas fa-sliders" style="color:var(--primary);margin-right:6px;"></i>Assistant Settings
+            </h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:11px 14px;margin-bottom:14px;">
+                <label class="ai-toggle-switch">
+                    <input type="checkbox" id="ai-full-data-toggle" onchange="toggleAiDataMode()">
+                    <span class="ai-toggle-slider"></span>
+                </label>
+                <div style="text-align:left;">
+                    <div style="font-size:0.75rem;font-weight:800;">Send Full Data</div>
+                    <div style="font-size:0.6rem;color:#6b7280;margin-top:2px;">Off = only summary stats are sent</div>
+                </div>
+            </div>
+            <button class="glass-button w-full font-bold text-sm py-3" style="border-color:rgba(96,165,250,0.3);color:var(--primary);" onclick="saveAiSettings()">
+                <i class="fas fa-check mr-2"></i>Save
+            </button>
+            <button class="glass-button w-full font-bold text-sm py-2.5 mt-2" style="color:#f87171;border-color:rgba(239,68,68,0.25);" onclick="clearAiChat()">
+                <i class="fas fa-trash mr-2"></i>Clear Chat
+            </button>
+            <button class="glass-button w-full font-bold text-sm py-2.5 mt-2" style="color:#9ca3af;" onclick="closeAiSettings()">Close</button>
+        </div>
+    </div>
+
 </div><!-- /app-container -->
 
 <audio id="background-music" style="display:none;"></audio>
@@ -1619,37 +1867,196 @@ function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={nam
 function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
 
 // ============================================================
-// THEME TOGGLE
+// APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
+// × Palette (8 presets + Custom). Three independent axes; see
+// applyAppearance() as the single source of truth.
 // ============================================================
-let isWC26 = localStorage.getItem('theme') === null ? true : (localStorage.getItem('theme') === 'wc26');
+const PALETTES = [
+    { id:'ocean',    label:'Ocean',     sw:['#1d4ed8','#60a5fa','#818cf8'] },
+    { id:'emerald',  label:'Emerald',   sw:['#059669','#34d399','#2dd4bf'] },
+    { id:'crimson',  label:'Crimson',   sw:['#b91c1c','#f87171','#fb7185'] },
+    { id:'sunset',   label:'Sunset',    sw:['#c2410c','#fb923c','#f472b6'] },
+    { id:'violet',   label:'Violet',    sw:['#6d28d9','#a78bfa','#e879f9'] },
+    { id:'cyan',     label:'Cyan',      sw:['#0891b2','#22d3ee','#38bdf8'] },
+    { id:'rosegold', label:'Rose Gold', sw:['#be123c','#fb7185','#fbbf24'] },
+    { id:'graphite', label:'Graphite',  sw:['#475569','#e2e8f0','#94a3b8'] },
+];
+const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 
-function applyTheme(){
-    if(isWC26){
-        document.body.classList.add('wc26');
-        document.getElementById('theme-icon').className='fas fa-globe';
-        document.getElementById('hero-sub-label').textContent='WORLD CUP 26';
-        // Show WC26 badge
-        const badge=document.querySelector('.wc26-logo-badge');
-        if(badge){ badge.style.display=''; badge.style.opacity=''; }
+let currentPalette = localStorage.getItem('palette') || 'ocean';
+let currentScheme  = localStorage.getItem('scheme') || 'dark'; // 'dark' | 'light'
+// migrates the old on/off lite flag from before this feature existed
+let performanceMode = localStorage.getItem('performance') || (localStorage.getItem('lite')==='on' ? 'lite' : 'full');
+let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
+
+// Single source of truth — call after any appearance change
+function applyAppearance(){
+    if(currentPalette === 'custom'){
+        document.body.removeAttribute('data-palette');
+        writeCustomPaletteVars();
     } else {
-        document.body.classList.remove('wc26');
-        document.getElementById('theme-icon').className='fas fa-futbol';
-        document.getElementById('hero-sub-label').textContent='LEAGUE SYSTEM';
-        // Hide WC26 badge when in default theme
-        const badge=document.querySelector('.wc26-logo-badge');
-        if(badge){ badge.style.display='none'; }
+        clearCustomPaletteVars();
+        document.body.setAttribute('data-palette', currentPalette);
     }
+    document.body.classList.toggle('scheme-light', currentScheme === 'light');
+    document.body.classList.toggle('lite-mode', performanceMode === 'lite');
     syncSettingsUI();
+    syncAppearanceUI();
 }
 
-// ============================================================
-// LITE MODE (POWER SAVE)
-// ============================================================
-let liteMode = localStorage.getItem('lite') === 'on';
-function applyLiteMode(){
-    document.body.classList.toggle('lite-mode', liteMode);
+function openAppearanceSheet(){
+    renderPaletteGrid();
+    syncAppearanceUI();
+    document.getElementById('appearance-sheet').classList.add('open');
 }
-applyLiteMode();
+function closeAppearanceSheet(){
+    document.getElementById('appearance-sheet').classList.remove('open');
+}
+function setPerformance(val){
+    haptic([6]);
+    performanceMode = val;
+    localStorage.setItem('performance', val);
+    localStorage.setItem('lite', val === 'lite' ? 'on' : 'off');
+    applyAppearance();
+}
+function setScheme(val){
+    haptic([6]);
+    currentScheme = val;
+    localStorage.setItem('scheme', val);
+    applyAppearance();
+}
+function selectPalette(id){
+    haptic([6]);
+    currentPalette = id;
+    localStorage.setItem('palette', id);
+    applyAppearance();
+}
+function renderPaletteGrid(){
+    const grid = document.getElementById('palette-grid');
+    if(!grid) return;
+    let html = PALETTES.map(p => `
+        <div class="palette-swatch" onclick="selectPalette('${p.id}')" data-id="${p.id}">
+            <div class="palette-swatch-circle" style="background:linear-gradient(135deg,${p.sw[0]},${p.sw[1]},${p.sw[2]});"></div>
+            <span>${p.label}</span>
+        </div>`).join('');
+    html += `
+        <div class="palette-swatch" onclick="selectPalette('custom')" data-id="custom">
+            <div class="palette-swatch-circle custom-circle"><i class="fas fa-sliders"></i></div>
+            <span>Custom</span>
+        </div>`;
+    grid.innerHTML = html;
+}
+function syncAppearanceUI(){
+    document.querySelectorAll('#perf-segmented .segmented-btn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.value === performanceMode);
+    });
+    document.querySelectorAll('#scheme-segmented .segmented-btn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.value === currentScheme);
+    });
+    document.querySelectorAll('.palette-swatch').forEach(el=>{
+        el.classList.toggle('selected', el.dataset.id === currentPalette);
+    });
+    const editor = document.getElementById('custom-palette-editor');
+    if(editor) editor.style.display = (currentPalette === 'custom') ? 'block' : 'none';
+    if(currentPalette === 'custom'){
+        const pi=document.getElementById('custom-primary-input'), ai=document.getElementById('custom-accent-input'), bi=document.getElementById('custom-bg-input');
+        if(pi) pi.value = customPaletteVals.primary;
+        if(ai) ai.value = customPaletteVals.accent;
+        if(bi) bi.value = customPaletteVals.bg;
+    }
+}
+
+// ---- Custom palette: derive a full variable set from 3 picked colors ----
+function hexToRgb(hex){
+    hex = hex.replace('#','');
+    if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+    const n = parseInt(hex,16);
+    return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+function rgbToHex(r,g,b){
+    return '#' + [r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+}
+function rgbToHsl(r,g,b){
+    r/=255; g/=255; b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if(max===min){ h=s=0; }
+    else{
+        const d=max-min;
+        s = l>0.5 ? d/(2-max-min) : d/(max+min);
+        switch(max){
+            case r: h=(g-b)/d+(g<b?6:0); break;
+            case g: h=(b-r)/d+2; break;
+            default: h=(r-g)/d+4;
+        }
+        h/=6;
+    }
+    return { h:h*360, s:s*100, l:l*100 };
+}
+function hslToRgb(h,s,l){
+    h/=360; s/=100; l/=100;
+    let r,g,b;
+    if(s===0){ r=g=b=l; }
+    else{
+        const hue2rgb=(p,q,t)=>{
+            if(t<0)t+=1; if(t>1)t-=1;
+            if(t<1/6) return p+(q-p)*6*t;
+            if(t<1/2) return q;
+            if(t<2/3) return p+(q-p)*(2/3-t)*6;
+            return p;
+        };
+        const q = l<0.5 ? l*(1+s) : l+s-l*s;
+        const p = 2*l-q;
+        r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+    }
+    return { r:r*255, g:g*255, b:b*255 };
+}
+function hexToHsl(hex){ const {r,g,b}=hexToRgb(hex); return rgbToHsl(r,g,b); }
+function hslToHex(h,s,l){ const {r,g,b}=hslToRgb(h,s,l); return rgbToHex(r,g,b); }
+function lighten(hex, targetL){ const hsl=hexToHsl(hex); return hslToHex(hsl.h, Math.max(hsl.s,35), targetL); }
+
+function writeCustomPaletteVars(){
+    const c = customPaletteVals;
+    const pr = hexToRgb(c.primary);
+    const bgHsl = hexToHsl(c.bg);
+    const bgFrom = hslToHex(bgHsl.h, Math.min(Math.max(bgHsl.s,35),75), 16);
+    const bgMid  = hslToHex(bgHsl.h, Math.min(Math.max(bgHsl.s,25),55), 8);
+    const bgTo   = hslToHex(bgHsl.h, Math.min(Math.max(bgHsl.s,20),45), 2);
+    const orb3   = hslToHex(bgHsl.h, 55, 42);
+    const heroSub = lighten(c.primary, 80);
+    const s = document.body.style;
+    s.setProperty('--bg-from', bgFrom);
+    s.setProperty('--bg-mid', bgMid);
+    s.setProperty('--bg-to', bgTo);
+    s.setProperty('--orb1', c.primary);
+    s.setProperty('--orb2', c.accent);
+    s.setProperty('--orb3', orb3);
+    s.setProperty('--primary', c.primary);
+    s.setProperty('--primary-glow', `rgba(${pr.r},${pr.g},${pr.b},0.35)`);
+    s.setProperty('--accent', c.accent);
+    s.setProperty('--header-text', lighten(c.primary, 84));
+    s.setProperty('--nav-active-bg', `rgba(${pr.r},${pr.g},${pr.b},0.20)`);
+    s.setProperty('--nav-active-color', c.primary);
+    s.setProperty('--nav-active-border', `rgba(${pr.r},${pr.g},${pr.b},0.45)`);
+    s.setProperty('--hero-grad', `linear-gradient(135deg,#fff 0%,${heroSub} 50%,${c.accent} 100%)`);
+    s.setProperty('--hero-sub', heroSub);
+    s.setProperty('--table-rank1-bg', 'rgba(251,191,36,0.07)');
+    s.setProperty('--particle-color', `${pr.r},${pr.g},${pr.b}`);
+}
+function clearCustomPaletteVars(){
+    ['--bg-from','--bg-mid','--bg-to','--orb1','--orb2','--orb3','--primary','--primary-glow','--accent',
+     '--header-text','--nav-active-bg','--nav-active-color','--nav-active-border','--hero-grad','--hero-sub',
+     '--table-rank1-bg','--particle-color'].forEach(p=>document.body.style.removeProperty(p));
+}
+function applyCustomPalette(){
+    customPaletteVals = {
+        primary: document.getElementById('custom-primary-input').value,
+        accent:  document.getElementById('custom-accent-input').value,
+        bg:      document.getElementById('custom-bg-input').value,
+    };
+    localStorage.setItem('customPalette', JSON.stringify(customPaletteVals));
+    if(currentPalette === 'custom') writeCustomPaletteVars();
+}
 
 // ============================================================
 // PLAYBACK MODE — 'shuffle' | 'sequential' | 'single'
@@ -1665,19 +2072,6 @@ const PLAYBACK_MODES = {
 // SETTINGS PANEL
 // ============================================================
 function syncSettingsUI(){
-    const themeIcon=document.getElementById('settings-theme-icon');
-    const themeLabel=document.getElementById('settings-theme-label');
-    if(themeIcon&&themeLabel){
-        themeIcon.className = isWC26 ? 'fas fa-globe' : 'fas fa-futbol';
-        themeLabel.textContent = isWC26 ? 'World Cup' : 'Classic';
-        document.getElementById('settings-theme-tile').classList.toggle('active', isWC26);
-    }
-    const liteIcon=document.getElementById('settings-lite-icon');
-    const liteLabel=document.getElementById('settings-lite-label');
-    if(liteIcon&&liteLabel){
-        liteLabel.textContent = liteMode ? 'Lite: On' : 'Lite: Off';
-        document.getElementById('settings-lite-tile').classList.toggle('active', liteMode);
-    }
     const musicIcon=document.getElementById('settings-music-icon');
     const musicLabel=document.getElementById('settings-music-label');
     if(musicIcon&&musicLabel){
@@ -1700,16 +2094,6 @@ function openSettings(){
 }
 function closeSettings(){
     document.getElementById('settings-modal').classList.remove('open');
-}
-function settingsToggleTheme(){
-    toggleTheme();
-}
-function settingsToggleLite(){
-    liteMode = !liteMode;
-    localStorage.setItem('lite', liteMode ? 'on' : 'off');
-    applyLiteMode();
-    syncSettingsUI();
-    showToast(liteMode ? 'Lite mode on' : 'Lite mode off', 'info', 1800);
 }
 function settingsToggleMusic(){
     toggleMusic();
@@ -1734,23 +2118,6 @@ function settingsNextTrack(){
         return;
     }
     playNextTrack();
-}
-
-function toggleTheme(){
-    haptic([8,30,8]);
-    isWC26=!isWC26;
-    localStorage.setItem('theme', isWC26?'wc26':'default');
-    applyTheme();
-    showToast(isWC26?'⚽ World Cup 2026 theme ON':'🔵 Classic theme restored','info');
-    // When switching BACK to default (non-WC26): hide logo badge instantly
-    if(!isWC26){
-        const badge=document.querySelector('.wc26-logo-badge');
-        if(badge){
-            badge.style.transition='opacity 0.4s ease';
-            badge.style.opacity='0';
-            setTimeout(()=>{ badge.style.display='none'; badge.style.opacity=''; badge.style.transition=''; },450);
-        }
-    }
 }
 
 // ============================================================
@@ -1938,73 +2305,26 @@ const ROUTES=['main-league','league','history','weird'];
 let currentRouteIndex=1;
 
 // ============================================================
-// SPLASH VIDEO
+// APP STARTUP ANIMATION — logo fades/scales in at center, then
+// glides to the header (replaces the old intro video entirely).
 // ============================================================
-function skipSplash(){
-    const screen = document.getElementById('splash-video-screen');
-    const video  = document.getElementById('splash-video');
-    video.pause();
-    screen.classList.add('fade-out');
-    // after the fade animation finishes, fully hide the element
-    screen.addEventListener('transitionend', function handler(){
-        screen.style.display = 'none';
-        screen.removeEventListener('transitionend', handler);
-    });
-    // fallback fallback if transitionend doesn't fire
-    setTimeout(()=>{ screen.style.display='none'; }, 1000);
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-    const video  = document.getElementById('splash-video');
-    const screen = document.getElementById('splash-video-screen');
-
-    // If NOT in WC26 theme, skip intro immediately
-    if(!isWC26){
-        screen.style.display='none';
-        return;
-    }
-
-    // Try to play (may be blocked on some browsers without muted)
-    const playPromise = video.play();
-    if(playPromise !== undefined){
-        playPromise.catch(()=>{
-            // If autoplay fails, just skip immediately
-            skipSplash();
-        });
-    }
-
-    // Auto-dismiss when video ends
-    video.addEventListener('ended', skipSplash);
-
-    // Safety timeout fallback — dismiss after 30s max
-    setTimeout(skipSplash, 30000);
-});
-
 function startApp(){
     const logo = document.getElementById('hero-logo-container');
 
-    if(!isWC26){
-        // Default theme: phase 1 — box + text fade in at center
-        setTimeout(()=>{
-            logo.classList.add('box-forming');
-        }, 200);
+    // Phase 1 — box + text fade in at center
+    setTimeout(()=>{
+        logo.classList.add('box-forming');
+    }, 200);
 
-        // Phase 2 — after 1.6s, glide smoothly to header
+    // Phase 2 — after 1.6s, glide smoothly to header
+    setTimeout(()=>{
+        logo.classList.remove('box-forming');
+        logo.classList.add('in-header');
         setTimeout(()=>{
-            logo.classList.remove('box-forming');
-            logo.classList.add('in-header');
-            setTimeout(()=>{
-                document.getElementById('bottom-navigation').classList.add('active');
-                navigate('league');
-            }, 750);
-        }, 1800);
-    } else {
-        // WC26 theme: keep existing fast transition
-        setTimeout(()=>{
-            logo.classList.add('in-header');
-            setTimeout(()=>{document.getElementById('bottom-navigation').classList.add('active');navigate('league');},800);
-        },1500);
-    }
+            document.getElementById('bottom-navigation').classList.add('active');
+            navigate('league');
+        }, 750);
+    }, 1800);
 }
 
 (function(){
@@ -3286,11 +3606,179 @@ document.addEventListener('touchstart', initAudio, {passive: true});
 // (swipe handling is merged into setupLogoInteractions above)
 
 // ============================================================
+// AI ASSISTANT — calls OpenRouter directly from the client.
+// This is a private, personal app, so the API key is hardcoded
+// below instead of being proxied through a separate Worker.
+// ============================================================
+const OPENROUTER_API_KEY = "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";
+const OPENROUTER_MODEL   = "tencent/hy3:free";
+const OPENROUTER_URL     = "https://openrouter.ai/api/v1/chat/completions";
+
+let aiFullData   = localStorage.getItem('ai_full_data') === null ? true : (localStorage.getItem('ai_full_data') === 'on');
+let aiChatHistory = (()=>{ try{ return JSON.parse(localStorage.getItem('ai_chat_history')) || []; }catch(e){ return []; } })();
+
+const AI_SYSTEM_PROMPT = `You are "HARFS Assistant", a friendly and sharp football analyst for a private league between a few teams named HOSI, Sajsfi, Bayern and Yellow.
+Reply in whichever language the user writes in — Persian or English — matching their language for every message. Keep a warm, concise, friendly tone, like a sports analyst who is genuinely a fan of this league.
+The current season's table, overall standings, match history and past-season archives are sent to you as JSON alongside the user's message (if the user has enabled "summary mode", you'll see only summarized stats instead of every match). Use this data for precise analysis (team trends, recent form, strengths/weaknesses, team comparisons, predictions), but never invent a number or stat that isn't in the data — if something isn't clear from the data, say so honestly.
+Keep answers short and suited to a mobile app, not a long article — unless the user explicitly asks for more detail. When relevant, give practical suggestions and strategy for teams to reach their goals (like winning the season or climbing the overall standings).`;
+
+function openAiPanel(){
+    haptic([8]);
+    document.getElementById('ai-panel-overlay').classList.add('open');
+    renderAiMessages();
+    if(!aiChatHistory.length){
+        pushAiMessage('model', "Hi! 👋 I'm the HARFS analysis assistant. I can review the table, results and team trends, and chat with you about strategy. What would you like to know?");
+    }
+    setTimeout(()=>{ const inp=document.getElementById('ai-chat-input'); if(inp) inp.focus(); }, 350);
+}
+function closeAiPanel(){
+    document.getElementById('ai-panel-overlay').classList.remove('open');
+}
+function openAiSettings(){
+    document.getElementById('ai-full-data-toggle').checked = aiFullData;
+    document.getElementById('ai-settings-modal').classList.add('open');
+}
+function closeAiSettings(){
+    document.getElementById('ai-settings-modal').classList.remove('open');
+}
+function saveAiSettings(){
+    closeAiSettings();
+    showToast('Assistant settings saved', 'success', 1800);
+}
+function toggleAiDataMode(){
+    aiFullData = document.getElementById('ai-full-data-toggle').checked;
+    localStorage.setItem('ai_full_data', aiFullData ? 'on' : 'off');
+}
+function clearAiChat(){
+    aiChatHistory = [];
+    localStorage.removeItem('ai_chat_history');
+    renderAiMessages();
+    closeAiSettings();
+    showToast('Chat cleared', 'info', 1600);
+}
+
+function pushAiMessage(role, text){
+    aiChatHistory.push({ role, text });
+    if(aiChatHistory.length > 40) aiChatHistory = aiChatHistory.slice(-40);
+    try{ localStorage.setItem('ai_chat_history', JSON.stringify(aiChatHistory)); }catch(e){}
+    renderAiMessages();
+}
+function escapeHtml(s){
+    const d=document.createElement('div');
+    d.textContent = s==null ? '' : String(s);
+    return d.innerHTML;
+}
+function renderAiMessages(){
+    const box=document.getElementById('ai-chat-messages');
+    if(!box) return;
+    box.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'model'}">${escapeHtml(m.text)}</div>`).join('');
+    const scroller=document.getElementById('ai-chat-scroll');
+    if(scroller) scroller.scrollTop = scroller.scrollHeight;
+}
+function setAiTyping(on){
+    const ind=document.getElementById('ai-typing-indicator');
+    if(ind) ind.style.display = on ? 'flex' : 'none';
+    const btn=document.getElementById('ai-send-btn');
+    if(btn) btn.disabled = on;
+    const scroller=document.getElementById('ai-chat-scroll');
+    if(on && scroller) scroller.scrollTop = scroller.scrollHeight;
+}
+
+// ---- Data payloads sent to the assistant for analysis ----
+function buildSummaryContext(){
+    const table = Object.values(leagueData).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
+    const overall = Object.values(mainLeagueData).sort((a,b)=>b.totalPoints-a.totalPoints);
+    const recentFormLast5 = {};
+    TEAM_NAMES.forEach(t=>{
+        const games = matchHistory.filter(m=>m.home===t||m.away===t).slice(0,5);
+        recentFormLast5[t] = games.map(m=>{
+            const isHome=m.home===t, p=String(m.score).split('-');
+            const my=isHome?+p[0]:+p[1], op=isHome?+p[1]:+p[0];
+            return my>op?'W':(my<op?'L':'D');
+        });
+    });
+    const pastChampions = archivedSeasons.map(s=>({
+        season: s.seasonId,
+        champion: (s.table && s.table[0]) ? s.table[0].name : null,
+    }));
+    return {
+        summaryMode: true,
+        teams: TEAM_DISPLAY_NAMES,
+        currentSeasonTable: table.map(t=>({team:t.name,P:t.P,W:t.W,D:t.D,L:t.L,GF:t.GF,GA:t.GA,Pts:t.Pts})),
+        overallStandings: overall.map(t=>({team:t.name,totalPoints:t.totalPoints})),
+        totalMatchesPlayed: matchHistory.length,
+        recentFormLast5,
+        archivedSeasonsCount: archivedSeasons.length,
+        pastChampions,
+    };
+}
+function buildFullContext(){
+    return {
+        summaryMode: false,
+        teams: TEAM_DISPLAY_NAMES,
+        currentSeasonTable: leagueData,
+        overallStandings: mainLeagueData,
+        matchHistory: matchHistory,
+        archivedSeasons: archivedSeasons,
+    };
+}
+
+async function sendAiMessage(){
+    const input = document.getElementById('ai-chat-input');
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    pushAiMessage('user', text);
+    setAiTyping(true);
+    const dataPayload = aiFullData ? buildFullContext() : buildSummaryContext();
+
+    // Build the OpenRouter chat-completions message list: system prompt,
+    // recent history, then the new user message with the league data
+    // context prepended so the model can ground its answer in real numbers.
+    const messages = [{ role: 'system', content: AI_SYSTEM_PROMPT }];
+    aiChatHistory.slice(-13, -1).forEach(m=>{
+        messages.push({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text });
+    });
+    const dataContext = `[League Data Context]:\n${JSON.stringify(dataPayload)}\n\n`;
+    messages.push({ role: 'user', content: dataContext + text });
+
+    try{
+        const res = await fetch(OPENROUTER_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://harfs-league-agent.local',
+                'X-Title': 'HARFS League Assistant',
+            },
+            body: JSON.stringify({
+                model: OPENROUTER_MODEL,
+                messages: messages,
+            }),
+        });
+        const raw = await res.text();
+        let payload; try{ payload = JSON.parse(raw); }catch(e){ payload = null; }
+        if(!res.ok || !payload){
+            throw new Error((payload && payload.error && payload.error.message) ? payload.error.message : ('HTTP ' + res.status));
+        }
+        const reply = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
+        if(!reply){
+            throw new Error('Empty response from AI provider');
+        }
+        pushAiMessage('model', reply);
+    }catch(err){
+        pushAiMessage('model', '⚠️ Could not reach the assistant (' + (err.message || 'unknown error') + '). Check your internet connection and try again.');
+    }finally{
+        setAiTyping(false);
+    }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 initializeLeagueData();
 initializeMainLeagueData();
-applyTheme();   // apply saved theme before first paint
+applyAppearance();   // apply saved palette/scheme/performance before first paint
 
 document.addEventListener('DOMContentLoaded',()=>{
     updateCurrentDateTime();
