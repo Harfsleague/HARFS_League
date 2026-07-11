@@ -1272,14 +1272,15 @@ body.lite-mode .ai-fab{ box-shadow:none; }
     max-width:84%; padding:11px 15px; border-radius:18px;
     font-size:0.82rem; line-height:1.75; white-space:pre-wrap;
     animation:cardIn 0.3s ease both; word-break:break-word;
+    text-align:start; unicode-bidi:plaintext;
 }
 .ai-msg.user{
-    align-self:flex-start;
+    align-self:flex-end;
     background:linear-gradient(135deg, var(--primary), var(--accent));
     color:#0b1220; font-weight:600; border-bottom-right-radius:6px;
 }
 .ai-msg.model{
-    align-self:flex-end;
+    align-self:flex-start;
     background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);
     color:#e5e7eb; border-bottom-left-radius:6px;
 }
@@ -3671,7 +3672,11 @@ function escapeHtml(s){
 function renderAiMessages(){
     const box=document.getElementById('ai-chat-messages');
     if(!box) return;
-    box.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'model'}">${escapeHtml(m.text)}</div>`).join('');
+    // dir="auto" makes each bubble detect its own base direction from its
+    // own text (Persian vs English vs mixed) instead of inheriting a single
+    // fixed direction from the panel — that mismatch is what was causing
+    // words/numbers to reorder when Persian and English were mixed together.
+    box.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'model'}" dir="auto">${escapeHtml(m.text)}</div>`).join('');
     const scroller=document.getElementById('ai-chat-scroll');
     if(scroller) scroller.scrollTop = scroller.scrollHeight;
 }
