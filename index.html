@@ -848,6 +848,20 @@ body {
    MISC
    ===================================================== */
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--primary);border-radius:50%;animation:spin 0.7s linear infinite;}
+/* Golden Moment save button — doubles as an upload progress bar so the
+   admin can see % uploaded and whether the save succeeded, without any
+   separate modal/toast that would clash with the existing button UI. */
+#weird-save-btn:disabled{opacity:1;cursor:default;}
+.weird-save-btn-fill{
+    position:absolute; inset:0; width:0%; opacity:0.35;
+    background:linear-gradient(90deg,#fbbf24,#f59e0b);
+    transition:width 0.2s ease, background 0.3s ease, opacity 0.3s ease;
+    z-index:0;
+}
+.weird-save-btn-label{
+    position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+}
 @keyframes spin{to{transform:rotate(360deg);}}
 .match-card.hidden-by-filter{display:none;}
 
@@ -1643,7 +1657,7 @@ body.lite-mode .ai-fab{ box-shadow:none; }
                         <div id="weird-upload-idle">
                             <i class="fas fa-photo-video" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
                             <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos, videos or a song <span style="color:#4b5563;">(max 4)</span></p>
-                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">Videos are auto-trimmed to 10s &amp; compressed</p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">Videos are auto-trimmed to 2 min &amp; compressed</p>
                         </div>
                         <div id="weird-upload-processing" style="display:none;">
                             <span class="spinner"></span>
@@ -1651,8 +1665,9 @@ body.lite-mode .ai-fab{ box-shadow:none; }
                         </div>
                     </div>
                     <div class="weird-img-preview-row" id="weird-preview-row" style="display:none;"></div>
-                    <button class="glass-button w-full mt-3 font-bold text-sm py-3" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;" onclick="saveWeirdEvent()">
-                        <i class="fas fa-bolt mr-2"></i> Save Event
+                    <button class="glass-button w-full mt-3 font-bold text-sm py-3" id="weird-save-btn" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;position:relative;overflow:hidden;" onclick="saveWeirdEvent()">
+                        <span class="weird-save-btn-fill" id="weird-save-btn-fill"></span>
+                        <span class="weird-save-btn-label" id="weird-save-btn-label"><i class="fas fa-bolt mr-2"></i> Save Event</span>
                     </button>
                 </div>
             </div>
@@ -2456,7 +2471,28 @@ function compressImage(base64,maxW,maxH,quality){
 // Re-encodes the clip through a canvas so it is capped at
 // MAX_MOMENT_VIDEO_SECONDS, downscaled, and bitrate-limited —
 // admin never has to trim or shrink the file themselves.
+//
+// This literally plays the source video in real time while a timer
+// draws frames to a canvas, so a 2-minute clip takes ~2 real minutes
+// to process. If the browser tab is backgrounded or the screen locks
+// during that window, mobile OSes throttle/suspend timers and video
+// playback, which can silently truncate or hang the recording — this
+// isn't an artificial limit in the code, it's a browser platform
+// behavior, so we mitigate it with a Wake Lock (keeps the screen on
+// where supported) and a warning if the tab is hidden mid-process.
 // ============================================================
+let momentWakeLock=null;
+async function acquireMomentWakeLock(){
+    try{
+        if('wakeLock' in navigator)momentWakeLock=await navigator.wakeLock.request('screen');
+    }catch(e){ momentWakeLock=null; } // unsupported or denied — fails silently, processing still works
+}
+function releaseMomentWakeLock(){
+    try{ if(momentWakeLock){ momentWakeLock.release(); momentWakeLock=null; } }catch(e){}
+}
+function onMomentVisibilityWarn(){
+    if(document.hidden)showToast('Keep this tab open in the foreground until the video finishes processing','error',3600);
+}
 function processMomentVideo(file){
     return new Promise((resolve,reject)=>{
         if(typeof MediaRecorder==='undefined'){reject(new Error('unsupported'));return;}
@@ -2464,8 +2500,14 @@ function processMomentVideo(file){
         const video=document.createElement('video');
         video.muted=false;video.playsInline=true;video.preload='auto';video.src=url;
         let settled=false;
-        const fail=err=>{if(settled)return;settled=true;URL.revokeObjectURL(url);reject(err);};
-        const finish=val=>{if(settled)return;settled=true;resolve(val);};
+        acquireMomentWakeLock();
+        document.addEventListener('visibilitychange',onMomentVisibilityWarn);
+        const cleanupGuards=()=>{
+            releaseMomentWakeLock();
+            document.removeEventListener('visibilitychange',onMomentVisibilityWarn);
+        };
+        const fail=err=>{if(settled)return;settled=true;cleanupGuards();URL.revokeObjectURL(url);reject(err);};
+        const finish=val=>{if(settled)return;settled=true;cleanupGuards();resolve(val);};
         video.onloadedmetadata=()=>{
             const clipSeconds=Math.min(video.duration||MAX_MOMENT_VIDEO_SECONDS,MAX_MOMENT_VIDEO_SECONDS);
             let w=video.videoWidth||640,h=video.videoHeight||360;
@@ -2773,47 +2815,126 @@ async function saveWeirdEvent(){
         targetArr=[event];
     }
 
-    const saved=await saveFile(targetFile,targetArr,'New golden moment',weirdShardShas[targetFile]||null);
+    // The moment file itself carries almost all the bytes (media is base64
+    // inside it); the manifest write (only when rolling to a new shard) is
+    // tiny by comparison, so it gets a small fixed slice of the bar instead
+    // of its own progress tracking.
+    const mainSlice=usingNewShard?0.92:1;
+    setWeirdSaveProgress(0,'uploading');
+    const saved=await saveFile(targetFile,targetArr,'New golden moment',weirdShardShas[targetFile]||null,
+        frac=>setWeirdSaveProgress(frac*mainSlice*100,'uploading'));
     if(!saved){
+        setWeirdSaveProgress(0,'error');
         showToast('Save failed — check network','error');
         return;
     }
 
     if(usingNewShard){
         weirdShardFiles.push(targetFile);
-        const manifestSaved=await saveFile(GITHUB_WEIRD_MANIFEST_FILE,{shards:weirdShardFiles},'New golden-moment shard',weirdManifestSha);
+        const manifestSaved=await saveFile(GITHUB_WEIRD_MANIFEST_FILE,{shards:weirdShardFiles},'New golden-moment shard',weirdManifestSha,
+            frac=>setWeirdSaveProgress((mainSlice*100)+frac*8,'uploading'));
         if(!manifestSaved){
             // The moment itself is safely saved in the new shard either way —
             // only the shard index failed to update, so the new shard just
             // won't be picked up on next load until this succeeds.
+            setWeirdSaveProgress(100,'error');
             showToast('Saved, but shard index update failed — try refreshing shortly', 'error');
+            weirdShardData[targetFile]=targetArr;
+            weirdEvents.unshift(event);
+            document.getElementById('weird-event-text').value='';
+            weirdMedia=[];renderWeirdPreview();
+            showAdminDashboard();
+            return;
         }
     }
     weirdShardData[targetFile]=targetArr;
     weirdEvents.unshift(event);
 
+    setWeirdSaveProgress(100,'success');
     showToast('Golden Moment saved! ⭐','success');
     document.getElementById('weird-event-text').value='';
     weirdMedia=[];renderWeirdPreview();
     showAdminDashboard();
 }
 
+// Drives the Save Event button's built-in progress bar. state:
+// 'uploading' (percent shown live), 'success' (checkmark, gold fill),
+// 'error' (red fill, tap-to-retry hint). Auto-resets after success/error.
+function setWeirdSaveProgress(percent,state){
+    const btn=document.getElementById('weird-save-btn');
+    const fill=document.getElementById('weird-save-btn-fill');
+    const label=document.getElementById('weird-save-btn-label');
+    if(!btn||!fill||!label)return;
+    const pct=Math.max(0,Math.min(100,Math.round(percent)));
+    if(state==='uploading'){
+        btn.disabled=true;
+        fill.style.width=pct+'%';
+        fill.style.opacity='0.35';
+        fill.style.background='linear-gradient(90deg,#fbbf24,#f59e0b)';
+        label.innerHTML=`<i class="fas fa-cloud-upload-alt mr-2"></i> Uploading… ${pct}%`;
+    } else if(state==='success'){
+        fill.style.width='100%';
+        fill.style.opacity='0.55';
+        fill.style.background='linear-gradient(90deg,#fbbf24,#f59e0b)';
+        label.innerHTML=`<i class="fas fa-check mr-2"></i> Saved!`;
+        setTimeout(resetWeirdSaveBtn,1400);
+    } else if(state==='error'){
+        fill.style.width='100%';
+        fill.style.opacity='0.35';
+        fill.style.background='linear-gradient(90deg,#ef4444,#dc2626)';
+        label.innerHTML=`<i class="fas fa-times mr-2"></i> Save failed — tap to retry`;
+        btn.disabled=false;
+        setTimeout(resetWeirdSaveBtn,2600);
+    } else {
+        resetWeirdSaveBtn();
+    }
+}
+function resetWeirdSaveBtn(){
+    const btn=document.getElementById('weird-save-btn');
+    const fill=document.getElementById('weird-save-btn-fill');
+    const label=document.getElementById('weird-save-btn-label');
+    if(!btn||!fill||!label)return;
+    btn.disabled=false;
+    fill.style.width='0%';
+    fill.style.opacity='0.35';
+    fill.style.background='linear-gradient(90deg,#fbbf24,#f59e0b)';
+    label.innerHTML=`<i class="fas fa-bolt mr-2"></i> Save Event`;
+}
+
 // Hook into saveFile to track weirdSha
-async function saveFile(filename,data,msg,curSha){
-    const token=localStorage.getItem('github_pat');if(!token)return false;
-    let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
-    if(curSha)body.sha=curSha;
-    try{
-        const r=await fetch(`${BASE_API}${filename}`,{method:'PUT',headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
-        if(r.ok){const d=await r.json();
-            if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
-            else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
-            else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
-            else if(filename===GITHUB_WEIRD_MANIFEST_FILE)weirdManifestSha=d.content.sha;
-            else if(filename===GITHUB_WEIRD_FILE||filename.startsWith('weird_events_')){weirdShardShas[filename]=d.content.sha;if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;}
-            else sha=d.content.sha;
-            return true;}
-    }catch(e){console.error(e);}return false;
+// Uses XMLHttpRequest (not fetch) so we can report real upload progress via
+// xhr.upload.onprogress — fetch has no cross-browser upload progress event.
+// onProgress is optional; existing callers that don't pass it are unaffected.
+function saveFile(filename,data,msg,curSha,onProgress){
+    return new Promise(resolve=>{
+        const token=localStorage.getItem('github_pat');
+        if(!token){resolve(false);return;}
+        let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
+        if(curSha)body.sha=curSha;
+        const xhr=new XMLHttpRequest();
+        xhr.open('PUT',`${BASE_API}${filename}`);
+        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.setRequestHeader('Content-Type','application/json');
+        if(xhr.upload&&typeof onProgress==='function'){
+            xhr.upload.onprogress=e=>{ if(e.lengthComputable)onProgress(e.loaded/e.total); };
+        }
+        xhr.onload=()=>{
+            if(xhr.status>=200&&xhr.status<300){
+                try{
+                    const d=JSON.parse(xhr.responseText);
+                    if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
+                    else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
+                    else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
+                    else if(filename===GITHUB_WEIRD_MANIFEST_FILE)weirdManifestSha=d.content.sha;
+                    else if(filename===GITHUB_WEIRD_FILE||filename.startsWith('weird_events_')){weirdShardShas[filename]=d.content.sha;if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;}
+                    else sha=d.content.sha;
+                    resolve(true);
+                }catch(e){resolve(false);}
+            } else { resolve(false); }
+        };
+        xhr.onerror=()=>resolve(false);
+        xhr.send(JSON.stringify(body));
+    });
 }
 
 // ============================================================
