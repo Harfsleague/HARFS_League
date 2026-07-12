@@ -323,6 +323,10 @@ body {
     transition:width 0.3s ease;
 }
 .nav-item.active::after{width:18px;}
+/* Overall / Season / History are disabled while the admin panel (PIN entry
+   or dashboard) is open, so the admin can't accidentally navigate away
+   mid-task — they must exit intentionally instead. */
+.nav-item.nav-disabled{opacity:0.32;pointer-events:none;filter:grayscale(0.4);}
 
 /* =====================================================
    SCREENS
@@ -1438,7 +1442,7 @@ body.lite-mode .ai-fab{ box-shadow:none; }
         <div class="nav-item" onclick="navigate('history')" id="nav-history">
             <i class="fas fa-history"></i><span>History</span>
         </div>
-        <div class="nav-item" onclick="handleWeirdOrAdminNav()" id="nav-admin">
+        <div class="nav-item" id="nav-admin">
             <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Moments</span>
         </div>
     </nav>
@@ -1863,7 +1867,7 @@ const GITHUB_WEIRD_FILE="weird_events.json";
 // active shard new events get appended to. Older shards are never rewritten,
 // so past media is never at risk when a new shard is created.
 const GITHUB_WEIRD_MANIFEST_FILE="weird_events_manifest.json";
-const WEIRD_SHARD_SIZE_LIMIT=40*1024*1024; // 40MB safety margin under GitHub's ~50MB practical limit
+const WEIRD_SHARD_SIZE_LIMIT=15*1024*1024; // 15MB — real-world reports show GitHub's Contents API can reject PUTs well below its documented 100MB limit (even 50MB payloads have been reported to fail with 422), so we stay well clear of that instead of trusting the higher figure
 const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
 const ADMIN_PASSWORD="0000";
 const TEAM_NAMES=["HOSI","Sajsfi","Bayern","Yellow"];
@@ -1877,6 +1881,7 @@ let matchHistory=[],archivedSeasons=[],weirdEvents=[];
 // one's GitHub blob sha (needed to update it), and each one's own event
 // array (only the active shard is ever rewritten when saving).
 let weirdShardFiles=[GITHUB_WEIRD_FILE],weirdShardShas={},weirdShardData={},weirdManifestSha=null;
+let lastSaveFileError=''; // holds the real error message from the last failed saveFile() call, for user-facing diagnostics
 let isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
 let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
@@ -1884,10 +1889,11 @@ let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for 
 const MAX_MOMENT_MEDIA=4;
 const MAX_MOMENT_VIDEO_SECONDS=120;
 const MOMENT_VIDEO_MAX_WIDTH=480;
-const MOMENT_VIDEO_BITRATE=700000; // ~700kbps — sharding (below) absorbs the larger files instead of shrinking quality
+const MOMENT_VIDEO_BITRATE=250000; // ~250kbps video — a full 2-min clip + audio stays well under WEIRD_SHARD_SIZE_LIMIT even after double base64 encoding
+const MOMENT_AUDIO_BITRATE=48000; // ~48kbps audio — explicit, so total size stays predictable instead of depending on the browser's default
 const MOMENT_AUDIO_MAX_MB=8;
 let adminRevealed=false; // whether admin button is shown
-let overallHoldTimer=null,overallHoldStart=null;
+let adminHoldTimer=null,adminHoldStart=null;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
 function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,totalPoints:0});}
@@ -2368,41 +2374,43 @@ function startApp(){
 })();
 
 // ============================================================
-// OVERALL LONG-PRESS → REVEAL ADMIN
+// MOMENTS LONG-PRESS → REVEAL + ENTER ADMIN
+// Holding 3s on the Moments nav item both turns it into the Admin
+// item AND opens the admin panel directly, in one gesture (instead
+// of the old two-step: hold on Overall to reveal, then tap to enter).
 // ============================================================
 function setupOverallHold(){
     const navMain=document.getElementById('nav-main');
+    // Overall is now a plain nav item — no hold gesture on it anymore.
+    navMain.addEventListener('click',()=>navigate('main-league'));
+
+    const navAdmin=document.getElementById('nav-admin');
 
     function startHold(e){
         e.preventDefault&&e.preventDefault();
-        overallHoldStart=Date.now();
-        overallHoldTimer=setTimeout(()=>{
+        adminHoldStart=Date.now();
+        adminHoldTimer=setTimeout(()=>{
             haptic([20,50,20,50,60]);
             revealAdminButton();
+            navigate('admin');
         },3000);
     }
     function cancelHold(){
-        if(overallHoldTimer){clearTimeout(overallHoldTimer);overallHoldTimer=null;}
-        // If held less than 5s, navigate to main-league normally
-        if(overallHoldStart&&(Date.now()-overallHoldStart)<4800&&!adminRevealed){
-            navigate('main-league');
+        if(adminHoldTimer){clearTimeout(adminHoldTimer);adminHoldTimer=null;}
+        // Released before the 3s hold completed → treat as a normal short
+        // tap (Moments feed, or straight into admin if already revealed).
+        if(adminHoldStart&&(Date.now()-adminHoldStart)<3000){
+            handleWeirdOrAdminNav();
         }
-        overallHoldStart=null;
+        adminHoldStart=null;
     }
 
-    navMain.addEventListener('mousedown',startHold);
-    navMain.addEventListener('touchstart',startHold,{passive:false});
-    navMain.addEventListener('mouseup',cancelHold);
-    navMain.addEventListener('mouseleave',cancelHold);
-    navMain.addEventListener('touchend',cancelHold);
-    navMain.addEventListener('touchcancel',cancelHold);
-
-    // Short tap (no hold) navigates to main-league when admin not revealed
-    navMain.addEventListener('click',()=>{
-        if(!adminRevealed && (!overallHoldStart || (Date.now()-overallHoldStart)<300)){
-            navigate('main-league');
-        }
-    });
+    navAdmin.addEventListener('mousedown',startHold);
+    navAdmin.addEventListener('touchstart',startHold,{passive:false});
+    navAdmin.addEventListener('mouseup',cancelHold);
+    navAdmin.addEventListener('mouseleave',cancelHold);
+    navAdmin.addEventListener('touchend',cancelHold);
+    navAdmin.addEventListener('touchcancel',cancelHold);
 }
 
 function revealAdminButton(){
@@ -2414,7 +2422,7 @@ function revealAdminButton(){
     navBtn.classList.add('admin-revealed');
     icon.className='fas fa-user-shield';
     label.textContent='Admin';
-    showToast('Admin button revealed! Tap it to enter.','info',3000);
+    showToast('Admin access revealed — enter your PIN','info',3000);
     // No auto-hide timer: the admin entry point stays revealed until the
     // admin manually exits (exitAdmin) or the app is reloaded — nothing
     // should silently kick the admin out mid-task (e.g. mid-upload).
@@ -2523,7 +2531,7 @@ function processMomentVideo(file){
             let mimeType='video/webm;codecs=vp8,opus';
             if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
             let recorder;
-            try{recorder=new MediaRecorder(canvasStream,{mimeType,videoBitsPerSecond:MOMENT_VIDEO_BITRATE});}
+            try{recorder=new MediaRecorder(canvasStream,{mimeType,videoBitsPerSecond:MOMENT_VIDEO_BITRATE,audioBitsPerSecond:MOMENT_AUDIO_BITRATE});}
             catch(e){fail(e);return;}
             const chunks=[];
             let drawTimer=null;
@@ -2790,6 +2798,18 @@ async function loadWeirdEventsFromGitHub(){
 async function saveWeirdEvent(){
     const text=document.getElementById('weird-event-text').value.trim();
     if(!text){showToast('Please write a description','error');return;}
+
+    // Safety net: check this event's own encoded size BEFORE spending time
+    // uploading. Even with the shard system, a single event has nowhere
+    // else to go if it alone is already too big, so catching that here
+    // (instantly, no upload attempt) is much better than finding out after
+    // the bar hits 100% and GitHub rejects it.
+    const soloEncodedSize=b64Encode(JSON.stringify([{id:Date.now(),text,media:weirdMedia,timestamp:new Date().toISOString()}],null,2)).length;
+    if(soloEncodedSize>WEIRD_SHARD_SIZE_LIMIT){
+        showToast(`This event is too large (~${(soloEncodedSize/1024/1024).toFixed(1)}MB encoded). Remove some media or use a shorter video.`,'error',5000);
+        return;
+    }
+
     const ok=await showConfirm({icon:'⭐',title:'Save Golden Moment?',message:'This will be permanently stored in the league archive.',okLabel:'Save',okColor:'purple'});
     if(!ok)return;
     const event={
@@ -2802,7 +2822,8 @@ async function saveWeirdEvent(){
     // Try appending to the current (last) shard first. Only roll over to a
     // brand-new shard file if that would push the shard past the safe size
     // limit — this keeps everything in as few files as possible while still
-    // guaranteeing we never hit GitHub's ~50MB practical PUT ceiling.
+    // staying well clear of GitHub's real-world PUT size ceiling (which in
+    // practice can reject payloads well below its documented 100MB limit).
     let targetFile=weirdShardFiles[weirdShardFiles.length-1];
     let targetArr=[event,...(weirdShardData[targetFile]||[])];
     let projectedSize=b64Encode(JSON.stringify(targetArr,null,2)).length;
@@ -2824,7 +2845,7 @@ async function saveWeirdEvent(){
         frac=>setWeirdSaveProgress(frac*mainSlice*100,'uploading'));
     if(!saved){
         setWeirdSaveProgress(0,'error');
-        showToast('Save failed — check network','error');
+        showToast(`Save failed: ${lastSaveFileError||'unknown error'}`,'error',5000);
         return;
     }
 
@@ -2837,7 +2858,7 @@ async function saveWeirdEvent(){
             // only the shard index failed to update, so the new shard just
             // won't be picked up on next load until this succeeds.
             setWeirdSaveProgress(100,'error');
-            showToast('Saved, but shard index update failed — try refreshing shortly', 'error');
+            showToast(`Saved, but shard index update failed: ${lastSaveFileError||'unknown error'}`, 'error', 5000);
             weirdShardData[targetFile]=targetArr;
             weirdEvents.unshift(event);
             document.getElementById('weird-event-text').value='';
@@ -2907,7 +2928,7 @@ function resetWeirdSaveBtn(){
 function saveFile(filename,data,msg,curSha,onProgress){
     return new Promise(resolve=>{
         const token=localStorage.getItem('github_pat');
-        if(!token){resolve(false);return;}
+        if(!token){lastSaveFileError='No GitHub token configured';resolve(false);return;}
         let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
         if(curSha)body.sha=curSha;
         const xhr=new XMLHttpRequest();
@@ -2928,10 +2949,19 @@ function saveFile(filename,data,msg,curSha,onProgress){
                     else if(filename===GITHUB_WEIRD_FILE||filename.startsWith('weird_events_')){weirdShardShas[filename]=d.content.sha;if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;}
                     else sha=d.content.sha;
                     resolve(true);
-                }catch(e){resolve(false);}
-            } else { resolve(false); }
+                }catch(e){lastSaveFileError=`Bad response from GitHub (status ${xhr.status})`;resolve(false);}
+            } else {
+                // Surface GitHub's actual error message (e.g. "content is not
+                // valid Base64", "file is too large to be processed", rate
+                // limit messages) instead of just a generic failure, so the
+                // real cause is visible in the UI rather than hidden.
+                let msg=`GitHub error ${xhr.status}`;
+                try{ const d=JSON.parse(xhr.responseText); if(d&&d.message)msg=`${xhr.status}: ${d.message}`; }catch(e){}
+                lastSaveFileError=msg;
+                resolve(false);
+            }
         };
-        xhr.onerror=()=>resolve(false);
+        xhr.onerror=()=>{lastSaveFileError='Network error — connection dropped mid-upload';resolve(false);};
         xhr.send(JSON.stringify(body));
     });
 }
@@ -2999,6 +3029,15 @@ function navigate(route){
         if(route==='admin'){ capsuleEl.classList.add('capsule-locked'); closeSettings(); }
         else{ capsuleEl.classList.remove('capsule-locked'); }
     }
+
+    // Disable Overall / Season / History while the admin panel (PIN screen
+    // or dashboard) is open, so a stray tap can't pull the admin out of it —
+    // exiting is only possible via the explicit exit button.
+    ['nav-main','nav-season','nav-history'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(!el)return;
+        el.classList.toggle('nav-disabled', route==='admin');
+    });
 
     currentRouteIndex=ROUTES.indexOf(route);
     const navMap={
