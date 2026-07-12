@@ -1881,6 +1881,7 @@ let matchHistory=[],archivedSeasons=[],weirdEvents=[];
 // one's GitHub blob sha (needed to update it), and each one's own event
 // array (only the active shard is ever rewritten when saving).
 let weirdShardFiles=[GITHUB_WEIRD_FILE],weirdShardShas={},weirdShardData={},weirdManifestSha=null;
+let weirdEventsLoaded=false; // guards against saving before shard shas are known (see saveWeirdEvent)
 let lastSaveFileError=''; // holds the real error message from the last failed saveFile() call, for user-facing diagnostics
 let isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
@@ -2792,12 +2793,24 @@ async function loadWeirdEventsFromGitHub(){
     }
     weirdEvents.sort((a,b)=>b.id-a.id); // newest first, independent of shard order
     weirdSha=weirdShardShas[GITHUB_WEIRD_FILE]||null; // kept in sync for any legacy references
+    weirdEventsLoaded=true;
     return weirdEvents;
 }
 
 async function saveWeirdEvent(){
     const text=document.getElementById('weird-event-text').value.trim();
     if(!text){showToast('Please write a description','error');return;}
+
+    // Hard safety net: never attempt a save before we actually know each
+    // shard's current sha. Without it, an update to an existing file looks
+    // identical (to our code) to creating a brand-new one, and GitHub
+    // rejects that with a 422 "sha wasn't supplied" error. This is normally
+    // already loaded by the time the admin dashboard opens, but this guard
+    // makes it impossible to hit the race regardless of timing.
+    if(!weirdEventsLoaded){
+        showToast('Syncing with GitHub before saving…','info',2000);
+        await loadWeirdEventsFromGitHub();
+    }
 
     // Safety net: check this event's own encoded size BEFORE spending time
     // uploading. Even with the shard system, a single event has nowhere
@@ -2994,8 +3007,13 @@ function showAdminDashboard(){
     document.getElementById('home-score-display').textContent='0';
     document.getElementById('away-score-display').textContent='0';
     updateMatchPreview();
-    // keep leagueData in sync with GitHub before any admin edit/delete/verify happens
-    Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([,h])=>renderAdminHistory(h));
+    // keep leagueData in sync with GitHub before any admin edit/delete/verify happens.
+    // Golden-Moment shard shas are loaded here too (once per session) — admin
+    // can now enter the panel without ever visiting the Moments tab first,
+    // so this can no longer be assumed to have happened already. Skipped on
+    // repeat dashboard visits (e.g. right after a save) since we already
+    // keep the shard shas in sync locally after every successful save.
+    Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub(),weirdEventsLoaded?Promise.resolve():loadWeirdEventsFromGitHub()]).then(([,h])=>renderAdminHistory(h));
     // reset weird media upload
     weirdMedia=[];renderWeirdPreview();
 }
