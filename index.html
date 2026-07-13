@@ -122,25 +122,6 @@ body[data-palette="graphite"] {
 }
 
 /* =====================================================
-   LIGHT SCHEME — derived automatically from whichever palette
-   is active, by inverting lightness while preserving hue
-   (the standard invert+hue-rotate technique). This means every
-   palette above automatically gets a coherent light look with
-   zero extra variables to maintain. Photos/videos and the
-   custom-palette color pickers are inverted back so they always
-   show true colors.
-   ===================================================== */
-body.scheme-light {
-    filter: invert(1) hue-rotate(180deg);
-    color-scheme: light;
-}
-body.scheme-light img,
-body.scheme-light video,
-body.scheme-light input[type="color"] {
-    filter: invert(1) hue-rotate(180deg);
-}
-
-/* =====================================================
    BASE
    ===================================================== */
 * { box-sizing: border-box; }
@@ -915,6 +896,10 @@ body {
 }
 .weird-img-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
 .weird-thumb-video::after{content:none;}
+.weird-thumb-placeholder{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.04);color:#4b5563;font-size:1.3rem;
+}
 .weird-video-play-icon{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     font-size:1.4rem;color:rgba(255,255,255,0.9);
@@ -933,6 +918,14 @@ body {
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .weird-audio-card audio{flex:1;height:32px;min-width:0;}
+.weird-audio-play-btn{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);
+    color:#fbbf24;border-radius:10px;padding:7px 10px;font-size:0.7rem;font-weight:700;
+    cursor:pointer;
+}
+.weird-audio-play-btn:active{transform:scale(0.96);}
+.weird-audio-play-btn:disabled{opacity:0.6;}
 /* Media lightbox */
 #weird-lightbox{
     position:fixed;inset:0;z-index:800;
@@ -1286,6 +1279,7 @@ body.lite-mode .ai-fab{ box-shadow:none; }
     -ms-overflow-style:none; scrollbar-width:none;
 }
 .ai-chat-scroll::-webkit-scrollbar{ display:none; }
+#ai-chat-messages{ display:flex; flex-direction:column; gap:12px; }
 .ai-msg{
     max-width:84%; padding:11px 15px; border-radius:18px;
     font-size:0.82rem; line-height:1.75; white-space:pre-wrap;
@@ -1409,12 +1403,6 @@ body.lite-mode .ai-fab{ box-shadow:none; }
         <div class="segmented-control" id="perf-segmented">
             <button class="segmented-btn" data-value="full" onclick="setPerformance('full')"><i class="fas fa-bolt"></i> Full</button>
             <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
-        </div>
-
-        <div class="appearance-section-label">Color Scheme</div>
-        <div class="segmented-control" id="scheme-segmented">
-            <button class="segmented-btn" data-value="dark" onclick="setScheme('dark')"><i class="fas fa-moon"></i> Dark</button>
-            <button class="segmented-btn" data-value="light" onclick="setScheme('light')"><i class="fas fa-sun"></i> Light</button>
         </div>
 
         <div class="appearance-section-label">Palette</div>
@@ -1707,6 +1695,10 @@ body.lite-mode .ai-fab{ box-shadow:none; }
     <!-- ============ MEDIA LIGHTBOX ============ -->
     <div id="weird-lightbox" onclick="closeWeirdLightbox()">
         <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
+        <div id="weird-lightbox-loading" style="display:none;color:#fff;text-align:center;">
+            <div class="spinner" style="width:32px;height:32px;border-width:3px;"></div>
+            <div style="font-size:0.75rem;margin-top:10px;color:#9ca3af;">Loading…</div>
+        </div>
         <img id="weird-lightbox-img" src="" alt="">
         <video id="weird-lightbox-video" src="" controls playsinline onclick="event.stopPropagation()" style="display:none;"></video>
     </div>
@@ -1918,7 +1910,6 @@ const PALETTES = [
 const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 
 let currentPalette = localStorage.getItem('palette') || 'ocean';
-let currentScheme  = localStorage.getItem('scheme') || 'dark'; // 'dark' | 'light'
 // migrates the old on/off lite flag from before this feature existed
 let performanceMode = localStorage.getItem('performance') || (localStorage.getItem('lite')==='on' ? 'lite' : 'full');
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
@@ -1932,7 +1923,6 @@ function applyAppearance(){
         clearCustomPaletteVars();
         document.body.setAttribute('data-palette', currentPalette);
     }
-    document.body.classList.toggle('scheme-light', currentScheme === 'light');
     document.body.classList.toggle('lite-mode', performanceMode === 'lite');
     syncSettingsUI();
     syncAppearanceUI();
@@ -1951,12 +1941,6 @@ function setPerformance(val){
     performanceMode = val;
     localStorage.setItem('performance', val);
     localStorage.setItem('lite', val === 'lite' ? 'on' : 'off');
-    applyAppearance();
-}
-function setScheme(val){
-    haptic([6]);
-    currentScheme = val;
-    localStorage.setItem('scheme', val);
     applyAppearance();
 }
 function selectPalette(id){
@@ -1983,9 +1967,6 @@ function renderPaletteGrid(){
 function syncAppearanceUI(){
     document.querySelectorAll('#perf-segmented .segmented-btn').forEach(b=>{
         b.classList.toggle('active', b.dataset.value === performanceMode);
-    });
-    document.querySelectorAll('#scheme-segmented .segmented-btn').forEach(b=>{
-        b.classList.toggle('active', b.dataset.value === currentScheme);
     });
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
@@ -2535,7 +2516,7 @@ function processMomentVideo(file){
             try{recorder=new MediaRecorder(canvasStream,{mimeType,videoBitsPerSecond:MOMENT_VIDEO_BITRATE,audioBitsPerSecond:MOMENT_AUDIO_BITRATE});}
             catch(e){fail(e);return;}
             const chunks=[];
-            let drawTimer=null;
+            let drawTimer=null,thumb=null;
             recorder.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
             recorder.onerror=e=>{if(drawTimer)clearInterval(drawTimer);video.pause();fail(e.error||new Error('recording failed'));};
             recorder.onstop=()=>{
@@ -2543,14 +2524,22 @@ function processMomentVideo(file){
                 video.pause();URL.revokeObjectURL(url);
                 const blob=new Blob(chunks,{type:'video/webm'});
                 const reader=new FileReader();
-                reader.onload=()=>finish({src:reader.result,duration:Math.round(clipSeconds)});
+                reader.onload=()=>finish({src:reader.result,duration:Math.round(clipSeconds),thumb});
                 reader.onerror=()=>fail(new Error('read failed'));
                 reader.readAsDataURL(blob);
             };
             video.currentTime=0;
             video.play().then(()=>{
                 recorder.start();
-                drawTimer=setInterval(()=>{try{ctx.drawImage(video,0,0,w,h);}catch(e){}},1000/24);
+                drawTimer=setInterval(()=>{
+                    try{
+                        ctx.drawImage(video,0,0,w,h);
+                        // Grab a small poster from the very first frame — this is
+                        // what the feed shows instead of ever loading the full
+                        // video, so it needs to be cheap (low res, low quality).
+                        if(!thumb)thumb=canvas.toDataURL('image/jpeg',0.55);
+                    }catch(e){}
+                },1000/24);
                 setTimeout(()=>{if(recorder.state!=='inactive')recorder.stop();},clipSeconds*1000);
             }).catch(fail);
         };
@@ -2585,7 +2574,11 @@ async function handleWeirdMediaSelect(e){
                 const reader=new FileReader();
                 reader.onload=async ev=>{
                     const compressed=await compressImage(ev.target.result,900,900,0.7);
-                    weirdMedia.push({type:'image',src:compressed});
+                    // Small preview used in the feed grid so it never has to
+                    // download the full-resolution image just to show a
+                    // thumbnail — the full version only loads when tapped.
+                    const thumb=await compressImage(ev.target.result,320,320,0.5);
+                    weirdMedia.push({type:'image',src:compressed,thumb});
                     renderWeirdPreview();res();
                 };
                 reader.onerror=()=>res();
@@ -2594,8 +2587,8 @@ async function handleWeirdMediaSelect(e){
         } else if(type==='video'){
             setMomentUploadBusy(true);
             try{
-                const {src,duration}=await processMomentVideo(file);
-                weirdMedia.push({type:'video',src,duration});
+                const {src,duration,thumb}=await processMomentVideo(file);
+                weirdMedia.push({type:'video',src,duration,thumb});
                 renderWeirdPreview();
             }catch(err){
                 showToast('Video processing not supported on this device — try a shorter clip','error',3500);
@@ -2676,24 +2669,33 @@ function renderWeirdEvents(){
         const media=getMomentMedia(ev);
         const visual=media.map((m,i)=>({...m,idx:i})).filter(m=>m.type!=='audio');
         const audios=media.map((m,i)=>({...m,idx:i})).filter(m=>m.type==='audio');
+        // Grid thumbnails only ever use the small `thumb` (or, for legacy
+        // images saved before thumbnails existed, the already-inline `src`
+        // — legacy videos with no thumb get a plain placeholder instead of
+        // ever rendering a real <video> tag here). Nothing full-size or
+        // heavy is ever placed in the feed grid; the real file only loads
+        // when openWeirdLightbox fetches it on tap.
         const imgs=visual.length>0
             ?`<div class="weird-card-images">
-                ${visual.map(m=>m.type==='video'
-                    ?`<div class="weird-img-thumb weird-thumb-video" onclick="openWeirdLightbox(${ev.id},${m.idx})">
-                        <video src="${m.src}" muted playsinline preload="metadata"></video>
-                        <i class="fas fa-play weird-video-play-icon"></i>
-                       </div>`
-                    :`<div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${m.idx})">
-                        <img src="${m.src}" alt="photo">
-                       </div>`
-                ).join('')}
+                ${visual.map(m=>{
+                    const preview=m.thumb||(m.type==='image'?m.src:null);
+                    if(m.type==='video'){
+                        return `<div class="weird-img-thumb weird-thumb-video" onclick="openWeirdLightbox(${ev.id},${m.idx})">
+                            ${preview?`<img src="${preview}" alt="video preview">`:`<div class="weird-thumb-placeholder"><i class="fas fa-film"></i></div>`}
+                            <i class="fas fa-play weird-video-play-icon"></i>
+                           </div>`;
+                    }
+                    return `<div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${m.idx})">
+                        ${preview?`<img src="${preview}" alt="photo">`:`<div class="weird-thumb-placeholder"><i class="fas fa-image"></i></div>`}
+                       </div>`;
+                }).join('')}
                </div>`:'';
         const audioList=audios.length>0
             ?`<div class="weird-card-audio-list">
                 ${audios.map(m=>`
-                    <div class="weird-audio-card">
+                    <div class="weird-audio-card" id="weird-audio-${ev.id}-${m.idx}">
                         <i class="fas fa-music"></i><span>${m.name||'Track'}</span>
-                        <audio src="${m.src}" controls></audio>
+                        <button class="weird-audio-play-btn" onclick="playWeirdAudio(${ev.id},${m.idx})"><i class="fas fa-play"></i> Play</button>
                     </div>`).join('')}
                </div>`:'';
         return`<div class="weird-card">
@@ -2709,11 +2711,30 @@ function renderWeirdEvents(){
         </div>`;
     }).join('');
 }
+// Lazily fetches + swaps in a real <audio> element only once tapped,
+// instead of every song on the whole feed loading its full file upfront.
+async function playWeirdAudio(eventId,mediaIndex){
+    const ev=weirdEvents.find(e=>e.id===eventId);
+    if(!ev)return;
+    const m=getMomentMedia(ev)[mediaIndex];
+    if(!m)return;
+    const card=document.getElementById(`weird-audio-${eventId}-${mediaIndex}`);
+    if(!card)return;
+    const btn=card.querySelector('.weird-audio-play-btn');
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading…';}
+    try{
+        const src=m.file?await fetchMomentMediaFile(m.file):m.src;
+        card.innerHTML=`<i class="fas fa-music"></i><span>${m.name||'Track'}</span><audio src="${src}" controls autoplay></audio>`;
+    }catch(err){
+        if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-play"></i> Play';}
+        showToast('Could not load audio — check connection','error');
+    }
+}
 
 // ============================================================
 // GOLDEN MOMENTS — LIGHTBOX (photo + video)
 // ============================================================
-function openWeirdLightbox(eventId,mediaIndex){
+async function openWeirdLightbox(eventId,mediaIndex){
     haptic([8]);
     const ev=weirdEvents.find(e=>e.id===eventId);
     if(!ev)return;
@@ -2721,15 +2742,28 @@ function openWeirdLightbox(eventId,mediaIndex){
     if(!m)return;
     const imgEl=document.getElementById('weird-lightbox-img');
     const vidEl=document.getElementById('weird-lightbox-video');
-    if(m.type==='video'){
-        imgEl.style.display='none';imgEl.src='';
-        vidEl.style.display='block';vidEl.src=m.src;vidEl.currentTime=0;
-        document.getElementById('weird-lightbox').classList.add('open');
-        vidEl.play().catch(()=>{});
-    } else {
-        if(vidEl){vidEl.pause();vidEl.style.display='none';vidEl.src='';}
-        imgEl.style.display='block';imgEl.src=m.src;
-        document.getElementById('weird-lightbox').classList.add('open');
+    const loadingEl=document.getElementById('weird-lightbox-loading');
+    imgEl.style.display='none';imgEl.src='';
+    vidEl.style.display='none';vidEl.pause();vidEl.src='';
+    if(loadingEl)loadingEl.style.display='flex';
+    document.getElementById('weird-lightbox').classList.add('open');
+    try{
+        // New events only store a small thumb + a reference to the full
+        // file, so the real photo/video is fetched here, on tap — nothing
+        // heavy is downloaded just from scrolling the feed. Legacy events
+        // (saved before this) still carry the full data inline as `src`.
+        const fullSrc=m.file?await fetchMomentMediaFile(m.file):m.src;
+        if(loadingEl)loadingEl.style.display='none';
+        if(m.type==='video'){
+            vidEl.style.display='block';vidEl.src=fullSrc;vidEl.currentTime=0;
+            vidEl.play().catch(()=>{});
+        } else {
+            imgEl.style.display='block';imgEl.src=fullSrc;
+        }
+    }catch(err){
+        if(loadingEl)loadingEl.style.display='none';
+        showToast('Could not load media — check your connection','error');
+        closeWeirdLightbox();
     }
 }
 function closeWeirdLightbox(){
@@ -2754,7 +2788,18 @@ function closeWeirdLightbox(){
 // Moments screen always shows the full history regardless of how
 // many shard files exist behind the scenes.
 // ============================================================
-async function loadWeirdEventsFromGitHub(){
+let weirdLoadInFlight=null;
+// Wrapped so concurrent callers (e.g. switching to the Moments tab right as
+// the admin dashboard is also loading) reuse the SAME in-flight request
+// instead of each starting their own — two overlapping loads both mutating
+// the shared weirdEvents/weirdShardData objects is exactly what was
+// producing duplicated/triplicated moments in the feed.
+function loadWeirdEventsFromGitHub(){
+    if(weirdLoadInFlight)return weirdLoadInFlight;
+    weirdLoadInFlight=loadWeirdEventsFromGitHubInner().finally(()=>{weirdLoadInFlight=null;});
+    return weirdLoadInFlight;
+}
+async function loadWeirdEventsFromGitHubInner(){
     weirdShardFiles=[GITHUB_WEIRD_FILE];
     weirdShardShas={};
     weirdShardData={};
@@ -2771,7 +2816,7 @@ async function loadWeirdEventsFromGitHub(){
         // back to the single legacy file (weirdShardFiles default above).
     }catch(e){weirdManifestSha=null;}
 
-    weirdEvents=[];
+    let events=[];
     for(const filename of weirdShardFiles){
         try{
             const r=await fetch(`${BASE_API}${filename}?ref=${GITHUB_LEAGUE_BRANCH}`);
@@ -2789,9 +2834,18 @@ async function loadWeirdEventsFromGitHub(){
             weirdShardShas[filename]=null;
             weirdShardData[filename]=[];
         }
-        weirdEvents=weirdEvents.concat(weirdShardData[filename]);
+        events=events.concat(weirdShardData[filename]);
     }
-    weirdEvents.sort((a,b)=>b.id-a.id); // newest first, independent of shard order
+    // Safety net: de-dupe by id in case a shard's own content ever contains
+    // an accidental repeat (e.g. from a previous corrupted save).
+    const seen=new Set();
+    events=events.filter(ev=>{
+        if(seen.has(ev.id))return false;
+        seen.add(ev.id);
+        return true;
+    });
+    events.sort((a,b)=>b.id-a.id); // newest first, independent of shard order
+    weirdEvents=events;
     weirdSha=weirdShardShas[GITHUB_WEIRD_FILE]||null; // kept in sync for any legacy references
     weirdEventsLoaded=true;
     return weirdEvents;
@@ -2812,31 +2866,54 @@ async function saveWeirdEvent(){
         await loadWeirdEventsFromGitHub();
     }
 
-    // Safety net: check this event's own encoded size BEFORE spending time
-    // uploading. Even with the shard system, a single event has nowhere
-    // else to go if it alone is already too big, so catching that here
-    // (instantly, no upload attempt) is much better than finding out after
-    // the bar hits 100% and GitHub rejects it.
-    const soloEncodedSize=b64Encode(JSON.stringify([{id:Date.now(),text,media:weirdMedia,timestamp:new Date().toISOString()}],null,2)).length;
-    if(soloEncodedSize>WEIRD_SHARD_SIZE_LIMIT){
-        showToast(`This event is too large (~${(soloEncodedSize/1024/1024).toFixed(1)}MB encoded). Remove some media or use a shorter video.`,'error',5000);
+    // Each media item (photo/video/song) is uploaded as its OWN file rather
+    // than inline in the shard JSON — this is what lets the feed show only
+    // small thumbnails and defer the real download until someone taps an
+    // item. So the only thing that can be individually "too big" now is a
+    // single media file's own encoded size, not the whole event.
+    const oversized=weirdMedia.find(m=>b64Encode(m.src||'').length>WEIRD_SHARD_SIZE_LIMIT);
+    if(oversized){
+        showToast(`One of the files is too large to upload safely. Remove it or use a shorter/lower-quality version.`,'error',5000);
         return;
     }
 
     const ok=await showConfirm({icon:'⭐',title:'Save Golden Moment?',message:'This will be permanently stored in the league archive.',okLabel:'Save',okColor:'purple'});
     if(!ok)return;
-    const event={
-        id:Date.now(),
-        text:text,
-        media:[...weirdMedia],
-        timestamp:new Date().toISOString()
-    };
+
+    const eventId=Date.now();
+    setWeirdSaveProgress(0,'uploading');
+
+    // Upload each media item's full-resolution data as its own file first.
+    // Progress is split evenly across: one slice per media file, plus one
+    // slice for the event/shard write itself (and the manifest, if a new
+    // shard has to be created).
+    const mediaWithFiles=weirdMedia.filter(m=>m.src);
+    const totalSteps=mediaWithFiles.length+1;
+    const lightMedia=[];
+    let stepIdx=0;
+    for(const m of weirdMedia){
+        if(!m.src){ lightMedia.push(m); continue; } // shouldn't happen, but keep as-is if it does
+        const idx=lightMedia.length;
+        const path=`moment_media/${eventId}_${idx}.txt`;
+        const base=stepIdx/totalSteps*100, span=100/totalSteps;
+        const uploaded=await uploadMomentMediaFile(path,m.src,frac=>setWeirdSaveProgress(base+frac*span,'uploading'));
+        if(!uploaded){
+            setWeirdSaveProgress(0,'error');
+            showToast(`Media upload failed: ${lastSaveFileError||'unknown error'}`,'error',5000);
+            return;
+        }
+        stepIdx++;
+        const {type,duration,name,thumb}=m;
+        lightMedia.push({type,duration,name,thumb,file:path});
+    }
+
+    const event={ id:eventId, text:text, media:lightMedia, timestamp:new Date().toISOString() };
 
     // Try appending to the current (last) shard first. Only roll over to a
     // brand-new shard file if that would push the shard past the safe size
-    // limit — this keeps everything in as few files as possible while still
-    // staying well clear of GitHub's real-world PUT size ceiling (which in
-    // practice can reject payloads well below its documented 100MB limit).
+    // limit. With media externalized, shards now only ever hold text +
+    // small thumbnails, so this should rarely if ever trigger — it's kept
+    // as a safety net rather than something expected to fire regularly.
     let targetFile=weirdShardFiles[weirdShardFiles.length-1];
     let targetArr=[event,...(weirdShardData[targetFile]||[])];
     let projectedSize=b64Encode(JSON.stringify(targetArr,null,2)).length;
@@ -2848,14 +2925,9 @@ async function saveWeirdEvent(){
         targetArr=[event];
     }
 
-    // The moment file itself carries almost all the bytes (media is base64
-    // inside it); the manifest write (only when rolling to a new shard) is
-    // tiny by comparison, so it gets a small fixed slice of the bar instead
-    // of its own progress tracking.
-    const mainSlice=usingNewShard?0.92:1;
-    setWeirdSaveProgress(0,'uploading');
+    const base=stepIdx/totalSteps*100, span=100/totalSteps;
     const saved=await saveFile(targetFile,targetArr,'New golden moment',weirdShardShas[targetFile]||null,
-        frac=>setWeirdSaveProgress(frac*mainSlice*100,'uploading'));
+        frac=>setWeirdSaveProgress(base+frac*span,'uploading'));
     if(!saved){
         setWeirdSaveProgress(0,'error');
         showToast(`Save failed: ${lastSaveFileError||'unknown error'}`,'error',5000);
@@ -2865,7 +2937,7 @@ async function saveWeirdEvent(){
     if(usingNewShard){
         weirdShardFiles.push(targetFile);
         const manifestSaved=await saveFile(GITHUB_WEIRD_MANIFEST_FILE,{shards:weirdShardFiles},'New golden-moment shard',weirdManifestSha,
-            frac=>setWeirdSaveProgress((mainSlice*100)+frac*8,'uploading'));
+            frac=>setWeirdSaveProgress(96+frac*4,'uploading'));
         if(!manifestSaved){
             // The moment itself is safely saved in the new shard either way —
             // only the shard index failed to update, so the new shard just
@@ -2938,6 +3010,51 @@ function resetWeirdSaveBtn(){
 // Uses XMLHttpRequest (not fetch) so we can report real upload progress via
 // xhr.upload.onprogress — fetch has no cross-browser upload progress event.
 // onProgress is optional; existing callers that don't pass it are unaffected.
+// ============================================================
+// GOLDEN MOMENT MEDIA FILES — stored as individual files instead
+// of inline base64 inside the shard JSON. This is what makes true
+// lazy-loading possible: the moments list itself only ever contains
+// small thumbnails, so viewing the feed never has to download any
+// full-size photo/video — only fetched when the admin/viewer taps
+// a specific item. It also keeps every shard file small and safely
+// under GitHub's real-world PUT size ceiling, regardless of how
+// many or how long the videos are.
+// ============================================================
+function uploadMomentMediaFile(path,dataUrlString,onProgress){
+    return new Promise(resolve=>{
+        const token=localStorage.getItem('github_pat');
+        if(!token){lastSaveFileError='No GitHub token configured';resolve(false);return;}
+        const body={message:'Golden Moment media',content:b64Encode(dataUrlString),branch:GITHUB_LEAGUE_BRANCH};
+        const xhr=new XMLHttpRequest();
+        xhr.open('PUT',`${BASE_API}${path}`);
+        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.setRequestHeader('Content-Type','application/json');
+        if(xhr.upload&&typeof onProgress==='function'){
+            xhr.upload.onprogress=e=>{ if(e.lengthComputable)onProgress(e.loaded/e.total); };
+        }
+        xhr.onload=()=>{
+            if(xhr.status>=200&&xhr.status<300){resolve(true);}
+            else{
+                let msg=`GitHub error ${xhr.status}`;
+                try{const d=JSON.parse(xhr.responseText);if(d&&d.message)msg=`${xhr.status}: ${d.message}`;}catch(e){}
+                lastSaveFileError=msg;
+                resolve(false);
+            }
+        };
+        xhr.onerror=()=>{lastSaveFileError='Network error — connection dropped mid-upload';resolve(false);};
+        xhr.send(JSON.stringify(body));
+    });
+}
+const momentMediaCache={}; // path -> data URL string, so re-opening the same item this session doesn't re-download it
+function fetchMomentMediaFile(path){
+    if(momentMediaCache[path])return Promise.resolve(momentMediaCache[path]);
+    const url=`${GITHUB_IMAGE_BASE_URL}${path}?t=${Date.now()}`;
+    return fetch(url).then(r=>{
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.text();
+    }).then(text=>{ momentMediaCache[path]=text; return text; });
+}
+
 function saveFile(filename,data,msg,curSha,onProgress){
     return new Promise(resolve=>{
         const token=localStorage.getItem('github_pat');
