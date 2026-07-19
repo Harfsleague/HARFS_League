@@ -4316,7 +4316,7 @@ async function confirmRenameMusic(i){
     if(!token){ showToast('No GitHub token configured','error',2400); return; }
     const btn=document.getElementById(`music-confirm-btn-${i}`);
     if(btn) btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-    const ok=await renameMusicFile(item.name,newTitle);
+    const ok=await renameMusicFile(item.name,newTitle,item.sha);
     if(ok){
         showToast('Song renamed','success',2000);
         refreshMusicEverywhere();
@@ -4477,28 +4477,34 @@ function deleteMusicFile(name,fileSha){
     });
 }
 
-async function fetchMusicFileRaw(name){
+// Fetches a file's full base64 content via the Git Blobs API (not the
+// Contents API — Contents only inlines `content` for files under 1MB,
+// which silently returns an empty string for anything bigger, like most
+// audio files. Blobs API returns full content for files up to 100MB).
+// `sha` is the blob sha GitHub already gave us in the folder listing.
+async function fetchBlobBase64(sha){
     const token=localStorage.getItem('github_pat');
-    const res=await fetch(`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}?ref=${GITHUB_LEAGUE_BRANCH}&_t=${Date.now()}`, token?{headers:{Authorization:`token ${token}`}}:{});
+    const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/blobs/${sha}`, token?{headers:{Authorization:`token ${token}`}}:{});
     if(!res.ok) throw new Error('HTTP '+res.status);
-    return res.json();
+    const data=await res.json();
+    if(!data.content) throw new Error('Blob came back empty');
+    return data.content.replace(/\n/g,'');
 }
 
 // GitHub's Contents API has no native rename/move — a rename is done by
 // re-uploading the same bytes under the new filename, then deleting the
 // original file once the new one is confirmed to exist.
-async function renameMusicFile(oldName,newTitle){
+async function renameMusicFile(oldName,newTitle,oldSha){
     const oldExt=oldName.includes('.')?oldName.slice(oldName.lastIndexOf('.')):'';
     let newName=newTitle.trim();
     if(oldExt&&!newName.toLowerCase().endsWith(oldExt.toLowerCase())) newName+=oldExt;
     if(newName===oldName) return true;
     newName=uniqueMusicName(newName);
     try{
-        const fileData=await fetchMusicFileRaw(oldName);
-        const content=(fileData.content||'').replace(/\n/g,'');
+        const content=await fetchBlobBase64(oldSha);
         const uploaded=await uploadMusicFile(newName,content);
         if(!uploaded) return false;
-        const deleted=await deleteMusicFile(oldName,fileData.sha);
+        const deleted=await deleteMusicFile(oldName,oldSha);
         if(!deleted){
             lastSaveFileError='Renamed, but could not remove the old file: '+lastSaveFileError;
             return false;
