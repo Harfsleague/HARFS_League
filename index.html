@@ -950,6 +950,46 @@ body {
 }
 #weird-lightbox-close:active{transform:scale(0.9);}
 
+/* ============ MUSIC LIBRARY MANAGER (admin) ============ */
+.music-item{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+    border-radius:14px;padding:9px 10px;margin-bottom:7px;
+}
+.music-item-icon{color:var(--primary);font-size:0.85rem;flex:0 0 auto;opacity:0.8;}
+.music-item-info{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.music-item-title{font-size:0.78rem;font-weight:700;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.music-item-sub{font-size:0.6rem;color:#6b7280;}
+.music-item-rename-input{
+    width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(96,165,250,0.4);
+    border-radius:8px;padding:4px 8px;font-size:0.76rem;color:#fff;outline:none;
+}
+.music-item-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+.music-item-btn{
+    width:28px;height:28px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#9ca3af;
+    font-size:0.68rem;cursor:pointer;transition:all 0.15s ease;
+}
+.music-item-btn:active{transform:scale(0.9);}
+.music-item-btn.confirm{color:#86efac;border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);}
+.music-item-btn.cancel{color:#fca5a5;border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);}
+.music-item-btn.danger{color:#fca5a5;}
+.music-item-btn.danger:active{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);}
+
+.music-upload-row{
+    background:rgba(255,255,255,0.03);border:1px solid rgba(96,165,250,0.2);
+    border-radius:12px;padding:8px 10px;margin-bottom:7px;transition:opacity 0.3s ease;
+}
+.music-upload-row-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;}
+.music-upload-name{font-size:0.7rem;color:#d1d5db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.music-upload-pct{font-size:0.66rem;color:#60a5fa;font-weight:800;flex:0 0 auto;}
+.music-upload-bar-track{width:100%;height:5px;border-radius:99px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.music-upload-bar-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#818cf8);transition:width 0.2s ease;}
+.music-upload-row.done .music-upload-bar-fill{background:linear-gradient(90deg,#22c55e,#4ade80);}
+.music-upload-row.done .music-upload-pct{color:#4ade80;}
+.music-upload-row.failed .music-upload-bar-fill{background:linear-gradient(90deg,#ef4444,#f87171);width:100% !important;}
+.music-upload-row.failed .music-upload-pct{color:#f87171;}
+
 /* Admin form for weird events */
 .weird-admin-section{
     background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
@@ -1634,6 +1674,32 @@ body.lite-mode .ai-fab{ box-shadow:none; }
                         </button>
                     </div>
                     <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history — use after any edit to double-check everything lines up.</p>
+                </div>
+            </div>
+
+            <!-- Music Library Manager -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#818cf8);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Music Library</h3>
+
+                    <div class="weird-upload-box" id="music-upload-box" style="margin-bottom:12px;">
+                        <input type="file" id="music-file-input" accept="audio/*" multiple onchange="handleMusicFileSelect(event)">
+                        <div id="music-upload-idle">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                            <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to upload one or more songs</p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">mp3, m4a, wav, ogg, aac</p>
+                        </div>
+                    </div>
+
+                    <div id="music-upload-progress-list"></div>
+
+                    <div id="admin-music-list" class="overflow-y-auto" style="max-height:260px;margin-top:4px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                    <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(96,165,250,0.3);color:#93c5fd;" onclick="loadMusicManagerList()">
+                        <i class="fas fa-rotate mr-2"></i>Refresh List
+                    </button>
                 </div>
             </div>
 
@@ -3133,6 +3199,9 @@ function showAdminDashboard(){
     Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub(),weirdEventsLoaded?Promise.resolve():loadWeirdEventsFromGitHub()]).then(([,h])=>renderAdminHistory(h));
     // reset weird media upload
     weirdMedia=[];renderWeirdPreview();
+    // Music library manager — always refetched on open so deletes/renames/
+    // uploads made from another session or device are reflected immediately.
+    loadMusicManagerList();
 }
 
 // Called when admin navigates away or finishes — restore nav
@@ -4144,6 +4213,300 @@ async function sendAiMessage(){
         pushAiMessage('model', '⚠️ Could not reach the assistant (' + (err.message || 'unknown error') + '). Check your internet connection and try again.');
     }finally{
         setAiTyping(false);
+    }
+}
+
+// ============================================================
+// ADMIN — MUSIC LIBRARY MANAGER
+// Lets the admin browse, upload (with real % progress), rename and
+// delete the tracks living in the GitHub "music" folder — the exact
+// same folder the playlist system above auto-loads from. Any change
+// here refreshes PLAYLIST immediately so the running player stays
+// in sync without needing a page reload.
+// ============================================================
+let musicManagerList=[]; // [{name, sha, size, title}]
+
+function formatBytes(n){
+    if(n==null) return '';
+    if(n<1024) return n+' B';
+    if(n<1024*1024) return (n/1024).toFixed(1)+' KB';
+    return (n/(1024*1024)).toFixed(1)+' MB';
+}
+
+// Forces a fresh read of the folder from GitHub (bypassing any cache) and
+// refreshes both the manager list and the live PLAYLIST used by the player.
+function refreshMusicEverywhere(){
+    playlistLoadPromise=null;
+    loadPlaylistFromGitHub();
+    loadMusicManagerList();
+}
+
+async function loadMusicManagerList(){
+    const listEl=document.getElementById('admin-music-list');
+    if(listEl) listEl.innerHTML='<div class="text-center text-gray-600 text-xs">Loading...</div>';
+    try{
+        const token=localStorage.getItem('github_pat');
+        const res=await fetch(MUSIC_API_URL+'&_t='+Date.now(), token?{headers:{Authorization:`token ${token}`}}:{});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const items=await res.json();
+        musicManagerList=(Array.isArray(items)?items:[])
+            .filter(it=>it.type==='file'&&AUDIO_EXTENSIONS.some(ext=>it.name.toLowerCase().endsWith(ext)))
+            .map(it=>({name:it.name, sha:it.sha, size:it.size, title:filenameToTitle(it.name)}))
+            .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));
+    }catch(e){
+        musicManagerList=[];
+        if(listEl) listEl.innerHTML='<div class="text-center text-red-400 text-xs">Could not load the music folder.</div>';
+        return;
+    }
+    renderMusicManager();
+}
+
+function renderMusicManager(){
+    const listEl=document.getElementById('admin-music-list');
+    if(!listEl) return;
+    if(!musicManagerList.length){
+        listEl.innerHTML='<div class="text-center text-gray-600 text-xs">No songs yet — upload one above.</div>';
+        return;
+    }
+    listEl.innerHTML=musicManagerList.map((item,i)=>`
+        <div class="music-item">
+            <i class="fas fa-music music-item-icon"></i>
+            <div class="music-item-info">
+                <input type="text" class="music-item-rename-input" id="music-rename-input-${i}" value="${escapeHtml(item.title)}" style="display:none;" onkeyup="if(event.key==='Enter')confirmRenameMusic(${i});if(event.key==='Escape')cancelRenameMusic(${i});">
+                <span class="music-item-title" id="music-item-title-${i}">${escapeHtml(item.title)}</span>
+                <span class="music-item-sub">${formatBytes(item.size)}</span>
+            </div>
+            <div class="music-item-actions">
+                <button class="music-item-btn" id="music-rename-btn-${i}" onclick="startRenameMusic(${i})" title="Rename"><i class="fas fa-pen"></i></button>
+                <button class="music-item-btn confirm" id="music-confirm-btn-${i}" style="display:none;" onclick="confirmRenameMusic(${i})" title="Save"><i class="fas fa-check"></i></button>
+                <button class="music-item-btn cancel" id="music-cancel-btn-${i}" style="display:none;" onclick="cancelRenameMusic(${i})" title="Cancel"><i class="fas fa-times"></i></button>
+                <button class="music-item-btn danger" onclick="deleteMusicItem(${i})" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function startRenameMusic(i){
+    document.getElementById(`music-item-title-${i}`).style.display='none';
+    document.getElementById(`music-rename-btn-${i}`).style.display='none';
+    document.getElementById(`music-confirm-btn-${i}`).style.display='inline-flex';
+    document.getElementById(`music-cancel-btn-${i}`).style.display='inline-flex';
+    const inp=document.getElementById(`music-rename-input-${i}`);
+    inp.style.display='block';
+    inp.focus();inp.select();
+}
+function cancelRenameMusic(i){
+    const item=musicManagerList[i];
+    document.getElementById(`music-item-title-${i}`).style.display='inline';
+    document.getElementById(`music-rename-btn-${i}`).style.display='inline-flex';
+    document.getElementById(`music-confirm-btn-${i}`).style.display='none';
+    document.getElementById(`music-cancel-btn-${i}`).style.display='none';
+    const inp=document.getElementById(`music-rename-input-${i}`);
+    inp.style.display='none';
+    if(item) inp.value=item.title;
+}
+async function confirmRenameMusic(i){
+    const item=musicManagerList[i];
+    if(!item) return;
+    const inp=document.getElementById(`music-rename-input-${i}`);
+    const newTitle=(inp.value||'').trim();
+    if(!newTitle){ showToast('Name cannot be empty','error',2200); return; }
+    if(newTitle===item.title){ cancelRenameMusic(i); return; }
+    const token=localStorage.getItem('github_pat');
+    if(!token){ showToast('No GitHub token configured','error',2400); return; }
+    const btn=document.getElementById(`music-confirm-btn-${i}`);
+    if(btn) btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+    const ok=await renameMusicFile(item.name,newTitle);
+    if(ok){
+        showToast('Song renamed','success',2000);
+        refreshMusicEverywhere();
+    }else{
+        showToast('Rename failed: '+(lastSaveFileError||'unknown error'),'error',3200);
+        if(btn) btn.innerHTML='<i class="fas fa-check"></i>';
+    }
+}
+
+async function deleteMusicItem(i){
+    const item=musicManagerList[i];
+    if(!item) return;
+    const confirmed=await showConfirm({
+        icon:'🗑️', title:'Delete this song?',
+        message:item.title+' will be permanently removed from the music folder.',
+        okLabel:'Delete', okColor:'red'
+    });
+    if(!confirmed) return;
+    const token=localStorage.getItem('github_pat');
+    if(!token){ showToast('No GitHub token configured','error',2400); return; }
+    const ok=await deleteMusicFile(item.name,item.sha);
+    if(ok){
+        showToast('Song deleted','success',2000);
+        refreshMusicEverywhere();
+    }else{
+        showToast('Delete failed: '+(lastSaveFileError||'unknown error'),'error',3200);
+    }
+}
+
+// ---- Upload ----
+function handleMusicFileSelect(e){
+    const files=Array.from(e.target.files||[]);
+    e.target.value='';
+    files.forEach(uploadSingleMusicFile);
+}
+
+function fileToBase64(file){
+    return new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>{
+            const result=reader.result||'';
+            const idx=result.indexOf(',');
+            resolve(idx>=0?result.slice(idx+1):result);
+        };
+        reader.onerror=()=>reject(new Error('Could not read file'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// Avoids silently overwriting an existing track with the same filename —
+// appends " (2)", " (3)"... against the currently loaded folder listing.
+function uniqueMusicName(name){
+    const existing=new Set(musicManagerList.map(m=>m.name));
+    if(!existing.has(name)) return name;
+    const dot=name.lastIndexOf('.');
+    const base=dot>0?name.slice(0,dot):name;
+    const ext=dot>0?name.slice(dot):'';
+    let n=2,candidate;
+    do{ candidate=`${base} (${n})${ext}`; n++; }while(existing.has(candidate));
+    return candidate;
+}
+
+async function uploadSingleMusicFile(file){
+    if(!AUDIO_EXTENSIONS.some(ext=>file.name.toLowerCase().endsWith(ext))){
+        showToast(file.name+' is not a supported audio file','error',2600);
+        return;
+    }
+    const token=localStorage.getItem('github_pat');
+    if(!token){ showToast('No GitHub token configured','error',2400); return; }
+
+    const finalName=uniqueMusicName(file.name);
+    const rowId='music-up-'+Math.random().toString(36).slice(2,9);
+    const progressList=document.getElementById('music-upload-progress-list');
+    if(progressList){
+        const row=document.createElement('div');
+        row.className='music-upload-row';
+        row.id=rowId;
+        row.innerHTML=`
+            <div class="music-upload-row-top">
+                <span class="music-upload-name">${escapeHtml(finalName)}</span>
+                <span class="music-upload-pct" id="${rowId}-pct">0%</span>
+            </div>
+            <div class="music-upload-bar-track"><div class="music-upload-bar-fill" id="${rowId}-fill" style="width:0%;"></div></div>`;
+        progressList.appendChild(row);
+    }
+    try{
+        const base64=await fileToBase64(file);
+        const ok=await uploadMusicFile(finalName,base64,frac=>{
+            const pct=Math.round(frac*100);
+            const pctEl=document.getElementById(rowId+'-pct');
+            const fillEl=document.getElementById(rowId+'-fill');
+            if(pctEl) pctEl.textContent=pct+'%';
+            if(fillEl) fillEl.style.width=pct+'%';
+        });
+        const rowEl=document.getElementById(rowId);
+        if(ok){
+            if(rowEl) rowEl.classList.add('done');
+            showToast(filenameToTitle(finalName)+' uploaded','success',2200);
+            refreshMusicEverywhere();
+        }else{
+            if(rowEl) rowEl.classList.add('failed');
+            showToast('Upload failed: '+(lastSaveFileError||'unknown error'),'error',3200);
+        }
+    }catch(err){
+        const rowEl=document.getElementById(rowId);
+        if(rowEl) rowEl.classList.add('failed');
+        showToast('Upload failed: '+(err.message||'could not read file'),'error',3200);
+    }finally{
+        setTimeout(()=>{ const rowEl=document.getElementById(rowId); if(rowEl) rowEl.remove(); },2200);
+    }
+}
+
+// ---- Raw GitHub Contents API calls scoped to the music folder ----
+function uploadMusicFile(name,base64Content,onProgress){
+    return new Promise(resolve=>{
+        const token=localStorage.getItem('github_pat');
+        if(!token){ lastSaveFileError='No GitHub token configured'; resolve(false); return; }
+        const body={message:'Upload music track: '+name, content:base64Content, branch:GITHUB_LEAGUE_BRANCH};
+        const xhr=new XMLHttpRequest();
+        xhr.open('PUT',`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`);
+        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.setRequestHeader('Content-Type','application/json');
+        if(xhr.upload&&typeof onProgress==='function'){
+            xhr.upload.onprogress=e=>{ if(e.lengthComputable) onProgress(e.loaded/e.total); };
+        }
+        xhr.onload=()=>{
+            if(xhr.status>=200&&xhr.status<300){ resolve(true); }
+            else{
+                let msg=`GitHub error ${xhr.status}`;
+                try{ const d=JSON.parse(xhr.responseText); if(d&&d.message) msg=`${xhr.status}: ${d.message}`; }catch(e){}
+                lastSaveFileError=msg; resolve(false);
+            }
+        };
+        xhr.onerror=()=>{ lastSaveFileError='Network error — connection dropped mid-upload'; resolve(false); };
+        xhr.send(JSON.stringify(body));
+    });
+}
+
+function deleteMusicFile(name,fileSha){
+    return new Promise(resolve=>{
+        const token=localStorage.getItem('github_pat');
+        if(!token){ lastSaveFileError='No GitHub token configured'; resolve(false); return; }
+        const body={message:'Delete music track: '+name, sha:fileSha, branch:GITHUB_LEAGUE_BRANCH};
+        const xhr=new XMLHttpRequest();
+        xhr.open('DELETE',`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`);
+        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.setRequestHeader('Content-Type','application/json');
+        xhr.onload=()=>{
+            if(xhr.status>=200&&xhr.status<300){ resolve(true); }
+            else{
+                let msg=`GitHub error ${xhr.status}`;
+                try{ const d=JSON.parse(xhr.responseText); if(d&&d.message) msg=`${xhr.status}: ${d.message}`; }catch(e){}
+                lastSaveFileError=msg; resolve(false);
+            }
+        };
+        xhr.onerror=()=>{ lastSaveFileError='Network error'; resolve(false); };
+        xhr.send(JSON.stringify(body));
+    });
+}
+
+async function fetchMusicFileRaw(name){
+    const token=localStorage.getItem('github_pat');
+    const res=await fetch(`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}?ref=${GITHUB_LEAGUE_BRANCH}&_t=${Date.now()}`, token?{headers:{Authorization:`token ${token}`}}:{});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return res.json();
+}
+
+// GitHub's Contents API has no native rename/move — a rename is done by
+// re-uploading the same bytes under the new filename, then deleting the
+// original file once the new one is confirmed to exist.
+async function renameMusicFile(oldName,newTitle){
+    const oldExt=oldName.includes('.')?oldName.slice(oldName.lastIndexOf('.')):'';
+    let newName=newTitle.trim();
+    if(oldExt&&!newName.toLowerCase().endsWith(oldExt.toLowerCase())) newName+=oldExt;
+    if(newName===oldName) return true;
+    newName=uniqueMusicName(newName);
+    try{
+        const fileData=await fetchMusicFileRaw(oldName);
+        const content=(fileData.content||'').replace(/\n/g,'');
+        const uploaded=await uploadMusicFile(newName,content);
+        if(!uploaded) return false;
+        const deleted=await deleteMusicFile(oldName,fileData.sha);
+        if(!deleted){
+            lastSaveFileError='Renamed, but could not remove the old file: '+lastSaveFileError;
+            return false;
+        }
+        return true;
+    }catch(e){
+        lastSaveFileError=e.message||'Rename failed';
+        return false;
     }
 }
 
