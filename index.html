@@ -4092,8 +4092,8 @@ document.addEventListener('touchstart', initAudio, {passive: true});
 // This is a private, personal app, so the API key is hardcoded
 // below instead of being proxied through a separate Worker.
 // ============================================================
-const OPENROUTER_API_KEY = "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";
-const OPENROUTER_MODEL   = "google/gemma-4-26b-a4b-it:free";
+const OPENROUTER_API_KEY = "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";
+const OPENROUTER_MODEL   = "nvidia/nemotron-3-ultra-550b-a55b:free";
 const OPENROUTER_URL     = "https://openrouter.ai/api/v1/chat/completions";
 
 let aiFullData   = localStorage.getItem('ai_full_data') === null ? true : (localStorage.getItem('ai_full_data') === 'on');
