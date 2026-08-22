@@ -4913,9 +4913,10 @@ document.addEventListener('touchstart', initAudio, {passive: true});
 // This is a private, personal app, so the API key is hardcoded
 // below instead of being proxied through a separate Worker.
 // ============================================================
-const OPENROUTER_API_KEY = "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";
-const OPENROUTER_MODEL   = "google/gemma-4-26b-a4b-it:free";
-const OPENROUTER_URL     = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MODEL = "google/gemma-4-26b-a4b-it:free";
+// The API key is NEVER stored in this client-side file.
+// Requests go through the Cloudflare Worker proxy.
+const OPENROUTER_URL = "https://harfs-ai-proxy.borobiron12.workers.dev/chat";
 
 let aiFullData   = localStorage.getItem('ai_full_data') === null ? true : (localStorage.getItem('ai_full_data') === 'on');
 let aiChatHistory = (()=>{ try{ return JSON.parse(localStorage.getItem('ai_chat_history')) || []; }catch(e){ return []; } })();
@@ -5148,10 +5149,7 @@ async function sendAiMessage(){
         const res = await fetch(OPENROUTER_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://harfs-league-agent.local',
-                'X-Title': 'HARFS League Assistant',
             },
             body: JSON.stringify({
                 model: OPENROUTER_MODEL,
