@@ -146,17 +146,22 @@ body {
 
 .ambient-orb {
     position: fixed; border-radius:50%;
-    filter: blur(90px); z-index:0; pointer-events:none;
-    animation: floatOrb 12s infinite ease-in-out;
+    filter: blur(64px); z-index:0; pointer-events:none;
+    animation: floatOrb 14s infinite ease-in-out;
     transition: background 0.8s ease;
+    /* GPU-composited transform, off the main-thread paint path — smoother
+       drift with noticeably less jank than the old 90px blur radius. */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
-.orb-1 { width:350px;height:350px; background:radial-gradient(circle,var(--orb1),transparent); top:-80px;left:-120px; opacity:0.4; }
-.orb-2 { width:450px;height:450px; background:radial-gradient(circle,var(--orb2),transparent); bottom:-120px;right:-120px; opacity:0.35; animation-delay:-6s; }
-.orb-3 { width:250px;height:250px; background:radial-gradient(circle,var(--orb3),transparent); top:40%;right:-80px; opacity:0.22; animation-delay:-3s; }
+.orb-1 { width:340px;height:340px; background:radial-gradient(circle,var(--orb1),transparent); top:-80px;left:-120px; opacity:0.38; }
+.orb-2 { width:430px;height:430px; background:radial-gradient(circle,var(--orb2),transparent); bottom:-120px;right:-120px; opacity:0.33; animation-delay:-6s; }
+.orb-3 { width:240px;height:240px; background:radial-gradient(circle,var(--orb3),transparent); top:40%;right:-80px; opacity:0.2; animation-delay:-3s; }
 
 @keyframes floatOrb {
-    0%,100%{transform:translate(0,0) scale(1);}
-    50%{transform:translate(25px,-40px) scale(1.08);}
+    0%,100%{transform:translate3d(0,0,0) scale(1);}
+    50%{transform:translate3d(25px,-40px,0) scale(1.06);}
 }
 
 /* =====================================================
@@ -286,7 +291,7 @@ body {
 .nav-item {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     color:#374151; padding:9px 0; border-radius:9999px;
-    transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); width:25%; cursor:pointer;
+    transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); flex:1 1 0; cursor:pointer;
     position:relative;
 }
 .nav-item i{font-size:1.1rem;margin-bottom:3px;transition:transform 0.3s ease;}
@@ -350,7 +355,7 @@ body {
     border-radius:18px; padding:13px 15px;
     position:relative; overflow:hidden;
     animation:rankCardIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-    cursor:default; transition:transform 0.15s;
+    cursor:pointer; transition:transform 0.15s;
     background:rgba(255,255,255,0.04);
     border:1px solid rgba(255,255,255,0.07);
 }
@@ -438,6 +443,67 @@ body {
 .ranking-card.rank-3 .ranking-pts-num { color:#d97706; }
 .ranking-card.rank-other .ranking-pts-num { color:#9ca3af; font-size:1.2rem; }
 .ranking-pts-lbl { font-size:0.52rem; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+/* Overall screen now ranks by trophies (medal-table style) instead of a
+   points number — see computeTrophyCounts()/compareTrophies() in the JS. */
+.ranking-trophy-block{ display:flex; gap:11px; flex-shrink:0; }
+.ranking-trophy-item{ display:flex; flex-direction:column; align-items:center; gap:1px; }
+.ranking-trophy-item .trophy-emoji{ font-size:1rem; line-height:1; }
+.ranking-trophy-item b{ font-size:0.78rem; font-weight:900; color:#e5e7eb; }
+.ranking-card.rank-other .ranking-trophy-item b{ color:#9ca3af; }
+
+/* ---- Team panel (tap a team on Overall) & generic report sheet ----
+   Both reuse .team-picker-sheet/.team-picker-panel/.team-picker-handle
+   for the overlay+sheet chrome, so they look and behave exactly like
+   the rest of the app's bottom sheets. */
+.team-panel-header{ display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-shrink:0; }
+.team-panel-header img{ width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.12); }
+.team-panel-header .name{ font-size:1.05rem; font-weight:900; color:#f0f4f8; }
+.team-panel-header .pinned{ font-size:0.65rem; color:var(--primary); margin-top:2px; }
+.team-panel-close{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:#9ca3af; cursor:pointer; flex-shrink:0; }
+.team-panel-scroll{ overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; display:flex; flex-direction:column; gap:12px; padding-bottom:4px; }
+.team-panel-scroll::-webkit-scrollbar{ display:none; }
+.team-panel-section{ background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:12px 14px; }
+.team-panel-section-title{ font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.trophy-cabinet-grid{ display:flex; justify-content:space-around; text-align:center; }
+.trophy-cabinet-item .trophy-emoji{ font-size:1.6rem; display:block; margin-bottom:4px; }
+.trophy-cabinet-item .trophy-count{ font-size:1.05rem; font-weight:900; color:#e5e7eb; }
+.wallet-balance-row{ display:flex; align-items:center; justify-content:space-between; }
+.wallet-balance-num{ font-size:1.4rem; font-weight:900; color:var(--gold); }
+.coin-log-list{ display:flex; flex-direction:column; gap:6px; margin-top:10px; max-height:170px; overflow-y:auto; }
+.coin-log-list::-webkit-scrollbar{ display:none; }
+.coin-log-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.68rem; padding:7px 9px; border-radius:10px; background:rgba(255,255,255,0.03); color:#cbd5e1; }
+.coin-log-delta{ font-weight:800; flex-shrink:0; }
+.coin-log-delta.positive{ color:#34d399; }
+.coin-log-delta.negative{ color:#f87171; }
+.team-panel-empty{ text-align:center; color:#4b5563; font-size:0.7rem; padding:10px 0; }
+.team-panel-admin-row{ display:none; gap:8px; margin-top:10px; }
+.team-panel-admin-row.visible{ display:flex; }
+.report-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:0.72rem; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); color:#cbd5e1; }
+.report-row:last-child{ border-bottom:none; }
+.report-row .label{ color:#9ca3af; }
+.report-row .value{ font-weight:800; color:#e5e7eb; flex-shrink:0; }
+
+/* ---- Shop (Boutique + Arena) ---- */
+.shop-item-card{
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px; padding:14px; margin-bottom:10px;
+}
+.shop-item-card.disabled{ opacity:0.5; }
+.shop-item-info{ flex:1; min-width:0; }
+.shop-item-name{ font-size:0.85rem; font-weight:800; color:#f0f4f8; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.shop-item-tag{ font-size:0.55rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border-radius:99px; background:rgba(251,191,36,0.15); color:var(--gold); border:1px solid rgba(251,191,36,0.3); }
+.shop-item-desc{ font-size:0.68rem; color:#9ca3af; margin-top:4px; line-height:1.5; }
+.shop-item-meta{ font-size:0.78rem; font-weight:800; color:var(--gold); margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.shop-item-extra{ font-size:0.6rem; font-weight:600; color:#6b7280; }
+.shop-item-buy-btn{
+    flex-shrink:0; border:1px solid rgba(52,211,153,0.35); background:rgba(52,211,153,0.12);
+    color:#6ee7b7; font-weight:800; font-size:0.72rem; padding:9px 14px; border-radius:11px; cursor:pointer;
+    font-family:inherit;
+}
+.shop-item-buy-btn:active{ transform:scale(0.95); }
+.shop-item-status{ flex-shrink:0; font-size:0.62rem; font-weight:700; color:#6b7280; text-align:center; max-width:78px; line-height:1.4; }
 
 /* left accent bar */
 .ranking-card::before {
@@ -538,32 +604,50 @@ body {
 .td-gd  { color:#d1d5db;font-weight:600; }
 
 /* =====================================================
-   MATCH HISTORY
+   MATCH HISTORY — merged into the Season screen. Minimal,
+   single-row cards (replaces the old oversized gradient-bar
+   cards) but keeps every feature: team filter chips, per-match
+   date/time, W/D/L color cue, and it's reused as-is for both
+   the current season and any archived season.
    ===================================================== */
-.match-card{
-    background:rgba(10,18,30,0.65);
+.season-history-card{
+    background:rgba(10,18,30,0.55);
     border:1px solid rgba(255,255,255,0.07);
-    border-radius:20px;overflow:hidden;
-    position:relative;margin-bottom:12px;
-    transition:transform 0.2s;
-    animation:cardIn 0.4s ease both;
+    border-radius:20px;
+    padding:14px;margin-bottom:16px;
 }
-@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-.match-card:active{transform:scale(0.98);}
-.match-card-bar{height:3px;width:100%;}
-.match-card-inner{padding:12px 14px 14px;}
-.match-team-logo{
-    width:46px;height:46px;border-radius:50%;object-fit:cover;
-    border:2px solid rgba(255,255,255,0.1);
-    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+.season-history-title{
+    font-size:0.72rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;
+    text-align:center;color:#6b7280;margin-bottom:10px;
 }
-.match-score-box{
-    background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.08);
-    border-radius:12px;padding:8px 14px;
-    font-size:1.5rem;font-weight:900;letter-spacing:4px;
-    color:var(--gold);text-shadow:0 0 10px rgba(251,191,36,0.4);
-    box-shadow:inset 0 2px 8px rgba(0,0,0,0.3);
-    min-width:90px;text-align:center;
+.season-history-title i{margin-right:5px;opacity:0.7;}
+.match-card-mini{
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:13px;
+    padding:8px 10px;margin-bottom:6px;
+    transition:opacity 0.2s ease,transform 0.2s ease;
+    animation:cardIn 0.35s ease both;
+}
+.match-card-mini:last-child{margin-bottom:0;}
+.match-card-mini:active{transform:scale(0.98);}
+.match-card-mini.hidden-by-filter{display:none;}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.mcm-date{
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    font-size:0.6rem;color:#6b7280;font-family:monospace;
+    margin-bottom:6px;
+}
+.mcm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.mcm-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mcm-team{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.mcm-team img{width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08);}
+.mcm-team span{font-size:0.68rem;font-weight:700;color:#d1d5db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mcm-team-away{flex-direction:row-reverse;text-align:right;}
+.mcm-score{
+    font-size:0.85rem;font-weight:900;color:var(--gold);
+    background:rgba(0,0,0,0.3);border-radius:8px;padding:3px 10px;
+    letter-spacing:1.5px;flex-shrink:0;
 }
 .match-badge{padding:3px 8px;border-radius:6px;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
 .badge-win{background:rgba(16,185,129,0.14);color:#34d399;border:1px solid rgba(16,185,129,0.3);}
@@ -848,7 +932,6 @@ body {
     display:flex; align-items:center; justify-content:center; gap:6px;
 }
 @keyframes spin{to{transform:rotate(360deg);}}
-.match-card.hidden-by-filter{display:none;}
 
 /* =====================================================
    GOLDEN MOMENTS SECTION
@@ -1076,6 +1159,44 @@ body {
 }
 
 /* =====================================================
+   LIQUID GLASS — generalized version of the capsule sheen
+   above, applied to the app's other main glass surfaces
+   (bottom nav, bottom sheets, settings) in Full performance
+   mode only. Turns off automatically in Lite mode — no JS
+   needed, Lite's own rules below are untouched.
+
+   NOTE: .bottom-nav is already `position:absolute` (that's what
+   pins it to the bottom of the screen) — it must NOT be reset to
+   `position:relative` here, or it collapses back into normal
+   document flow and jumps to the top of the page. Only the panels
+   that are `position:static` by default need it added.
+   ===================================================== */
+body:not(.lite-mode) .team-picker-panel,
+body:not(.lite-mode) .settings-panel,
+body:not(.lite-mode) .season-history-card{
+    position:relative;
+    overflow:hidden;
+}
+body:not(.lite-mode) .bottom-nav{
+    overflow:hidden;
+}
+body:not(.lite-mode) .bottom-nav::before,
+body:not(.lite-mode) .team-picker-panel::before,
+body:not(.lite-mode) .settings-panel::before,
+body:not(.lite-mode) .season-history-card::before{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.07) 40%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.07) 60%, transparent 80%);
+    background-size: 220% 100%;
+    background-position: 130% 0;
+    pointer-events:none;
+    animation: liquidSheen 8s ease-in-out infinite;
+    mix-blend-mode: overlay;
+    border-radius: inherit;
+    will-change: background-position;
+}
+
+/* =====================================================
    LITE MODE (PERFORMANCE SAVER) — flat surfaces, no blur,
    no continuous/looping effects. Short one-shot transitions
    (tap feedback, card entrances, page fades) are intentionally
@@ -1100,7 +1221,8 @@ body.lite-mode * {
 body.lite-mode .app-container,
 body.lite-mode .bottom-nav,
 body.lite-mode .league-header,
-body.lite-mode .match-card,
+body.lite-mode .season-history-card,
+body.lite-mode .match-card-mini,
 body.lite-mode .weird-card,
 body.lite-mode .admin-section,
 body.lite-mode .modal-content,
@@ -1225,6 +1347,9 @@ body.lite-mode .hero-text {
     box-shadow:0 0 10px var(--primary-glow);
 }
 .segmented-btn:active{ transform:scale(0.96); }
+/* Full performance mode — temporarily disabled (see FULL_PERFORMANCE_DISABLED) */
+.segmented-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+.segmented-btn:disabled:active{ transform:none; }
 .palette-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:12px 8px;
 }
@@ -1289,14 +1414,6 @@ body.lite-mode .hero-text {
 }
 .season-fab.season-fab-active{ display:flex; }
 .season-fab.season-fab-faded{ opacity:0; pointer-events:none; transform:translateX(-50%) translateY(14px); }
-.ai-fab{
-    background:linear-gradient(135deg, var(--primary), var(--accent));
-    color:#0b1220;
-    box-shadow:0 8px 26px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
-}
-.ai-fab:active{ transform:translateX(-50%) scale(0.94); }
-.ai-fab i{ font-size:0.95rem; }
-body.lite-mode .ai-fab{ box-shadow:none; }
 .back-to-top-fab{
     background:rgba(15,23,42,0.88);
     color:#e5e7eb;
@@ -1307,6 +1424,23 @@ body.lite-mode .ai-fab{ box-shadow:none; }
 .back-to-top-fab:active{ transform:translateX(-50%) scale(0.94); }
 .back-to-top-fab i{ font-size:0.85rem; }
 body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+
+/* AI Assistant entry point — now a small icon button inside the Season
+   Table header card itself, instead of a floating pill (keeps the
+   floating-button budget on screen down to just "back to top"). */
+.season-ai-header-btn{
+    position:absolute; top:14px; right:16px;
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg, var(--primary), var(--accent));
+    color:#0b1220;
+    border:1px solid rgba(255,255,255,0.3);
+    box-shadow:0 4px 14px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    cursor:pointer;
+    transition:transform 0.15s ease;
+}
+.season-ai-header-btn:active{ transform:scale(0.9); }
+body.lite-mode .season-ai-header-btn{ box-shadow:none; }
 
 /* =====================================================
    AI ASSISTANT — chat panel
@@ -1468,7 +1602,7 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
 
         <div class="appearance-section-label">Performance</div>
         <div class="segmented-control" id="perf-segmented">
-            <button class="segmented-btn" data-value="full" onclick="setPerformance('full')"><i class="fas fa-bolt"></i> Full</button>
+            <button class="segmented-btn" data-value="full" onclick="setPerformance('full')" disabled title="Temporarily unavailable"><i class="fas fa-bolt"></i> Full</button>
             <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
         </div>
 
@@ -1494,8 +1628,8 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
         <div class="nav-item active" onclick="navigate('league')" id="nav-season">
             <i class="fas fa-futbol"></i><span>Season</span>
         </div>
-        <div class="nav-item" onclick="navigate('history')" id="nav-history">
-            <i class="fas fa-history"></i><span>History</span>
+        <div class="nav-item" onclick="navigate('shop')" id="nav-shop">
+            <i class="fas fa-store"></i><span>Shop</span>
         </div>
         <div class="nav-item" id="nav-admin">
             <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Moments</span>
@@ -1521,7 +1655,13 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
     <!-- ============ SEASON TABLE ============ -->
     <div id="league-table-screen" class="page-screen">
 
-        <div class="league-header">
+        <div class="league-header" style="position:relative;">
+            <button class="season-ai-header-btn" onclick="openAiPanel()" aria-label="AI Assistant" title="AI Assistant">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4">
+  <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+  <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
+</svg>
+            </button>
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Season Table</h2>
             <div class="text-[10px] text-gray-500 font-mono mb-2" id="current-datetime">...</div>
             <!-- Season Navigation Pills -->
@@ -1579,36 +1719,41 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
             </div>
         </div>
 
-        <!-- Archive match history (shown only when viewing archived season) -->
-        <div class="w-full px-3 mt-2" id="archive-history-section" style="display:none;">
-            <div style="background:rgba(10,18,30,0.65);border:1px solid rgba(255,255,255,0.07);border-radius:22px;overflow:hidden;margin-bottom:14px;">
-                <div style="height:3px;background:linear-gradient(90deg,#374151,#4b5563);"></div>
-                <div style="padding:14px;">
-                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;color:#6b7280;">
-                        <i class="fas fa-history mr-1"></i> Season Matches
-                    </h3>
-                    <div id="archive-history-list" class="flex flex-col gap-2"></div>
+        <!-- Match history — merged into Season, works for current + archived seasons alike -->
+        <div class="w-full px-3 mt-2" id="season-history-section">
+            <div class="season-history-card">
+                <h3 class="season-history-title"><i class="fas fa-history"></i> Match History</h3>
+                <div class="chip-bar w-full" id="season-history-filter-bar">
+                    <div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>
+                </div>
+                <div id="season-history-list">
+                    <div id="season-history-loading" class="text-center text-gray-500 mt-6 text-sm flex items-center justify-center gap-2">
+                        <span class="spinner"></span> Loading...
+                    </div>
                 </div>
             </div>
         </div>
 
     </div><!-- /league-table-screen -->
 
-    <!-- ============ MATCH HISTORY ============ -->
-    <div id="match-history-screen" class="page-screen">
+    <!-- ============ SHOP ============ -->
+    <div id="shop-screen" class="page-screen">
         <div class="league-header">
-            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Match Feed</h2>
-            <div class="chip-bar w-full" id="history-filter-bar">
-                <div class="chip active" onclick="filterHistory('all',this)">All</div>
-            </div>
-        </div>
-        <div class="w-full px-4">
-            <div id="history-list">
-                <div id="history-loading" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
-                    <span class="spinner"></span> Loading...
+            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Shop</h2>
+            <div class="flex items-center gap-2 w-full mb-3">
+                <span style="font-size:0.62rem;color:#6b7280;font-weight:700;flex-shrink:0;">Buying for</span>
+                <div id="shop-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('shop')">
+                    <img id="shop-team-select-icon" src="" style="display:none;">
+                    <span id="shop-team-select-label">Select team</span>
+                    <i class="fas fa-chevron-down chevron"></i>
                 </div>
             </div>
+            <div class="segmented-control w-full" id="shop-tabs">
+                <button class="segmented-btn active" data-tab="boutique" onclick="setShopTab('boutique')"><i class="fas fa-shirt"></i> Boutique</button>
+                <button class="segmented-btn" data-tab="arena" onclick="setShopTab('arena')"><i class="fas fa-bolt"></i> Arena</button>
+            </div>
         </div>
+        <div class="w-full px-4" id="shop-items-list"></div>
     </div>
 
     <!-- ============ ADMIN ============ -->
@@ -1691,8 +1836,11 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
                         <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(59,130,246,0.3);color:#93c5fd;" onclick="recalculateLeagueTable()">
                             <i class="fas fa-shield-halved text-lg"></i><span>Verify Table</span>
                         </button>
+                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(234,179,8,0.3);color:#fde047;" onclick="auditCoinEconomy()">
+                            <i class="fas fa-coins text-lg"></i><span>Audit Coins</span>
+                        </button>
                     </div>
-                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history — use after any edit to double-check everything lines up.</p>
+                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history, or reviews every wallet for anything that looks broken — use after any edit to double-check everything lines up.</p>
                 </div>
             </div>
 
@@ -1862,19 +2010,10 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
         </div>
     </div>
 
-    <!-- AI Assistant entry point — lives on the Season screen, floats above the bottom nav.
-         Sibling of the .page-screens (not nested inside one) so it stays a true
-         non-scrolling overlay — see the .season-fab comment in the CSS for why. -->
-    <div class="season-fab ai-fab" id="ai-fab" onclick="openAiPanel()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 flex-shrink-0 text-gray-900 dark:text-slate-100">
-  <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
-  <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
-</svg>
-    </div>
-
-    <!-- Swaps in for the AI button once the user scrolls down the Season screen
-         (e.g. to read a past season's match history) so the AI entry point never
-         drifts around mid-scroll — see updateSeasonFabScroll() in the JS. -->
+    <!-- Season screen's "back to top" pill — floats above the bottom nav,
+         appears once the user scrolls down into the match history.
+         Sibling of the .page-screens (not nested inside one) so it stays a
+         true non-scrolling overlay — see the .season-fab comment in the CSS. -->
     <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="scrollSeasonToTop()">
         <i class="fas fa-arrow-up"></i><span>Back to Top</span>
     </div>
@@ -1885,6 +2024,65 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
             <div class="team-picker-handle"></div>
             <div class="team-picker-title" id="team-picker-title">Select Team</div>
             <div class="team-picker-grid" id="team-picker-grid"></div>
+        </div>
+    </div>
+
+    <!-- ============ TEAM PANEL (tap a team on Overall) ============ -->
+    <div id="team-panel-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeTeamPanel()">
+        <div class="team-picker-panel" style="max-height:82vh;">
+            <div class="team-picker-handle"></div>
+            <div class="team-panel-header">
+                <img id="team-panel-logo" src="" alt="" onerror="this.style.opacity='0.3'">
+                <div style="flex:1;min-width:0;">
+                    <div class="name" id="team-panel-name"></div>
+                    <div class="pinned" id="team-panel-pinned"></div>
+                </div>
+                <div class="team-panel-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="team-panel-scroll">
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-trophy"></i> Trophy Cabinet</div>
+                    <div class="trophy-cabinet-grid" id="team-panel-trophies"></div>
+                </div>
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-crown"></i> League Records</div>
+                    <div id="team-panel-records"></div>
+                </div>
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-coins"></i> Coin Wallet</div>
+                    <div class="wallet-balance-row">
+                        <span class="wallet-balance-num"><span id="team-panel-coins">0</span> 🪙</span>
+                    </div>
+                    <div class="coin-log-list" id="team-panel-log"></div>
+                    <div class="team-panel-admin-row" id="team-panel-admin-adjust">
+                        <button class="glass-button flex-1 text-xs py-2" onclick="adjustTeamCoinsPrompt()"><i class="fas fa-pen"></i> Adjust Coins</button>
+                    </div>
+                </div>
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-shirt"></i> Collection</div>
+                    <div id="team-panel-items"></div>
+                </div>
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-bolt"></i> Arena Requests</div>
+                    <div id="team-panel-arena"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GENERIC REPORT SHEET (e.g. coin economy audit) ============ -->
+    <div id="report-sheet-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeReportSheet()">
+        <div class="team-picker-panel" style="max-height:82vh;">
+            <div class="team-picker-handle"></div>
+            <div class="team-panel-header">
+                <div style="flex:1;min-width:0;">
+                    <div class="name" id="report-sheet-title"></div>
+                </div>
+                <div class="team-panel-close" onclick="closeReportSheet()"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="team-panel-scroll">
+                <div class="team-panel-section" id="report-sheet-body"></div>
+            </div>
         </div>
     </div>
 
@@ -1980,6 +2178,7 @@ let lastSaveFileError=''; // holds the real error message from the last failed s
 let isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
 let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
+let shopActiveTeam=null,shopActiveTab='boutique';
 let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for new event
 const MAX_MOMENT_MEDIA=4;
 const MAX_MOMENT_VIDEO_SECONDS=120;
@@ -1991,7 +2190,7 @@ let adminRevealed=false; // whether admin button is shown
 let adminHoldTimer=null,adminHoldStart=null;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
-function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,totalPoints:0});}
+function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,coins:0,coinLog:[],ownedItems:[],pinned:null});}
 function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
 
 // ============================================================
@@ -2012,8 +2211,13 @@ const PALETTES = [
 const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 
 let currentPalette = localStorage.getItem('palette') || 'ocean';
+// Full performance mode is temporarily disabled (see setPerformance below).
+// Lite is forced regardless of what's saved, but the saved preference itself
+// is left untouched so Full can just be switched back on later without
+// anyone needing to reselect it.
+const FULL_PERFORMANCE_DISABLED = true;
 // migrates the old on/off lite flag from before this feature existed
-let performanceMode = localStorage.getItem('performance') || (localStorage.getItem('lite')==='on' ? 'lite' : 'full');
+let performanceMode = FULL_PERFORMANCE_DISABLED ? 'lite' : (localStorage.getItem('performance') || (localStorage.getItem('lite')==='on' ? 'lite' : 'full'));
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
 
 // Single source of truth — call after any appearance change
@@ -2039,6 +2243,11 @@ function closeAppearanceSheet(){
     document.getElementById('appearance-sheet').classList.remove('open');
 }
 function setPerformance(val){
+    if(FULL_PERFORMANCE_DISABLED && val==='full'){
+        haptic([6]);
+        showToast('Full performance mode is temporarily unavailable','info');
+        return;
+    }
     haptic([6]);
     performanceMode = val;
     localStorage.setItem('performance', val);
@@ -2242,35 +2451,57 @@ function settingsNextTrack(){
 // ============================================================
 (function(){
     const canvas=document.getElementById('particle-canvas');
-    const ctx=canvas.getContext('2d');
-    let W,H;
+    const ctx=canvas.getContext('2d',{alpha:true});
+    let W,H,rafId=null;
     const particles=[];
+    // Fewer particles than before (36 vs 55) — noticeably lighter on the
+    // main thread while staying visually indistinguishable at this size/opacity.
+    const PARTICLE_COUNT=36;
     function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
     resize();window.addEventListener('resize',resize);
-    for(let i=0;i<55;i++){
+    for(let i=0;i<PARTICLE_COUNT;i++){
         particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
             r:Math.random()*1.5+0.3,dx:(Math.random()-0.5)*0.25,dy:(Math.random()-0.5)*0.25,
             o:Math.random()*0.38+0.08,pulse:Math.random()*Math.PI*2});
     }
-    function getColor(){
+    let cachedColor=null;
+    function refreshColor(){
         const s=getComputedStyle(document.documentElement);
-        return s.getPropertyValue('--particle-color').trim()||'147,197,253';
+        cachedColor=s.getPropertyValue('--particle-color').trim()||'147,197,253';
     }
+    refreshColor();
+    // Palette/scheme changes are the only thing that ever changes this value —
+    // re-reading getComputedStyle on every single frame (as before) was wasted work.
+    const paletteObserver=new MutationObserver(refreshColor);
+    paletteObserver.observe(document.body,{attributes:true,attributeFilter:['data-palette','style']});
     function draw(){
         ctx.clearRect(0,0,W,H);
-        const col=getColor();
         particles.forEach(p=>{
             p.pulse+=0.012;
             const o=p.o*(0.6+0.4*Math.sin(p.pulse));
             ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-            ctx.fillStyle=`rgba(${col},${o})`;ctx.fill();
+            ctx.fillStyle=`rgba(${cachedColor},${o})`;ctx.fill();
             p.x+=p.dx;p.y+=p.dy;
             if(p.x<0)p.x=W;if(p.x>W)p.x=0;
             if(p.y<0)p.y=H;if(p.y>H)p.y=0;
         });
-        requestAnimationFrame(draw);
+        rafId=requestAnimationFrame(draw);
     }
-    draw();
+    // Skip all work entirely when the canvas isn't visible: it's hidden via
+    // CSS in Lite mode (display:none) and pointless to keep painting while
+    // the tab is backgrounded — both previously burned CPU/battery for nothing.
+    function shouldRun(){
+        return !document.hidden && !document.body.classList.contains('lite-mode');
+    }
+    function start(){ if(rafId===null && shouldRun()) draw(); }
+    function stop(){ if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }
+    function sync(){ shouldRun() ? start() : stop(); }
+    document.addEventListener('visibilitychange', sync);
+    // Performance mode is applied via a body class toggle (setPerformance →
+    // applyAppearance), so a lightweight interval catches that transition
+    // without needing to hook into every call site that can change it.
+    setInterval(sync, 800);
+    sync();
 })();
 
 // ============================================================
@@ -2418,7 +2649,7 @@ function formatShamsiDateTime(ts){
 // ============================================================
 // SWIPE + ROUTES
 // ============================================================
-const ROUTES=['main-league','league','history','weird'];
+const ROUTES=['main-league','league','shop','weird'];
 let currentRouteIndex=1;
 
 // ============================================================
@@ -3258,8 +3489,6 @@ function navigate(route){
         syncSeasonPill();
         const sel = document.getElementById('season-selector');
         if(sel) sel.value = 'current';
-        const archSec = document.getElementById('archive-history-section');
-        if(archSec) archSec.style.display = 'none';
         updateCurrentDateTime();
     }
 
@@ -3273,7 +3502,7 @@ function navigate(route){
     // Disable Overall / Season / History while the admin panel (PIN screen
     // or dashboard) is open, so a stray tap can't pull the admin out of it —
     // exiting is only possible via the explicit exit button.
-    ['nav-main','nav-season','nav-history'].forEach(id=>{
+    ['nav-main','nav-season','nav-shop'].forEach(id=>{
         const el=document.getElementById(id);
         if(!el)return;
         el.classList.toggle('nav-disabled', route==='admin');
@@ -3282,14 +3511,14 @@ function navigate(route){
     currentRouteIndex=ROUTES.indexOf(route);
     const navMap={
         'main-league':'nav-main','league':'nav-season',
-        'history':'nav-history','weird':'nav-admin','admin':'nav-admin'
+        'shop':'nav-shop','weird':'nav-admin','admin':'nav-admin'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
 
     const idMap={
         'main-league':'main-league-screen','league':'league-table-screen',
-        'history':'match-history-screen','weird':'weird-screen','admin':'admin-screen'
+        'shop':'shop-screen','weird':'weird-screen','admin':'admin-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{
@@ -3302,14 +3531,13 @@ function navigate(route){
     if(target){target.style.display='flex';setTimeout(()=>target.classList.add('active'),40);}
 
     if(route==='main-league')loadMainLeagueDataFromGitHub().then(renderMainLeagueTable);
-    if(route==='league')Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([d])=>{
+    if(route==='league')Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([d,h])=>{
         const sel=document.getElementById('season-selector');if(sel)sel.value='current';
         isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
-        const archSec=document.getElementById('archive-history-section');
-        if(archSec)archSec.style.display='none';
+        renderSeasonHistoryList(h);
     });
     updateSeasonFabs(route);
-    if(route==='history')loadMatchHistoryFromGitHub().then(renderMatchHistory);
+    if(route==='shop')loadMainLeagueDataFromGitHub().then(renderShop);
     if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
     if(route==='admin'){
         if(isAdminUnlocked)showAdminDashboard();
@@ -3322,7 +3550,8 @@ function navigate(route){
 // ============================================================
 function renderMainLeagueTable(){
     document.getElementById('main-loading-message').style.display='none';
-    const table=Object.values(mainLeagueData).sort((a,b)=>b.totalPoints-a.totalPoints);
+    const trophies = computeTrophyCounts();
+    const table = TEAM_NAMES.map(t=>({name:t,...trophies[t]})).sort(compareTrophies);
     const pod=document.getElementById('podium-container');
 
     if(!table.length){ pod.style.display='none'; return; }
@@ -3331,27 +3560,43 @@ function renderMainLeagueTable(){
 
     const rankClasses=['rank-1','rank-2','rank-3'];
 
+    // Teams tied on gold/silver/bronze share the same rank number (e.g. two
+    // teams both on 2 golds are both "#1" — the next distinct team is "#3",
+    // not "#2"), mirroring standard sports "equal rank" conventions.
+    const ranks=[];
+    table.forEach((t,i)=>{
+        if(i>0){
+            const prev=table[i-1];
+            const tied = t.gold===prev.gold && t.silver===prev.silver && t.bronze===prev.bronze;
+            ranks.push(tied ? ranks[i-1] : i+1);
+        } else {
+            ranks.push(1);
+        }
+    });
+
     pod.innerHTML=table.map((t,i)=>{
-        const rankClass = i < 3 ? rankClasses[i] : 'rank-other';
-        const rankNum   = i + 1;
+        const rankNum   = ranks[i];
+        const rankClass = rankNum <= 3 ? rankClasses[rankNum-1] : 'rank-other';
         const delay     = i * 55;
 
-        // Modern rank badge: icons for top3, number for rest
-        const rankBadgeContent = i === 0 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
-                                : i === 1 ? '<span style="font-size:1rem;font-weight:900;">2</span>'
-                                : i === 2 ? '<span style="font-size:1rem;font-weight:900;">3</span>'
+        // Modern rank badge: icons for top3, number for rest — driven by the
+        // tie-aware rankNum, not the array index, so tied teams get matching badges.
+        const rankBadgeContent = rankNum === 1 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
+                                : rankNum === 2 ? '<span style="font-size:1rem;font-weight:900;">2</span>'
+                                : rankNum === 3 ? '<span style="font-size:1rem;font-weight:900;">3</span>'
                                 : `<span>${rankNum}</span>`;
 
         return `
-            <div class="ranking-card ${rankClass}" style="animation-delay:${delay}ms">
+            <div class="ranking-card ${rankClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
                 <div class="ranking-badge">${rankBadgeContent}</div>
                 <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" class="ranking-avatar" onerror="this.style.opacity='0.3'">
                 <div class="ranking-info">
                     <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${TEAM_DISPLAY_NAMES[t.name]}</div>
                 </div>
-                <div class="ranking-pts-block">
-                    <div class="ranking-pts-num">${t.totalPoints}</div>
-                    <div class="ranking-pts-lbl">PTS</div>
+                <div class="ranking-trophy-block">
+                    <div class="ranking-trophy-item"><span class="trophy-emoji">🥇</span><b>${t.gold}</b></div>
+                    <div class="ranking-trophy-item"><span class="trophy-emoji">🥈</span><b>${t.silver}</b></div>
+                    <div class="ranking-trophy-item"><span class="trophy-emoji">🥉</span><b>${t.bronze}</b></div>
                 </div>
             </div>`;
     }).join('');
@@ -3392,72 +3637,64 @@ function renderLeagueTable(dataToRender){
 }
 
 // ============================================================
-// RENDER — MATCH HISTORY
+// RENDER — MATCH HISTORY  (merged into the Season screen; the
+// same minimal cards + team-filter chips work for both the live
+// current-season feed and any archived season's history)
 // ============================================================
-function buildFilterChips(){
-    const bar=document.getElementById('history-filter-bar');
-    bar.innerHTML=`<div class="chip active" onclick="filterHistory('all',this)">All</div>`;
+function buildSeasonHistoryChips(){
+    const bar=document.getElementById('season-history-filter-bar');
+    if(!bar)return;
+    bar.innerHTML=`<div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>`;
     TEAM_NAMES.forEach(t=>{
         const c=document.createElement('div');
         c.className='chip';c.textContent=TEAM_DISPLAY_NAMES[t];
-        c.onclick=function(){filterHistory(t,this);};bar.appendChild(c);
+        c.onclick=function(){filterSeasonHistory(t,this);};bar.appendChild(c);
     });
 }
-function filterHistory(filter,chip){
+function filterSeasonHistory(filter,chip){
     haptic([6]);currentFilter=filter;
-    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    document.querySelectorAll('#season-history-filter-bar .chip').forEach(c=>c.classList.remove('active'));
     chip.classList.add('active');
-    document.querySelectorAll('.match-card').forEach(card=>{
+    document.querySelectorAll('#season-history-list .match-card-mini').forEach(card=>{
         const show=filter==='all'||card.dataset.home===filter||card.dataset.away===filter;
         card.classList.toggle('hidden-by-filter',!show);
     });
 }
-function renderMatchHistory(history){
-    matchHistory=history;
-    const loadingEl=document.getElementById('history-loading');
+function renderSeasonHistoryList(history){
+    history=history||[];
+    const loadingEl=document.getElementById('season-history-loading');
     if(loadingEl)loadingEl.style.display='none';
-    buildFilterChips();
-    const list=document.getElementById('history-list');
+    buildSeasonHistoryChips();
+    currentFilter='all';
+    const list=document.getElementById('season-history-list');
     if(!list)return;
     if(!history.length){
-        list.innerHTML='<div style="text-align:center;margin-top:40px;color:#374151;"><i class="fas fa-futbol" style="font-size:2rem;display:block;margin-bottom:8px;opacity:0.3;"></i><p style="font-size:0.85rem;">No matches yet</p></div>';
+        list.innerHTML='<div style="text-align:center;padding:26px 0;color:#374151;"><i class="fas fa-futbol" style="font-size:1.6rem;display:block;margin-bottom:6px;opacity:0.3;"></i><p style="font-size:0.8rem;">No matches yet</p></div>';
         return;
     }
     list.innerHTML=history.map((m,idx)=>{
         const dt=formatShamsiDateTime(m.timestamp);
         const parts=m.score.split('-');
         const hs=parseInt(parts[0]),as=parseInt(parts[1]);
-        let bar='from-blue-600 to-purple-600';
-        if(hs>as)bar='from-green-500 to-emerald-600';
-        else if(as>hs)bar='from-red-500 to-rose-600';
-        const delay=Math.min(idx,8)*50;
-        return`<div class="match-card" data-home="${m.home}" data-away="${m.away}" style="animation-delay:${delay}ms">
-            <div class="match-card-bar bg-gradient-to-r ${bar}"></div>
-            <div class="match-card-inner">
-                <div style="text-align:center;margin-bottom:10px;">
-                    <span style="font-size:0.62rem;color:#4b5563;background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:999px;font-family:monospace;">
-                        <i class="far fa-calendar-alt" style="margin-right:4px;"></i>${dt.date} · ${dt.time}
-                    </span>
+        let dot='#818cf8';
+        if(hs>as)dot='#22c55e';
+        else if(as>hs)dot='#ef4444';
+        const delay=Math.min(idx,10)*35;
+        return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" style="animation-delay:${delay}ms">
+            <div class="mcm-date"><span class="mcm-dot" style="background:${dot};"></span>${dt.date} · ${dt.time}</div>
+            <div class="mcm-row">
+                <div class="mcm-team">
+                    <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" onerror="this.style.opacity='0.3'">
+                    <span>${TEAM_DISPLAY_NAMES[m.home]||m.home}</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
-                    <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:6px;">
-                        <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" class="match-team-logo" onerror="this.style.opacity='0.3'">
-                        <span style="font-weight:700;font-size:0.72rem;text-align:center;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.home]}</span>
-                    </div>
-                    <div class="match-score-box">${m.score}</div>
-                    <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:6px;">
-                        <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" class="match-team-logo" onerror="this.style.opacity='0.3'">
-                        <span style="font-weight:700;font-size:0.72rem;text-align:center;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.away]}</span>
-                    </div>
+                <div class="mcm-score">${m.score}</div>
+                <div class="mcm-team mcm-team-away">
+                    <span>${TEAM_DISPLAY_NAMES[m.away]||m.away}</span>
+                    <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" onerror="this.style.opacity='0.3'">
                 </div>
             </div>
         </div>`;
     }).join('');
-    if(currentFilter!=='all'){
-        document.querySelectorAll('.match-card').forEach(c=>{
-            if(c.dataset.home!==currentFilter&&c.dataset.away!==currentFilter)c.classList.add('hidden-by-filter');
-        });
-    }
 }
 
 // ============================================================
@@ -3500,11 +3737,14 @@ function setTeamPickerValue(side,teamKey){
 function openTeamPicker(side){
     haptic([6]);
     activeTeamPickerSide=side;
-    document.getElementById('home-team-select-trigger').classList.toggle('open',side==='home');
-    document.getElementById('away-team-select-trigger').classList.toggle('open',side==='away');
-    document.getElementById('team-picker-title').textContent=side==='home'?'Select Home Team':'Select Away Team';
-    const otherSelected=side==='home'?selectedAwayTeam:selectedHomeTeam;
-    const currentSelected=side==='home'?selectedHomeTeam:selectedAwayTeam;
+    document.getElementById('home-team-select-trigger')?.classList.toggle('open',side==='home');
+    document.getElementById('away-team-select-trigger')?.classList.toggle('open',side==='away');
+    document.getElementById('shop-team-select-trigger')?.classList.toggle('open',side==='shop');
+    const titleMap={ home:'Select Home Team', away:'Select Away Team', shop:'Buying For' };
+    document.getElementById('team-picker-title').textContent=titleMap[side]||'Select Team';
+    // Shop just needs any of the 4 teams pickable — no "other side" exclusion like home/away matches have
+    const otherSelected = side==='home' ? selectedAwayTeam : side==='away' ? selectedHomeTeam : null;
+    const currentSelected = side==='home' ? selectedHomeTeam : side==='away' ? selectedAwayTeam : shopActiveTeam;
     const grid=document.getElementById('team-picker-grid');
     grid.innerHTML=TEAM_NAMES.map(t=>{
         const isSelected=t===currentSelected;
@@ -3519,18 +3759,29 @@ function openTeamPicker(side){
 function closeTeamPicker(){
     haptic([6]);
     document.getElementById('team-picker-sheet').classList.remove('open');
-    document.getElementById('home-team-select-trigger').classList.remove('open');
-    document.getElementById('away-team-select-trigger').classList.remove('open');
+    document.getElementById('home-team-select-trigger')?.classList.remove('open');
+    document.getElementById('away-team-select-trigger')?.classList.remove('open');
+    document.getElementById('shop-team-select-trigger')?.classList.remove('open');
     activeTeamPickerSide=null;
 }
 function selectTeamInPicker(teamKey){
     if(!activeTeamPickerSide)return;
     haptic([8,30,8]);
-    if(activeTeamPickerSide==='home'){selectedHomeTeam=teamKey;}
-    else{selectedAwayTeam=teamKey;}
-    setTeamPickerValue(activeTeamPickerSide,teamKey);
-    updateMatchPreview();
-    document.getElementById('admin-match-error').style.display='none';
+    if(activeTeamPickerSide==='home'){
+        selectedHomeTeam=teamKey;
+        setTeamPickerValue('home',teamKey);
+        updateMatchPreview();
+        document.getElementById('admin-match-error').style.display='none';
+    } else if(activeTeamPickerSide==='away'){
+        selectedAwayTeam=teamKey;
+        setTeamPickerValue('away',teamKey);
+        updateMatchPreview();
+        document.getElementById('admin-match-error').style.display='none';
+    } else if(activeTeamPickerSide==='shop'){
+        shopActiveTeam=teamKey;
+        setTeamPickerValue('shop',teamKey);
+        renderShop();
+    }
     closeTeamPicker();
 }
 
@@ -3730,12 +3981,11 @@ async function loadArchiveDropdown(){
     }catch(e){console.log("No archives yet");}
 }
 function loadSelectedSeason(val){
-    const archiveHistSection=document.getElementById('archive-history-section');
     if(val==='current'){
         isViewingArchive=false;
         updateCurrentDateTime();
         renderLeagueTable(leagueData);
-        if(archiveHistSection)archiveHistSection.style.display='none';
+        renderSeasonHistoryList(matchHistory);
     } else {
         isViewingArchive=true;
         const s=archivedSeasons.find(s=>s.seasonId==val);
@@ -3747,59 +3997,606 @@ function loadSelectedSeason(val){
             if(el)el.innerHTML=`<i class="far fa-calendar-check mr-1"></i>Ended: ${parts[2]} ${J_MONTHS_EN[parseInt(parts[1],10)-1]} ${parts[0]}`;
             const ld={};s.table.forEach(t=>ld[t.name]=t);
             renderLeagueTable(ld);
-            // Show archived season match history
-            if(archiveHistSection){
-                const history=s.history||[];
-                if(history.length>0){
-                    archiveHistSection.style.display='block';
-                    renderArchiveHistory(history);
-                } else {
-                    archiveHistSection.style.display='none';
-                }
-            }
+            // Archived seasons get the exact same minimal, filterable
+            // match-history list as the current season.
+            renderSeasonHistoryList(s.history||[]);
         }
     }
 }
-
-function renderArchiveHistory(history){
-    const list=document.getElementById('archive-history-list');
-    if(!list)return;
-    list.innerHTML=history.map((m,idx)=>{
-        const dt=formatShamsiDateTime(m.timestamp);
-        const parts=m.score.split('-');
-        const hs=parseInt(parts[0]),as=parseInt(parts[1]);
-        let barColor='#6366f1';
-        if(hs>as)barColor='#22c55e';
-        else if(as>hs)barColor='#ef4444';
-        return`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;">
-            <div style="height:2px;background:${barColor};"></div>
-            <div style="padding:10px 12px;">
-                <div style="text-align:center;margin-bottom:8px;">
-                    <span style="font-size:0.58rem;color:#4b5563;background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:999px;font-family:monospace;">
-                        <i class="far fa-calendar-alt" style="margin-right:3px;"></i>${dt.date} · ${dt.time}
-                    </span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-                        <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.opacity='0.3'">
-                        <span style="font-size:0.65rem;font-weight:700;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.home]||m.home}</span>
-                    </div>
-                    <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:5px 12px;font-size:1.1rem;font-weight:900;color:#fbbf24;letter-spacing:3px;min-width:70px;text-align:center;">
-                        ${m.score}
-                    </div>
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-                        <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.opacity='0.3'">
-                        <span style="font-size:0.65rem;font-weight:700;color:#e5e7eb;">${TEAM_DISPLAY_NAMES[m.away]||m.away}</span>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
 async function loadMainLeagueDataFromGitHub(){
     if(!Object.keys(mainLeagueData).length)initializeMainLeagueData();
-    try{const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();mainSha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});}}catch(e){}return mainLeagueData;
+    try{const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();mainSha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});}}catch(e){}
+    TEAM_NAMES.forEach(ensureWalletFields); // backfills the wallet shape for any team the file predates
+    return mainLeagueData;
 }
+
+// ============================================================
+// COIN ECONOMY & TROPHIES
+// ------------------------------------------------------------
+// Coins are earned automatically, purely from final scores (no
+// match timeline exists to lean on — see COIN_RULES). Trophies are
+// NOT stored anywhere: they're tallied live from archivedSeasons on
+// every render (computeTrophyCounts), so archiving a season IS what
+// awards the trophy — one source of truth, no drift possible.
+// The shop catalog (what coins can actually be spent on, and at what
+// price) is intentionally still unbuilt — this is the engine only.
+// ============================================================
+const COIN_RULES = {
+    WIN: 10,
+    DRAW: 4,
+    LOSS: 1,
+    CLEAN_SHEET_BONUS: 3,   // conceding 0 goals, on top of the result above
+    BIG_WIN_MARGIN: 3,      // winning by this many goals or more...
+    BIG_WIN_BONUS: 3,       // ...grants this many bonus coins
+    WIN_STREAK_LENGTH: 3,   // this many consecutive wins...
+    WIN_STREAK_BONUS: 10,   // ...grants a one-time bonus (retriggers every further streak of this length)
+};
+const SEASON_END_COIN_BONUS = [50, 30, 15]; // champion, runner-up, third place
+const LOGO_RENT_GRACE_SEASONS = 1; // seasons an item can go unpaid before it's reclaimed
+
+// ============================================================
+// SHOP CATALOG
+// ------------------------------------------------------------
+// Boutique = cosmetic, permanent-with-upkeep or timed, no gameplay
+// effect. Arena = in-game perks agreed before an FC26 match — the
+// app can't enforce these itself, it just tracks that a team paid
+// for one; the perk is honoured manually between players. Arena
+// prices escalate the more a team buys the same perk in a season
+// (see getArenaPrice()) so nobody can stack the same edge forever.
+// ============================================================
+const SHOP_ITEMS = {
+    boutique: [
+        { id:'crest_skin', name:'Custom Crest Skin', category:'boutique', price:80, rentPerSeason:5,
+          description:'A permanent custom color skin for your team crest across the app. A small seasonal upkeep keeps it active.' },
+        { id:'crest_legendary', name:'Legendary Crest', category:'boutique', price:180, rentPerSeason:10, rare:true,
+          description:"A one-of-a-kind crest design — only one team in HARFS can hold this at a time. If it's already owned, it isn't available until that team lets it go." },
+        { id:'profile_frame', name:'Profile Frame', category:'boutique', price:50, rentPerSeason:0,
+          description:'A gold frame around your team badge, permanently. No upkeep.' },
+        { id:'pin_spotlight', name:'Pin a Message', category:'boutique', price:30, rentPerSeason:0, durationDays:14,
+          description:'Pin a short bragging-rights message to the top of your team panel for 2 weeks.' },
+        { id:'boutique_mystery', name:'Mystery Box', category:'boutique', price:16, mystery:true,
+          description:'A cheap gamble: 50% chance it\'s a total bust, 50% chance of a coin jackpot payout.' },
+    ],
+    arena: [
+        { id:'goal_handicap', name:'Goal Handicap', category:'arena', basePrice:60, escalation:30,
+          description:'Start your next agreed match with a 1-goal head start.' },
+        { id:'veto_pick', name:"Veto Opponent's Pick", category:'arena', basePrice:70, escalation:30,
+          description:"Force your next opponent to play a formation or squad of your choosing." },
+        { id:'redo_half', name:'Redo First Half', category:'arena', basePrice:50, escalation:20,
+          description:'Claim the right to restart the first half once if it goes badly.' },
+        { id:'coin_insurance', name:'Coin Insurance', category:'arena', basePrice:40, escalation:20,
+          description:'If you lose your next match, it still pays out coins as if it were a draw.' },
+        { id:'double_coins', name:'Double Coins', category:'arena', basePrice:40, escalation:20,
+          description:"Your next match's coin reward is doubled, win or lose." },
+        { id:'arena_mystery', name:'Mystery Perk', category:'arena', basePrice:12, escalation:6, mystery:true,
+          description:'A cheap gamble: 50% chance it\'s a total bust, 50% chance of winning a random Arena perk for free.' },
+    ],
+};
+function findShopItem(id){ return SHOP_ITEMS.boutique.find(i=>i.id===id) || SHOP_ITEMS.arena.find(i=>i.id===id) || null; }
+function isRareItemClaimed(itemId){
+    for(const t of TEAM_NAMES){
+        const w = mainLeagueData[t];
+        if(w && Array.isArray(w.ownedItems) && w.ownedItems.some(it=>it.id===itemId)) return t;
+    }
+    return null;
+}
+function getArenaPrice(item, team){
+    const used = (team && mainLeagueData[team] && mainLeagueData[team].arenaUsage && mainLeagueData[team].arenaUsage[item.id]) || 0;
+    return item.basePrice + used*item.escalation;
+}
+
+// ============================================================
+// SHOP UI
+// ============================================================
+function setShopTab(tab){
+    shopActiveTab = tab;
+    document.querySelectorAll('#shop-tabs .segmented-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+    renderShop();
+}
+function renderShopItemCard(item, price, disabled, statusLabel, metaNote){
+    return `<div class="shop-item-card ${disabled?'disabled':''}">
+        <div class="shop-item-info">
+            <div class="shop-item-name">${escapeHtml(item.name)}${item.rare?'<span class="shop-item-tag">Rare</span>':''}${item.mystery?'<span class="shop-item-tag" style="background:rgba(139,92,246,0.15);color:#c4b5fd;border-color:rgba(139,92,246,0.3);">Gamble</span>':''}</div>
+            <div class="shop-item-desc">${escapeHtml(item.description)}</div>
+            <div class="shop-item-meta">${price} 🪙<span class="shop-item-extra">${escapeHtml(metaNote)}</span></div>
+        </div>
+        ${disabled
+            ? `<div class="shop-item-status">${escapeHtml(statusLabel)}</div>`
+            : `<button class="shop-item-buy-btn" onclick="requestShopItem('${item.id}')">Request</button>`}
+    </div>`;
+}
+function renderShop(){
+    const container = document.getElementById('shop-items-list');
+    if(!container) return;
+    setTeamPickerValue('shop', shopActiveTeam);
+    if(!shopActiveTeam){
+        container.innerHTML = '<div class="team-panel-empty" style="padding:40px 0;">Pick a team above to see prices and request items</div>';
+        return;
+    }
+    TEAM_NAMES.forEach(ensureWalletFields);
+    const wallet = mainLeagueData[shopActiveTeam];
+    const list = SHOP_ITEMS[shopActiveTab] || [];
+    container.innerHTML = list.map(item=>{
+        if(item.mystery){
+            const price = item.category==='arena' ? getArenaPrice(item, shopActiveTeam) : item.price;
+            return renderShopItemCard(item, price, false, '', '🎲 50/50 gamble');
+        }
+        if(shopActiveTab==='boutique'){
+            const claimedBy = item.rare ? isRareItemClaimed(item.id) : null;
+            const alreadyOwned = wallet.ownedItems.some(it=>it.id===item.id);
+            const disabled = !!(claimedBy || alreadyOwned);
+            let statusLabel = '';
+            if(alreadyOwned) statusLabel = 'Owned';
+            else if(claimedBy) statusLabel = `Owned by ${TEAM_DISPLAY_NAMES[claimedBy]||claimedBy}`;
+            const metaNote = item.rentPerSeason ? `+${item.rentPerSeason}/season upkeep` : (item.durationDays ? `Lasts ${Math.round(item.durationDays/7)} weeks` : 'Permanent');
+            return renderShopItemCard(item, item.price, disabled, statusLabel, metaNote);
+        } else {
+            const price = getArenaPrice(item, shopActiveTeam);
+            return renderShopItemCard(item, price, false, '', 'Price rises each time you use it this season');
+        }
+    }).join('');
+}
+
+// ============================================================
+// REQUEST → COPY LINK → ADMIN-APPROVE flow
+// ------------------------------------------------------------
+// Regular users have no GitHub write access at all (only the admin
+// device holds the token), so a "buy" tap here can't write anything
+// itself. Instead it builds a link that carries the request, shown
+// in-app with a Copy button (no navigator.share — some in-app
+// browsers/webviews don't support it reliably, so we avoid it
+// entirely rather than risk a crash). The user sends that link to
+// the admin however they normally would; opening it on the admin's
+// device shows a one-tap confirm that actually executes it.
+// ============================================================
+function b64Decode(s){ return decodeURIComponent(escape(atob(s))); }
+function buildActionLink(payload){
+    const encoded = encodeURIComponent(b64Encode(JSON.stringify(payload)));
+    const url = new URL(location.href);
+    url.search = '';
+    url.searchParams.set('req', encoded);
+    return url.toString();
+}
+let pendingRequestLink = '';
+function openRequestLinkSheet(payload, summaryText){
+    pendingRequestLink = buildActionLink(payload);
+    haptic([10]);
+    const bodyHtml = `
+        <p style="font-size:0.75rem;color:#cbd5e1;margin:0 0 12px;line-height:1.6;">${escapeHtml(summaryText)}</p>
+        <div id="request-link-box" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;font-size:0.62rem;color:#9ca3af;word-break:break-all;margin-bottom:12px;font-family:monospace;">${escapeHtml(pendingRequestLink)}</div>
+        <button class="glass-button w-full text-xs py-3" style="border-color:rgba(52,211,153,0.35);color:#6ee7b7;" onclick="copyPendingRequestLink()"><i class="fas fa-copy"></i> Copy Link</button>
+        <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:10px;line-height:1.5;">Send this link to the admin — opening it on their device shows a one-tap approval. Nothing is saved until they approve it.</p>`;
+    openReportSheet('Request Ready', bodyHtml);
+}
+function copyPendingRequestLink(){
+    if(!pendingRequestLink) return;
+    const done = ()=>showToast('Link copied ✅','success',2200);
+    const failed = ()=>{
+        // Fallback for browsers/webviews without Clipboard API access: select the text so it can be copied manually.
+        const el = document.getElementById('request-link-box');
+        if(el){
+            try{
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }catch(e){}
+        }
+        showToast('Could not auto-copy — long-press the link above to copy it','info',3500);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(pendingRequestLink).then(done).catch(failed);
+    } else {
+        failed();
+    }
+}
+function requestShopItem(itemId){
+    if(!shopActiveTeam){ showToast('Pick a team first','error',2000); return; }
+    const item = findShopItem(itemId);
+    if(!item) return;
+    const price = item.category==='arena' ? getArenaPrice(item, shopActiveTeam) : item.price;
+    const wallet = mainLeagueData[shopActiveTeam];
+    if(wallet && wallet.coins < price){
+        showToast(`Not enough coins — ${TEAM_DISPLAY_NAMES[shopActiveTeam]} has ${wallet.coins}, needs ${price}`,'error',3200);
+        return;
+    }
+    const payload = { action:'shop_buy', category:item.category, item:item.id, team:shopActiveTeam, price, ts:Date.now() };
+    let summary = `${TEAM_DISPLAY_NAMES[shopActiveTeam]||shopActiveTeam} wants to buy "${item.name}" for ${price} coins`;
+    if(item.id==='pin_spotlight'){
+        const text = prompt('What message do you want pinned for 2 weeks?');
+        if(!text) return;
+        payload.pinText = text.slice(0,120);
+        summary += `: "${payload.pinText}"`;
+    }
+    openRequestLinkSheet(payload, summary);
+}
+async function confirmAndExecuteShopPurchase(payload){
+    const item = findShopItem(payload.item);
+    if(!item || !TEAM_NAMES.includes(payload.team)) return;
+    const confirmMessage = item.id==='pin_spotlight'
+        ? `${TEAM_DISPLAY_NAMES[payload.team]||payload.team} wants to pin "${payload.pinText||''}" for ${payload.price} coins.`
+        : item.mystery
+            ? `${TEAM_DISPLAY_NAMES[payload.team]||payload.team} wants to gamble ${payload.price} coins on "${item.name}" — 50/50 odds.`
+            : `${TEAM_DISPLAY_NAMES[payload.team]||payload.team} wants "${item.name}" for ${payload.price} coins.`;
+    const ok = await showConfirm({ icon: item.mystery?'🎲':'🛍️', title:'Approve Purchase?', message: confirmMessage, okLabel:'Approve', okColor:'green' });
+    if(!ok) return;
+    await loadMainLeagueDataFromGitHub(); // re-check everything against the live state, not the (possibly stale) link
+    const wallet = mainLeagueData[payload.team];
+    if(item.id!=='pin_spotlight' && !item.mystery){
+        if(item.rare && isRareItemClaimed(item.id)){
+            showToast('Too late — that rare item was already claimed','error',3200); return;
+        }
+        if(wallet.ownedItems.some(it=>it.id===item.id)){
+            showToast(`${payload.team} already owns this`,'error',3000); return;
+        }
+    }
+    const currentPrice = item.category==='arena' ? getArenaPrice(item, payload.team) : item.price;
+    if(wallet.coins < currentPrice){
+        showToast(`Not enough coins now — ${payload.team} has ${wallet.coins}, needs ${currentPrice}`,'error',3500); return;
+    }
+
+    if(item.mystery){
+        addCoins(payload.team, -currentPrice, `${item.name}: entry fee`);
+        wallet.arenaUsage[item.id] = (wallet.arenaUsage[item.id]||0) + 1; // still escalates like any other arena item
+        const won = Math.random() < 0.5;
+        let resultMsg;
+        if(item.category==='boutique'){
+            if(won){
+                const jackpot = Math.round(currentPrice * (3 + Math.random()*2)); // 3x–5x payout
+                addCoins(payload.team, jackpot, `${item.name}: jackpot!`);
+                resultMsg = `🎉 Jackpot! ${TEAM_DISPLAY_NAMES[payload.team]} won +${jackpot} coins!`;
+            } else {
+                addCoins(payload.team, 0, `${item.name}: bust — nothing this time`);
+                resultMsg = `😬 Bust — ${TEAM_DISPLAY_NAMES[payload.team]} won nothing this time.`;
+            }
+        } else { // arena mystery
+            if(won){
+                const pool = SHOP_ITEMS.arena.filter(i=>!i.mystery);
+                const wonItem = pool[Math.floor(Math.random()*pool.length)];
+                wallet.arenaUsage[wonItem.id] = (wallet.arenaUsage[wonItem.id]||0) + 1;
+                wallet.arenaHistory.unshift({ id:wonItem.id, name:`${wonItem.name} (won from Mystery Perk)`, cost:0, ts:new Date().toISOString() });
+                resultMsg = `🎉 ${TEAM_DISPLAY_NAMES[payload.team]} won a free "${wonItem.name}"!`;
+            } else {
+                wallet.arenaHistory.unshift({ id:item.id, name:'Mystery Perk (bust)', cost:currentPrice, ts:new Date().toISOString() });
+                resultMsg = `😬 Bust — ${TEAM_DISPLAY_NAMES[payload.team]} won no perk this time.`;
+            }
+            if(wallet.arenaHistory.length>30) wallet.arenaHistory.length=30;
+        }
+        const saved = await saveMainLeagueDataToGitHub(mainLeagueData, `Shop mystery item: ${payload.team} tried ${item.name}`);
+        showToast(saved?resultMsg:'Saved locally — check network', saved?'success':'info');
+        renderMainLeagueTable();
+        if(document.getElementById('shop-screen')?.classList.contains('active')) renderShop();
+        if(document.getElementById('team-panel-overlay')?.classList.contains('open')) openTeamPanel(payload.team);
+        return;
+    }
+
+    addCoins(payload.team, -currentPrice, item.id==='pin_spotlight' ? 'Pinned a message' : `Bought: ${item.name}`);
+    if(item.id==='pin_spotlight'){
+        wallet.pinned = { text: (payload.pinText||'').slice(0,120), expiresAt: new Date(Date.now()+(item.durationDays||14)*86400000).toISOString() };
+    } else if(item.category==='boutique'){
+        wallet.ownedItems.push({ id:item.id, name:item.name, acquiredAt:new Date().toISOString(), rentPerSeason:item.rentPerSeason||0, unpaidSeasons:0 });
+    } else {
+        wallet.arenaUsage[item.id] = (wallet.arenaUsage[item.id]||0) + 1;
+        wallet.arenaHistory.unshift({ id:item.id, name:item.name, cost:currentPrice, ts:new Date().toISOString() });
+        if(wallet.arenaHistory.length>30) wallet.arenaHistory.length=30;
+    }
+    const saved = await saveMainLeagueDataToGitHub(mainLeagueData, `Shop purchase: ${payload.team} bought ${item.name}`);
+    showToast(saved?`Purchase approved ✅ ${item.name} → ${TEAM_DISPLAY_NAMES[payload.team]||payload.team}`:'Saved locally — check network', saved?'success':'info');
+    renderMainLeagueTable();
+    if(document.getElementById('shop-screen')?.classList.contains('active')) renderShop();
+    if(document.getElementById('team-panel-overlay')?.classList.contains('open')) openTeamPanel(payload.team);
+}
+// Checked once at startup — see the DOMContentLoaded handler below.
+async function handleIncomingActionLink(){
+    const params = new URLSearchParams(location.search);
+    const req = params.get('req');
+    if(!req) return;
+    history.replaceState(null,'',location.pathname); // strip it so a refresh doesn't re-trigger this
+    let payload;
+    try{ payload = JSON.parse(b64Decode(decodeURIComponent(req))); }
+    catch(e){ return; }
+    if(!localStorage.getItem('github_pat')){
+        showToast('This link needs to be opened on the admin device','info',4000);
+        return;
+    }
+    if(payload.action==='shop_buy') await confirmAndExecuteShopPurchase(payload);
+}
+
+function ensureWalletFields(team){
+    const w = mainLeagueData[team];
+    if(!w) return;
+    if(typeof w.coins !== 'number') w.coins = 0;
+    if(!Array.isArray(w.coinLog)) w.coinLog = [];
+    if(!Array.isArray(w.ownedItems)) w.ownedItems = [];
+    if(!w.arenaUsage || typeof w.arenaUsage !== 'object') w.arenaUsage = {};
+    if(!Array.isArray(w.arenaHistory)) w.arenaHistory = [];
+    if(w.pinned === undefined) w.pinned = null;
+    delete w.totalPoints; // retired — see computeTrophyCounts()
+}
+
+function addCoins(team, amount, reason){
+    if(!mainLeagueData[team]) return;
+    ensureWalletFields(team);
+    const w = mainLeagueData[team];
+    w.coins = Math.max(0, w.coins + amount);
+    w.coinLog.unshift({ ts: new Date().toISOString(), delta: amount, reason });
+    if(w.coinLog.length > 60) w.coinLog.length = 60; // keep the wallet file from growing forever
+}
+
+// Applies the automatic per-match coin rules to both sides of one result.
+// sign=-1 lets deleteMatch()/saveEditedMatch() cleanly reverse a previous award.
+function applyMatchCoins(home, away, hs, as, sign=1){
+    awardSideCoins(home, hs, as, sign);
+    awardSideCoins(away, as, hs, sign);
+}
+function awardSideCoins(team, gf, ga, sign){
+    if(!mainLeagueData[team]) return;
+    let amount = gf>ga ? COIN_RULES.WIN : (gf===ga ? COIN_RULES.DRAW : COIN_RULES.LOSS);
+    let reason = gf>ga ? 'Match won' : (gf===ga ? 'Match drawn' : 'Match played');
+    if(ga===0){ amount += COIN_RULES.CLEAN_SHEET_BONUS; reason += ' + clean sheet'; }
+    if(gf-ga >= COIN_RULES.BIG_WIN_MARGIN){ amount += COIN_RULES.BIG_WIN_BONUS; reason += ' + big win'; }
+    addCoins(team, amount * sign, sign<0 ? `Reverted: ${reason}` : reason);
+}
+
+// Win-streak bonus needs the freshly-saved match list (newest-first) to look
+// backwards, so it's checked separately, right after matchHistory is updated.
+function checkWinStreakBonus(team){
+    const games = matchHistory.filter(m=>m.home===team||m.away===team).slice(0, COIN_RULES.WIN_STREAK_LENGTH);
+    if(games.length < COIN_RULES.WIN_STREAK_LENGTH) return;
+    const allWins = games.every(m=>{
+        const p=m.score.split('-'); const hs=parseInt(p[0])||0, as=parseInt(p[1])||0;
+        const mine = m.home===team ? hs : as, theirs = m.home===team ? as : hs;
+        return mine>theirs;
+    });
+    if(allWins) addCoins(team, COIN_RULES.WIN_STREAK_BONUS, `${COIN_RULES.WIN_STREAK_LENGTH}-win streak bonus`);
+}
+
+// Gold/silver/bronze tally, read straight from the archive — never stored separately.
+function computeTrophyCounts(){
+    const counts = {}; TEAM_NAMES.forEach(t=>counts[t]={gold:0,silver:0,bronze:0});
+    (archivedSeasons||[]).forEach(season=>{
+        const table = season.table || [];
+        if(table[0] && counts[table[0].name]) counts[table[0].name].gold++;
+        if(table[1] && counts[table[1].name]) counts[table[1].name].silver++;
+        if(table[2] && counts[table[2].name]) counts[table[2].name].bronze++;
+    });
+    return counts;
+}
+// True medal-table ranking: most gold wins outright; silver is the first
+// tie-break, bronze the second; total trophy count breaks any further tie,
+// then alphabetical for full stability. Expects {name,gold,silver,bronze}.
+function compareTrophies(a,b){
+    if(b.gold!==a.gold) return b.gold-a.gold;
+    if(b.silver!==a.silver) return b.silver-a.silver;
+    if(b.bronze!==a.bronze) return b.bronze-a.bronze;
+    const totalA=a.gold+a.silver+a.bronze, totalB=b.gold+b.silver+b.bronze;
+    if(totalB!==totalA) return totalB-totalA;
+    return a.name.localeCompare(b.name);
+}
+
+// ============================================================
+// RECORD-BASED BADGES (non-purchasable, dynamic)
+// ------------------------------------------------------------
+// These aren't owned like shop items — they're automatically held by
+// whichever team currently leads a career stat, recomputed on every
+// render (nothing stored), and change hands the moment someone else
+// takes the lead. "Career" here means every archived season's final
+// table plus the current season's live stats — archived seasons only
+// keep their final per-team row (P/W/D/L/GF/GA), not a full match
+// log, so summing those rows is what "all-time" actually means here.
+// ============================================================
+function computeAllTimeStats(){
+    const stats = {}; TEAM_NAMES.forEach(t=>stats[t]={GF:0,GA:0,W:0,D:0,L:0,P:0});
+    (archivedSeasons||[]).forEach(season=>{
+        (season.table||[]).forEach(row=>{
+            if(!(row.name in stats)) return;
+            stats[row.name].GF+=row.GF||0; stats[row.name].GA+=row.GA||0;
+            stats[row.name].W+=row.W||0; stats[row.name].D+=row.D||0; stats[row.name].L+=row.L||0;
+            stats[row.name].P+=row.P||0;
+        });
+    });
+    TEAM_NAMES.forEach(t=>{
+        const row = leagueData[t];
+        if(!row) return;
+        stats[t].GF+=row.GF||0; stats[t].GA+=row.GA||0;
+        stats[t].W+=row.W||0; stats[t].D+=row.D||0; stats[t].L+=row.L||0;
+        stats[t].P+=row.P||0;
+    });
+    return stats;
+}
+function computeRecordBadges(){
+    const stats = computeAllTimeStats();
+    const trophies = computeTrophyCounts();
+    const pickLeader = (valueFn) => {
+        let best=null, bestVal=-Infinity;
+        TEAM_NAMES.slice().sort().forEach(t=>{ // alphabetical order gives a stable, deterministic tie-break
+            const v = valueFn(stats[t], trophies[t]);
+            if(v>bestVal){ bestVal=v; best=t; }
+        });
+        return { team:best, value:bestVal };
+    };
+    return {
+        topScorer:    { ...pickLeader(s=>s.GF), icon:'⚽', label:'Top Scorer (all-time)' },
+        bestDefense:  { ...pickLeader(s=>-s.GA), icon:'🛡️', label:'Best Defense (all-time)' },
+        mostWins:     { ...pickLeader(s=>s.W), icon:'🔥', label:'Most Wins (all-time)' },
+        mostDecorated:{ ...pickLeader((s,tr)=>tr.gold+tr.silver+tr.bronze), icon:'👑', label:'Most Decorated' },
+    };
+}
+function renderRecordBadgesFor(team){
+    const badges = computeRecordBadges();
+    const held = Object.values(badges).filter(b=>b.team===team && b.value>0);
+    if(!held.length) return '<div class="team-panel-empty">No league records held right now</div>';
+    return held.map(b=>`<div class="coin-log-row"><span>${b.icon} ${escapeHtml(b.label)}</span><span style="color:#6b7280;font-weight:600;">On loan</span></div>`).join('');
+}
+
+// Placeholder mechanism, ready for when the boutique catalog exists. Each
+// owned item can carry a `rentPerSeason` cost; at season end we try to
+// charge it. Unpaid items aren't repossessed immediately — they're marked
+// and only freed back to the public pool after LOGO_RENT_GRACE_SEASONS.
+// With no purchasable items yet this is a no-op for every team.
+async function processLogoRentAtSeasonEnd(){
+    TEAM_NAMES.forEach(team=>{
+        ensureWalletFields(team);
+        const w = mainLeagueData[team];
+        w.ownedItems.forEach(item=>{
+            if(!item.rentPerSeason) return; // permanent/free items are untouched
+            if(w.coins >= item.rentPerSeason){
+                addCoins(team, -item.rentPerSeason, `Rent: ${item.name||item.id}`);
+                item.unpaidSeasons = 0;
+            } else {
+                item.unpaidSeasons = (item.unpaidSeasons||0) + 1;
+            }
+        });
+        w.ownedItems = w.ownedItems.filter(item=>!(item.rentPerSeason && item.unpaidSeasons > LOGO_RENT_GRACE_SEASONS));
+    });
+}
+
+// ============================================================
+// TEAM PANEL — tap a team on Overall to see its trophies, wallet
+// and (later) its collection/requests. Read-only for everyone;
+// the "Adjust Coins" control only appears once the admin is
+// unlocked, since it writes straight to GitHub.
+// ============================================================
+function openTeamPanel(team){
+    if(!mainLeagueData[team]) return;
+    haptic([8]);
+    ensureWalletFields(team);
+    const w = mainLeagueData[team];
+    const trophies = computeTrophyCounts()[team] || {gold:0,silver:0,bronze:0};
+
+    document.getElementById('team-panel-logo').src = `${GITHUB_IMAGE_BASE_URL}${team}.png`;
+    document.getElementById('team-panel-name').textContent = TEAM_DISPLAY_NAMES[team] || team;
+
+    const pinnedEl = document.getElementById('team-panel-pinned');
+    if(w.pinned && w.pinned.expiresAt && new Date(w.pinned.expiresAt) > new Date()){
+        pinnedEl.innerHTML = `<i class="fas fa-thumbtack"></i> ${escapeHtml(w.pinned.text)}`;
+    } else {
+        pinnedEl.textContent = '';
+    }
+
+    document.getElementById('team-panel-trophies').innerHTML = `
+        <div class="trophy-cabinet-item"><span class="trophy-emoji">🥇</span><div class="trophy-count">${trophies.gold}</div></div>
+        <div class="trophy-cabinet-item"><span class="trophy-emoji">🥈</span><div class="trophy-count">${trophies.silver}</div></div>
+        <div class="trophy-cabinet-item"><span class="trophy-emoji">🥉</span><div class="trophy-count">${trophies.bronze}</div></div>`;
+
+    document.getElementById('team-panel-records').innerHTML = renderRecordBadgesFor(team);
+
+    document.getElementById('team-panel-coins').textContent = w.coins;
+    const logEl = document.getElementById('team-panel-log');
+    logEl.innerHTML = w.coinLog.length ? w.coinLog.slice(0,12).map(l=>{
+        const d = new Date(l.ts);
+        const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        return `<div class="coin-log-row">
+            <span>${escapeHtml(l.reason||'')}${when?` · ${when}`:''}</span>
+            <span class="coin-log-delta ${l.delta>=0?'positive':'negative'}">${l.delta>=0?'+':''}${l.delta}</span>
+        </div>`;
+    }).join('') : '<div class="team-panel-empty">No transactions yet</div>';
+
+    const itemsEl = document.getElementById('team-panel-items');
+    itemsEl.innerHTML = w.ownedItems.length ? w.ownedItems.map(it=>{
+        const extra = it.rentPerSeason ? `${it.rentPerSeason}/season rent` : (it.expiresAt ? `until ${new Date(it.expiresAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : 'permanent');
+        return `<div class="coin-log-row"><span>${escapeHtml(it.name||it.id)}</span><span style="color:#6b7280;font-weight:600;">${escapeHtml(extra)}</span></div>`;
+    }).join('') : '<div class="team-panel-empty">No items yet — visit the Shop</div>';
+
+    const arenaEl = document.getElementById('team-panel-arena');
+    arenaEl.innerHTML = w.arenaHistory.length ? w.arenaHistory.slice(0,10).map(a=>{
+        const d = new Date(a.ts);
+        const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        return `<div class="coin-log-row"><span>${escapeHtml(a.name||a.id)}${when?` · ${when}`:''}</span><span style="color:#6b7280;font-weight:600;">-${a.cost}</span></div>`;
+    }).join('') : '<div class="team-panel-empty">No in-game requests yet</div>';
+
+    const adminRow = document.getElementById('team-panel-admin-adjust');
+    adminRow.classList.toggle('visible', isAdminUnlocked);
+    adminRow.dataset.team = team;
+
+    document.getElementById('team-panel-overlay').classList.add('open');
+}
+function closeTeamPanel(){
+    document.getElementById('team-panel-overlay').classList.remove('open');
+}
+async function adjustTeamCoinsPrompt(){
+    const team = document.getElementById('team-panel-admin-adjust').dataset.team;
+    if(!team) return;
+    const raw = prompt('Coin adjustment (use a minus sign to deduct), e.g. 20 or -15:');
+    if(raw===null) return;
+    const amount = parseInt(raw,10);
+    if(!Number.isFinite(amount) || amount===0){ showToast('Enter a non-zero number','error',2200); return; }
+    const reason = prompt('Reason for this adjustment:') || 'Manual admin adjustment';
+    await loadMainLeagueDataFromGitHub();
+    addCoins(team, amount, reason);
+    const saved = await saveMainLeagueDataToGitHub(mainLeagueData, `Manual coin adjustment: ${team} ${amount>0?'+':''}${amount}`);
+    showToast(saved ? 'Wallet updated 🪙' : 'Saved locally — check network', saved ? 'success' : 'info');
+    openTeamPanel(team);
+    renderMainLeagueTable();
+}
+
+// ============================================================
+// GENERIC REPORT SHEET — reused by the coin-economy audit below
+// (and anything else that needs to show the admin a read-only
+// report before/after an action).
+// ============================================================
+function openReportSheet(title, bodyHtml){
+    document.getElementById('report-sheet-title').textContent = title;
+    document.getElementById('report-sheet-body').innerHTML = bodyHtml;
+    document.getElementById('report-sheet-overlay').classList.add('open');
+}
+function closeReportSheet(){
+    document.getElementById('report-sheet-overlay').classList.remove('open');
+}
+
+// ============================================================
+// COIN ECONOMY AUDIT — admin-only, read-only diagnostic. Coins
+// aren't purely derived like the season table is (manual
+// adjustments and rent are part of the ledger too), so this
+// doesn't blindly rebuild wallets from scratch — it reconciles
+// each wallet's log against its stored balance and flags anything
+// that looks broken, plus how much of this season's matches are
+// actually reflected in the ledger.
+// ============================================================
+async function auditCoinEconomy(){
+    showToast('Auditing wallets…','info',1500);
+    await loadMainLeagueDataFromGitHub();
+    await loadMatchHistoryFromGitHub();
+
+    // Recompute what the CURRENT season's matches alone should have paid out,
+    // to compare against what's actually logged as match income this season.
+    const expectedFromMatches = {}; TEAM_NAMES.forEach(t=>expectedFromMatches[t]=0);
+    matchHistory.forEach(m=>{
+        const p=m.score.split('-'); const hs=parseInt(p[0])||0, as=parseInt(p[1])||0;
+        [[m.home,hs,as],[m.away,as,hs]].forEach(([team,gf,ga])=>{
+            if(!(team in expectedFromMatches)) return;
+            let amt = gf>ga?COIN_RULES.WIN:(gf===ga?COIN_RULES.DRAW:COIN_RULES.LOSS);
+            if(ga===0) amt+=COIN_RULES.CLEAN_SHEET_BONUS;
+            if(gf-ga>=COIN_RULES.BIG_WIN_MARGIN) amt+=COIN_RULES.BIG_WIN_BONUS;
+            expectedFromMatches[team]+=amt;
+        });
+    });
+
+    let anyIssue = false;
+    const rows = TEAM_NAMES.map(team=>{
+        ensureWalletFields(team);
+        const w = mainLeagueData[team];
+        const negativeFlag = w.coins < 0;
+        const corruptLog = w.coinLog.some(l=>typeof l.delta!=='number' || !Number.isFinite(l.delta));
+        if(negativeFlag||corruptLog) anyIssue = true;
+        return `<div class="report-row">
+            <span class="label">${TEAM_DISPLAY_NAMES[team]||team}</span>
+            <span class="value">${w.coins} 🪙 ${negativeFlag?'⚠️ negative':''}${corruptLog?' ⚠️ bad entry':''}</span>
+        </div>
+        <div class="report-row" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span class="label">— from ${matchHistory.length} matches this season, wallet should show at least</span>
+            <span class="value">+${expectedFromMatches[team]}</span>
+        </div>`;
+    }).join('');
+
+    const summary = anyIssue
+        ? '<p style="color:#f87171;font-size:0.72rem;margin-bottom:10px;">⚠️ Something looks off — check the flagged wallet(s) below, e.g. via "Adjust Coins" on the team panel.</p>'
+        : '<p style="color:#34d399;font-size:0.72rem;margin-bottom:10px;">✅ No negative balances or corrupted entries found. "Should show at least" figures are the season\'s match-based income only — season-end bonuses, rent and manual adjustments sit on top of that.</p>';
+
+    openReportSheet('Coin Economy Audit', summary + rows);
+}
+
 async function loadLeagueDataFromGitHub(){
     if(!Object.keys(leagueData).length)initializeLeagueData();
     try{const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();sha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...c[k]};});}}catch(e){}return leagueData;
@@ -3825,30 +4622,42 @@ async function registerMatchResult(){
     document.getElementById('admin-match-error').style.display='none';
     const ok=await showConfirm({icon:'⚽',title:'Save Match?',message:`${TEAM_DISPLAY_NAMES[h]} ${homeScore} – ${awayScore} ${TEAM_DISPLAY_NAMES[a]}`,okLabel:'Save',okColor:'green'});
     if(!ok)return;
+    await loadMainLeagueDataFromGitHub(); // fresh wallet state + sha before we touch coins
     updateTeamStats(leagueData[h],homeScore,awayScore);
     updateTeamStats(leagueData[a],awayScore,homeScore);
     const m={home:h,away:a,score:`${homeScore}-${awayScore}`,timestamp:new Date().toISOString()};
     matchHistory.unshift(m);
+    applyMatchCoins(h,a,homeScore,awayScore,1);
+    checkWinStreakBonus(h);
+    checkWinStreakBonus(a);
     const s1=await saveLeagueDataToGitHub(leagueData,`Match ${m.score}`);
     const s2=await saveMatchHistoryToGitHub(matchHistory,`History ${m.score}`);
+    const s3=await saveMainLeagueDataToGitHub(mainLeagueData,`Coins for match ${m.score}`);
     homeScore=0;awayScore=0;
     document.getElementById('home-score-display').textContent='0';
     document.getElementById('away-score-display').textContent='0';
     updateMatchPreview();
-    showToast(s1&&s2?`Saved: ${h} ${m.score} ${a}`:'Saved locally — check network',s1&&s2?'success':'info');
+    showToast(s1&&s2&&s3?`Saved: ${h} ${m.score} ${a}`:'Saved locally — check network',s1&&s2&&s3?'success':'info');
     await refreshAllLeagueViews();
     showAdminDashboard();
 }
 async function deleteMatch(i){
     const m=matchHistory[i];
-    const ok=await showConfirm({icon:'🗑️',title:'Delete Match?',message:`${TEAM_DISPLAY_NAMES[m.home]} ${m.score} ${TEAM_DISPLAY_NAMES[m.away]} — Stats will revert.`,okLabel:'Delete',okColor:'red'});
+    const ok=await showConfirm({icon:'🗑️',title:'Delete Match?',message:`${TEAM_DISPLAY_NAMES[m.home]} ${m.score} ${TEAM_DISPLAY_NAMES[m.away]} — Stats and coins will revert.`,okLabel:'Delete',okColor:'red'});
     if(!ok)return;
+    await loadMainLeagueDataFromGitHub();
     const p=m.score.split('-');const hs=parseInt(p[0]),as=parseInt(p[1]);
     revertTeamStats(leagueData[m.home],hs,as);revertTeamStats(leagueData[m.away],as,hs);
+    // Reverses the base result/clean-sheet/big-win coins this match granted. A
+    // win-streak bonus it may have triggered is NOT auto-clawed-back (it's a rare,
+    // one-time award and untangling it from one deleted match reliably isn't worth
+    // the complexity) — adjust manually from the team panel if that ever matters.
+    applyMatchCoins(m.home,m.away,hs,as,-1);
     matchHistory.splice(i,1);
     const s1=await saveLeagueDataToGitHub(leagueData,"Reverted stats");
     const s2=await saveMatchHistoryToGitHub(matchHistory,"Deleted match");
-    if(s1&&s2)showToast('Match deleted & stats reverted','success');
+    const s3=await saveMainLeagueDataToGitHub(mainLeagueData,"Reverted coins for deleted match");
+    if(s1&&s2&&s3)showToast('Match deleted, stats & coins reverted','success');
     await refreshAllLeagueViews();
     showAdminDashboard();
 }
@@ -3885,17 +4694,21 @@ async function saveEditedMatch(){
     const p=m.score.split('-');
     const oldHs=parseInt(p[0])||0,oldAs=parseInt(p[1])||0;
     if(editHomeScore===oldHs&&editAwayScore===oldAs){closeEditMatchModal();return;}
+    await loadMainLeagueDataFromGitHub();
     // revert the old result then apply the new one, so the table always reflects what's on screen
     if(leagueData[m.home])revertTeamStats(leagueData[m.home],oldHs,oldAs);
     if(leagueData[m.away])revertTeamStats(leagueData[m.away],oldAs,oldHs);
     if(leagueData[m.home])updateTeamStats(leagueData[m.home],editHomeScore,editAwayScore);
     if(leagueData[m.away])updateTeamStats(leagueData[m.away],editAwayScore,editHomeScore);
+    applyMatchCoins(m.home,m.away,oldHs,oldAs,-1);
+    applyMatchCoins(m.home,m.away,editHomeScore,editAwayScore,1);
     m.score=`${editHomeScore}-${editAwayScore}`;
     m.editedAt=new Date().toISOString();
     closeEditMatchModal();
     const s1=await saveLeagueDataToGitHub(leagueData,`Edited match result: ${m.score}`);
     const s2=await saveMatchHistoryToGitHub(matchHistory,'Edited match result');
-    showToast(s1&&s2?'Match result updated ✏️':'Saved locally — check network',s1&&s2?'success':'info');
+    const s3=await saveMainLeagueDataToGitHub(mainLeagueData,'Coins adjusted for edited match');
+    showToast(s1&&s2&&s3?'Match result & coins updated ✏️':'Saved locally — check network',s1&&s2&&s3?'success':'info');
     await refreshAllLeagueViews();
     showAdminDashboard();
 }
@@ -3927,7 +4740,7 @@ async function recalculateLeagueTable(){
 // ============================================================
 async function refreshAllLeagueViews(){
     renderLeagueTable(leagueData);
-    renderMatchHistory(matchHistory);
+    if(!isViewingArchive)renderSeasonHistoryList(matchHistory);
     renderAdminHistory(matchHistory);
     await loadMainLeagueDataFromGitHub();
     renderMainLeagueTable();
@@ -3940,18 +4753,26 @@ async function archiveCurrentSeason(finalTable,finalHistory){
     loadArchiveDropdown();
 }
 async function finishSeason(){
-    const ok=await showConfirm({icon:'🏆',title:'End the Season?',message:'Top 3 teams earn championship points and the season will be archived, including its match history. The History tab will then start fresh for the new season.',okLabel:'End Season',okColor:'purple'});
+    const ok=await showConfirm({icon:'🏆',title:'End the Season?',message:'Top 3 teams earn a trophy and a coin bonus, and the season will be archived, including its match history. The Season tab\'s match history will then start fresh for the new season.',okLabel:'End Season',okColor:'purple'});
     if(!ok)return;
     await loadMainLeagueDataFromGitHub();
     const sorted=Object.values(leagueData).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
-    [3,2,1].forEach((pts,idx)=>{if(sorted[idx]&&mainLeagueData[sorted[idx].name])mainLeagueData[sorted[idx].name].totalPoints+=pts;});
+    // Trophies (gold/silver/bronze) aren't stored — they're tallied live from
+    // archivedSeasons' saved tables (see computeTrophyCounts()), so archiving
+    // the season below is what actually "awards" the trophy. Coins are still a
+    // running ledger though, so the top 3 get a one-time season-end bonus here.
+    SEASON_END_COIN_BONUS.forEach((bonus,idx)=>{
+        if(sorted[idx]) addCoins(sorted[idx].name, bonus, `Season finish bonus (#${idx+1})`);
+    });
+    TEAM_NAMES.forEach(t=>{ ensureWalletFields(t); mainLeagueData[t].arenaUsage = {}; }); // arena price escalation is per-season
     await archiveCurrentSeason(sorted,matchHistory);
-    await saveMainLeagueDataToGitHub(mainLeagueData,"Season End");
+    await processLogoRentAtSeasonEnd(); // was a no-op until now — the boutique catalog exists, so this actually charges rent
+    await saveMainLeagueDataToGitHub(mainLeagueData,"Season End — trophy archived, coin bonuses applied");
     // The season table AND the live match list both reset here. The just-played
     // matches aren't lost — archiveCurrentSeason() just copied them into the
     // archive above — but the "current" match history needs to start empty so
-    // the History tab only ever shows matches from the season in progress,
-    // instead of accumulating every match ever played across every season.
+    // the Season tab's history only ever shows matches from the season in
+    // progress, instead of accumulating every match ever played across every season.
     initializeLeagueData();
     matchHistory=[];
     await saveLeagueDataToGitHub(leagueData,"Reset Season Table");
@@ -4092,8 +4913,8 @@ document.addEventListener('touchstart', initAudio, {passive: true});
 // This is a private, personal app, so the API key is hardcoded
 // below instead of being proxied through a separate Worker.
 // ============================================================
-const OPENROUTER_API_KEY = "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";
-const OPENROUTER_MODEL   = "nvidia/nemotron-3-ultra-550b-a55b:free";
+const OPENROUTER_API_KEY = "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";
+const OPENROUTER_MODEL   = "google/gemma-4-26b-a4b-it:free";
 const OPENROUTER_URL     = "https://openrouter.ai/api/v1/chat/completions";
 
 let aiFullData   = localStorage.getItem('ai_full_data') === null ? true : (localStorage.getItem('ai_full_data') === 'on');
@@ -4106,6 +4927,7 @@ Warm, sharp, a little playful — like a sports analyst who's genuinely a fan of
 
 ## Language
 Reply in whichever language the user just wrote in — Persian or English — and keep matching it message to message, even if earlier messages were in the other language. If a message mixes both, mirror whichever one dominates it.
+When you write in Persian, avoid needless mid-sentence code-switching into English — keep the sentence structure Persian and only drop into Latin script for things that genuinely have to stay in it (team names like HOSI, Bayern, Sajsfi, Yellow; scores/numbers). Don't restate the same phrase in both languages, and don't scatter isolated English words through an otherwise-Persian sentence just because you can — the app renders mixed-script text and every extra switch is a chance for it to render oddly.
 
 ## Output formatting — read carefully
 Your reply is shown as plain text in a chat bubble (no Markdown rendering). This means:
@@ -4116,37 +4938,37 @@ Your reply is shown as plain text in a chat bubble (no Markdown rendering). This
 
 ## The data you're given
 Every user message is preceded by a "[League Data Context]" JSON blob built fresh from the live league data — treat it as the single source of truth, not your own memory or general football knowledge. Depending on the user's settings you'll get one of two shapes:
-- Full mode (summaryMode: false): currentSeasonTable (per-team live stats), overallStandings (all-time HARFS points), matchHistory (every match this season, newest first, each with home/away/score/timestamp), and archivedSeasons (past seasons' final tables + their match history).
+- Full mode (summaryMode: false): currentSeasonTable (per-team live stats), overallStandings (trophies + coin wallet per team), matchHistory (every match this season, newest first, each with home/away/score/timestamp), and archivedSeasons (past seasons' final tables + their match history).
 - Summary mode (summaryMode: true): the same picture pre-aggregated — currentSeasonTable, overallStandings, recentFormLast5 (last 5 results per team as W/L/D, newest first), totalMatchesPlayed, archivedSeasonsCount, and pastChampions.
-Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal difference, Pts=season points, totalPoints=all-time HARFS points (overall standings, separate from the season table).
+Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal difference, Pts=season points (this season's table only). overallStandings entries carry goldTrophies/silverTrophies/bronzeTrophies (one gold per season a team has won outright, one silver per runner-up finish, one bronze per third place — ranked by gold count first, then silver, then bronze) plus coins (a separate in-app currency teams earn automatically from match results, spendable in a shop that's still being built) and, in full mode, coinLog/ownedItems for that wallet's detail.
 
 ## Grounding rules — non-negotiable
 - Only state numbers, results, or standings that are actually present in the JSON you were sent. Never estimate, round creatively, or fill gaps from general football knowledge.
 - If the data needed to answer isn't in the context (e.g. asked about a season that hasn't been archived yet, or a stat that requires full mode while you were sent summary mode), say so plainly and suggest what would help (e.g. "turn on Send Full Data in Assistant Settings") instead of guessing.
 - Before quoting a stat, double-check it against the JSON in this same turn — don't rely on something you said earlier in the conversation if the data has since changed.
+- You can explain how coins are earned or what a wallet currently holds, but you can never actually spend, transfer, or award coins yourself — any purchase or adjustment happens through the app/admin, not through this chat. If asked to "buy" or "give" something, explain that plainly instead of pretending to do it.
 
 ## What you're good for
-Reading the table and recent form, comparing teams head-to-head, spotting trends (winning/losing streaks, goal-scoring droughts, defensive form), realistic title/relegation-race math, and practical strategy suggestions for a team trying to climb the season table or the all-time standings. Predictions and "who wins the league" takes are welcome — just frame them clearly as your read of the trends, not a guarantee.
+Reading the table and recent form, comparing teams head-to-head, spotting trends (winning/losing streaks, goal-scoring droughts, defensive form), realistic title/relegation-race math, and practical strategy suggestions for a team trying to climb the season table or add to their trophy cabinet. Predictions and "who wins the league" takes are welcome — just frame them clearly as your read of the trends, not a guarantee.
 
 ## Scope
 Stay focused on HARFS: this league, its teams, matches, and standings. For unrelated questions, briefly redirect back to what you're here for rather than fully answering — but stay friendly about it, not robotic or preachy.`;
 
-// ---- Season screen floating buttons: AI entry ⇄ Back-to-top ----
-// The AI fab only belongs on the Season screen, and while there it should
-// fade out (replaced by a "back to top" button) once the user scrolls down
-// far enough to be reading match history rather than sitting at the top.
+// ---- Season screen floating button: Back-to-top ----
+// The AI entry point now lives as a small icon button inside the Season
+// Table header card itself (always visible, no fade logic needed). The
+// "back to top" pill is the only floating fab left, and it only makes
+// sense on the Season screen, appearing once the user scrolls down far
+// enough to be reading match history rather than sitting at the top.
 const SEASON_FAB_SCROLL_THRESHOLD = 60;
 
 function updateSeasonFabs(route){
-    const aiFab=document.getElementById('ai-fab');
     const topFab=document.getElementById('back-to-top-fab');
-    if(!aiFab||!topFab) return;
+    if(!topFab) return;
     const onSeasonScreen = route==='league';
-    aiFab.classList.toggle('season-fab-active', onSeasonScreen);
     topFab.classList.toggle('season-fab-active', onSeasonScreen);
     if(onSeasonScreen){
-        // Always re-enter showing the AI button, not mid-fade from a previous scroll position
-        aiFab.classList.remove('season-fab-faded');
+        // Always re-enter hidden, not mid-fade from a previous scroll position
         topFab.classList.add('season-fab-faded');
     }
 }
@@ -4157,12 +4979,10 @@ function scrollSeasonToTop(){
 }
 function setupSeasonFabScroll(){
     const screen=document.getElementById('league-table-screen');
-    const aiFab=document.getElementById('ai-fab');
     const topFab=document.getElementById('back-to-top-fab');
-    if(!screen||!aiFab||!topFab) return;
+    if(!screen||!topFab) return;
     screen.addEventListener('scroll',()=>{
         const scrolledDown = screen.scrollTop > SEASON_FAB_SCROLL_THRESHOLD;
-        aiFab.classList.toggle('season-fab-faded', scrolledDown);
         topFab.classList.toggle('season-fab-faded', !scrolledDown);
     },{passive:true});
 }
@@ -4213,14 +5033,36 @@ function escapeHtml(s){
     d.textContent = s==null ? '' : String(s);
     return d.innerHTML;
 }
+
+// Wraps runs of Latin letters/digits (team names, scores, dates…) with Unicode
+// directional-isolate marks (LRI…PDI) when they sit inside Persian text. Bidi
+// text rendering can otherwise reorder a Latin/number run relative to its
+// surrounding RTL words in a way that reads as scrambled — this is the actual
+// fix for that, on top of instructing the model not to code-switch needlessly.
+function wrapBidiIsolates(text){
+    if(!/[\u0600-\u06FF]/.test(text)) return text; // only needed once Persian is present
+    return text.replace(/[A-Za-z0-9][A-Za-z0-9\-\/:.,]*(?:\s[A-Za-z0-9][A-Za-z0-9\-\/:.,]*)*/g, run => `\u2066${run}\u2069`);
+}
+// Turns a raw model reply into safe, correctly-formatted chat HTML. The model
+// is told never to use Markdown (this UI can't render it), but as a safety
+// net any stray **bold**/## heading syntax that slips through is converted
+// into real formatting instead of being shown as literal asterisks/hashes.
+function formatAiMessageHtml(raw){
+    let s = wrapBidiIsolates(raw == null ? '' : String(raw)); // run first, while it's still plain text
+    s = escapeHtml(s);
+    s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');           // **bold** -> real bold
+    s = s.replace(/^#{1,6}\s*(.+)$/gm, '<b>$1</b>');          // ## heading -> bold line
+    s = s.replace(/[*#]{1,}/g, '');                           // any remaining stray */# -> removed
+    return s;
+}
 function renderAiMessages(){
     const box=document.getElementById('ai-chat-messages');
     if(!box) return;
     // dir="auto" makes each bubble detect its own base direction from its
     // own text (Persian vs English vs mixed) instead of inheriting a single
-    // fixed direction from the panel — that mismatch is what was causing
-    // words/numbers to reorder when Persian and English were mixed together.
-    box.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'model'}" dir="auto">${escapeHtml(m.text)}</div>`).join('');
+    // fixed direction from the panel — combined with formatAiMessageHtml()'s
+    // bidi isolation, that's what keeps mixed Persian/English readable.
+    box.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'model'}" dir="auto">${formatAiMessageHtml(m.text)}</div>`).join('');
     const scroller=document.getElementById('ai-chat-scroll');
     if(scroller) scroller.scrollTop = scroller.scrollHeight;
 }
@@ -4236,7 +5078,8 @@ function setAiTyping(on){
 // ---- Data payloads sent to the assistant for analysis ----
 function buildSummaryContext(){
     const table = Object.values(leagueData).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
-    const overall = Object.values(mainLeagueData).sort((a,b)=>b.totalPoints-a.totalPoints);
+    const trophies = computeTrophyCounts();
+    const overall = TEAM_NAMES.map(t=>({name:t,...trophies[t]})).sort(compareTrophies);
     const recentFormLast5 = {};
     TEAM_NAMES.forEach(t=>{
         const games = matchHistory.filter(m=>m.home===t||m.away===t).slice(0,5);
@@ -4254,7 +5097,7 @@ function buildSummaryContext(){
         summaryMode: true,
         teams: TEAM_DISPLAY_NAMES,
         currentSeasonTable: table.map(t=>({team:t.name,P:t.P,W:t.W,D:t.D,L:t.L,GF:t.GF,GA:t.GA,Pts:t.Pts})),
-        overallStandings: overall.map(t=>({team:t.name,totalPoints:t.totalPoints})),
+        overallStandings: overall.map(t=>({team:t.name,goldTrophies:t.gold,silverTrophies:t.silver,bronzeTrophies:t.bronze,coins:(mainLeagueData[t.name]&&mainLeagueData[t.name].coins)||0})),
         totalMatchesPlayed: matchHistory.length,
         recentFormLast5,
         archivedSeasonsCount: archivedSeasons.length,
@@ -4262,11 +5105,21 @@ function buildSummaryContext(){
     };
 }
 function buildFullContext(){
+    const trophies = computeTrophyCounts();
+    const overallStandings = TEAM_NAMES.map(t=>{
+        ensureWalletFields(t);
+        const w = mainLeagueData[t];
+        return {
+            team: t,
+            goldTrophies: trophies[t].gold, silverTrophies: trophies[t].silver, bronzeTrophies: trophies[t].bronze,
+            coins: w.coins, coinLog: w.coinLog, ownedItems: w.ownedItems,
+        };
+    });
     return {
         summaryMode: false,
         teams: TEAM_DISPLAY_NAMES,
         currentSeasonTable: leagueData,
-        overallStandings: mainLeagueData,
+        overallStandings,
         matchHistory: matchHistory,
         archivedSeasons: archivedSeasons,
     };
@@ -4636,6 +5489,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     setupOverallHold();
     setupSeasonFabScroll();
     startApp();
+    handleIncomingActionLink(); // checks for a ?req= shop/arena request link opened on this device
 });
 </script>
 
