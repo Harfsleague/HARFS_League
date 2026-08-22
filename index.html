@@ -3659,6 +3659,64 @@ function filterSeasonHistory(filter,chip){
         const show=filter==='all'||card.dataset.home===filter||card.dataset.away===filter;
         card.classList.toggle('hidden-by-filter',!show);
     });
+    updateHistoryLayout(filter);
+    updateHistoryDots(filter);
+}
+
+// Puts the SELECTED team on the left of every match card (this format has no
+// home/away concept, so when a team is filtered it should always lead) and
+// flips the score to match — their score first. On "all" it falls back to
+// the original stored home/away order.
+function updateHistoryLayout(filter){
+    document.querySelectorAll('#season-history-list .match-card-mini').forEach(card=>{
+        const row=card.querySelector('.mcm-row');
+        if(!row)return;
+        const home=card.dataset.home,away=card.dataset.away;
+        const hs=parseInt(card.dataset.hs),as=parseInt(card.dataset.as);
+        let leftTeam=home,leftScore=hs,rightTeam=away,rightScore=as;
+        if(filter!=='all'&&away===filter&&home!==filter){
+            leftTeam=away;leftScore=as;rightTeam=home;rightScore=hs;
+        }
+        row.innerHTML=`
+            <div class="mcm-team">
+                <img src="${GITHUB_IMAGE_BASE_URL}${leftTeam}.png" onerror="this.style.opacity='0.3'">
+                <span>${TEAM_DISPLAY_NAMES[leftTeam]||leftTeam}</span>
+            </div>
+            <div class="mcm-score">${leftScore}-${rightScore}</div>
+            <div class="mcm-team mcm-team-away">
+                <span>${TEAM_DISPLAY_NAMES[rightTeam]||rightTeam}</span>
+                <img src="${GITHUB_IMAGE_BASE_URL}${rightTeam}.png" onerror="this.style.opacity='0.3'">
+            </div>`;
+    });
+}
+
+// Colors each match card's dot based on the RESULT OF THE SELECTED TEAM
+// (not home/away — this format has no home/away concept). Hidden entirely
+// when no specific team is selected (filter === 'all').
+function updateHistoryDots(filter){
+    document.querySelectorAll('#season-history-list .match-card-mini').forEach(card=>{
+        const dotEl=card.querySelector('.mcm-dot');
+        if(!dotEl)return;
+        if(filter==='all'){
+            dotEl.style.display='none';
+            return;
+        }
+        const home=card.dataset.home,away=card.dataset.away;
+        const hs=parseInt(card.dataset.hs),as=parseInt(card.dataset.as);
+        let isTeamInMatch=true,teamScore,oppScore;
+        if(home===filter){teamScore=hs;oppScore=as;}
+        else if(away===filter){teamScore=as;oppScore=hs;}
+        else{isTeamInMatch=false;}
+        if(!isTeamInMatch){
+            dotEl.style.display='none';
+            return;
+        }
+        let color='#818cf8'; // draw
+        if(teamScore>oppScore)color='#22c55e'; // win
+        else if(teamScore<oppScore)color='#ef4444'; // loss
+        dotEl.style.display='';
+        dotEl.style.background=color;
+    });
 }
 function renderSeasonHistoryList(history){
     history=history||[];
@@ -3676,12 +3734,11 @@ function renderSeasonHistoryList(history){
         const dt=formatShamsiDateTime(m.timestamp);
         const parts=m.score.split('-');
         const hs=parseInt(parts[0]),as=parseInt(parts[1]);
-        let dot='#818cf8';
-        if(hs>as)dot='#22c55e';
-        else if(as>hs)dot='#ef4444';
         const delay=Math.min(idx,10)*35;
-        return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" style="animation-delay:${delay}ms">
-            <div class="mcm-date"><span class="mcm-dot" style="background:${dot};"></span>${dt.date} · ${dt.time}</div>
+        // dot starts hidden — it only appears once a specific team filter is
+        // active, and then reflects THAT team's result (see updateHistoryDots)
+        return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" data-hs="${hs}" data-as="${as}" style="animation-delay:${delay}ms">
+            <div class="mcm-date"><span class="mcm-dot" style="display:none;"></span>${dt.date} · ${dt.time}</div>
             <div class="mcm-row">
                 <div class="mcm-team">
                     <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" onerror="this.style.opacity='0.3'">
