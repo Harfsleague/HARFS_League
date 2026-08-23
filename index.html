@@ -2226,8 +2226,8 @@ const GITHUB_WEIRD_MANIFEST_FILE="weird_events_manifest.json";
 const WEIRD_SHARD_SIZE_LIMIT=15*1024*1024; // 15MB — real-world reports show GitHub's Contents API can reject PUTs well below its documented 100MB limit (even 50MB payloads have been reported to fail with 422), so we stay well clear of that instead of trusting the higher figure
 const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
 const ADMIN_PASSWORD="0000";
-const TEAM_NAMES=["HOSI","Sajsfi","Bayern","Yellow"];
-const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sajsfi":"Sajsfi","Bayern":"Bayern","Yellow":"Yellow"};
+const TEAM_NAMES=["HOSI","Sezar","Bayern","Yellow"];
+const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sezar":"Sezar","Bayern":"Bayern","Yellow":"Yellow"};
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 
 let leagueData={},mainLeagueData={};
@@ -5141,14 +5141,14 @@ const OPENROUTER_URL = "https://harfs-ai-proxy.borobiron12.workers.dev/chat";
 let aiFullData   = localStorage.getItem('ai_full_data') === null ? true : (localStorage.getItem('ai_full_data') === 'on');
 let aiChatHistory = (()=>{ try{ return JSON.parse(localStorage.getItem('ai_chat_history')) || []; }catch(e){ return []; } })();
 
-const AI_SYSTEM_PROMPT = `You are "HARFS Assistant" — the resident football analyst for HARFS, a private league between four teams: HOSI, Sajsfi, Bayern and Yellow. You're talking to people inside that league (players, managers, fans), never the general public.
+const AI_SYSTEM_PROMPT = `You are "HARFS Assistant" — the resident football analyst for HARFS, a private league between four teams: HOSI, Sezar, Bayern and Yellow. You're talking to people inside that league (players, managers, fans), never the general public.
 
 ## Personality & tone
 Warm, sharp, a little playful — like a sports analyst who's genuinely a fan of this specific league and knows its teams by heart. Confident with numbers, never dry or robotic. Match the energy of the question: a quick score check gets a quick reply; a "how do we win the season" question gets real tactical thought.
 
 ## Language
 Reply in whichever language the user just wrote in — Persian or English — and keep matching it message to message, even if earlier messages were in the other language. If a message mixes both, mirror whichever one dominates it.
-When you write in Persian, avoid needless mid-sentence code-switching into English — keep the sentence structure Persian and only drop into Latin script for things that genuinely have to stay in it (team names like HOSI, Bayern, Sajsfi, Yellow; scores/numbers). Don't restate the same phrase in both languages, and don't scatter isolated English words through an otherwise-Persian sentence just because you can — the app renders mixed-script text and every extra switch is a chance for it to render oddly.
+When you write in Persian, avoid needless mid-sentence code-switching into English — keep the sentence structure Persian and only drop into Latin script for things that genuinely have to stay in it (team names like HOSI, Bayern, Sezar, Yellow; scores/numbers). Don't restate the same phrase in both languages, and don't scatter isolated English words through an otherwise-Persian sentence just because you can — the app renders mixed-script text and every extra switch is a chance for it to render oddly.
 
 ## Output formatting — read carefully
 Your reply is shown as plain text in a chat bubble (no Markdown rendering). This means:
