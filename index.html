@@ -952,8 +952,31 @@ body {
     display:inline-flex;align-items:center;gap:5px;
     font-size:0.62rem;color:#6b7280;font-family:monospace;
     background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:999px;
-    margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.06);
 }
+.weird-card-toprow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.weird-pin-badge{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:0.6rem;font-weight:800;letter-spacing:0.3px;color:#fbbf24;
+    background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);
+    padding:3px 9px;border-radius:999px;
+}
+.weird-card-pinned{
+    border-color:rgba(251,191,36,0.4);
+    box-shadow:0 0 0 1px rgba(251,191,36,0.15),0 8px 24px rgba(0,0,0,0.3);
+}
+.weird-admin-actions{
+    display:flex;gap:8px;margin-top:12px;padding-top:12px;
+    border-top:1px dashed rgba(255,255,255,0.08);
+}
+.weird-admin-btn{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:0.66rem;font-weight:700;padding:8px 6px;border-radius:10px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    color:#cbd5e1;cursor:pointer;transition:transform 0.15s ease;
+}
+.weird-admin-btn:active{transform:scale(0.94);}
+.weird-admin-btn-danger{color:#f87171;border-color:rgba(239,68,68,0.25);}
 .weird-card-text{
     font-size:0.82rem;line-height:1.6;color:#d1d5db;
     margin-bottom:12px;white-space:pre-wrap;
@@ -1441,6 +1464,10 @@ body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-
 }
 .season-ai-header-btn:active{ transform:scale(0.9); }
 body.lite-mode .season-ai-header-btn{ box-shadow:none; }
+/* Docked state — while the button is temporarily reparented to <body> and
+   scroll-docked beside the HARFS capsule (see dockAiHeaderBtn/undockAiHeaderBtn
+   in JS). Needs to sit above the capsule (z-index:200). */
+.season-ai-header-btn.ai-btn-floating{ z-index:210; }
 
 /* =====================================================
    AI ASSISTANT — chat panel
@@ -1656,7 +1683,7 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
     <div id="league-table-screen" class="page-screen">
 
         <div class="league-header" style="position:relative;">
-            <button class="season-ai-header-btn" onclick="openAiPanel()" aria-label="AI Assistant" title="AI Assistant">
+            <button class="season-ai-header-btn" id="season-ai-header-btn" onclick="openAiPanel()" aria-label="AI Assistant" title="AI Assistant">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4">
   <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
   <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
@@ -1893,6 +1920,14 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                     <button class="glass-button w-full mt-3 font-bold text-sm py-3" id="weird-save-btn" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;position:relative;overflow:hidden;" onclick="saveWeirdEvent()">
                         <span class="weird-save-btn-fill" id="weird-save-btn-fill"></span>
                         <span class="weird-save-btn-label" id="weird-save-btn-label"><i class="fas fa-bolt mr-2"></i> Save Event</span>
+                    </button>
+                    <!-- Jumps to the public Moments feed WITHOUT logging the admin out
+                         (plain exitAdmin()/the nav item's normal tap both clear
+                         isAdminUnlocked first) so the Pin/Edit/Delete controls on
+                         each card stay visible. Tap the nav item again (still
+                         labeled "Admin") to come straight back to this dashboard. -->
+                    <button class="glass-button w-full mt-2 font-bold text-xs py-2.5" style="border-color:rgba(251,191,36,0.25);color:#fde68a;" onclick="navigate('weird')">
+                        <i class="fas fa-list-ul mr-2"></i>Manage Existing Moments (Pin / Edit / Delete)
                     </button>
                 </div>
             </div>
@@ -2988,6 +3023,22 @@ function getMomentMedia(ev){
     if(ev.images)return ev.images.map(src=>({type:'image',src}));
     return [];
 }
+// Pinned moments (admin-set, persisted to GitHub so it's pinned for every
+// user, not just this session) always sort first; within each group, newest
+// first — same as before.
+function momentSortComparator(a,b){
+    const pa=a.pinned?1:0, pb=b.pinned?1:0;
+    if(pa!==pb)return pb-pa;
+    return b.id-a.id;
+}
+// Locates which shard file currently holds a given moment id, so admin
+// edits/deletes/pins write back to the correct shard instead of guessing.
+function findMomentShardFile(id){
+    for(const filename of weirdShardFiles){
+        if((weirdShardData[filename]||[]).some(e=>e.id===id))return filename;
+    }
+    return null;
+}
 function renderWeirdEvents(){
     const list=document.getElementById('weird-events-list');
     const loadingEl=document.getElementById('weird-loading');
@@ -3031,15 +3082,24 @@ function renderWeirdEvents(){
                         <button class="weird-audio-play-btn" onclick="playWeirdAudio(${ev.id},${m.idx})"><i class="fas fa-play"></i> Play</button>
                     </div>`).join('')}
                </div>`:'';
-        return`<div class="weird-card">
+        const adminActions = isAdminUnlocked ? `<div class="weird-admin-actions">
+                    <button class="weird-admin-btn" onclick="toggleMomentPin(${ev.id})"><i class="fas fa-thumbtack"></i> ${ev.pinned?'Unpin':'Pin'}</button>
+                    <button class="weird-admin-btn" onclick="editMomentPrompt(${ev.id})"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="weird-admin-btn weird-admin-btn-danger" onclick="deleteMoment(${ev.id})"><i class="fas fa-trash"></i> Delete</button>
+                </div>` : '';
+        return`<div class="weird-card${ev.pinned?' weird-card-pinned':''}">
             <div class="weird-card-bar"></div>
             <div class="weird-card-body">
-                <div class="weird-card-date">
-                    <i class="far fa-calendar-alt"></i>${dt.date} · ${dt.time}
+                <div class="weird-card-toprow">
+                    <div class="weird-card-date">
+                        <i class="far fa-calendar-alt"></i>${dt.date} · ${dt.time}
+                    </div>
+                    ${ev.pinned?'<div class="weird-pin-badge"><i class="fas fa-thumbtack"></i> Pinned</div>':''}
                 </div>
                 <div class="weird-card-text">${ev.text}</div>
                 ${imgs}
                 ${audioList}
+                ${adminActions}
             </div>
         </div>`;
     }).join('');
@@ -3177,7 +3237,7 @@ async function loadWeirdEventsFromGitHubInner(){
         seen.add(ev.id);
         return true;
     });
-    events.sort((a,b)=>b.id-a.id); // newest first, independent of shard order
+    events.sort(momentSortComparator); // pinned first, then newest first — independent of shard order
     weirdEvents=events;
     weirdSha=weirdShardShas[GITHUB_WEIRD_FILE]||null; // kept in sync for any legacy references
     weirdEventsLoaded=true;
@@ -3293,6 +3353,80 @@ async function saveWeirdEvent(){
     document.getElementById('weird-event-text').value='';
     weirdMedia=[];renderWeirdPreview();
     showAdminDashboard();
+}
+
+// ============================================================
+// GOLDEN MOMENTS — ADMIN: PIN / EDIT / DELETE
+// All three locate the shard file the moment currently lives in
+// (findMomentShardFile), mutate that shard's array, and write it back to
+// GitHub the same way saveWeirdEvent does — so the change is persisted for
+// every user, not just this session/device.
+// ============================================================
+async function toggleMomentPin(id){
+    const ev=weirdEvents.find(e=>e.id===id);
+    if(!ev)return;
+    const shardFile=findMomentShardFile(id);
+    if(!shardFile){showToast("Could not locate this moment's file",'error');return;}
+    const newPinned=!ev.pinned;
+    const arr=weirdShardData[shardFile];
+    const idx=arr.findIndex(e=>e.id===id);
+    if(idx===-1)return;
+    const prevArr=arr.slice();
+    arr[idx]={...arr[idx],pinned:newPinned};
+    const saved=await saveFile(shardFile,arr,newPinned?'Pinned golden moment':'Unpinned golden moment',weirdShardShas[shardFile]||null);
+    if(!saved){
+        weirdShardData[shardFile]=prevArr;
+        showToast(`Could not update pin: ${lastSaveFileError||'unknown error'}`,'error',4000);
+        return;
+    }
+    ev.pinned=newPinned;
+    weirdEvents.sort(momentSortComparator);
+    renderWeirdEvents();
+    showToast(newPinned?'Moment pinned 📌':'Moment unpinned','success');
+}
+async function editMomentPrompt(id){
+    const ev=weirdEvents.find(e=>e.id===id);
+    if(!ev)return;
+    const newText=prompt("Edit this moment's description:", ev.text||'');
+    if(newText===null)return; // cancelled
+    const trimmed=newText.trim();
+    if(!trimmed){showToast('Description cannot be empty','error');return;}
+    if(trimmed===ev.text)return;
+    const shardFile=findMomentShardFile(id);
+    if(!shardFile){showToast("Could not locate this moment's file",'error');return;}
+    const arr=weirdShardData[shardFile];
+    const idx=arr.findIndex(e=>e.id===id);
+    if(idx===-1)return;
+    const prevArr=arr.slice();
+    arr[idx]={...arr[idx],text:trimmed};
+    const saved=await saveFile(shardFile,arr,'Edited golden moment',weirdShardShas[shardFile]||null);
+    if(!saved){
+        weirdShardData[shardFile]=prevArr;
+        showToast(`Edit failed: ${lastSaveFileError||'unknown error'}`,'error',4000);
+        return;
+    }
+    ev.text=trimmed;
+    renderWeirdEvents();
+    showToast('Moment updated ✏️','success');
+}
+async function deleteMoment(id){
+    const ev=weirdEvents.find(e=>e.id===id);
+    if(!ev)return;
+    const ok=await showConfirm({icon:'🗑️',title:'Delete this Moment?',message:'This removes it permanently for everyone — this cannot be undone.',okLabel:'Delete',okColor:'red'});
+    if(!ok)return;
+    const shardFile=findMomentShardFile(id);
+    if(!shardFile){showToast("Could not locate this moment's file",'error');return;}
+    const prevArr=weirdShardData[shardFile];
+    const newArr=prevArr.filter(e=>e.id!==id);
+    const saved=await saveFile(shardFile,newArr,'Deleted golden moment',weirdShardShas[shardFile]||null);
+    if(!saved){
+        showToast(`Delete failed: ${lastSaveFileError||'unknown error'}`,'error',4000);
+        return;
+    }
+    weirdShardData[shardFile]=newArr;
+    weirdEvents=weirdEvents.filter(e=>e.id!==id);
+    renderWeirdEvents();
+    showToast('Moment deleted','success');
 }
 
 // Drives the Save Event button's built-in progress bar. state:
@@ -5028,6 +5162,10 @@ function updateSeasonFabs(route){
     if(onSeasonScreen){
         // Always re-enter hidden, not mid-fade from a previous scroll position
         topFab.classList.add('season-fab-faded');
+    } else if(aiHeaderBtnDocked){
+        // Leaving the Season screen entirely — snap the AI button back into
+        // its header slot immediately rather than leaving it floating.
+        undockAiHeaderBtn(true);
     }
 }
 function scrollSeasonToTop(){
@@ -5042,7 +5180,64 @@ function setupSeasonFabScroll(){
     screen.addEventListener('scroll',()=>{
         const scrolledDown = screen.scrollTop > SEASON_FAB_SCROLL_THRESHOLD;
         topFab.classList.toggle('season-fab-faded', !scrolledDown);
+        if(scrolledDown) dockAiHeaderBtn(); else undockAiHeaderBtn();
     },{passive:true});
+}
+
+// ---- AI header button: docks beside the HARFS capsule while scrolled down ----
+// The button normally lives inside the Season Table header card and scrolls
+// away with it. Past SEASON_FAB_SCROLL_THRESHOLD we detach it from the
+// (transformed) scrolling screen and re-home it next to the fixed HARFS
+// capsule instead, animating with a FLIP (measure old rect → reparent with
+// no transition → measure new rect → transition to it) so the move reads as
+// one smooth glide instead of a jump. Scrolling back up reverses it.
+let aiHeaderBtnDocked=false, aiHeaderBtnAnimating=false, aiHeaderBtnTimer=null;
+function dockAiHeaderBtn(){
+    if(aiHeaderBtnDocked) return;
+    const btn=document.getElementById('season-ai-header-btn');
+    const capsule=document.getElementById('hero-logo-container');
+    if(!btn||!capsule) return;
+    clearTimeout(aiHeaderBtnTimer);
+    const startRect=btn.getBoundingClientRect();
+    aiHeaderBtnDocked=true; aiHeaderBtnAnimating=true;
+    document.body.appendChild(btn);
+    btn.classList.add('ai-btn-floating');
+    btn.style.transition='none';
+    btn.style.position='fixed'; btn.style.margin='0'; btn.style.right='auto';
+    btn.style.top=startRect.top+'px'; btn.style.left=startRect.left+'px';
+    void btn.offsetWidth; // force reflow so the jump above isn't animated
+    const capRect=capsule.getBoundingClientRect();
+    const targetTop=capRect.top+capRect.height/2-startRect.height/2;
+    const targetLeft=capRect.right+10;
+    btn.style.transition='top 0.5s cubic-bezier(0.22,1,0.36,1), left 0.5s cubic-bezier(0.22,1,0.36,1)';
+    requestAnimationFrame(()=>{ btn.style.top=targetTop+'px'; btn.style.left=targetLeft+'px'; });
+    aiHeaderBtnTimer=setTimeout(()=>{ aiHeaderBtnAnimating=false; },520);
+}
+function undockAiHeaderBtn(instant){
+    if(!aiHeaderBtnDocked) return;
+    const btn=document.getElementById('season-ai-header-btn');
+    const header=document.querySelector('#league-table-screen .league-header');
+    if(!btn||!header){ aiHeaderBtnDocked=false; return; }
+    clearTimeout(aiHeaderBtnTimer);
+    if(instant){
+        header.appendChild(btn);
+        btn.classList.remove('ai-btn-floating');
+        btn.style.cssText='';
+        aiHeaderBtnDocked=false; aiHeaderBtnAnimating=false;
+        return;
+    }
+    aiHeaderBtnAnimating=true;
+    const headerRect=header.getBoundingClientRect();
+    const targetTop=headerRect.top+14;
+    const targetLeft=headerRect.right-16-btn.offsetWidth;
+    btn.style.transition='top 0.5s cubic-bezier(0.22,1,0.36,1), left 0.5s cubic-bezier(0.22,1,0.36,1)';
+    requestAnimationFrame(()=>{ btn.style.top=targetTop+'px'; btn.style.left=targetLeft+'px'; });
+    aiHeaderBtnTimer=setTimeout(()=>{
+        header.appendChild(btn);
+        btn.classList.remove('ai-btn-floating');
+        btn.style.cssText='';
+        aiHeaderBtnDocked=false; aiHeaderBtnAnimating=false;
+    },520);
 }
 
 function openAiPanel(){
