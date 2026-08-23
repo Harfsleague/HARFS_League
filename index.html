@@ -1547,6 +1547,31 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
     display:flex; gap:8px; padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));
     border-top:1px solid rgba(255,255,255,0.06); flex-shrink:0;
 }
+.ai-suggestions-row{
+    display:flex; gap:8px; padding:10px 14px 0; flex-shrink:0;
+    overflow-x:auto; -ms-overflow-style:none; scrollbar-width:none;
+}
+.ai-suggestions-row::-webkit-scrollbar{ display:none; }
+.ai-suggestions-row:empty{ padding:0; }
+.ai-suggestion-chip{
+    flex-shrink:0; white-space:nowrap; font-family:inherit;
+    font-size:0.72rem; font-weight:700; color:var(--primary);
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14);
+    padding:8px 14px; border-radius:999px; cursor:pointer;
+    transition:transform 0.15s ease, background 0.15s ease;
+    animation:cardIn 0.3s ease both;
+}
+.ai-suggestion-chip:active{ transform:scale(0.94); background:rgba(255,255,255,0.1); }
+.ai-suggestion-skeleton{
+    width:120px; height:32px; color:transparent; pointer-events:none;
+    background:linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
+    background-size:200% 100%;
+    animation:aiSkeletonPulse 1.3s ease-in-out infinite;
+}
+@keyframes aiSkeletonPulse{
+    0%{ background-position:200% 0; }
+    100%{ background-position:-200% 0; }
+}
 #ai-chat-input{
     flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
     border-radius:14px; padding:11px 15px; color:#fff; font-size:0.82rem;
@@ -2137,6 +2162,10 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                     <div class="ai-typing-dots"><span></span><span></span><span></span></div>
                 </div>
             </div>
+            <!-- Quick-ask suggestions — shown until the user sends their first
+                 real message (see renderAiSuggestions), same pattern as the
+                 suggestion chips in most chat apps. -->
+            <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
             <div class="ai-input-bar">
                 <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
                 <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
@@ -5247,6 +5276,7 @@ function openAiPanel(){
     if(!aiChatHistory.length){
         pushAiMessage('model', "Hi! 👋 I'm the HARFS analysis assistant. I can review the table, results and team trends, and chat with you about strategy. What would you like to know?");
     }
+    renderAiSuggestions();
     setTimeout(()=>{ const inp=document.getElementById('ai-chat-input'); if(inp) inp.focus(); }, 350);
 }
 function closeAiPanel(){
@@ -5270,7 +5300,9 @@ function toggleAiDataMode(){
 function clearAiChat(){
     aiChatHistory = [];
     localStorage.removeItem('ai_chat_history');
+    aiDynamicSuggestions = null; // force a fresh, re-grounded batch next time chat is empty
     renderAiMessages();
+    renderAiSuggestions();
     closeAiSettings();
     showToast('Chat cleared', 'info', 1600);
 }
@@ -5280,11 +5312,101 @@ function pushAiMessage(role, text){
     if(aiChatHistory.length > 40) aiChatHistory = aiChatHistory.slice(-40);
     try{ localStorage.setItem('ai_chat_history', JSON.stringify(aiChatHistory)); }catch(e){}
     renderAiMessages();
+    renderAiSuggestions();
 }
 function escapeHtml(s){
     const d=document.createElement('div');
     d.textContent = s==null ? '' : String(s);
     return d.innerHTML;
+}
+
+// ---- Quick-ask suggestion chips ----
+// Shown above the input bar (like the prompt suggestions in most chat apps),
+// but NOT hardcoded — the assistant itself generates a fresh batch (grounded
+// in the current league data, in Persian) the first time the chat is empty.
+// They disappear once the user sends a real message, and are regenerated
+// from scratch after Clear Chat, since the data may have changed by then.
+let aiDynamicSuggestions = null; // null = not fetched yet for this empty-chat state
+let aiSuggestionsLoading = false;
+const AI_SUGGESTION_COUNT = 4;
+
+function renderAiSuggestions(){
+    const row=document.getElementById('ai-suggestions-row');
+    if(!row) return;
+    const hasUserMessage = aiChatHistory.some(m=>m.role==='user');
+    if(hasUserMessage){
+        row.innerHTML='';
+        return;
+    }
+    if(aiSuggestionsLoading){
+        row.innerHTML = '<div class="ai-suggestion-chip ai-suggestion-skeleton"></div>'.repeat(3);
+        return;
+    }
+    if(aiDynamicSuggestions===null){
+        fetchAiSuggestions(); // sets loading + re-renders (skeleton) synchronously before its own await
+        return;
+    }
+    if(!aiDynamicSuggestions.length){
+        row.innerHTML=''; // generation failed — fail quietly, no chips this time
+        return;
+    }
+    row.innerHTML = aiDynamicSuggestions.map(p=>
+        `<button type="button" class="ai-suggestion-chip" dir="auto" onclick="useAiSuggestion(this)">${escapeHtml(p)}</button>`
+    ).join('');
+}
+async function fetchAiSuggestions(){
+    if(aiSuggestionsLoading) return;
+    aiSuggestionsLoading = true;
+    renderAiSuggestions();
+    try{
+        const dataPayload = aiFullData ? buildFullContext() : buildSummaryContext();
+        const dataContext = `[League Data Context]:\n${JSON.stringify(dataPayload)}\n\n`;
+        const instruction = `Based on the league data above, come up with exactly ${AI_SUGGESTION_COUNT} short, specific questions — in Persian (Farsi) — that someone using this app might want to ask you next. Ground them in the actual current standings, results, teams or trends, not generic filler. Each under 8 words. Reply with ONLY a raw JSON array of ${AI_SUGGESTION_COUNT} strings — no markdown, no code fences, no extra text before or after.`;
+        const res = await fetch(OPENROUTER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: OPENROUTER_MODEL,
+                messages: [
+                    { role: 'system', content: AI_SYSTEM_PROMPT },
+                    { role: 'user', content: dataContext + instruction },
+                ],
+            }),
+        });
+        const raw = await res.text();
+        let payload; try{ payload = JSON.parse(raw); }catch(e){ payload = null; }
+        const replyText = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
+        if(!res.ok || !replyText) throw new Error('Bad response');
+        const list = parseSuggestionList(replyText);
+        if(!list.length) throw new Error('Empty list');
+        aiDynamicSuggestions = list.slice(0, AI_SUGGESTION_COUNT);
+    }catch(e){
+        aiDynamicSuggestions = [];
+    }
+    aiSuggestionsLoading = false;
+    renderAiSuggestions();
+}
+// Pulls a JSON array of strings out of the model's reply even if it wrapped
+// it in ```json fences or added stray commentary around it.
+function parseSuggestionList(raw){
+    let s = String(raw).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+    try{
+        const arr = JSON.parse(s);
+        if(Array.isArray(arr)) return arr.map(x=>String(x).trim()).filter(Boolean);
+    }catch(e){}
+    const m = s.match(/\[[\s\S]*\]/); // fallback: grab the first [...] block in the text
+    if(m){
+        try{
+            const arr = JSON.parse(m[0]);
+            if(Array.isArray(arr)) return arr.map(x=>String(x).trim()).filter(Boolean);
+        }catch(e){}
+    }
+    return [];
+}
+function useAiSuggestion(btn){
+    const input=document.getElementById('ai-chat-input');
+    if(input) input.value = btn.textContent;
+    sendAiMessage();
 }
 
 // Wraps runs of Latin letters/digits (team names, scores, dates…) with Unicode
