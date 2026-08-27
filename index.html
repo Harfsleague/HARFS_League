@@ -5465,13 +5465,18 @@ function renderAiMessageBody(text){
             while(i < lines.length && isTableRow(lines[i])) rows.push(splitRow(lines[i++]));
             html += buildTableHtml(rows);
         } else {
-            html += escapeHtml(lines[i]) + (i < lines.length-1 ? '<br>' : '');
+            html += formatAiInlineText(lines[i]) + (i < lines.length-1 ? '<br>' : '');
             i++;
         }
     }
     return html;
 }
 
+// dir="auto" makes each bubble detect its own base direction from its own
+// text (Persian vs English vs mixed) instead of inheriting a single fixed
+// direction from the panel — combined with formatAiInlineText()'s bidi
+// isolation, that's what keeps mixed Persian/English readable, while
+// renderAiMessageBody still renders any pipe-table lines as a real <table>.
 function renderAiMessages(){
     const box=document.getElementById('ai-chat-messages');
     if(!box) return;
@@ -5578,28 +5583,19 @@ function wrapBidiIsolates(text){
     if(!/[\u0600-\u06FF]/.test(text)) return text; // only needed once Persian is present
     return text.replace(/[A-Za-z0-9][A-Za-z0-9\-\/:.,]*(?:\s[A-Za-z0-9][A-Za-z0-9\-\/:.,]*)*/g, run => `\u2066${run}\u2069`);
 }
-// Turns a raw model reply into safe, correctly-formatted chat HTML. The model
-// is told never to use Markdown (this UI can't render it), but as a safety
-// net any stray **bold**/## heading syntax that slips through is converted
-// into real formatting instead of being shown as literal asterisks/hashes.
-function formatAiMessageHtml(raw){
+// Turns one line of a raw model reply into safe, correctly-formatted chat
+// HTML. The model is told never to use Markdown (this UI can't render it),
+// but as a safety net any stray **bold**/## heading syntax that slips
+// through is converted into real formatting instead of being shown as
+// literal asterisks/hashes. Called per non-table line by renderAiMessageBody
+// (pipe-table lines are handled separately, via buildTableHtml).
+function formatAiInlineText(raw){
     let s = wrapBidiIsolates(raw == null ? '' : String(raw)); // run first, while it's still plain text
     s = escapeHtml(s);
     s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');           // **bold** -> real bold
-    s = s.replace(/^#{1,6}\s*(.+)$/gm, '<b>$1</b>');          // ## heading -> bold line
+    s = s.replace(/^#{1,6}\s*(.+)$/, '<b>$1</b>');           // ## heading -> bold line
     s = s.replace(/[*#]{1,}/g, '');                           // any remaining stray */# -> removed
     return s;
-}
-function renderAiMessages(){
-    const box=document.getElementById('ai-chat-messages');
-    if(!box) return;
-    // dir="auto" makes each bubble detect its own base direction from its
-    // own text (Persian vs English vs mixed) instead of inheriting a single
-    // fixed direction from the panel — combined with formatAiMessageHtml()'s
-    // bidi isolation, that's what keeps mixed Persian/English readable.
-    box.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'model'}" dir="auto">${formatAiMessageHtml(m.text)}</div>`).join('');
-    const scroller=document.getElementById('ai-chat-scroll');
-    if(scroller) scroller.scrollTop = scroller.scrollHeight;
 }
 function setAiTyping(on){
     const ind=document.getElementById('ai-typing-indicator');
