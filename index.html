@@ -1401,6 +1401,39 @@ body.lite-mode .hero-text {
 #custom-palette-editor{
     margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);
 }
+
+/* =====================================================
+   PLAYLIST SHEET — list of songs, opened from Settings
+   ===================================================== */
+.playlist-panel{
+    max-height:70vh; overflow-y:auto;
+    -ms-overflow-style:none; scrollbar-width:none;
+}
+.playlist-panel::-webkit-scrollbar{ display:none; }
+.playlist-track-item{
+    display:flex; align-items:center; gap:11px;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+    border-radius:15px; padding:11px 14px; margin-bottom:8px; cursor:pointer;
+    transition:all 0.15s;
+}
+.playlist-track-item:active{ transform:scale(0.98); background:rgba(255,255,255,0.08); }
+.playlist-track-item.playing{
+    background:var(--nav-active-bg); border-color:var(--nav-active-border);
+}
+.playlist-track-icon{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06); color:#9ca3af; font-size:0.8rem;
+}
+.playlist-track-item.playing .playlist-track-icon{
+    background:linear-gradient(135deg, var(--primary), var(--accent)); color:#0b1220;
+}
+.playlist-track-title{
+    flex:1; min-width:0; font-size:0.8rem; font-weight:700; color:#e5e7eb;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.playlist-track-item.playing .playlist-track-title{ color:var(--nav-active-color); }
+.playlist-empty{ text-align:center; color:#4b5563; font-size:0.75rem; padding:26px 0; }
 .custom-color-row{ display:flex; justify-content:space-between; gap:10px; }
 .custom-color-row label{
     display:flex; flex-direction:column; align-items:center; gap:7px;
@@ -1646,13 +1679,17 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                 <i class="fas fa-music" id="settings-music-icon"></i>
                 <span id="settings-music-label">Music: On</span>
             </div>
+            <div class="settings-tile" id="settings-playlist-tile" onclick="openPlaylistSheet()">
+                <i class="fas fa-list-ul"></i>
+                <span>Playlist</span>
+            </div>
+            <div class="settings-tile" onclick="settingsNextTrack()">
+                <i class="fas fa-forward-step"></i>
+                <span>Next Track</span>
+            </div>
             <div class="settings-tile" id="settings-mode-tile" onclick="cyclePlaybackMode()">
                 <i class="fas fa-random" id="settings-mode-icon"></i>
                 <span id="settings-mode-label">Shuffle</span>
-            </div>
-            <div class="settings-tile wide" onclick="settingsNextTrack()">
-                <i class="fas fa-forward-step"></i>
-                <span>Next Track</span>
             </div>
         </div>
     </div>
@@ -1680,6 +1717,15 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                 <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()"></label>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Playlist Sheet (list of songs, opened from Settings) -->
+<div class="team-picker-sheet" id="playlist-sheet" onclick="if(event.target===this)closePlaylistSheet()">
+    <div class="team-picker-panel playlist-panel">
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Playlist</div>
+        <div id="playlist-list-container"><!-- filled by JS --></div>
     </div>
 </div>
 
@@ -2500,6 +2546,50 @@ function closeSettings(){
 function settingsToggleMusic(){
     toggleMusic();
     syncSettingsUI();
+}
+
+// ============================================================
+// PLAYLIST SHEET — lists every track from PLAYLIST (same source the
+// auto-player uses), lets the user tap one to play it immediately,
+// and highlights whichever track is currently playing.
+// ============================================================
+function openPlaylistSheet(){
+    haptic([6]);
+    document.getElementById('playlist-sheet').classList.add('open');
+    renderPlaylistSheet();
+    if(!PLAYLIST.length){
+        loadPlaylistFromGitHub().then(renderPlaylistSheet);
+    }
+}
+function closePlaylistSheet(){
+    haptic([6]);
+    document.getElementById('playlist-sheet').classList.remove('open');
+}
+function renderPlaylistSheet(){
+    const container=document.getElementById('playlist-list-container');
+    if(!container)return;
+    if(!PLAYLIST.length){
+        container.innerHTML='<div class="playlist-empty"><span class="spinner"></span></div>';
+        return;
+    }
+    container.innerHTML=PLAYLIST.map((t,i)=>{
+        const isPlaying = i===currentTrackIndex && backgroundMusicStarted && !musicMuted;
+        return `<div class="playlist-track-item ${isPlaying?'playing':''}" onclick="selectPlaylistTrack(${i})">
+            <div class="playlist-track-icon"><i class="fas ${isPlaying?'fa-volume-up':'fa-music'}"></i></div>
+            <div class="playlist-track-title">${escapeHtml(t.title)}</div>
+        </div>`;
+    }).join('');
+}
+function selectPlaylistTrack(index){
+    haptic([8]);
+    if(musicMuted){
+        musicMuted=false;
+        localStorage.setItem('music','on');
+    }
+    playTrack(index);
+    backgroundMusicStarted=true;
+    syncSettingsUI();
+    renderPlaylistSheet();
 }
 function cyclePlaybackMode(){
     const order=['shuffle','sequential','single'];
@@ -5086,6 +5176,7 @@ function playTrack(index) {
     bgMusic.play()
         .then(() => {
             showSongNotification(track.title);
+            if(document.getElementById('playlist-sheet')?.classList.contains('open'))renderPlaylistSheet();
         })
         .catch(() => {});
 }
