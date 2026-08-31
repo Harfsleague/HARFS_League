@@ -268,8 +268,24 @@ body {
 #hero-logo-container.in-header .hero-subtext {
     opacity:1; transform:translateY(0);
 }
-#hero-logo-container.in-header .hero-text{font-size:1.8rem;letter-spacing:4px;}
+#hero-logo-container.in-header .hero-text{
+    font-size:1.8rem;letter-spacing:4px;
+    display:inline-block;
+    animation:harfsBreathe 6s ease-in-out infinite;
+}
+@keyframes harfsBreathe{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.04); }
+}
+body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 #hero-logo-container.in-header .hero-subtext{font-size:0.65rem;margin-top:-2px;}
+#nav-settings{ position:relative; }
+#nav-settings-team-logo{
+    width:20px;height:20px;border-radius:50%;object-fit:cover;
+    background:rgba(255,255,255,0.08); display:none;
+    border:1px solid rgba(255,255,255,0.18);
+    margin-bottom:3px;
+}
 
 /* =====================================================
    BOTTOM NAV
@@ -291,6 +307,7 @@ body {
 .nav-item {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     color:#374151; padding:9px 0; border-radius:9999px;
+    border:1px solid transparent; /* reserved so .active's border doesn't shift the box (and anything absolutely positioned inside it, like the Profile team logo) by 1px */
     transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); flex:1 1 0; cursor:pointer;
     position:relative;
 }
@@ -711,6 +728,17 @@ body {
     transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 .modal-overlay.open .modal-content{transform:scale(1) translateY(0);}
+/* Small fixed X close button, pinned to the modal's top-right corner —
+   sits above the profile-header gradient, doesn't move when the body
+   below it scrolls. Replaces the old full-width "Close" button. */
+.modal-x-close{
+    position:absolute; top:12px; right:12px; z-index:20;
+    width:28px;height:28px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.14);
+    color:#e5e7eb; cursor:pointer; font-size:0.72rem;
+}
+.modal-x-close:active{ transform:scale(0.9); }
 .confirm-modal .confirm-icon{font-size:2.4rem;margin-bottom:12px;}
 .confirm-modal h3{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
 .confirm-modal p{font-size:0.8rem;color:#9ca3af;margin-bottom:20px;line-height:1.5;}
@@ -737,6 +765,8 @@ body {
     border:3px solid rgba(255,255,255,0.35);
     box-shadow:0 8px 24px rgba(0,0,0,0.5);
     position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);z-index:10;
+    background:#ffffff;
+    opacity:1 !important;
 }
 .profile-body{padding:50px 20px 20px;}
 .stat-card{
@@ -946,7 +976,7 @@ body {
     width:100%;
 }
 .weird-card:active{transform:scale(0.98);}
-.weird-card-bar{height:4px;width:100%;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);}
+.weird-card-bar{height:4px;width:100%;background:linear-gradient(90deg, var(--primary), var(--accent));}
 .weird-card-body{padding:14px 16px 16px;}
 .weird-card-date{
     display:inline-flex;align-items:center;gap:5px;
@@ -979,7 +1009,35 @@ body {
 .weird-admin-btn-danger{color:#f87171;border-color:rgba(239,68,68,0.25);}
 .weird-card-text{
     font-size:0.82rem;line-height:1.6;color:#d1d5db;
-    margin-bottom:12px;white-space:pre-wrap;
+    white-space:pre-wrap;
+}
+/* ---- Horizontal capsule layout: media thumbnails on the left,
+   Persian text (right-aligned, RTL) on the right — tap a thumbnail
+   to open the same full lightbox gallery as before. ---- */
+.weird-card-row{ display:flex; align-items:flex-start; gap:12px; }
+.weird-card-textcol{ flex:1; min-width:0; }
+.weird-card-textcol .weird-card-text{ margin-bottom:0; text-align:right; direction:rtl; }
+.weird-card-mediacol{
+    flex-shrink:0; width:108px; display:flex; flex-direction:column; gap:6px;
+}
+.weird-img-thumb-sm{
+    width:108px; height:108px; border-radius:16px; overflow:hidden;
+    cursor:pointer; position:relative; background:rgba(0,0,0,0.3);
+    border:1px solid rgba(255,255,255,0.08); transition:transform 0.2s;
+}
+.weird-img-thumb-sm:active{ transform:scale(0.94); }
+.weird-img-thumb-sm img,.weird-img-thumb-sm video{ width:100%;height:100%;object-fit:cover;display:block; }
+.weird-img-thumb-sm.weird-thumb-video::after{
+    content:'\f04b';font-family:'Font Awesome 6 Free';font-weight:900;
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:0.7rem;color:rgba(255,255,255,0.9);
+    background:rgba(0,0,0,0.5);width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+}
+.weird-media-count-badge{
+    position:absolute;bottom:3px;right:3px;
+    font-size:0.58rem;font-weight:800;color:#fff;
+    background:rgba(0,0,0,0.65);padding:1px 5px;border-radius:999px;
 }
 .weird-card-images{display:flex;gap:8px;}
 .weird-img-thumb{
@@ -1194,19 +1252,19 @@ body {
    document flow and jumps to the top of the page. Only the panels
    that are `position:static` by default need it added.
    ===================================================== */
-body:not(.lite-mode) .team-picker-panel,
-body:not(.lite-mode) .settings-panel,
-body:not(.lite-mode) .season-history-card{
+body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel,
+body:not(.lite-mode):not(.perf-no-sheen) .settings-panel,
+body:not(.lite-mode):not(.perf-no-sheen) .season-history-card{
     position:relative;
     overflow:hidden;
 }
-body:not(.lite-mode) .bottom-nav{
+body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav{
     overflow:hidden;
 }
-body:not(.lite-mode) .bottom-nav::before,
-body:not(.lite-mode) .team-picker-panel::before,
-body:not(.lite-mode) .settings-panel::before,
-body:not(.lite-mode) .season-history-card::before{
+body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav::before,
+body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel::before,
+body:not(.lite-mode):not(.perf-no-sheen) .settings-panel::before,
+body:not(.lite-mode):not(.perf-no-sheen) .season-history-card::before{
     content:'';
     position:absolute; inset:0;
     background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.07) 40%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.07) 60%, transparent 80%);
@@ -1282,9 +1340,79 @@ body.lite-mode .hero-text {
 }
 
 /* =====================================================
+   GRANULAR PERFORMANCE TOGGLES — "Full" performance is no longer
+   all-or-nothing. Each visual cost is its own switch (see the
+   Performance tile in Settings); .lite-mode above still exists as
+   the one-tap "everything off" preset, these classes let any subset
+   be turned off independently for a fully custom mix.
+   ===================================================== */
+body.perf-no-orbs .ambient-orb{ display:none !important; }
+body.perf-no-particles #particle-canvas{ display:none !important; }
+body.perf-no-blur *{
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+}
+body.perf-no-blur .app-container,
+body.perf-no-blur .bottom-nav,
+body.perf-no-blur .league-header,
+body.perf-no-blur .season-history-card,
+body.perf-no-blur .match-card-mini,
+body.perf-no-blur .weird-card,
+body.perf-no-blur .admin-section,
+body.perf-no-blur .modal-content,
+body.perf-no-blur .settings-panel,
+body.perf-no-blur .appearance-panel,
+body.perf-no-blur .ai-panel,
+body.perf-no-blur .glass-button,
+body.perf-no-blur .glass-input,
+body.perf-no-blur .ranking-card,
+body.perf-no-blur .team-picker-panel,
+body.perf-no-blur .stat-card,
+body.perf-no-blur .toast,
+body.perf-no-blur .settings-screen-panel,
+body.perf-no-blur .login-panel{
+    background-color:var(--bg-mid) !important;
+    background-image:none !important;
+}
+body.perf-no-blur #hero-logo-container.in-header,
+body.perf-no-blur #hero-logo-container.box-forming{
+    background:var(--bg-mid) !important;
+    border-color:rgba(255,255,255,0.10) !important;
+}
+body.perf-no-shadow *{ box-shadow:none !important; }
+body.perf-no-sheen #hero-logo-container.in-header::after{ display:none !important; }
+body.perf-no-sheen .hero-text{
+    animation:none !important;
+    background:none !important;
+    -webkit-text-fill-color:#ffffff !important;
+    color:#ffffff !important;
+    filter:none !important;
+}
+body.perf-no-anim *{
+    animation-duration:0.001s !important;
+    transition-duration:0.001s !important;
+}
+.perf-option-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 4px; border-bottom:1px solid rgba(255,255,255,0.06);
+    font-size:0.72rem; font-weight:600; color:#e5e7eb;
+}
+.perf-option-row:last-child{ border-bottom:none; }
+.perf-toggle{
+    width:42px;height:24px;border-radius:99px;background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.14); position:relative; cursor:pointer; flex-shrink:0;
+    transition:background 0.2s;
+}
+.perf-toggle::after{
+    content:''; position:absolute; top:2px; left:2px; width:18px;height:18px;border-radius:50%;
+    background:#fff; transition:transform 0.2s;
+}
+.perf-toggle.on{ background:var(--primary); border-color:var(--primary); }
+.perf-toggle.on::after{ transform:translateX(18px); }
+
+/* =====================================================
    SETTINGS PANEL — small, square, centered, no explanations
    ===================================================== */
-#settings-modal .modal-content{ display:none; }
 .settings-panel{
     width:min(76vw,270px);
     aspect-ratio:1/1;
@@ -1331,6 +1459,102 @@ body.lite-mode .hero-text {
 .settings-tile span{ font-size:0.62rem; font-weight:700; letter-spacing:0.3px; text-align:center; }
 .settings-tile.wide{ grid-column:1/-1; }
 
+/* =====================================================
+   SETTINGS SCREEN — full page (promoted from the old small
+   center modal), same visual language as the other tabs.
+   ===================================================== */
+.settings-screen-header{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+/* Account capsule — logo fixed on the left, name/subtitle on the right.
+   No inline logout here (there's exactly one Log Out tile, at the very
+   bottom of the panel, see .danger-tile). */
+.account-card{
+    display:flex; align-items:center; gap:12px; margin-top:10px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
+    border-radius:999px; padding:8px 22px 8px 8px;
+}
+.account-avatar{
+    width:52px; height:52px; border-radius:50%; object-fit:cover; flex-shrink:0;
+    background:rgba(255,255,255,0.06);
+    border:2px solid rgba(255,255,255,0.16);
+    box-shadow:0 6px 18px rgba(0,0,0,0.3);
+}
+.account-textcol{ display:flex; flex-direction:column; gap:1px; text-align:left; }
+.account-name{ font-size:0.85rem; font-weight:900; letter-spacing:0.3px; color:#fff; }
+.account-subtitle{ font-size:0.6rem; color:#6b7280; font-weight:600; letter-spacing:0.2px; }
+.settings-section-label{
+    font-size:0.62rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase;
+    color:#6b7280; margin:16px 4px 8px;
+}
+.settings-page-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 4px;
+}
+.settings-page-tile{
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
+    border-radius:16px; color:#fff; cursor:pointer; padding:14px 10px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+    transition:all 0.15s; text-align:center;
+}
+.settings-page-tile:active{ transform:scale(0.95); background:rgba(255,255,255,0.1); }
+.settings-page-tile.active{
+    background:var(--nav-active-bg); border-color:var(--nav-active-border); color:var(--nav-active-color);
+}
+.settings-page-tile i{ font-size:1.3rem; }
+.settings-page-tile span{ font-size:0.66rem; font-weight:700; }
+.settings-page-tile.wide{ grid-column:1/-1; flex-direction:row; justify-content:flex-start; padding:14px 16px; }
+.settings-page-tile.admin-tile{ border-color:rgba(167,139,250,0.35); color:#c4b5fd; }
+.settings-page-tile.danger-tile{ border-color:rgba(239,68,68,0.3); color:#f87171; }
+.settings-page-tile.shop-tile-big{
+    flex-direction:row; justify-content:flex-start; gap:14px;
+    padding:20px 18px; border-radius:22px;
+    background:linear-gradient(135deg, rgba(96,165,250,0.16), rgba(129,140,248,0.16));
+    border:1px solid rgba(255,255,255,0.14);
+}
+.settings-page-tile.shop-tile-big .shop-tile-icon{
+    width:44px;height:44px;border-radius:14px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:1.2rem;
+    background:linear-gradient(135deg, var(--primary), var(--accent)); color:#0b1220;
+    box-shadow:0 4px 14px var(--primary-glow);
+}
+.settings-page-tile.shop-tile-big .shop-tile-textcol{ display:flex; flex-direction:column; gap:2px; text-align:left; }
+.settings-page-tile.shop-tile-big .shop-tile-title{ font-size:0.88rem; font-weight:900; color:#fff; }
+.settings-page-tile.shop-tile-big .shop-tile-sub{ font-size:0.64rem; color:#9ca3af; font-weight:600; }
+.settings-page-tile.shop-tile-big i.shop-tile-chevron{ margin-left:auto; color:#4b5563; }
+
+/* =====================================================
+   LOGIN SCREEN — team pick + password, Telegram-like flow.
+   Sits above everything (higher z-index than the settings/team
+   sheets) until a team is authenticated, then never shows again
+   on this device unless the user logs out.
+   ===================================================== */
+#login-screen{
+    position:fixed; inset:0; z-index:1500; display:none;
+    align-items:center; justify-content:center; flex-direction:column;
+    background:radial-gradient(circle at 30% 80%, var(--bg-from) 0%, var(--bg-mid) 60%, var(--bg-to) 100%);
+    padding:24px;
+}
+#login-screen.open{ display:flex; }
+.login-panel{
+    width:min(88vw,340px); background:linear-gradient(160deg,rgba(10,18,30,0.97),rgba(15,23,42,0.97));
+    border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.18);
+    border-radius:24px; padding:22px 20px; backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+    box-shadow:0 24px 60px rgba(0,0,0,0.6);
+}
+.login-title{ font-size:0.95rem; font-weight:900; text-align:center; color:#fff; letter-spacing:0.5px; margin-bottom:4px; }
+.login-sub{ font-size:0.68rem; color:#6b7280; text-align:center; margin-bottom:18px; }
+.login-team-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.login-team-card{
+    display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 8px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:16px;
+    cursor:pointer; transition:all 0.15s;
+}
+.login-team-card:active{ transform:scale(0.94); background:rgba(255,255,255,0.1); }
+.login-team-card img{ width:44px;height:44px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.08); }
+.login-team-card span{ font-size:0.7rem; font-weight:800; }
+.login-back-btn{ font-size:0.68rem; color:#6b7280; text-align:center; margin-top:14px; cursor:pointer; }
+.login-selected-team{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:16px; }
+.login-selected-team img{ width:64px;height:64px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.08); }
+.login-error{ font-size:0.65rem; color:#f87171; text-align:center; margin-top:8px; display:none; font-weight:700; }
+
 /* dim + disable capsule while inside admin panel */
 #hero-logo-container.capsule-locked{
     opacity:0.35 !important;
@@ -1370,7 +1594,6 @@ body.lite-mode .hero-text {
     box-shadow:0 0 10px var(--primary-glow);
 }
 .segmented-btn:active{ transform:scale(0.96); }
-/* Full performance mode — temporarily disabled (see FULL_PERFORMANCE_DISABLED) */
 .segmented-btn:disabled{ opacity:0.35; cursor:not-allowed; }
 .segmented-btn:disabled:active{ transform:none; }
 .palette-grid{
@@ -1479,44 +1702,48 @@ body.lite-mode .hero-text {
 }
 .back-to-top-fab:active{ transform:translateX(-50%) scale(0.94); }
 .back-to-top-fab i{ font-size:0.85rem; }
-body.lite-mode .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+body.lite-mode .back-to-top-fab,
+body.perf-no-blur .back-to-top-fab,
+body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
 
-/* AI Assistant entry point — now a small icon button inside the Season
-   Table header card itself, instead of a floating pill (keeps the
-   floating-button budget on screen down to just "back to top"). */
-.season-ai-header-btn{
-    position:absolute; top:14px; right:16px;
-    width:32px;height:32px;border-radius:50%;
+/* AI entry capsule — sits below the last row of the Overall table */
+.ai-entry-capsule{
+    width:100%; display:flex; align-items:center; gap:12px;
+    margin-top:14px; padding:14px 16px; border-radius:20px;
+    background:linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.12));
+    border:1px solid rgba(255,255,255,0.12);
+    cursor:pointer; transition:transform 0.15s ease; text-align:left;
+}
+.ai-entry-capsule:active{ transform:scale(0.97); }
+.ai-entry-icon{
+    width:38px;height:38px;border-radius:50%;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
     background:linear-gradient(135deg, var(--primary), var(--accent));
-    color:#0b1220;
-    border:1px solid rgba(255,255,255,0.3);
-    box-shadow:0 4px 14px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
-    cursor:pointer;
-    transition:transform 0.15s ease;
+    color:#0b1220; box-shadow:0 4px 14px var(--primary-glow);
 }
-.season-ai-header-btn:active{ transform:scale(0.9); }
-body.lite-mode .season-ai-header-btn{ box-shadow:none; }
-/* Docked state — while the button is temporarily reparented to <body> and
-   scroll-docked beside the HARFS capsule (see dockAiHeaderBtn/undockAiHeaderBtn
-   in JS). Needs to sit above the capsule (z-index:200). */
-.season-ai-header-btn.ai-btn-floating{ z-index:210; }
+.ai-entry-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.ai-entry-title{ font-size:0.8rem; font-weight:800; color:#fff; }
+.ai-entry-sub{ font-size:0.64rem; color:#6b7280; }
+.ai-entry-chevron{ color:#4b5563; font-size:0.8rem; flex-shrink:0; }
 
 /* =====================================================
-   AI ASSISTANT — chat panel
+   AI ASSISTANT — full-page chat screen (moved out of the old
+   bottom-sheet so it gets a proper header + fills the whole screen)
    ===================================================== */
+#ai-chat-screen.page-screen{ overflow:hidden; } /* the inner scroll area handles scrolling instead */
+.ai-chat-inner{
+    width:100%; max-width:460px; height:100%;
+    display:flex; flex-direction:column;
+}
 .ai-panel{
     background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
     backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
-    border:1px solid rgba(255,255,255,0.09); border-bottom:none;
-    border-radius:26px 26px 0 0;
-    width:100%; max-width:460px; height:88vh;
+    border:1px solid rgba(255,255,255,0.09);
+    border-radius:26px;
+    width:100%; height:100%;
     display:flex; flex-direction:column; overflow:hidden;
-    box-shadow:0 -16px 50px rgba(0,0,0,0.5);
-    transform:translateY(100%);
-    transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 16px 50px rgba(0,0,0,0.5);
 }
-#ai-panel-overlay.open .ai-panel{ transform:translateY(0); }
 .ai-panel-header{
     display:flex; align-items:center; justify-content:space-between;
     padding:16px 18px 12px; border-bottom:1px solid rgba(255,255,255,0.06);
@@ -1524,9 +1751,15 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
 }
 .ai-panel-title{
     font-size:0.88rem; font-weight:900; display:flex; align-items:center; gap:8px;
-    color:var(--primary);
+    color:var(--primary); flex:1; justify-content:center;
 }
-.ai-panel-header-actions{ display:flex; gap:8px; }
+.ai-panel-back-btn{
+    width:34px;height:34px;border-radius:50%;flex-shrink:0;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+    color:#9ca3af;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.ai-panel-back-btn:active{ transform:scale(0.92); }
+.ai-panel-header-actions{ display:flex; gap:8px; flex-shrink:0; }
 .ai-icon-btn{
     width:30px; height:30px; border-radius:50%; border:none;
     background:rgba(255,255,255,0.06); color:#9ca3af;
@@ -1535,7 +1768,7 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
 }
 .ai-icon-btn:active{ transform:scale(0.9); }
 .ai-chat-scroll{
-    flex:1; overflow-y:auto; padding:16px;
+    flex:1; min-height:0; overflow-y:auto; padding:16px;
     display:flex; flex-direction:column; gap:12px;
     -ms-overflow-style:none; scrollbar-width:none;
 }
@@ -1657,45 +1890,42 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
 <!-- Toast -->
 <div id="toast-container"></div>
 
-<!-- Hero Logo (hold in header state to open Settings) -->
+<!-- Hero Logo (original HARFS wordmark — purely decorative now that
+     Settings lives in the bottom nav; no hold-gesture action anymore) -->
 <div id="hero-logo-container">
     <div class="hero-text" id="harfs-text">HARFS</div>
     <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
 </div>
 
-<!-- Settings Panel (opened by holding the HARFS capsule) -->
-<div class="modal-overlay" id="settings-modal">
-    <div class="settings-panel">
-        <div class="settings-panel-header">
-            <span>Settings</span>
-            <button class="settings-close-btn" onclick="closeSettings()"><i class="fas fa-times"></i></button>
+<!-- ============ LOGIN SCREEN ============
+     Telegram-style: pick your team, then set (first time) or enter
+     (every time after) that team's password. Session is kept in
+     localStorage so this only shows again after a manual logout or
+     on a new device/browser. Backed by a small Cloudflare Worker —
+     see HARFS_AUTH_API below. -->
+<div id="login-screen">
+    <div class="login-panel">
+        <div id="login-step-pick">
+            <div class="login-title">Welcome to HARFS</div>
+            <div class="login-sub">Select your team to continue</div>
+            <div class="login-team-grid" id="login-team-grid"><!-- filled by JS --></div>
         </div>
-        <div class="settings-grid">
-            <div class="settings-tile wide" id="settings-appearance-tile" onclick="openAppearanceSheet()">
-                <i class="fas fa-palette"></i>
-                <span>Appearance</span>
+        <div id="login-step-password" style="display:none;">
+            <div class="login-selected-team">
+                <img id="login-selected-logo" src="">
+                <div class="login-title" id="login-selected-name">Team</div>
+                <div class="login-sub" id="login-password-hint">Enter your password</div>
             </div>
-            <div class="settings-tile" id="settings-music-tile" onclick="settingsToggleMusic()">
-                <i class="fas fa-music" id="settings-music-icon"></i>
-                <span id="settings-music-label">Music: On</span>
-            </div>
-            <div class="settings-tile" id="settings-playlist-tile" onclick="openPlaylistSheet()">
-                <i class="fas fa-list-ul"></i>
-                <span>Playlist</span>
-            </div>
-            <div class="settings-tile" onclick="settingsNextTrack()">
-                <i class="fas fa-forward-step"></i>
-                <span>Next Track</span>
-            </div>
-            <div class="settings-tile" id="settings-mode-tile" onclick="cyclePlaybackMode()">
-                <i class="fas fa-random" id="settings-mode-icon"></i>
-                <span id="settings-mode-label">Shuffle</span>
-            </div>
+            <input type="password" id="login-password-input" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg" placeholder="Password" onkeyup="if(event.key==='Enter')submitLoginPassword()">
+            <input type="password" id="login-password-confirm" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg mt-2" placeholder="Confirm password" style="display:none;" onkeyup="if(event.key==='Enter')submitLoginPassword()">
+            <button class="glass-button w-full font-bold mt-3" onclick="submitLoginPassword()" id="login-submit-btn">Continue</button>
+            <p class="login-error" id="login-error"></p>
+            <div class="login-back-btn" onclick="backToTeamPick()"><i class="fas fa-arrow-left mr-1"></i> Choose a different team</div>
         </div>
     </div>
 </div>
 
-<!-- Appearance Sheet (Performance mode + Color scheme + Palette) -->
+<!-- Appearance Sheet (Performance customization + Color scheme + Palette) -->
 <div class="team-picker-sheet" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
     <div class="team-picker-panel appearance-panel">
         <div class="team-picker-handle"></div>
@@ -1703,8 +1933,35 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
 
         <div class="appearance-section-label">Performance</div>
         <div class="segmented-control" id="perf-segmented">
-            <button class="segmented-btn" data-value="full" onclick="setPerformance('full')" disabled title="Temporarily unavailable"><i class="fas fa-bolt"></i> Full</button>
             <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
+            <button class="segmented-btn" data-value="custom" onclick="setPerformance('custom')"><i class="fas fa-sliders"></i> Custom</button>
+        </div>
+
+        <div id="perf-custom-options" style="display:none;">
+            <div class="perf-option-row">
+                <span><i class="fas fa-circle-nodes mr-1"></i> Background Orbs</span>
+                <div class="perf-toggle" id="perf-toggle-orbs" onclick="togglePerfOption('orbs')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-braille mr-1"></i> Floating Particles</span>
+                <div class="perf-toggle" id="perf-toggle-particles" onclick="togglePerfOption('particles')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-droplet mr-1"></i> Glass Blur Effects</span>
+                <div class="perf-toggle" id="perf-toggle-blur" onclick="togglePerfOption('blur')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-sun mr-1"></i> Glow / Shadows</span>
+                <div class="perf-toggle" id="perf-toggle-shadows" onclick="togglePerfOption('shadows')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-wand-sparkles mr-1"></i> Shimmer Animations</span>
+                <div class="perf-toggle" id="perf-toggle-sheen" onclick="togglePerfOption('sheen')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-forward mr-1"></i> Fast Transitions</span>
+                <div class="perf-toggle" id="perf-toggle-anim" onclick="togglePerfOption('anim')"></div>
+            </div>
         </div>
 
         <div class="appearance-section-label">Palette</div>
@@ -1738,11 +1995,13 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
         <div class="nav-item active" onclick="navigate('league')" id="nav-season">
             <i class="fas fa-futbol"></i><span>Season</span>
         </div>
-        <div class="nav-item" onclick="navigate('shop')" id="nav-shop">
-            <i class="fas fa-store"></i><span>Shop</span>
+        <div class="nav-item" onclick="navigate('weird')" id="nav-admin">
+            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Memories</span>
         </div>
-        <div class="nav-item" id="nav-admin">
-            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Moments</span>
+        <div class="nav-item" onclick="navigate('settings')" id="nav-settings">
+            <i class="fas fa-gear" id="nav-settings-icon"></i>
+            <img id="nav-settings-team-logo" src="">
+            <span>Profile</span>
         </div>
     </nav>
 
@@ -1759,6 +2018,19 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
             </div>
+            <button class="ai-entry-capsule" onclick="navigate('ai-chat')">
+                <div class="ai-entry-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
+                        <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+                        <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
+                    </svg>
+                </div>
+                <div class="ai-entry-text">
+                    <span class="ai-entry-title">HARFS Assistant</span>
+                    <span class="ai-entry-sub">Ask about the table, results &amp; trends</span>
+                </div>
+                <i class="fas fa-chevron-right ai-entry-chevron"></i>
+            </button>
         </div>
     </div>
 
@@ -1766,12 +2038,6 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
     <div id="league-table-screen" class="page-screen">
 
         <div class="league-header" style="position:relative;">
-            <button class="season-ai-header-btn" id="season-ai-header-btn" onclick="openAiPanel()" aria-label="AI Assistant" title="AI Assistant">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4">
-  <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
-  <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
-</svg>
-            </button>
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Season Table</h2>
             <div class="text-[10px] text-gray-500 font-mono mb-2" id="current-datetime">...</div>
             <!-- Season Navigation Pills -->
@@ -1846,24 +2112,26 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
 
     </div><!-- /league-table-screen -->
 
-    <!-- ============ SHOP ============ -->
+    <!-- ============ SHOP (now reached from Settings, not the bottom nav) ============ -->
     <div id="shop-screen" class="page-screen">
         <div class="league-header">
-            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Shop</h2>
-            <div class="flex items-center gap-2 w-full mb-3">
-                <span style="font-size:0.62rem;color:#6b7280;font-weight:700;flex-shrink:0;">Buying for</span>
-                <div id="shop-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('shop')">
-                    <img id="shop-team-select-icon" src="" style="display:none;">
-                    <span id="shop-team-select-label">Select team</span>
-                    <i class="fas fa-chevron-down chevron"></i>
-                </div>
+            <button onclick="navigate('settings')" style="align-self:flex-start;margin-bottom:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Settings
+            </button>
+            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Arena Shop</h2>
+            <div class="settings-team-badge" style="margin-top:0;margin-bottom:10px;">
+                <img id="shop-my-team-logo" src="">
+                <span id="shop-my-team-name">—</span>
             </div>
-            <div class="segmented-control w-full" id="shop-tabs">
-                <button class="segmented-btn active" data-tab="boutique" onclick="setShopTab('boutique')"><i class="fas fa-shirt"></i> Boutique</button>
-                <button class="segmented-btn" data-tab="arena" onclick="setShopTab('arena')"><i class="fas fa-bolt"></i> Arena</button>
-            </div>
+            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">Requests are sent straight to the Bayern admin panel for approval — nothing is charged until it's approved.</p>
         </div>
         <div class="w-full px-4" id="shop-items-list"></div>
+        <div class="w-full px-4 mt-2" id="shop-my-requests-wrap" style="display:none;">
+            <div class="season-history-card">
+                <h3 class="season-history-title"><i class="fas fa-clock"></i> Your Pending Requests</h3>
+                <div id="shop-my-requests-list"></div>
+            </div>
+        </div>
     </div>
 
     <!-- ============ ADMIN ============ -->
@@ -1875,16 +2143,7 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
             </button>
         </div>
 
-        <div id="admin-login-section" class="w-full px-6 flex flex-col items-center gap-5">
-            <div style="background:rgba(255,255,255,0.04);padding:32px;border-radius:24px;border:1px solid rgba(255,255,255,0.09);display:flex;flex-direction:column;align-items:center;width:100%;max-width:280px;backdrop-filter:blur(20px);">
-                <i class="fas fa-user-shield" style="font-size:2.8rem;color:#a78bfa;margin-bottom:20px;"></i>
-                <input type="password" id="admin-pwd-input" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg mb-4" placeholder="Enter PIN" onkeyup="if(event.key==='Enter')verifyAdmin()">
-                <button class="glass-button w-full font-bold" style="border-color:rgba(167,139,250,0.4);color:#c4b5fd;" onclick="verifyAdmin()">Unlock Panel</button>
-                <p id="admin-error" class="text-xs text-red-400 mt-3 font-semibold" style="display:none;">Incorrect PIN</p>
-            </div>
-        </div>
-
-        <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:none;">
+        <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:flex;">
             <!-- Register Match -->
             <div class="admin-section">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#06b6d4);"></div>
@@ -1930,6 +2189,23 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                     <p class="text-xs text-red-400 text-center mt-3 font-semibold" id="admin-match-error" style="display:none;">Teams must be different.</p>
                     <button class="glass-button w-full mt-4 font-bold text-sm py-3" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="registerMatchResult()">
                         <i class="fas fa-check-circle mr-2"></i> Save Match
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pending Shop Purchases (submitted automatically via the HARFS
+                 auth/purchases Worker — see HARFS_AUTH_API. Approve/Reject
+                 here finalizes them the same way the old admin-approve-link
+                 used to, just without a link to send around.) -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fdba74,#fca5a5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Pending Shop Purchases</h3>
+                    <div id="admin-purchases-list" class="overflow-y-auto space-y-2" style="max-height:320px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                    <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(245,158,11,0.3);color:#fdba74;" onclick="loadPendingPurchases()">
+                        <i class="fas fa-rotate mr-2"></i>Refresh
                     </button>
                 </div>
             </div>
@@ -2004,14 +2280,6 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                         <span class="weird-save-btn-fill" id="weird-save-btn-fill"></span>
                         <span class="weird-save-btn-label" id="weird-save-btn-label"><i class="fas fa-bolt mr-2"></i> Save Event</span>
                     </button>
-                    <!-- Jumps to the public Moments feed WITHOUT logging the admin out
-                         (plain exitAdmin()/the nav item's normal tap both clear
-                         isAdminUnlocked first) so the Pin/Edit/Delete controls on
-                         each card stay visible. Tap the nav item again (still
-                         labeled "Admin") to come straight back to this dashboard. -->
-                    <button class="glass-button w-full mt-2 font-bold text-xs py-2.5" style="border-color:rgba(251,191,36,0.25);color:#fde68a;" onclick="navigate('weird')">
-                        <i class="fas fa-list-ul mr-2"></i>Manage Existing Moments (Pin / Edit / Delete)
-                    </button>
                 </div>
             </div>
 
@@ -2043,6 +2311,75 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
         </div>
     </div>
 
+    <!-- ============ SETTINGS (promoted from the old capsule-hold modal) ============ -->
+    <div id="settings-screen" class="page-screen">
+        <div class="league-header settings-screen-header">
+            <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Profile</h2>
+            <div class="account-card">
+                <img id="settings-team-badge-logo" src="" class="account-avatar">
+                <div class="account-textcol">
+                    <span id="settings-team-badge-name" class="account-name">—</span>
+                    <span class="account-subtitle">HARFS League Account</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full px-4">
+            <div class="settings-page-grid">
+                <button class="settings-page-tile wide shop-tile-big" onclick="navigate('shop')">
+                    <div class="shop-tile-icon"><i class="fas fa-store"></i></div>
+                    <div class="shop-tile-textcol">
+                        <span class="shop-tile-title">Arena Shop</span>
+                        <span class="shop-tile-sub">Spend coins, request items</span>
+                    </div>
+                    <i class="fas fa-chevron-right shop-tile-chevron"></i>
+                </button>
+            </div>
+
+            <div class="settings-section-label">Appearance &amp; Sound</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
+                    <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
+                </div>
+                <div class="settings-page-tile" id="settings-music-tile" onclick="settingsToggleMusic()">
+                    <i class="fas fa-music" id="settings-music-icon"></i>
+                    <span id="settings-music-label">Music: On</span>
+                </div>
+                <div class="settings-page-tile" onclick="openPlaylistSheet()">
+                    <i class="fas fa-list-ul"></i><span>Playlist</span>
+                </div>
+                <div class="settings-page-tile" onclick="settingsNextTrack()">
+                    <i class="fas fa-forward-step"></i><span>Next Track</span>
+                </div>
+                <div class="settings-page-tile" id="settings-mode-tile" onclick="cyclePlaybackMode()">
+                    <i class="fas fa-random" id="settings-mode-icon"></i>
+                    <span id="settings-mode-label">Shuffle</span>
+                </div>
+            </div>
+
+            <div id="settings-admin-section" style="display:none;">
+                <div class="settings-section-label">Bayern Admin</div>
+                <div class="settings-page-grid">
+                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
+                        <i class="fas fa-user-shield" style="margin-right:8px;"></i><span>Admin Panel</span>
+                    </div>
+                    <div class="settings-page-tile wide admin-tile" style="flex-direction:row;justify-content:space-between;cursor:default;" onclick="event.stopPropagation()">
+                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-pen-to-square"></i>Edit Mode</span>
+                        <div class="perf-toggle" id="admin-edit-mode-toggle" onclick="toggleAdminEditMode()"></div>
+                    </div>
+                </div>
+                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories, and Adjust Coins appears in team panels.</p>
+            </div>
+
+            <div class="settings-section-label">Account</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide danger-tile" onclick="logoutTeam()">
+                    <i class="fas fa-right-from-bracket" style="margin-right:8px;"></i><span>Log Out</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ MEDIA LIGHTBOX ============ -->
     <div id="weird-lightbox" onclick="closeWeirdLightbox()">
         <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
@@ -2054,7 +2391,8 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
         <video id="weird-lightbox-video" src="" controls playsinline onclick="event.stopPropagation()" style="display:none;"></video>
     </div>
     <div id="team-profile-modal" class="modal-overlay">
-        <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;">
+        <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;position:relative;">
+            <div class="modal-x-close" onclick="hideTeamProfile()"><i class="fas fa-times"></i></div>
             <div class="profile-header">
                 <div class="profile-header-bg"></div>
                 <img id="profile-team-logo" src="" class="profile-avatar">
@@ -2084,7 +2422,6 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
                     <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Form (Last 5)</div>
                     <div id="team-form-dots" style="display:flex;gap:7px;justify-content:center;align-items:center;"></div>
                 </div>
-                <button class="glass-button w-full text-sm" onclick="hideTeamProfile()">Close</button>
             </div>
         </div>
     </div>
@@ -2146,43 +2483,43 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
     </div>
 
     <!-- ============ TEAM PANEL (tap a team on Overall) ============ -->
-    <div id="team-panel-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeTeamPanel()">
-        <div class="team-picker-panel" style="max-height:82vh;">
-            <div class="team-picker-handle"></div>
-            <div class="team-panel-header">
-                <img id="team-panel-logo" src="" alt="" onerror="this.style.opacity='0.3'">
-                <div style="flex:1;min-width:0;">
-                    <div class="name" id="team-panel-name"></div>
-                    <div class="pinned" id="team-panel-pinned"></div>
-                </div>
-                <div class="team-panel-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
+    <div id="team-panel-overlay" class="modal-overlay" onclick="if(event.target===this)closeTeamPanel()">
+        <div class="modal-content" style="padding:0;overflow:hidden;max-width:360px;max-height:86vh;display:flex;flex-direction:column;position:relative;">
+            <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
+            <div class="profile-header" style="flex-shrink:0;">
+                <div class="profile-header-bg"></div>
+                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'">
             </div>
-            <div class="team-panel-scroll">
-                <div class="team-panel-section">
-                    <div class="team-panel-section-title"><i class="fas fa-trophy"></i> Trophy Cabinet</div>
-                    <div class="trophy-cabinet-grid" id="team-panel-trophies"></div>
-                </div>
-                <div class="team-panel-section">
-                    <div class="team-panel-section-title"><i class="fas fa-crown"></i> League Records</div>
-                    <div id="team-panel-records"></div>
-                </div>
-                <div class="team-panel-section">
-                    <div class="team-panel-section-title"><i class="fas fa-coins"></i> Coin Wallet</div>
-                    <div class="wallet-balance-row">
-                        <span class="wallet-balance-num"><span id="team-panel-coins">0</span> 🪙</span>
+            <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+                <h4 id="team-panel-name" class="text-xl font-black text-white mb-0.5" style="text-align:center;">Team</h4>
+                <div id="team-panel-pinned" style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;"></div>
+                <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-trophy"></i> Trophy Cabinet</div>
+                        <div class="trophy-cabinet-grid" id="team-panel-trophies"></div>
                     </div>
-                    <div class="coin-log-list" id="team-panel-log"></div>
-                    <div class="team-panel-admin-row" id="team-panel-admin-adjust">
-                        <button class="glass-button flex-1 text-xs py-2" onclick="adjustTeamCoinsPrompt()"><i class="fas fa-pen"></i> Adjust Coins</button>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-crown"></i> League Records</div>
+                        <div id="team-panel-records"></div>
                     </div>
-                </div>
-                <div class="team-panel-section">
-                    <div class="team-panel-section-title"><i class="fas fa-shirt"></i> Collection</div>
-                    <div id="team-panel-items"></div>
-                </div>
-                <div class="team-panel-section">
-                    <div class="team-panel-section-title"><i class="fas fa-bolt"></i> Arena Requests</div>
-                    <div id="team-panel-arena"></div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-coins"></i> Coin Wallet</div>
+                        <div class="wallet-balance-row">
+                            <span class="wallet-balance-num"><span id="team-panel-coins">0</span> 🪙</span>
+                        </div>
+                        <div class="coin-log-list" id="team-panel-log"></div>
+                        <div class="team-panel-admin-row" id="team-panel-admin-adjust">
+                            <button class="glass-button flex-1 text-xs py-2" onclick="adjustTeamCoinsPrompt()"><i class="fas fa-pen"></i> Adjust Coins</button>
+                        </div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-shirt"></i> Collection</div>
+                        <div id="team-panel-items"></div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-bolt"></i> Arena Requests</div>
+                        <div id="team-panel-arena"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2204,29 +2541,31 @@ body.lite-mode .season-ai-header-btn{ box-shadow:none; }
         </div>
     </div>
 
-    <!-- ============ AI ASSISTANT CHAT PANEL ============ -->
-    <div id="ai-panel-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeAiPanel()">
-        <div class="ai-panel" dir="ltr">
-            <div class="ai-panel-header">
-                <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
-                <div class="ai-panel-header-actions">
-                    <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
-                    <button class="ai-icon-btn" onclick="closeAiPanel()" title="Close"><i class="fas fa-times"></i></button>
+    <!-- ============ AI ASSISTANT — full-page chat ============ -->
+    <div id="ai-chat-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel" dir="ltr">
+                <div class="ai-panel-header">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
+                    </div>
                 </div>
-            </div>
-            <div class="ai-chat-scroll" id="ai-chat-scroll">
-                <div id="ai-chat-messages"></div>
-                <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
-                    <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+                <div class="ai-chat-scroll" id="ai-chat-scroll">
+                    <div id="ai-chat-messages"></div>
+                    <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
+                        <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+                    </div>
                 </div>
-            </div>
-            <!-- Quick-ask suggestions — shown until the user sends their first
-                 real message (see renderAiSuggestions), same pattern as the
-                 suggestion chips in most chat apps. -->
-            <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
-            <div class="ai-input-bar">
-                <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
-                <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+                <!-- Quick-ask suggestions — shown until the user sends their first
+                     real message (see renderAiSuggestions), same pattern as the
+                     suggestion chips in most chat apps. -->
+                <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
+                <div class="ai-input-bar">
+                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
+                    <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -2283,10 +2622,24 @@ const GITHUB_WEIRD_FILE="weird_events.json";
 const GITHUB_WEIRD_MANIFEST_FILE="weird_events_manifest.json";
 const WEIRD_SHARD_SIZE_LIMIT=15*1024*1024; // 15MB — real-world reports show GitHub's Contents API can reject PUTs well below its documented 100MB limit (even 50MB payloads have been reported to fail with 422), so we stay well clear of that instead of trusting the higher figure
 const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
-const ADMIN_PASSWORD="0000";
 const TEAM_NAMES=["HOSI","Sezar","Bayern","Yellow"];
 const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sezar":"Sezar","Bayern":"Bayern","Yellow":"Yellow"};
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
+
+// ============================================================
+// HARFS AUTH / PURCHASES API (Cloudflare Worker)
+// ------------------------------------------------------------
+// Replace this with your deployed Worker's URL once you've followed
+// the deployment guide (worker.js + DEPLOY_GUIDE.md). Everything
+// below degrades gracefully (clear error toasts) if this is left
+// pointing at the placeholder.
+// ============================================================
+const HARFS_AUTH_API = "https://REPLACE-WITH-YOUR-WORKER.workers.dev";
+let loggedInTeam = localStorage.getItem('harfs_team') || null;
+let harfsSessionToken = localStorage.getItem('harfs_session') || null;
+let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
+let loginIsNewAccount = false;
+
 
 let leagueData={},mainLeagueData={};
 let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null;
@@ -2300,7 +2653,6 @@ let lastSaveFileError=''; // holds the real error message from the last failed s
 let isAdminUnlocked=false,isViewingArchive=false;
 let homeScore=0,awayScore=0,currentFilter='all';
 let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
-let shopActiveTeam=null,shopActiveTab='boutique';
 let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for new event
 const MAX_MOMENT_MEDIA=4;
 const MAX_MOMENT_VIDEO_SECONDS=120;
@@ -2308,12 +2660,146 @@ const MOMENT_VIDEO_MAX_WIDTH=480;
 const MOMENT_VIDEO_BITRATE=250000; // ~250kbps video — a full 2-min clip + audio stays well under WEIRD_SHARD_SIZE_LIMIT even after double base64 encoding
 const MOMENT_AUDIO_BITRATE=48000; // ~48kbps audio — explicit, so total size stays predictable instead of depending on the browser's default
 const MOMENT_AUDIO_MAX_MB=8;
-let adminRevealed=false; // whether admin button is shown
-let adminHoldTimer=null,adminHoldStart=null;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
 function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,coins:0,coinLog:[],ownedItems:[],pinned:null});}
 function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
+
+// ============================================================
+// LOGIN SYSTEM — team pick + password, backed by the HARFS auth
+// Worker. First pick for a team sets its password; every pick after
+// that requires it. Session persists in localStorage so this only
+// runs again after logoutTeam() or on a fresh browser/device.
+// ============================================================
+function renderLoginTeamGrid(){
+    const grid=document.getElementById('login-team-grid');
+    if(!grid) return;
+    grid.innerHTML = TEAM_NAMES.map(t=>`
+        <div class="login-team-card" onclick="pickLoginTeam('${t}')">
+            <img src="${GITHUB_IMAGE_BASE_URL}${t}.png" onerror="this.style.opacity=0.25;">
+            <span>${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}</span>
+        </div>`).join('');
+}
+function showLoginScreen(){
+    renderLoginTeamGrid();
+    document.getElementById('login-step-pick').style.display='block';
+    document.getElementById('login-step-password').style.display='none';
+    document.getElementById('login-screen').classList.add('open');
+}
+function hideLoginScreen(){
+    document.getElementById('login-screen').classList.remove('open');
+}
+function backToTeamPick(){
+    loginPickedTeam=null;
+    document.getElementById('login-step-pick').style.display='block';
+    document.getElementById('login-step-password').style.display='none';
+    document.getElementById('login-password-input').value='';
+    document.getElementById('login-password-confirm').value='';
+    document.getElementById('login-error').style.display='none';
+}
+async function pickLoginTeam(team){
+    haptic([8]);
+    loginPickedTeam=team;
+    document.getElementById('login-selected-logo').src=`${GITHUB_IMAGE_BASE_URL}${team}.png`;
+    document.getElementById('login-selected-name').textContent=TEAM_DISPLAY_NAMES[team]||team;
+    document.getElementById('login-error').style.display='none';
+    document.getElementById('login-password-input').value='';
+    document.getElementById('login-password-confirm').value='';
+    document.getElementById('login-password-hint').textContent='Checking team...';
+    document.getElementById('login-step-pick').style.display='none';
+    document.getElementById('login-step-password').style.display='block';
+    try{
+        const res = await fetch(`${HARFS_AUTH_API}/auth/status?team=${encodeURIComponent(team)}`);
+        const data = await res.json();
+        loginIsNewAccount = !data.registered;
+    }catch(e){
+        loginIsNewAccount = false; // fail safe — assume registered, let /auth/login sort it out
+    }
+    if(loginIsNewAccount){
+        document.getElementById('login-password-hint').textContent='First time — set a password for this team';
+        document.getElementById('login-password-confirm').style.display='block';
+        document.getElementById('login-submit-btn').textContent='Set Password & Continue';
+    } else {
+        document.getElementById('login-password-hint').textContent='Enter your password';
+        document.getElementById('login-password-confirm').style.display='none';
+        document.getElementById('login-submit-btn').textContent='Log In';
+    }
+    document.getElementById('login-password-input').focus();
+}
+async function submitLoginPassword(){
+    const team=loginPickedTeam;
+    if(!team) return;
+    const pwd=document.getElementById('login-password-input').value;
+    const errEl=document.getElementById('login-error');
+    errEl.style.display='none';
+    if(!pwd || pwd.length<4){
+        errEl.textContent='Password must be at least 4 characters';
+        errEl.style.display='block';
+        return;
+    }
+    if(loginIsNewAccount){
+        const confirm=document.getElementById('login-password-confirm').value;
+        if(pwd!==confirm){
+            errEl.textContent="Passwords don't match";
+            errEl.style.display='block';
+            return;
+        }
+    }
+    const btn=document.getElementById('login-submit-btn');
+    btn.disabled=true; btn.textContent='Please wait...';
+    try{
+        const res = await fetch(`${HARFS_AUTH_API}/auth/login`,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({team, password:pwd})
+        });
+        const data = await res.json();
+        if(!res.ok || !data.ok){
+            errEl.textContent = data.error || 'Incorrect password';
+            errEl.style.display='block';
+            btn.disabled=false; btn.textContent = loginIsNewAccount ? 'Set Password & Continue' : 'Log In';
+            return;
+        }
+        loggedInTeam = team;
+        harfsSessionToken = data.token;
+        localStorage.setItem('harfs_team', team);
+        localStorage.setItem('harfs_session', data.token);
+        haptic([10,40,10]);
+        hideLoginScreen();
+        updateHeaderForLogin();
+        navigate('league');
+        showToast(`Welcome, ${TEAM_DISPLAY_NAMES[team]||team} 👋`,'success',2400);
+    }catch(e){
+        errEl.textContent='Could not reach the login server — check your connection';
+        errEl.style.display='block';
+    }
+    btn.disabled=false; btn.textContent = loginIsNewAccount ? 'Set Password & Continue' : 'Log In';
+}
+function logoutTeam(){
+    showConfirm({icon:'👋', title:'Log Out?', message:`Log out of ${TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam} on this device?`, okLabel:'Log Out', okColor:'red'}).then(ok=>{
+        if(!ok) return;
+        loggedInTeam=null; harfsSessionToken=null;
+        localStorage.removeItem('harfs_team'); localStorage.removeItem('harfs_session');
+        updateHeaderForLogin();
+        showLoginScreen();
+    });
+}
+// Swaps the bottom-nav "Settings" icon between the plain gear (logged
+// out) and the logged-in team's badge (Telegram-style account
+// indicator) — the top HARFS capsule stays untouched/decorative.
+function updateHeaderForLogin(){
+    const iconEl=document.getElementById('nav-settings-icon');
+    const logoEl=document.getElementById('nav-settings-team-logo');
+    if(!iconEl||!logoEl) return;
+    if(loggedInTeam){
+        iconEl.style.display='none';
+        logoEl.src=`${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+        logoEl.style.display='inline-block';
+    } else {
+        iconEl.style.display='inline-block';
+        logoEl.style.display='none';
+    }
+}
+
 
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
@@ -2333,13 +2819,27 @@ const PALETTES = [
 const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 
 let currentPalette = localStorage.getItem('palette') || 'ocean';
-// Full performance mode is temporarily disabled (see setPerformance below).
-// Lite is forced regardless of what's saved, but the saved preference itself
-// is left untouched so Full can just be switched back on later without
-// anyone needing to reselect it.
-const FULL_PERFORMANCE_DISABLED = true;
-// migrates the old on/off lite flag from before this feature existed
-let performanceMode = FULL_PERFORMANCE_DISABLED ? 'lite' : (localStorage.getItem('performance') || (localStorage.getItem('lite')==='on' ? 'lite' : 'full'));
+
+// ------------------------------------------------------------
+// PERFORMANCE — "Full performance" as a single on/off mode is gone.
+// Only two presets remain: Lite (a one-tap "everything off" shortcut)
+// and Custom (six independent switches — this is where "full" effects
+// live now, just selectable one at a time instead of all-or-nothing).
+// ------------------------------------------------------------
+const PERF_KEYS = ['orbs','particles','blur','shadows','sheen','anim'];
+const PERF_ALL_ON  = { orbs:true,  particles:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
+const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, sheen:false, anim:false };
+let performancePreset = localStorage.getItem('performancePreset')
+    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag; 'full' now maps to 'custom'
+if(performancePreset==='full') performancePreset='custom'; // migrates anyone who had the old preset saved
+let perfCustom = (()=>{
+    try{ const saved = JSON.parse(localStorage.getItem('perfCustom')); if(saved) return {...PERF_ALL_ON, ...saved}; }catch(e){}
+    return {...PERF_ALL_ON};
+})();
+function currentPerfValues(){
+    if(performancePreset==='lite') return PERF_ALL_OFF;
+    return perfCustom;
+}
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
 
 // Single source of truth — call after any appearance change
@@ -2351,7 +2851,14 @@ function applyAppearance(){
         clearCustomPaletteVars();
         document.body.setAttribute('data-palette', currentPalette);
     }
-    document.body.classList.toggle('lite-mode', performanceMode === 'lite');
+    const p = currentPerfValues();
+    document.body.classList.toggle('lite-mode', PERF_KEYS.every(k=>!p[k])); // convenience alias when everything's off
+    document.body.classList.toggle('perf-no-orbs', !p.orbs);
+    document.body.classList.toggle('perf-no-particles', !p.particles);
+    document.body.classList.toggle('perf-no-blur', !p.blur);
+    document.body.classList.toggle('perf-no-shadow', !p.shadows);
+    document.body.classList.toggle('perf-no-sheen', !p.sheen);
+    document.body.classList.toggle('perf-no-anim', !p.anim);
     syncSettingsUI();
     syncAppearanceUI();
 }
@@ -2364,16 +2871,25 @@ function openAppearanceSheet(){
 function closeAppearanceSheet(){
     document.getElementById('appearance-sheet').classList.remove('open');
 }
+// val is 'lite' | 'custom'. Picking 'custom' just switches the source
+// of truth to perfCustom (seeded from whatever was active) and reveals
+// the individual switches below.
 function setPerformance(val){
-    if(FULL_PERFORMANCE_DISABLED && val==='full'){
-        haptic([6]);
-        showToast('Full performance mode is temporarily unavailable','info');
-        return;
-    }
     haptic([6]);
-    performanceMode = val;
-    localStorage.setItem('performance', val);
-    localStorage.setItem('lite', val === 'lite' ? 'on' : 'off');
+    if(val==='custom' && performancePreset!=='custom'){
+        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active
+        localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
+    }
+    performancePreset = val;
+    localStorage.setItem('performancePreset', val);
+    applyAppearance();
+}
+// Flips a single switch while in Custom mode.
+function togglePerfOption(key){
+    if(performancePreset!=='custom') return;
+    haptic([6]);
+    perfCustom[key] = !perfCustom[key];
+    localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     applyAppearance();
 }
 function selectPalette(id){
@@ -2399,8 +2915,16 @@ function renderPaletteGrid(){
 }
 function syncAppearanceUI(){
     document.querySelectorAll('#perf-segmented .segmented-btn').forEach(b=>{
-        b.classList.toggle('active', b.dataset.value === performanceMode);
+        b.classList.toggle('active', b.dataset.value === performancePreset);
     });
+    const customPanel = document.getElementById('perf-custom-options');
+    if(customPanel) customPanel.style.display = (performancePreset==='custom') ? 'block' : 'none';
+    if(performancePreset==='custom'){
+        PERF_KEYS.forEach(k=>{
+            const el = document.getElementById('perf-toggle-'+k);
+            if(el) el.classList.toggle('on', !!perfCustom[k]);
+        });
+    }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
     });
@@ -2413,6 +2937,7 @@ function syncAppearanceUI(){
         if(bi) bi.value = customPaletteVals.bg;
     }
 }
+
 
 // ---- Custom palette: derive a full variable set from 3 picked colors ----
 function hexToRgb(hex){
@@ -2537,15 +3062,41 @@ function syncSettingsUI(){
 }
 
 function openSettings(){
-    syncSettingsUI();
-    document.getElementById('settings-modal').classList.add('open');
+    navigate('settings');
 }
-function closeSettings(){
-    document.getElementById('settings-modal').classList.remove('open');
-}
+function closeSettings(){ /* Settings is a full page now — nothing to close */ }
 function settingsToggleMusic(){
     toggleMusic();
     syncSettingsUI();
+}
+
+// Populates the Settings screen each time it's navigated to: team
+// badge, admin tile visibility (Bayern only), current toggle states.
+function renderSettingsScreen(){
+    syncSettingsUI();
+    syncAppearanceUI();
+    const badgeLogo=document.getElementById('settings-team-badge-logo');
+    const badgeName=document.getElementById('settings-team-badge-name');
+    if(loggedInTeam){
+        if(badgeLogo) badgeLogo.src=`${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+        if(badgeName) badgeName.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
+    }
+    const adminSection=document.getElementById('settings-admin-section');
+    if(adminSection) adminSection.style.display = (loggedInTeam==='Bayern') ? 'block' : 'none';
+    const editToggle=document.getElementById('admin-edit-mode-toggle');
+    if(editToggle) editToggle.classList.toggle('on', isAdminUnlocked);
+}
+// Flips Edit Mode on/off — this is the single switch for both the
+// Pin/Edit/Delete controls on Memories cards and the Adjust Coins
+// button inside team panels (see isAdminUnlocked usages).
+function toggleAdminEditMode(){
+    haptic([8]);
+    isAdminUnlocked = !isAdminUnlocked;
+    const editToggle=document.getElementById('admin-edit-mode-toggle');
+    if(editToggle) editToggle.classList.toggle('on', isAdminUnlocked);
+    showToast(isAdminUnlocked ? 'Edit Mode on' : 'Edit Mode off', 'info', 1600);
+    // Refresh anything already on screen that depends on this flag
+    if(document.getElementById('weird-screen')?.classList.contains('active')) renderWeirdEvents();
 }
 
 // ============================================================
@@ -2657,7 +3208,7 @@ function settingsNextTrack(){
     // CSS in Lite mode (display:none) and pointless to keep painting while
     // the tab is backgrounded — both previously burned CPU/battery for nothing.
     function shouldRun(){
-        return !document.hidden && !document.body.classList.contains('lite-mode');
+        return !document.hidden && !document.body.classList.contains('lite-mode') && !document.body.classList.contains('perf-no-particles');
     }
     function start(){ if(rafId===null && shouldRun()) draw(); }
     function stop(){ if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }
@@ -2697,57 +3248,9 @@ function toggleMusic(){
     showToast(musicMuted ? 'Music off' : 'Music on', 'info', 1800);
 }
 
-// Hold on HARFS logo capsule → open Settings panel
-(function setupLogoInteractions(){
-    let holdTimer = null;
-    let didFire   = false;
-    let startX = 0, startY = 0;
-    let isMoving = false;
-    const logo = document.getElementById('hero-logo-container');
-
-    function onStart(e){
-        if(!logo.classList.contains('in-header')) return;
-        if(logo.classList.contains('capsule-locked')) return;
-        const touch = e.touches ? e.touches[0] : e;
-        startX = touch.clientX;
-        startY = touch.clientY;
-        isMoving = false;
-        didFire = false;
-        holdTimer = setTimeout(()=>{
-            if(!isMoving){
-                didFire = true;
-                haptic([8,30,8]);
-                openSettings();
-            }
-        }, 500);
-    }
-
-    function onMove(e){
-        if(!logo.classList.contains('in-header')) return;
-        const touch = e.touches ? e.touches[0] : e;
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        if(Math.abs(dx) > 8 || Math.abs(dy) > 8){
-            isMoving = true;
-            if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
-        }
-    }
-
-    function onEnd(){
-        if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
-    }
-
-    logo.addEventListener('touchstart', onStart,  {passive:true});
-    logo.addEventListener('touchmove',  onMove,   {passive:true});
-    logo.addEventListener('touchend',   onEnd,    {passive:true});
-    logo.addEventListener('touchcancel',onEnd);
-    logo.addEventListener('mousedown',  onStart);
-    logo.addEventListener('mousemove',  onMove);
-    logo.addEventListener('mouseup',    onEnd);
-    logo.addEventListener('mouseleave', onEnd);
-    // prevent the hold from also firing a stray click
-    logo.addEventListener('click', e=>{ if(didFire){ e.stopImmediatePropagation(); didFire=false; } });
-})();
+// The HARFS capsule in the header is purely decorative now — Settings
+// lives in the bottom nav, so there's no hold-gesture action on it
+// anymore (this used to open the old Settings modal).
 
 // ============================================================
 // TOAST — pill style matching song notification
@@ -2815,7 +3318,7 @@ function formatShamsiDateTime(ts){
 // ============================================================
 // SWIPE + ROUTES
 // ============================================================
-const ROUTES=['main-league','league','shop','weird'];
+const ROUTES=['main-league','league','weird','settings'];
 let currentRouteIndex=1;
 
 // ============================================================
@@ -2824,6 +3327,7 @@ let currentRouteIndex=1;
 // ============================================================
 function startApp(){
     const logo = document.getElementById('hero-logo-container');
+    updateHeaderForLogin();
 
     // Phase 1 — box + text fade in at center
     setTimeout(()=>{
@@ -2836,7 +3340,11 @@ function startApp(){
         logo.classList.add('in-header');
         setTimeout(()=>{
             document.getElementById('bottom-navigation').classList.add('active');
-            navigate('league');
+            if(!loggedInTeam){
+                showLoginScreen();
+            } else {
+                navigate('league');
+            }
         }, 750);
     }, 1800);
 }
@@ -2855,82 +3363,24 @@ function startApp(){
 })();
 
 // ============================================================
-// MOMENTS LONG-PRESS → REVEAL + ENTER ADMIN
-// Holding 3s on the Moments nav item both turns it into the Admin
-// item AND opens the admin panel directly, in one gesture (instead
-// of the old two-step: hold on Overall to reveal, then tap to enter).
+// NAV WIRING
+// ------------------------------------------------------------
+// Admin is no longer a secret hold-gesture on this tab — it now
+// lives inside Settings, and only for the Bayern account (see
+// renderSettingsScreen() / TEAM login system below). Memories
+// (formerly "Moments") is a plain nav item like any other.
 // ============================================================
 function setupOverallHold(){
     const navMain=document.getElementById('nav-main');
-    // Overall is now a plain nav item — no hold gesture on it anymore.
     navMain.addEventListener('click',()=>navigate('main-league'));
-
-    const navAdmin=document.getElementById('nav-admin');
-
-    function startHold(e){
-        e.preventDefault&&e.preventDefault();
-        adminHoldStart=Date.now();
-        adminHoldTimer=setTimeout(()=>{
-            haptic([20,50,20,50,60]);
-            revealAdminButton();
-            navigate('admin');
-        },3000);
-    }
-    function cancelHold(){
-        if(adminHoldTimer){clearTimeout(adminHoldTimer);adminHoldTimer=null;}
-        // Released before the 3s hold completed → treat as a normal short
-        // tap (Moments feed, or straight into admin if already revealed).
-        if(adminHoldStart&&(Date.now()-adminHoldStart)<3000){
-            handleWeirdOrAdminNav();
-        }
-        adminHoldStart=null;
-    }
-
-    navAdmin.addEventListener('mousedown',startHold);
-    navAdmin.addEventListener('touchstart',startHold,{passive:false});
-    navAdmin.addEventListener('mouseup',cancelHold);
-    navAdmin.addEventListener('mouseleave',cancelHold);
-    navAdmin.addEventListener('touchend',cancelHold);
-    navAdmin.addEventListener('touchcancel',cancelHold);
 }
 
-function revealAdminButton(){
-    if(adminRevealed)return;
-    adminRevealed=true;
-    const navBtn=document.getElementById('nav-admin');
-    const icon=document.getElementById('nav-admin-icon');
-    const label=document.getElementById('nav-admin-label');
-    navBtn.classList.add('admin-revealed');
-    icon.className='fas fa-user-shield';
-    label.textContent='Admin';
-    showToast('Admin access revealed — enter your PIN','info',3000);
-    // No auto-hide timer: the admin entry point stays revealed until the
-    // admin manually exits (exitAdmin) or the app is reloaded — nothing
-    // should silently kick the admin out mid-task (e.g. mid-upload).
-}
-
+// Kept as a no-op shim: exitAdmin() and a couple of older call sites
+// still reference this when leaving the admin dashboard.
 function hideAdminButton(){
-    adminRevealed=false;
-    const navBtn=document.getElementById('nav-admin');
-    const icon=document.getElementById('nav-admin-icon');
-    const label=document.getElementById('nav-admin-label');
-    navBtn.classList.remove('admin-revealed');
-    icon.className='fas fa-star';
-    label.textContent='Moments';
-    // If we were on admin screen, go back to golden moments
     const adminScreen=document.getElementById('admin-screen');
     if(adminScreen&&adminScreen.classList.contains('active')){
-        navigate('weird');
-    }
-}
-
-function handleWeirdOrAdminNav(){
-    if(adminRevealed){
-        // Enter admin panel
-        navigate('admin');
-        // After entering admin, hide admin reveal (will return to weird on exit)
-    } else {
-        navigate('weird');
+        navigate('settings');
     }
 }
 
@@ -3184,24 +3634,26 @@ function renderWeirdEvents(){
         const media=getMomentMedia(ev);
         const visual=media.map((m,i)=>({...m,idx:i})).filter(m=>m.type!=='audio');
         const audios=media.map((m,i)=>({...m,idx:i})).filter(m=>m.type==='audio');
-        // Grid thumbnails only ever use the small `thumb` (or, for legacy
-        // images saved before thumbnails existed, the already-inline `src`
-        // — legacy videos with no thumb get a plain placeholder instead of
-        // ever rendering a real <video> tag here). Nothing full-size or
-        // heavy is ever placed in the feed grid; the real file only loads
-        // when openWeirdLightbox fetches it on tap.
-        const imgs=visual.length>0
-            ?`<div class="weird-card-images">
-                ${visual.map(m=>{
+        // Small stacked thumbnails (max 2 shown) instead of a big grid —
+        // tapping any of them opens the same full lightbox gallery as
+        // before. A "+N" badge covers anything beyond the first 2.
+        const visibleThumbs = visual.slice(0,2);
+        const extraCount = visual.length - visibleThumbs.length;
+        const mediaCol = visual.length>0
+            ?`<div class="weird-card-mediacol">
+                ${visibleThumbs.map((m,i)=>{
                     const preview=m.thumb||(m.type==='image'?m.src:null);
+                    const isLast = i===visibleThumbs.length-1 && extraCount>0;
+                    const badge = isLast ? `<span class="weird-media-count-badge">+${extraCount}</span>` : '';
                     if(m.type==='video'){
-                        return `<div class="weird-img-thumb weird-thumb-video" onclick="openWeirdLightbox(${ev.id},${m.idx})">
+                        return `<div class="weird-img-thumb-sm weird-thumb-video" onclick="openWeirdLightbox(${ev.id},${m.idx})">
                             ${preview?`<img src="${preview}" alt="video preview">`:`<div class="weird-thumb-placeholder"><i class="fas fa-film"></i></div>`}
-                            <i class="fas fa-play weird-video-play-icon"></i>
+                            ${badge}
                            </div>`;
                     }
-                    return `<div class="weird-img-thumb" onclick="openWeirdLightbox(${ev.id},${m.idx})">
+                    return `<div class="weird-img-thumb-sm" onclick="openWeirdLightbox(${ev.id},${m.idx})">
                         ${preview?`<img src="${preview}" alt="photo">`:`<div class="weird-thumb-placeholder"><i class="fas fa-image"></i></div>`}
+                        ${badge}
                        </div>`;
                 }).join('')}
                </div>`:'';
@@ -3227,8 +3679,12 @@ function renderWeirdEvents(){
                     </div>
                     ${ev.pinned?'<div class="weird-pin-badge"><i class="fas fa-thumbtack"></i> Pinned</div>':''}
                 </div>
-                <div class="weird-card-text">${ev.text}</div>
-                ${imgs}
+                <div class="weird-card-row">
+                    ${mediaCol}
+                    <div class="weird-card-textcol">
+                        <div class="weird-card-text">${ev.text}</div>
+                    </div>
+                </div>
                 ${audioList}
                 ${adminActions}
             </div>
@@ -3695,25 +4151,17 @@ function saveFile(filename,data,msg,curSha,onProgress){
 }
 
 // ============================================================
-// PATCH verifyAdmin to hide admin button after unlock + go back on exit
+// Admin dashboard — no PIN anymore. Getting to this screen at all
+// already required logging in as the Bayern team (see navigate()),
+// so entering here goes straight to the dashboard.
 // ============================================================
-function verifyAdmin(){
-    const input=document.getElementById('admin-pwd-input').value;
-    if(input===ADMIN_PASSWORD){
-        document.getElementById('admin-error').style.display='none';
-        isAdminUnlocked=true;document.getElementById('admin-pwd-input').value='';
-        haptic([8,40,8]);
-        let t=localStorage.getItem('github_pat');
-        if(!t){t=prompt("Enter GitHub PAT:");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;}
-        showAdminDashboard();showToast('Admin panel unlocked','success');
-    } else {
-        haptic([60,30,60]);document.getElementById('admin-error').style.display='block';
-        showToast('Incorrect PIN','error');
-    }
-}
 function showAdminDashboard(){
-    document.getElementById('admin-login-section').style.display='none';
-    document.getElementById('admin-dashboard-section').style.display='flex';
+    // First time on this device: still need a GitHub PAT to actually save
+    // anything — that's a device credential, separate from the team login.
+    let t=localStorage.getItem('github_pat');
+    if(!t){t=prompt("Enter GitHub PAT (needed once per device to save changes):");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;}
+    // Edit Mode (isAdminUnlocked) is a separate on/off toggle in Profile →
+    // Bayern Admin — visiting the dashboard itself doesn't turn it on.
     selectedHomeTeam=TEAM_NAMES[0]||null;
     selectedAwayTeam=TEAM_NAMES.length>1?TEAM_NAMES[1]:(TEAM_NAMES[0]||null);
     setTeamPickerValue('home',selectedHomeTeam);
@@ -3729,6 +4177,7 @@ function showAdminDashboard(){
     // repeat dashboard visits (e.g. right after a save) since we already
     // keep the shard shas in sync locally after every successful save.
     Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub(),weirdEventsLoaded?Promise.resolve():loadWeirdEventsFromGitHub()]).then(([,h])=>renderAdminHistory(h));
+    loadPendingPurchases();
     // reset weird media upload
     weirdMedia=[];renderWeirdPreview();
     // Music library manager — always refetched on open so deletes/renames/
@@ -3738,9 +4187,7 @@ function showAdminDashboard(){
 
 // Called when admin navigates away or finishes — restore nav
 function exitAdmin(){
-    isAdminUnlocked=false;
-    hideAdminButton();
-    navigate('weird');
+    navigate('settings');
 }
 function navigate(route){
     haptic([8]);
@@ -3757,17 +4204,17 @@ function navigate(route){
         updateCurrentDateTime();
     }
 
-    // Lock the HARFS capsule (and its settings) while the admin panel is open
+    // Lock the HARFS capsule while the admin panel is open, so a stray
+    // hold can't pull the admin out of it mid-task.
     const capsuleEl=document.getElementById('hero-logo-container');
     if(capsuleEl){
-        if(route==='admin'){ capsuleEl.classList.add('capsule-locked'); closeSettings(); }
+        if(route==='admin'){ capsuleEl.classList.add('capsule-locked'); }
         else{ capsuleEl.classList.remove('capsule-locked'); }
     }
 
-    // Disable Overall / Season / History while the admin panel (PIN screen
-    // or dashboard) is open, so a stray tap can't pull the admin out of it —
-    // exiting is only possible via the explicit exit button.
-    ['nav-main','nav-season','nav-shop'].forEach(id=>{
+    // Disable every other nav item while the admin panel (PIN screen or
+    // dashboard) is open — exiting is only possible via the explicit exit button.
+    ['nav-main','nav-season','nav-admin','nav-settings'].forEach(id=>{
         const el=document.getElementById(id);
         if(!el)return;
         el.classList.toggle('nav-disabled', route==='admin');
@@ -3775,15 +4222,17 @@ function navigate(route){
 
     currentRouteIndex=ROUTES.indexOf(route);
     const navMap={
-        'main-league':'nav-main','league':'nav-season',
-        'shop':'nav-shop','weird':'nav-admin','admin':'nav-admin'
+        'main-league':'nav-main','league':'nav-season','weird':'nav-admin',
+        'shop':'nav-settings','settings':'nav-settings','admin':'nav-settings',
+        'ai-chat':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
 
     const idMap={
         'main-league':'main-league-screen','league':'league-table-screen',
-        'shop':'shop-screen','weird':'weird-screen','admin':'admin-screen'
+        'shop':'shop-screen','weird':'weird-screen','admin':'admin-screen',
+        'settings':'settings-screen','ai-chat':'ai-chat-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{
@@ -3804,9 +4253,12 @@ function navigate(route){
     updateSeasonFabs(route);
     if(route==='shop')loadMainLeagueDataFromGitHub().then(renderShop);
     if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
+    if(route==='settings')renderSettingsScreen();
     if(route==='admin'){
-        if(isAdminUnlocked)showAdminDashboard();
-        else{document.getElementById('admin-login-section').style.display='flex';document.getElementById('admin-dashboard-section').style.display='none';}
+        // Getting into the admin route at all already required a Bayern
+        // login — there's no separate PIN gate anymore.
+        if(!loggedInTeam || loggedInTeam!=='Bayern'){ showToast('Admin panel is Bayern-only','error',2400); navigate('settings'); return; }
+        showAdminDashboard();
     }
 }
 
@@ -4061,12 +4513,10 @@ function openTeamPicker(side){
     activeTeamPickerSide=side;
     document.getElementById('home-team-select-trigger')?.classList.toggle('open',side==='home');
     document.getElementById('away-team-select-trigger')?.classList.toggle('open',side==='away');
-    document.getElementById('shop-team-select-trigger')?.classList.toggle('open',side==='shop');
-    const titleMap={ home:'Select Home Team', away:'Select Away Team', shop:'Buying For' };
+    const titleMap={ home:'Select Home Team', away:'Select Away Team' };
     document.getElementById('team-picker-title').textContent=titleMap[side]||'Select Team';
-    // Shop just needs any of the 4 teams pickable — no "other side" exclusion like home/away matches have
     const otherSelected = side==='home' ? selectedAwayTeam : side==='away' ? selectedHomeTeam : null;
-    const currentSelected = side==='home' ? selectedHomeTeam : side==='away' ? selectedAwayTeam : shopActiveTeam;
+    const currentSelected = side==='home' ? selectedHomeTeam : selectedAwayTeam;
     const grid=document.getElementById('team-picker-grid');
     grid.innerHTML=TEAM_NAMES.map(t=>{
         const isSelected=t===currentSelected;
@@ -4083,7 +4533,6 @@ function closeTeamPicker(){
     document.getElementById('team-picker-sheet').classList.remove('open');
     document.getElementById('home-team-select-trigger')?.classList.remove('open');
     document.getElementById('away-team-select-trigger')?.classList.remove('open');
-    document.getElementById('shop-team-select-trigger')?.classList.remove('open');
     activeTeamPickerSide=null;
 }
 function selectTeamInPicker(teamKey){
@@ -4099,10 +4548,6 @@ function selectTeamInPicker(teamKey){
         setTeamPickerValue('away',teamKey);
         updateMatchPreview();
         document.getElementById('admin-match-error').style.display='none';
-    } else if(activeTeamPickerSide==='shop'){
-        shopActiveTeam=teamKey;
-        setTeamPickerValue('shop',teamKey);
-        renderShop();
     }
     closeTeamPicker();
 }
@@ -4359,26 +4804,14 @@ const LOGO_RENT_GRACE_SEASONS = 1; // seasons an item can go unpaid before it's 
 // ============================================================
 // SHOP CATALOG
 // ------------------------------------------------------------
-// Boutique = cosmetic, permanent-with-upkeep or timed, no gameplay
-// effect. Arena = in-game perks agreed before an FC26 match — the
-// app can't enforce these itself, it just tracks that a team paid
-// for one; the perk is honoured manually between players. Arena
-// prices escalate the more a team buys the same perk in a season
-// (see getArenaPrice()) so nobody can stack the same edge forever.
+// Boutique (cosmetics) has been removed — Arena only. Arena = in-game
+// perks agreed before an FC26 match — the app can't enforce these
+// itself, it just tracks that a team paid for one; the perk is
+// honoured manually between players. Prices escalate the more a team
+// buys the same perk in a season (see getArenaPrice()) so nobody can
+// stack the same edge forever.
 // ============================================================
 const SHOP_ITEMS = {
-    boutique: [
-        { id:'crest_skin', name:'Custom Crest Skin', category:'boutique', price:80, rentPerSeason:5,
-          description:'A permanent custom color skin for your team crest across the app. A small seasonal upkeep keeps it active.' },
-        { id:'crest_legendary', name:'Legendary Crest', category:'boutique', price:180, rentPerSeason:10, rare:true,
-          description:"A one-of-a-kind crest design — only one team in HARFS can hold this at a time. If it's already owned, it isn't available until that team lets it go." },
-        { id:'profile_frame', name:'Profile Frame', category:'boutique', price:50, rentPerSeason:0,
-          description:'A gold frame around your team badge, permanently. No upkeep.' },
-        { id:'pin_spotlight', name:'Pin a Message', category:'boutique', price:30, rentPerSeason:0, durationDays:14,
-          description:'Pin a short bragging-rights message to the top of your team panel for 2 weeks.' },
-        { id:'boutique_mystery', name:'Mystery Box', category:'boutique', price:16, mystery:true,
-          description:'A cheap gamble: 50% chance it\'s a total bust, 50% chance of a coin jackpot payout.' },
-    ],
     arena: [
         { id:'goal_handicap', name:'Goal Handicap', category:'arena', basePrice:60, escalation:30,
           description:'Start your next agreed match with a 1-goal head start.' },
@@ -4394,14 +4827,7 @@ const SHOP_ITEMS = {
           description:'A cheap gamble: 50% chance it\'s a total bust, 50% chance of winning a random Arena perk for free.' },
     ],
 };
-function findShopItem(id){ return SHOP_ITEMS.boutique.find(i=>i.id===id) || SHOP_ITEMS.arena.find(i=>i.id===id) || null; }
-function isRareItemClaimed(itemId){
-    for(const t of TEAM_NAMES){
-        const w = mainLeagueData[t];
-        if(w && Array.isArray(w.ownedItems) && w.ownedItems.some(it=>it.id===itemId)) return t;
-    }
-    return null;
-}
+function findShopItem(id){ return SHOP_ITEMS.arena.find(i=>i.id===id) || null; }
 function getArenaPrice(item, team){
     const used = (team && mainLeagueData[team] && mainLeagueData[team].arenaUsage && mainLeagueData[team].arenaUsage[item.id]) || 0;
     return item.basePrice + used*item.escalation;
@@ -4410,15 +4836,10 @@ function getArenaPrice(item, team){
 // ============================================================
 // SHOP UI
 // ============================================================
-function setShopTab(tab){
-    shopActiveTab = tab;
-    document.querySelectorAll('#shop-tabs .segmented-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
-    renderShop();
-}
 function renderShopItemCard(item, price, disabled, statusLabel, metaNote){
     return `<div class="shop-item-card ${disabled?'disabled':''}">
         <div class="shop-item-info">
-            <div class="shop-item-name">${escapeHtml(item.name)}${item.rare?'<span class="shop-item-tag">Rare</span>':''}${item.mystery?'<span class="shop-item-tag" style="background:rgba(139,92,246,0.15);color:#c4b5fd;border-color:rgba(139,92,246,0.3);">Gamble</span>':''}</div>
+            <div class="shop-item-name">${escapeHtml(item.name)}${item.mystery?'<span class="shop-item-tag" style="background:rgba(139,92,246,0.15);color:#c4b5fd;border-color:rgba(139,92,246,0.3);">Gamble</span>':''}</div>
             <div class="shop-item-desc">${escapeHtml(item.description)}</div>
             <div class="shop-item-meta">${price} 🪙<span class="shop-item-extra">${escapeHtml(metaNote)}</span></div>
         </div>
@@ -4430,199 +4851,165 @@ function renderShopItemCard(item, price, disabled, statusLabel, metaNote){
 function renderShop(){
     const container = document.getElementById('shop-items-list');
     if(!container) return;
-    setTeamPickerValue('shop', shopActiveTeam);
-    if(!shopActiveTeam){
-        container.innerHTML = '<div class="team-panel-empty" style="padding:40px 0;">Pick a team above to see prices and request items</div>';
+    if(!loggedInTeam){
+        container.innerHTML = '<div class="team-panel-empty" style="padding:40px 0;">Log in with a team to see prices and request items</div>';
         return;
     }
+    const logoEl=document.getElementById('shop-my-team-logo'), nameEl=document.getElementById('shop-my-team-name');
+    if(logoEl) logoEl.src=`${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+    if(nameEl) nameEl.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
     TEAM_NAMES.forEach(ensureWalletFields);
-    const wallet = mainLeagueData[shopActiveTeam];
-    const list = SHOP_ITEMS[shopActiveTab] || [];
+    const list = SHOP_ITEMS.arena;
     container.innerHTML = list.map(item=>{
-        if(item.mystery){
-            const price = item.category==='arena' ? getArenaPrice(item, shopActiveTeam) : item.price;
-            return renderShopItemCard(item, price, false, '', '🎲 50/50 gamble');
-        }
-        if(shopActiveTab==='boutique'){
-            const claimedBy = item.rare ? isRareItemClaimed(item.id) : null;
-            const alreadyOwned = wallet.ownedItems.some(it=>it.id===item.id);
-            const disabled = !!(claimedBy || alreadyOwned);
-            let statusLabel = '';
-            if(alreadyOwned) statusLabel = 'Owned';
-            else if(claimedBy) statusLabel = `Owned by ${TEAM_DISPLAY_NAMES[claimedBy]||claimedBy}`;
-            const metaNote = item.rentPerSeason ? `+${item.rentPerSeason}/season upkeep` : (item.durationDays ? `Lasts ${Math.round(item.durationDays/7)} weeks` : 'Permanent');
-            return renderShopItemCard(item, item.price, disabled, statusLabel, metaNote);
-        } else {
-            const price = getArenaPrice(item, shopActiveTeam);
-            return renderShopItemCard(item, price, false, '', 'Price rises each time you use it this season');
-        }
+        const price = getArenaPrice(item, loggedInTeam);
+        const note = item.mystery ? '🎲 50/50 gamble' : 'Price rises each time you use it this season';
+        return renderShopItemCard(item, price, false, '', note);
     }).join('');
+    loadMyPendingRequests();
 }
 
 // ============================================================
-// REQUEST → COPY LINK → ADMIN-APPROVE flow
-// ------------------------------------------------------------
-// Regular users have no GitHub write access at all (only the admin
-// device holds the token), so a "buy" tap here can't write anything
-// itself. Instead it builds a link that carries the request, shown
-// in-app with a Copy button (no navigator.share — some in-app
-// browsers/webviews don't support it reliably, so we avoid it
-// entirely rather than risk a crash). The user sends that link to
-// the admin however they normally would; opening it on the admin's
-// device shows a one-tap confirm that actually executes it.
+// PURCHASE REQUESTS — now submitted automatically to the Bayern
+// admin panel through the HARFS auth/purchases Worker, instead of
+// generating a link the buyer had to copy and send manually. The
+// admin approves/rejects from Settings → Admin Panel → Pending
+// Shop Purchases; approving runs the exact same wallet logic that
+// used to run when an approve-link was opened on the admin device.
+// The buying team is always the logged-in team — there's no team
+// picker in the shop anymore.
 // ============================================================
-function b64Decode(s){ return decodeURIComponent(escape(atob(s))); }
-function buildActionLink(payload){
-    const encoded = encodeURIComponent(b64Encode(JSON.stringify(payload)));
-    const url = new URL(location.href);
-    url.search = '';
-    url.searchParams.set('req', encoded);
-    return url.toString();
-}
-let pendingRequestLink = '';
-function openRequestLinkSheet(payload, summaryText){
-    pendingRequestLink = buildActionLink(payload);
-    haptic([10]);
-    const bodyHtml = `
-        <p style="font-size:0.75rem;color:#cbd5e1;margin:0 0 12px;line-height:1.6;">${escapeHtml(summaryText)}</p>
-        <div id="request-link-box" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;font-size:0.62rem;color:#9ca3af;word-break:break-all;margin-bottom:12px;font-family:monospace;">${escapeHtml(pendingRequestLink)}</div>
-        <button class="glass-button w-full text-xs py-3" style="border-color:rgba(52,211,153,0.35);color:#6ee7b7;" onclick="copyPendingRequestLink()"><i class="fas fa-copy"></i> Copy Link</button>
-        <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:10px;line-height:1.5;">Send this link to the admin — opening it on their device shows a one-tap approval. Nothing is saved until they approve it.</p>`;
-    openReportSheet('Request Ready', bodyHtml);
-}
-function copyPendingRequestLink(){
-    if(!pendingRequestLink) return;
-    const done = ()=>showToast('Link copied ✅','success',2200);
-    const failed = ()=>{
-        // Fallback for browsers/webviews without Clipboard API access: select the text so it can be copied manually.
-        const el = document.getElementById('request-link-box');
-        if(el){
-            try{
-                const range = document.createRange();
-                range.selectNodeContents(el);
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }catch(e){}
-        }
-        showToast('Could not auto-copy — long-press the link above to copy it','info',3500);
-    };
-    if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(pendingRequestLink).then(done).catch(failed);
-    } else {
-        failed();
-    }
-}
-function requestShopItem(itemId){
-    if(!shopActiveTeam){ showToast('Pick a team first','error',2000); return; }
+async function requestShopItem(itemId){
+    if(!loggedInTeam){ showToast('Log in first','error',2000); return; }
     const item = findShopItem(itemId);
     if(!item) return;
-    const price = item.category==='arena' ? getArenaPrice(item, shopActiveTeam) : item.price;
-    const wallet = mainLeagueData[shopActiveTeam];
+    const price = getArenaPrice(item, loggedInTeam);
+    const wallet = mainLeagueData[loggedInTeam];
     if(wallet && wallet.coins < price){
-        showToast(`Not enough coins — ${TEAM_DISPLAY_NAMES[shopActiveTeam]} has ${wallet.coins}, needs ${price}`,'error',3200);
+        showToast(`Not enough coins — ${TEAM_DISPLAY_NAMES[loggedInTeam]} has ${wallet.coins}, needs ${price}`,'error',3200);
         return;
     }
-    const payload = { action:'shop_buy', category:item.category, item:item.id, team:shopActiveTeam, price, ts:Date.now() };
-    let summary = `${TEAM_DISPLAY_NAMES[shopActiveTeam]||shopActiveTeam} wants to buy "${item.name}" for ${price} coins`;
-    if(item.id==='pin_spotlight'){
-        const text = prompt('What message do you want pinned for 2 weeks?');
-        if(!text) return;
-        payload.pinText = text.slice(0,120);
-        summary += `: "${payload.pinText}"`;
-    }
-    openRequestLinkSheet(payload, summary);
-}
-async function confirmAndExecuteShopPurchase(payload){
-    const item = findShopItem(payload.item);
-    if(!item || !TEAM_NAMES.includes(payload.team)) return;
-    const confirmMessage = item.id==='pin_spotlight'
-        ? `${TEAM_DISPLAY_NAMES[payload.team]||payload.team} wants to pin "${payload.pinText||''}" for ${payload.price} coins.`
-        : item.mystery
-            ? `${TEAM_DISPLAY_NAMES[payload.team]||payload.team} wants to gamble ${payload.price} coins on "${item.name}" — 50/50 odds.`
-            : `${TEAM_DISPLAY_NAMES[payload.team]||payload.team} wants "${item.name}" for ${payload.price} coins.`;
-    const ok = await showConfirm({ icon: item.mystery?'🎲':'🛍️', title:'Approve Purchase?', message: confirmMessage, okLabel:'Approve', okColor:'green' });
+    const payload = { category:item.category, item:item.id, team:loggedInTeam, price, ts:Date.now() };
+    const ok = await showConfirm({ icon:item.mystery?'🎲':'🛍️', title:'Send Purchase Request?', message:`Request "${item.name}" for ${price} coins? This is sent to the Bayern admin for approval.`, okLabel:'Send Request', okColor:'green' });
     if(!ok) return;
-    await loadMainLeagueDataFromGitHub(); // re-check everything against the live state, not the (possibly stale) link
+    try{
+        const res = await fetch(`${HARFS_AUTH_API}/purchases`,{
+            method:'POST', headers:{'Content-Type':'application/json', 'Authorization':`Bearer ${harfsSessionToken}`},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if(!res.ok || !data.ok){ showToast(data.error||'Could not send request','error',3000); return; }
+        showToast('Request sent to admin for approval ✅','success',2600);
+        loadMyPendingRequests();
+    }catch(e){
+        showToast('Could not reach the server — check your connection','error',3200);
+    }
+}
+async function loadMyPendingRequests(){
+    const wrap=document.getElementById('shop-my-requests-wrap');
+    const list=document.getElementById('shop-my-requests-list');
+    if(!wrap||!list||!loggedInTeam) return;
+    try{
+        const res = await fetch(`${HARFS_AUTH_API}/purchases?team=${encodeURIComponent(loggedInTeam)}&status=pending`,{
+            headers:{'Authorization':`Bearer ${harfsSessionToken}`}
+        });
+        const data = await res.json();
+        const items = (data.purchases||[]);
+        if(!items.length){ wrap.style.display='none'; return; }
+        wrap.style.display='block';
+        list.innerHTML = items.map(p=>{
+            const item=findShopItem(p.item);
+            return `<div class="coin-log-row"><span>${escapeHtml(item?item.name:p.item)} — ${p.price} 🪙</span><span style="color:#fbbf24;font-weight:700;">Pending</span></div>`;
+        }).join('');
+    }catch(e){ wrap.style.display='none'; }
+}
+// Runs the actual wallet effect for an approved purchase — called by
+// the admin's "Approve" button in the Pending Shop Purchases list.
+async function executeApprovedPurchase(payload){
+    const item = findShopItem(payload.item);
+    if(!item || !TEAM_NAMES.includes(payload.team)) return false;
+    await loadMainLeagueDataFromGitHub(); // re-check against the live state before spending
     const wallet = mainLeagueData[payload.team];
-    if(item.id!=='pin_spotlight' && !item.mystery){
-        if(item.rare && isRareItemClaimed(item.id)){
-            showToast('Too late — that rare item was already claimed','error',3200); return;
-        }
-        if(wallet.ownedItems.some(it=>it.id===item.id)){
-            showToast(`${payload.team} already owns this`,'error',3000); return;
-        }
-    }
-    const currentPrice = item.category==='arena' ? getArenaPrice(item, payload.team) : item.price;
+    ensureWalletFields(payload.team);
+    const currentPrice = getArenaPrice(item, payload.team);
     if(wallet.coins < currentPrice){
-        showToast(`Not enough coins now — ${payload.team} has ${wallet.coins}, needs ${currentPrice}`,'error',3500); return;
+        showToast(`Not enough coins now — ${payload.team} has ${wallet.coins}, needs ${currentPrice}`,'error',3500); return false;
     }
-
     if(item.mystery){
         addCoins(payload.team, -currentPrice, `${item.name}: entry fee`);
-        wallet.arenaUsage[item.id] = (wallet.arenaUsage[item.id]||0) + 1; // still escalates like any other arena item
+        wallet.arenaUsage[item.id] = (wallet.arenaUsage[item.id]||0) + 1;
         const won = Math.random() < 0.5;
         let resultMsg;
-        if(item.category==='boutique'){
-            if(won){
-                const jackpot = Math.round(currentPrice * (3 + Math.random()*2)); // 3x–5x payout
-                addCoins(payload.team, jackpot, `${item.name}: jackpot!`);
-                resultMsg = `🎉 Jackpot! ${TEAM_DISPLAY_NAMES[payload.team]} won +${jackpot} coins!`;
-            } else {
-                addCoins(payload.team, 0, `${item.name}: bust — nothing this time`);
-                resultMsg = `😬 Bust — ${TEAM_DISPLAY_NAMES[payload.team]} won nothing this time.`;
-            }
-        } else { // arena mystery
-            if(won){
-                const pool = SHOP_ITEMS.arena.filter(i=>!i.mystery);
-                const wonItem = pool[Math.floor(Math.random()*pool.length)];
-                wallet.arenaUsage[wonItem.id] = (wallet.arenaUsage[wonItem.id]||0) + 1;
-                wallet.arenaHistory.unshift({ id:wonItem.id, name:`${wonItem.name} (won from Mystery Perk)`, cost:0, ts:new Date().toISOString() });
-                resultMsg = `🎉 ${TEAM_DISPLAY_NAMES[payload.team]} won a free "${wonItem.name}"!`;
-            } else {
-                wallet.arenaHistory.unshift({ id:item.id, name:'Mystery Perk (bust)', cost:currentPrice, ts:new Date().toISOString() });
-                resultMsg = `😬 Bust — ${TEAM_DISPLAY_NAMES[payload.team]} won no perk this time.`;
-            }
-            if(wallet.arenaHistory.length>30) wallet.arenaHistory.length=30;
+        if(won){
+            const pool = SHOP_ITEMS.arena.filter(i=>!i.mystery);
+            const wonItem = pool[Math.floor(Math.random()*pool.length)];
+            wallet.arenaUsage[wonItem.id] = (wallet.arenaUsage[wonItem.id]||0) + 1;
+            wallet.arenaHistory.unshift({ id:wonItem.id, name:`${wonItem.name} (won from Mystery Perk)`, cost:0, ts:new Date().toISOString() });
+            resultMsg = `🎉 ${TEAM_DISPLAY_NAMES[payload.team]} won a free "${wonItem.name}"!`;
+        } else {
+            wallet.arenaHistory.unshift({ id:item.id, name:'Mystery Perk (bust)', cost:currentPrice, ts:new Date().toISOString() });
+            resultMsg = `😬 Bust — ${TEAM_DISPLAY_NAMES[payload.team]} won no perk this time.`;
         }
+        if(wallet.arenaHistory.length>30) wallet.arenaHistory.length=30;
         const saved = await saveMainLeagueDataToGitHub(mainLeagueData, `Shop mystery item: ${payload.team} tried ${item.name}`);
         showToast(saved?resultMsg:'Saved locally — check network', saved?'success':'info');
-        renderMainLeagueTable();
-        if(document.getElementById('shop-screen')?.classList.contains('active')) renderShop();
-        if(document.getElementById('team-panel-overlay')?.classList.contains('open')) openTeamPanel(payload.team);
-        return;
-    }
-
-    addCoins(payload.team, -currentPrice, item.id==='pin_spotlight' ? 'Pinned a message' : `Bought: ${item.name}`);
-    if(item.id==='pin_spotlight'){
-        wallet.pinned = { text: (payload.pinText||'').slice(0,120), expiresAt: new Date(Date.now()+(item.durationDays||14)*86400000).toISOString() };
-    } else if(item.category==='boutique'){
-        wallet.ownedItems.push({ id:item.id, name:item.name, acquiredAt:new Date().toISOString(), rentPerSeason:item.rentPerSeason||0, unpaidSeasons:0 });
     } else {
+        addCoins(payload.team, -currentPrice, `Bought: ${item.name}`);
         wallet.arenaUsage[item.id] = (wallet.arenaUsage[item.id]||0) + 1;
         wallet.arenaHistory.unshift({ id:item.id, name:item.name, cost:currentPrice, ts:new Date().toISOString() });
         if(wallet.arenaHistory.length>30) wallet.arenaHistory.length=30;
+        const saved = await saveMainLeagueDataToGitHub(mainLeagueData, `Shop purchase: ${payload.team} bought ${item.name}`);
+        showToast(saved?`Purchase approved ✅ ${item.name} → ${TEAM_DISPLAY_NAMES[payload.team]||payload.team}`:'Saved locally — check network', saved?'success':'info');
     }
-    const saved = await saveMainLeagueDataToGitHub(mainLeagueData, `Shop purchase: ${payload.team} bought ${item.name}`);
-    showToast(saved?`Purchase approved ✅ ${item.name} → ${TEAM_DISPLAY_NAMES[payload.team]||payload.team}`:'Saved locally — check network', saved?'success':'info');
     renderMainLeagueTable();
     if(document.getElementById('shop-screen')?.classList.contains('active')) renderShop();
     if(document.getElementById('team-panel-overlay')?.classList.contains('open')) openTeamPanel(payload.team);
+    return true;
 }
-// Checked once at startup — see the DOMContentLoaded handler below.
-async function handleIncomingActionLink(){
-    const params = new URLSearchParams(location.search);
-    const req = params.get('req');
-    if(!req) return;
-    history.replaceState(null,'',location.pathname); // strip it so a refresh doesn't re-trigger this
-    let payload;
-    try{ payload = JSON.parse(b64Decode(decodeURIComponent(req))); }
-    catch(e){ return; }
-    if(!localStorage.getItem('github_pat')){
-        showToast('This link needs to be opened on the admin device','info',4000);
-        return;
+// Admin dashboard — lists every pending purchase across all teams,
+// fetched from the Worker, with Approve/Reject actions.
+async function loadPendingPurchases(){
+    const el=document.getElementById('admin-purchases-list');
+    if(!el) return;
+    el.innerHTML='<div class="text-center text-gray-600 text-xs">Loading...</div>';
+    try{
+        const res = await fetch(`${HARFS_AUTH_API}/purchases?status=pending`,{
+            headers:{'Authorization':`Bearer ${harfsSessionToken}`}
+        });
+        const data = await res.json();
+        const items = data.purchases||[];
+        if(!items.length){ el.innerHTML='<div class="text-center text-gray-600 text-xs">No pending purchases</div>'; return; }
+        el.innerHTML = items.map(p=>{
+            const item=findShopItem(p.item);
+            return `<div class="admin-history-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-weight:800;">${escapeHtml(TEAM_DISPLAY_NAMES[p.team]||p.team)}</span>
+                    <span style="color:#fbbf24;">${p.price} 🪙</span>
+                </div>
+                <div style="font-size:0.7rem;color:#9ca3af;">${escapeHtml(item?item.name:p.item)}</div>
+                <div style="display:flex;gap:8px;">
+                    <button class="glass-button flex-1 text-xs py-2" style="border-color:rgba(34,197,94,0.35);color:#86efac;" onclick="decidePurchase('${p.id}','approved')">Approve</button>
+                    <button class="glass-button flex-1 text-xs py-2" style="border-color:rgba(239,68,68,0.3);color:#f87171;" onclick="decidePurchase('${p.id}','rejected')">Reject</button>
+                </div>
+            </div>`;
+        }).join('');
+    }catch(e){
+        el.innerHTML='<div class="text-center text-red-400 text-xs">Could not load — check the Worker URL / connection</div>';
     }
-    if(payload.action==='shop_buy') await confirmAndExecuteShopPurchase(payload);
+}
+async function decidePurchase(id, decision){
+    try{
+        const res = await fetch(`${HARFS_AUTH_API}/purchases/${encodeURIComponent(id)}/decision`,{
+            method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${harfsSessionToken}`},
+            body: JSON.stringify({decision})
+        });
+        const data = await res.json();
+        if(!res.ok || !data.ok){ showToast(data.error||'Could not update request','error',3000); return; }
+        if(decision==='approved' && data.purchase) await executeApprovedPurchase(data.purchase);
+        else showToast('Request rejected','info',2000);
+        loadPendingPurchases();
+    }catch(e){
+        showToast('Could not reach the server — check your connection','error',3200);
+    }
 }
 
 function ensureWalletFields(team){
@@ -4794,7 +5181,7 @@ function openTeamPanel(team){
     if(w.pinned && w.pinned.expiresAt && new Date(w.pinned.expiresAt) > new Date()){
         pinnedEl.innerHTML = `<i class="fas fa-thumbtack"></i> ${escapeHtml(w.pinned.text)}`;
     } else {
-        pinnedEl.textContent = '';
+        pinnedEl.innerHTML = '';
     }
 
     document.getElementById('team-panel-trophies').innerHTML = `
@@ -5287,11 +5674,6 @@ Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal 
 - Predictions and "who wins the league" takes are welcome — just frame them clearly as your read of the trends, not a guarantee, and never dress a guess up as a data-backed number.`;
 
 // ---- Season screen floating button: Back-to-top ----
-// The AI entry point now lives as a small icon button inside the Season
-// Table header card itself (always visible, no fade logic needed). The
-// "back to top" pill is the only floating fab left, and it only makes
-// sense on the Season screen, appearing once the user scrolls down far
-// enough to be reading match history rather than sitting at the top.
 const SEASON_FAB_SCROLL_THRESHOLD = 60;
 
 function updateSeasonFabs(route){
@@ -5302,10 +5684,6 @@ function updateSeasonFabs(route){
     if(onSeasonScreen){
         // Always re-enter hidden, not mid-fade from a previous scroll position
         topFab.classList.add('season-fab-faded');
-    } else if(aiHeaderBtnDocked){
-        // Leaving the Season screen entirely — snap the AI button back into
-        // its header slot immediately rather than leaving it floating.
-        undockAiHeaderBtn(true);
     }
 }
 function scrollSeasonToTop(){
@@ -5320,69 +5698,12 @@ function setupSeasonFabScroll(){
     screen.addEventListener('scroll',()=>{
         const scrolledDown = screen.scrollTop > SEASON_FAB_SCROLL_THRESHOLD;
         topFab.classList.toggle('season-fab-faded', !scrolledDown);
-        if(scrolledDown) dockAiHeaderBtn(); else undockAiHeaderBtn();
     },{passive:true});
-}
-
-// ---- AI header button: docks beside the HARFS capsule while scrolled down ----
-// The button normally lives inside the Season Table header card and scrolls
-// away with it. Past SEASON_FAB_SCROLL_THRESHOLD we detach it from the
-// (transformed) scrolling screen and re-home it next to the fixed HARFS
-// capsule instead, animating with a FLIP (measure old rect → reparent with
-// no transition → measure new rect → transition to it) so the move reads as
-// one smooth glide instead of a jump. Scrolling back up reverses it.
-let aiHeaderBtnDocked=false, aiHeaderBtnAnimating=false, aiHeaderBtnTimer=null;
-function dockAiHeaderBtn(){
-    if(aiHeaderBtnDocked) return;
-    const btn=document.getElementById('season-ai-header-btn');
-    const capsule=document.getElementById('hero-logo-container');
-    if(!btn||!capsule) return;
-    clearTimeout(aiHeaderBtnTimer);
-    const startRect=btn.getBoundingClientRect();
-    aiHeaderBtnDocked=true; aiHeaderBtnAnimating=true;
-    document.body.appendChild(btn);
-    btn.classList.add('ai-btn-floating');
-    btn.style.transition='none';
-    btn.style.position='fixed'; btn.style.margin='0'; btn.style.right='auto';
-    btn.style.top=startRect.top+'px'; btn.style.left=startRect.left+'px';
-    void btn.offsetWidth; // force reflow so the jump above isn't animated
-    const capRect=capsule.getBoundingClientRect();
-    const targetTop=capRect.top+capRect.height/2-startRect.height/2;
-    const targetLeft=capRect.right+10;
-    btn.style.transition='top 0.5s cubic-bezier(0.22,1,0.36,1), left 0.5s cubic-bezier(0.22,1,0.36,1)';
-    requestAnimationFrame(()=>{ btn.style.top=targetTop+'px'; btn.style.left=targetLeft+'px'; });
-    aiHeaderBtnTimer=setTimeout(()=>{ aiHeaderBtnAnimating=false; },520);
-}
-function undockAiHeaderBtn(instant){
-    if(!aiHeaderBtnDocked) return;
-    const btn=document.getElementById('season-ai-header-btn');
-    const header=document.querySelector('#league-table-screen .league-header');
-    if(!btn||!header){ aiHeaderBtnDocked=false; return; }
-    clearTimeout(aiHeaderBtnTimer);
-    if(instant){
-        header.appendChild(btn);
-        btn.classList.remove('ai-btn-floating');
-        btn.style.cssText='';
-        aiHeaderBtnDocked=false; aiHeaderBtnAnimating=false;
-        return;
-    }
-    aiHeaderBtnAnimating=true;
-    const headerRect=header.getBoundingClientRect();
-    const targetTop=headerRect.top+14;
-    const targetLeft=headerRect.right-16-btn.offsetWidth;
-    btn.style.transition='top 0.5s cubic-bezier(0.22,1,0.36,1), left 0.5s cubic-bezier(0.22,1,0.36,1)';
-    requestAnimationFrame(()=>{ btn.style.top=targetTop+'px'; btn.style.left=targetLeft+'px'; });
-    aiHeaderBtnTimer=setTimeout(()=>{
-        header.appendChild(btn);
-        btn.classList.remove('ai-btn-floating');
-        btn.style.cssText='';
-        aiHeaderBtnDocked=false; aiHeaderBtnAnimating=false;
-    },520);
 }
 
 function openAiPanel(){
     haptic([8]);
-    document.getElementById('ai-panel-overlay').classList.add('open');
+    navigate('ai-chat');
     renderAiMessages();
     if(!aiChatHistory.length){
         pushAiMessage('model', "Hi! 👋 I'm the HARFS analysis assistant. I can review the table, results and team trends, and chat with you about strategy. What would you like to know?");
@@ -5391,7 +5712,7 @@ function openAiPanel(){
     setTimeout(()=>{ const inp=document.getElementById('ai-chat-input'); if(inp) inp.focus(); }, 350);
 }
 function closeAiPanel(){
-    document.getElementById('ai-panel-overlay').classList.remove('open');
+    navigate('main-league');
 }
 function openAiSettings(){
     document.getElementById('ai-full-data-toggle').checked = aiFullData;
@@ -6017,7 +6338,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     setupOverallHold();
     setupSeasonFabScroll();
     startApp();
-    handleIncomingActionLink(); // checks for a ?req= shop/arena request link opened on this device
 });
 </script>
 
