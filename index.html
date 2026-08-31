@@ -2634,7 +2634,7 @@ const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 // below degrades gracefully (clear error toasts) if this is left
 // pointing at the placeholder.
 // ============================================================
-const HARFS_AUTH_API = "https://REPLACE-WITH-YOUR-WORKER.workers.dev";
+const HARFS_AUTH_API = "https://harfs-auth.borobiron12.workers.dev";
 let loggedInTeam = localStorage.getItem('harfs_team') || null;
 let harfsSessionToken = localStorage.getItem('harfs_session') || null;
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
