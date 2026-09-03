@@ -48,7 +48,7 @@ function renderMainLeagueTable(){
         return `
             <div class="ranking-card ${rankClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
                 <div class="ranking-badge">${rankBadgeContent}</div>
-                <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" class="ranking-avatar" onerror="this.style.opacity='0.3'">
+                <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" class="ranking-avatar" onerror="this.style.opacity='1'">
                 <div class="ranking-info">
                     <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${TEAM_DISPLAY_NAMES[t.name]}</div>
                 </div>
