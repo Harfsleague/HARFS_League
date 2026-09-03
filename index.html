@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="manifest" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/manifest.json">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<div class="ambient-orb orb-1"></div>
+<div class="ambient-orb orb-2"></div>
+<div class="ambient-orb orb-3"></div>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<!-- Hero Logo (original HARFS wordmark — purely decorative now that
+     Settings lives in the bottom nav; no hold-gesture action anymore) -->
+<div id="hero-logo-container">
+    <div class="hero-text" id="harfs-text">HARFS</div>
+    <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
+</div>
+
+<!-- ============ LOGIN SCREEN ============
+     Telegram-style: pick your team, then set (first time) or enter
+     (every time after) that team's password. Session is kept in
+     localStorage so this only shows again after a manual logout or
+     on a new device/browser. Backed by a small Cloudflare Worker —
+     see HARFS_AUTH_API below. -->
+<div id="login-screen">
+    <div class="login-panel">
+        <div id="login-step-pick">
+            <div class="login-title">Welcome to HARFS</div>
+            <div class="login-sub">Select your team to continue</div>
+            <div class="login-team-grid" id="login-team-grid"><!-- filled by JS --></div>
+        </div>
+        <div id="login-step-password" style="display:none;">
+            <div class="login-selected-team">
+                <img id="login-selected-logo" src="">
+                <div class="login-title" id="login-selected-name">Team</div>
+                <div class="login-sub" id="login-password-hint">Enter your password</div>
+            </div>
+            <input type="password" id="login-password-input" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg" placeholder="Password" onkeyup="if(event.key==='Enter')submitLoginPassword()">
+            <input type="password" id="login-password-confirm" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg mt-2" placeholder="Confirm password" style="display:none;" onkeyup="if(event.key==='Enter')submitLoginPassword()">
+            <button class="glass-button w-full font-bold mt-3" onclick="submitLoginPassword()" id="login-submit-btn">Continue</button>
+            <p class="login-error" id="login-error"></p>
+            <div class="login-back-btn" onclick="backToTeamPick()"><i class="fas fa-arrow-left mr-1"></i> Choose a different team</div>
+        </div>
+    </div>
+</div>
+
+<!-- Appearance Sheet (Performance customization + Color scheme + Palette) -->
+<div class="team-picker-sheet" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
+    <div class="team-picker-panel appearance-panel">
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Appearance</div>
+
+        <div class="appearance-section-label">Performance</div>
+        <div class="segmented-control" id="perf-segmented">
+            <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
+            <button class="segmented-btn" data-value="custom" onclick="setPerformance('custom')"><i class="fas fa-sliders"></i> Custom</button>
+        </div>
+
+        <div id="perf-custom-options" style="display:none;">
+            <div class="perf-option-row">
+                <span><i class="fas fa-circle-nodes mr-1"></i> Background Orbs</span>
+                <div class="perf-toggle" id="perf-toggle-orbs" onclick="togglePerfOption('orbs')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-braille mr-1"></i> Floating Particles</span>
+                <div class="perf-toggle" id="perf-toggle-particles" onclick="togglePerfOption('particles')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-droplet mr-1"></i> Glass Blur Effects</span>
+                <div class="perf-toggle" id="perf-toggle-blur" onclick="togglePerfOption('blur')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-sun mr-1"></i> Glow / Shadows</span>
+                <div class="perf-toggle" id="perf-toggle-shadows" onclick="togglePerfOption('shadows')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-wand-sparkles mr-1"></i> Shimmer Animations</span>
+                <div class="perf-toggle" id="perf-toggle-sheen" onclick="togglePerfOption('sheen')"></div>
+            </div>
+            <div class="perf-option-row">
+                <span><i class="fas fa-forward mr-1"></i> Fast Transitions</span>
+                <div class="perf-toggle" id="perf-toggle-anim" onclick="togglePerfOption('anim')"></div>
+            </div>
+        </div>
+
+        <div class="appearance-section-label">Palette</div>
+        <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
+
+        <div id="custom-palette-editor" style="display:none;">
+            <div class="custom-color-row">
+                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()"></label>
+                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()"></label>
+                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()"></label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Playlist Sheet (list of songs, opened from Settings) -->
+<div class="team-picker-sheet" id="playlist-sheet" onclick="if(event.target===this)closePlaylistSheet()">
+    <div class="team-picker-panel playlist-panel">
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Playlist</div>
+        <div id="playlist-list-container"><!-- filled by JS --></div>
+    </div>
+</div>
+
+<div class="app-container" id="app-container">
+
+    <nav class="bottom-nav" id="bottom-navigation">
+        <div class="nav-item" id="nav-main">
+            <i class="fas fa-trophy"></i><span>Overall</span>
+        </div>
+        <div class="nav-item active" onclick="navigate('league')" id="nav-season">
+            <i class="fas fa-futbol"></i><span>Season</span>
+        </div>
+        <div class="nav-item" onclick="navigate('weird')" id="nav-admin">
+            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Memories</span>
+        </div>
+        <div class="nav-item" onclick="navigate('settings')" id="nav-settings">
+            <i class="fas fa-gear" id="nav-settings-icon"></i>
+            <img id="nav-settings-team-logo" src="">
+            <span>Profile</span>
+        </div>
+    </nav>
+
+    <!-- ============ MAIN LEAGUE ============ -->
+    <div id="main-league-screen" class="page-screen">
+
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 Championship</h2>
+        </div>
+
+        <div class="w-full px-4">
+            <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
+            <div id="main-league-body" class="flex flex-col gap-2"></div>
+            <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
+                <span class="spinner"></span> Loading...
+            </div>
+            <button class="ai-entry-capsule" onclick="navigate('ai-chat')">
+                <div class="ai-entry-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
+                        <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+                        <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
+                    </svg>
+                </div>
+                <div class="ai-entry-text">
+                    <span class="ai-entry-title">HARFS Assistant</span>
+                    <span class="ai-entry-sub">Ask about the table, results &amp; trends</span>
+                </div>
+                <i class="fas fa-chevron-right ai-entry-chevron"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============ SEASON TABLE ============ -->
+    <div id="league-table-screen" class="page-screen">
+
+        <div class="league-header" style="position:relative;">
+            <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Season Table</h2>
+            <div class="text-[10px] text-gray-500 font-mono mb-2" id="current-datetime">...</div>
+            <!-- Season Navigation Pills -->
+            <div id="season-nav-wrapper" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                <button id="season-prev-btn" onclick="navigateSeason(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="season-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;min-width:130px;" onclick="openSeasonPicker()">
+                    <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="season-pill-label">Current Season</span>
+                </div>
+                <button id="season-next-btn" onclick="navigateSeason(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <!-- Hidden original select (for compatibility) -->
+            <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
+                <option value="current">Current Season</option>
+            </select>
+        </div>
+
+        <div class="w-full px-3">
+            <div class="table-wrap">
+                <table class="season-table">
+                    <colgroup>
+                        <col class="c-rank">
+                        <col class="c-team">
+                        <col class="c-num"><!-- P -->
+                        <col class="c-num"><!-- W -->
+                        <col class="c-num"><!-- D -->
+                        <col class="c-num"><!-- L -->
+                        <col class="c-num"><!-- GF -->
+                        <col class="c-num"><!-- GA -->
+                        <col class="c-num"><!-- GD -->
+                        <col class="c-pts"> <!-- PT -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="th-team">Team</th>
+                            <th>P</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th class="th-gf">GF</th>
+                            <th class="th-ga">GA</th>
+                            <th>GD</th>
+                            <th class="th-pts" style="text-align:right;padding-right:6px;">PT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="league-table-body"></tbody>
+                </table>
+            </div>
+            <div id="loading-message" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                <span class="spinner"></span> Loading...
+            </div>
+        </div>
+
+        <!-- Match history — merged into Season, works for current + archived seasons alike -->
+        <div class="w-full px-3 mt-2" id="season-history-section">
+            <div class="season-history-card">
+                <h3 class="season-history-title"><i class="fas fa-history"></i> Match History</h3>
+                <div class="chip-bar w-full" id="season-history-filter-bar">
+                    <div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>
+                </div>
+                <div id="season-history-list">
+                    <div id="season-history-loading" class="text-center text-gray-500 mt-6 text-sm flex items-center justify-center gap-2">
+                        <span class="spinner"></span> Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /league-table-screen -->
+
+    <!-- ============ SHOP (now reached from Settings, not the bottom nav) ============ -->
+    <div id="shop-screen" class="page-screen">
+        <div class="league-header">
+            <button onclick="navigate('settings')" style="align-self:flex-start;margin-bottom:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Settings
+            </button>
+            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Arena Shop</h2>
+            <div class="settings-team-badge" style="margin-top:0;margin-bottom:10px;">
+                <img id="shop-my-team-logo" src="">
+                <span id="shop-my-team-name">—</span>
+            </div>
+            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">Requests are sent straight to the Bayern admin panel for approval — nothing is charged until it's approved.</p>
+        </div>
+        <div class="w-full px-4" id="shop-items-list"></div>
+        <div class="w-full px-4 mt-2" id="shop-my-requests-wrap" style="display:none;">
+            <div class="season-history-card">
+                <h3 class="season-history-title"><i class="fas fa-clock"></i> Your Pending Requests</h3>
+                <div id="shop-my-requests-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ADMIN ============ -->
+    <div id="admin-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black text-purple-300 uppercase tracking-widest">Admin Panel</h2>
+            <button onclick="exitAdmin()" style="margin-top:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Exit Admin
+            </button>
+        </div>
+
+        <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:flex;">
+            <!-- Register Match -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#06b6d4);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#86efac,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Register Match</h3>
+                    <div class="flex justify-between items-center gap-3 mb-5">
+                        <div id="home-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('home')">
+                            <img id="home-team-select-icon" src="" style="display:none;">
+                            <span id="home-team-select-label">Select team</span>
+                            <i class="fas fa-chevron-down chevron"></i>
+                        </div>
+                        <span style="color:#4b5563;font-weight:800;font-size:0.85rem;">vs</span>
+                        <div id="away-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('away')">
+                            <img id="away-team-select-icon" src="" style="display:none;">
+                            <span id="away-team-select-label">Select team</span>
+                            <i class="fas fa-chevron-down chevron"></i>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex-1 flex flex-col items-center gap-2">
+                            <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('home',1)"><i class="fas fa-plus"></i></button>
+                            <div class="score-display" id="home-score-display">0</div>
+                            <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('home',-1)"><i class="fas fa-minus"></i></button>
+                        </div>
+                        <div style="font-size:1.8rem;font-weight:900;color:#374151;">:</div>
+                        <div class="flex-1 flex flex-col items-center gap-2">
+                            <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('away',1)"><i class="fas fa-plus"></i></button>
+                            <div class="score-display" id="away-score-display">0</div>
+                            <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('away',-1)"><i class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div id="match-preview">
+                        <div class="preview-team">
+                            <img id="preview-home-logo" src="" style="opacity:0.6;">
+                            <span id="preview-home-name">Home</span>
+                        </div>
+                        <div class="preview-score" id="preview-score-text">0 : 0</div>
+                        <div class="preview-team">
+                            <img id="preview-away-logo" src="" style="opacity:0.6;">
+                            <span id="preview-away-name">Away</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-red-400 text-center mt-3 font-semibold" id="admin-match-error" style="display:none;">Teams must be different.</p>
+                    <button class="glass-button w-full mt-4 font-bold text-sm py-3" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="registerMatchResult()">
+                        <i class="fas fa-check-circle mr-2"></i> Save Match
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pending Shop Purchases (submitted automatically via the HARFS
+                 auth/purchases Worker — see HARFS_AUTH_API. Approve/Reject
+                 here finalizes them the same way the old admin-approve-link
+                 used to, just without a link to send around.) -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fdba74,#fca5a5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Pending Shop Purchases</h3>
+                    <div id="admin-purchases-list" class="overflow-y-auto space-y-2" style="max-height:320px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                    <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(245,158,11,0.3);color:#fdba74;" onclick="loadPendingPurchases()">
+                        <i class="fas fa-rotate mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- League Management -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#8b5cf6,#ec4899);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#c4b5fd,#f9a8d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">League Management</h3>
+                    <div class="flex gap-3">
+                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(139,92,246,0.3);color:#c4b5fd;" onclick="finishSeason()">
+                            <i class="fas fa-flag-checkered text-lg"></i><span>End Season</span>
+                        </button>
+                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(59,130,246,0.3);color:#93c5fd;" onclick="recalculateLeagueTable()">
+                            <i class="fas fa-shield-halved text-lg"></i><span>Verify Table</span>
+                        </button>
+                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(234,179,8,0.3);color:#fde047;" onclick="auditCoinEconomy()">
+                            <i class="fas fa-coins text-lg"></i><span>Audit Coins</span>
+                        </button>
+                    </div>
+                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history, or reviews every wallet for anything that looks broken — use after any edit to double-check everything lines up.</p>
+                </div>
+            </div>
+
+            <!-- Music Library Manager -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#818cf8);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Music Library</h3>
+
+                    <div class="weird-upload-box" id="music-upload-box" style="margin-bottom:12px;">
+                        <input type="file" id="music-file-input" accept="audio/*" multiple onchange="handleMusicFileSelect(event)">
+                        <div id="music-upload-idle">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                            <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to upload one or more songs</p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">mp3, m4a, wav, ogg, aac</p>
+                        </div>
+                    </div>
+
+                    <div id="music-upload-progress-list"></div>
+
+                    <div id="admin-music-list" class="overflow-y-auto" style="max-height:260px;margin-top:4px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                    <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(96,165,250,0.3);color:#93c5fd;" onclick="loadMusicManagerList()">
+                        <i class="fas fa-rotate mr-2"></i>Refresh List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Weird Event Registration -->
+            <div class="weird-admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
+                <div class="admin-section-body" style="padding:14px;">
+                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
+                    <textarea id="weird-event-text" class="glass-input w-full p-3 rounded-xl text-sm mb-3" rows="3" placeholder="Describe this special moment..." style="resize:none;font-family:inherit;line-height:1.5;"></textarea>
+                    <!-- Media upload (photo / video / song) -->
+                    <div class="weird-upload-box" id="weird-upload-box">
+                        <input type="file" id="weird-file-input" accept="image/*,video/*,audio/*" multiple onchange="handleWeirdMediaSelect(event)">
+                        <div id="weird-upload-idle">
+                            <i class="fas fa-photo-video" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                            <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos, videos or a song <span style="color:#4b5563;">(max 4)</span></p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">Videos are auto-trimmed to 2 min &amp; compressed</p>
+                        </div>
+                        <div id="weird-upload-processing" style="display:none;">
+                            <span class="spinner"></span>
+                            <p style="font-size:0.68rem;color:#9ca3af;margin:6px 0 0;">Processing video…</p>
+                        </div>
+                    </div>
+                    <div class="weird-img-preview-row" id="weird-preview-row" style="display:none;"></div>
+                    <button class="glass-button w-full mt-3 font-bold text-sm py-3" id="weird-save-btn" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;position:relative;overflow:hidden;" onclick="saveWeirdEvent()">
+                        <span class="weird-save-btn-fill" id="weird-save-btn-fill"></span>
+                        <span class="weird-save-btn-label" id="weird-save-btn-label"><i class="fas fa-bolt mr-2"></i> Save Event</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Matches -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#374151,#4b5563);"></div>
+                <div class="admin-section-body">
+                    <h3 style="color:#6b7280;">Recent Matches</h3>
+                    <div id="admin-history-list" class="overflow-y-auto space-y-2" style="max-height:200px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GOLDEN MOMENTS ============ -->
+    <div id="weird-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments</h2>
+            <p class="text-xs mt-1" style="color:#6b7280;">Special memories — forever preserved</p>
+        </div>
+        <div class="w-full px-4">
+            <div id="weird-events-list">
+                <div id="weird-loading" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SETTINGS (promoted from the old capsule-hold modal) ============ -->
+    <div id="settings-screen" class="page-screen">
+        <div class="league-header settings-screen-header">
+            <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Profile</h2>
+            <div class="account-card">
+                <img id="settings-team-badge-logo" src="" class="account-avatar">
+                <div class="account-textcol">
+                    <span id="settings-team-badge-name" class="account-name">—</span>
+                    <span class="account-subtitle">HARFS League Account</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full px-4">
+            <div class="settings-page-grid">
+                <button class="settings-page-tile wide shop-tile-big" onclick="navigate('shop')">
+                    <div class="shop-tile-icon"><i class="fas fa-store"></i></div>
+                    <div class="shop-tile-textcol">
+                        <span class="shop-tile-title">Arena Shop</span>
+                        <span class="shop-tile-sub">Spend coins, request items</span>
+                    </div>
+                    <i class="fas fa-chevron-right shop-tile-chevron"></i>
+                </button>
+            </div>
+
+            <div class="settings-section-label">Appearance &amp; Sound</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
+                    <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
+                </div>
+                <div class="settings-page-tile" id="settings-music-tile" onclick="settingsToggleMusic()">
+                    <i class="fas fa-music" id="settings-music-icon"></i>
+                    <span id="settings-music-label">Music: On</span>
+                </div>
+                <div class="settings-page-tile" onclick="openPlaylistSheet()">
+                    <i class="fas fa-list-ul"></i><span>Playlist</span>
+                </div>
+                <div class="settings-page-tile" onclick="settingsNextTrack()">
+                    <i class="fas fa-forward-step"></i><span>Next Track</span>
+                </div>
+                <div class="settings-page-tile" id="settings-mode-tile" onclick="cyclePlaybackMode()">
+                    <i class="fas fa-random" id="settings-mode-icon"></i>
+                    <span id="settings-mode-label">Shuffle</span>
+                </div>
+            </div>
+
+            <div id="settings-admin-section" style="display:none;">
+                <div class="settings-section-label">Bayern Admin</div>
+                <div class="settings-page-grid">
+                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
+                        <i class="fas fa-user-shield" style="margin-right:8px;"></i><span>Admin Panel</span>
+                    </div>
+                    <div class="settings-page-tile wide admin-tile" style="flex-direction:row;justify-content:space-between;cursor:default;" onclick="event.stopPropagation()">
+                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-pen-to-square"></i>Edit Mode</span>
+                        <div class="perf-toggle" id="admin-edit-mode-toggle" onclick="toggleAdminEditMode()"></div>
+                    </div>
+                </div>
+                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories, and Adjust Coins appears in team panels.</p>
+            </div>
+
+            <div class="settings-section-label">Account</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide danger-tile" onclick="logoutTeam()">
+                    <i class="fas fa-right-from-bracket" style="margin-right:8px;"></i><span>Log Out</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MEDIA LIGHTBOX ============ -->
+    <div id="weird-lightbox" onclick="closeWeirdLightbox()">
+        <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
+        <div id="weird-lightbox-loading" style="display:none;color:#fff;text-align:center;">
+            <div class="spinner" style="width:32px;height:32px;border-width:3px;"></div>
+            <div style="font-size:0.75rem;margin-top:10px;color:#9ca3af;">Loading…</div>
+        </div>
+        <img id="weird-lightbox-img" src="" alt="">
+        <video id="weird-lightbox-video" src="" controls playsinline onclick="event.stopPropagation()" style="display:none;"></video>
+    </div>
+    <div id="team-profile-modal" class="modal-overlay">
+        <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;position:relative;">
+            <div class="modal-x-close" onclick="hideTeamProfile()"><i class="fas fa-times"></i></div>
+            <div class="profile-header">
+                <div class="profile-header-bg"></div>
+                <img id="profile-team-logo" src="" class="profile-avatar">
+            </div>
+            <div class="profile-body">
+                <h4 id="profile-team-name" class="text-xl font-black text-white mb-0.5">Team</h4>
+                <div class="text-[10px] uppercase tracking-widest mb-4" style="color:var(--primary);">Season Stats</div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div class="stat-card"><div class="stat-val text-yellow-400" id="profile-stat-pts">0</div><div class="stat-lbl">Points</div></div>
+                    <div class="stat-card"><div class="stat-val text-white" id="profile-stat-p">0</div><div class="stat-lbl">Played</div></div>
+                    <div class="stat-card"><div class="stat-val text-green-400" id="profile-stat-gf">0</div><div class="stat-lbl">Goal Diff</div></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="stat-card" style="background:rgba(34,197,94,0.07);border-color:rgba(34,197,94,0.14);"><div class="stat-val text-green-400" id="profile-stat-w">0</div><div class="stat-lbl" style="color:#4ade80;">Wins</div></div>
+                    <div class="stat-card"><div class="stat-val text-gray-300" id="profile-stat-d">0</div><div class="stat-lbl">Draws</div></div>
+                    <div class="stat-card" style="background:rgba(239,68,68,0.07);border-color:rgba(239,68,68,0.14);"><div class="stat-val text-red-400" id="profile-stat-l">0</div><div class="stat-lbl" style="color:#f87171;">Losses</div></div>
+                </div>
+                <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+                    <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Last Match</div>
+                    <div class="flex items-center justify-between">
+                        <div id="last-match-result-badge" class="match-badge badge-draw">N/A</div>
+                        <div id="last-match-detail" class="text-xs font-semibold text-gray-200">No matches yet</div>
+                    </div>
+                </div>
+                <!-- Last 5 matches form -->
+                <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+                    <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Form (Last 5)</div>
+                    <div id="team-form-dots" style="display:flex;gap:7px;justify-content:center;align-items:center;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CUSTOM CONFIRM ============ -->
+    <div id="custom-confirm-modal" class="modal-overlay">
+        <div class="modal-content confirm-modal text-center" style="max-width:300px;">
+            <div class="confirm-icon" id="confirm-icon">⚠️</div>
+            <h3 id="confirm-title">Are you sure?</h3>
+            <p id="confirm-message">This action cannot be undone.</p>
+            <div class="confirm-btn-row">
+                <button class="confirm-btn confirm-btn-cancel" onclick="resolveConfirm(false)">Cancel</button>
+                <button class="confirm-btn confirm-btn-ok green" id="confirm-ok-btn" onclick="resolveConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ EDIT MATCH RESULT MODAL ============ -->
+    <div id="edit-match-modal" class="modal-overlay">
+        <div class="modal-content confirm-modal text-center" style="max-width:300px;">
+            <div class="confirm-icon">✏️</div>
+            <h3>Edit Match Result</h3>
+            <p id="edit-match-teams" style="margin-bottom:14px;">Home vs Away</p>
+            <div class="flex justify-between items-center gap-4" style="margin-bottom:6px;">
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('home',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="edit-home-score-display">0</div>
+                    <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('home',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+                <div style="font-size:1.6rem;font-weight:900;color:#374151;">:</div>
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('away',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="edit-away-score-display">0</div>
+                    <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('away',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+            </div>
+            <div class="confirm-btn-row" style="margin-top:14px;">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeEditMatchModal()">Cancel</button>
+                <button class="confirm-btn confirm-btn-ok green" onclick="saveEditedMatch()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Season screen's "back to top" pill — floats above the bottom nav,
+         appears once the user scrolls down into the match history.
+         Sibling of the .page-screens (not nested inside one) so it stays a
+         true non-scrolling overlay — see the .season-fab comment in the CSS. -->
+    <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="scrollSeasonToTop()">
+        <i class="fas fa-arrow-up"></i><span>Back to Top</span>
+    </div>
+
+    <!-- ============ TEAM PICKER SHEET ============ -->
+    <div id="team-picker-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeTeamPicker()">
+        <div class="team-picker-panel">
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title" id="team-picker-title">Select Team</div>
+            <div class="team-picker-grid" id="team-picker-grid"></div>
+        </div>
+    </div>
+
+    <!-- ============ TEAM PANEL (tap a team on Overall) ============ -->
+    <div id="team-panel-overlay" class="modal-overlay" onclick="if(event.target===this)closeTeamPanel()">
+        <div class="modal-content" style="padding:0;overflow:hidden;max-width:360px;max-height:86vh;display:flex;flex-direction:column;position:relative;">
+            <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
+            <div class="profile-header" style="flex-shrink:0;">
+                <div class="profile-header-bg"></div>
+                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'">
+            </div>
+            <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+                <h4 id="team-panel-name" class="text-xl font-black text-white mb-0.5" style="text-align:center;">Team</h4>
+                <div id="team-panel-pinned" style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;"></div>
+                <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-trophy"></i> Trophy Cabinet</div>
+                        <div class="trophy-cabinet-grid" id="team-panel-trophies"></div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-crown"></i> League Records</div>
+                        <div id="team-panel-records"></div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-coins"></i> Coin Wallet</div>
+                        <div class="wallet-balance-row">
+                            <span class="wallet-balance-num"><span id="team-panel-coins">0</span> 🪙</span>
+                        </div>
+                        <div class="coin-log-list" id="team-panel-log"></div>
+                        <div class="team-panel-admin-row" id="team-panel-admin-adjust">
+                            <button class="glass-button flex-1 text-xs py-2" onclick="adjustTeamCoinsPrompt()"><i class="fas fa-pen"></i> Adjust Coins</button>
+                        </div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-shirt"></i> Collection</div>
+                        <div id="team-panel-items"></div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-bolt"></i> Arena Requests</div>
+                        <div id="team-panel-arena"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GENERIC REPORT SHEET (e.g. coin economy audit) ============ -->
+    <div id="report-sheet-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeReportSheet()">
+        <div class="team-picker-panel" style="max-height:82vh;">
+            <div class="team-picker-handle"></div>
+            <div class="team-panel-header">
+                <div style="flex:1;min-width:0;">
+                    <div class="name" id="report-sheet-title"></div>
+                </div>
+                <div class="team-panel-close" onclick="closeReportSheet()"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="team-panel-scroll">
+                <div class="team-panel-section" id="report-sheet-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AI ASSISTANT — full-page chat ============ -->
+    <div id="ai-chat-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel" dir="ltr">
+                <div class="ai-panel-header">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
+                    </div>
+                </div>
+                <div class="ai-chat-scroll" id="ai-chat-scroll">
+                    <div id="ai-chat-messages"></div>
+                    <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
+                        <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+                <!-- Quick-ask suggestions — shown until the user sends their first
+                     real message (see renderAiSuggestions), same pattern as the
+                     suggestion chips in most chat apps. -->
+                <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
+                <div class="ai-input-bar">
+                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
+                    <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AI ASSISTANT SETTINGS ============ -->
+    <div id="ai-settings-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:320px;" dir="ltr">
+            <h3 style="font-size:0.95rem;font-weight:800;margin-bottom:16px;text-align:center;">
+                <i class="fas fa-sliders" style="color:var(--primary);margin-right:6px;"></i>Assistant Settings
+            </h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:11px 14px;margin-bottom:14px;">
+                <label class="ai-toggle-switch">
+                    <input type="checkbox" id="ai-full-data-toggle" onchange="toggleAiDataMode()">
+                    <span class="ai-toggle-slider"></span>
+                </label>
+                <div style="text-align:left;">
+                    <div style="font-size:0.75rem;font-weight:800;">Send Full Data</div>
+                    <div style="font-size:0.6rem;color:#6b7280;margin-top:2px;">Off = only summary stats are sent</div>
+                </div>
+            </div>
+            <button class="glass-button w-full font-bold text-sm py-3" style="border-color:rgba(96,165,250,0.3);color:var(--primary);" onclick="saveAiSettings()">
+                <i class="fas fa-check mr-2"></i>Save
+            </button>
+            <button class="glass-button w-full font-bold text-sm py-2.5 mt-2" style="color:#f87171;border-color:rgba(239,68,68,0.25);" onclick="clearAiChat()">
+                <i class="fas fa-trash mr-2"></i>Clear Chat
+            </button>
+            <button class="glass-button w-full font-bold text-sm py-2.5 mt-2" style="color:#9ca3af;" onclick="closeAiSettings()">Close</button>
+        </div>
+    </div>
+
+</div><!-- /app-container -->
+
+<audio id="background-music" style="display:none;"></audio>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/appearance.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/memories.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/overall.js"></script>
+<script src="js/season.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/league-ops.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ai-chat.js"></script>
+<script src="js/admin-music.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('./sw.js')
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.error(e));
+    });
+}
+</script>
+</body>
+</html>
