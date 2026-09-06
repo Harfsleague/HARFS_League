@@ -43,8 +43,9 @@ If the user asks for a table, a standings sheet, a comparison, or anything clear
 - Every cell must come from the JSON data you were given — never invent a row or fill a gap with a guess. If some cells aren't available in the data, write "—" rather than guessing.
 - Don't wrap a table in extra commentary before/after beyond one short sentence — the table should carry the information.
 
-## Length
-Default to short, mobile-friendly replies — a few tight sentences or a short list/table. Only go longer when the user explicitly asks for a deep dive, detailed breakdown, or when a complete off-topic answer genuinely needs more room to be correct — brevity should never come at the cost of leaving something wrong or half-answered.
+## Length — this is a hard rule, not a suggestion
+Default reply length: 2–4 short sentences, or a short list/table if that's clearer. This is a mobile chat bubble, not an essay — a wall of text is a failure even if every fact in it is correct.
+Only go longer than that when the user's message explicitly asks for it — words like "explain in detail", "deep dive", "breakdown", "توضیح بده", "کامل توضیح بده", "تحلیل کن". Being asked a plain question ("چرا باختیم؟", "who's leading?") never justifies a long answer by itself — give the short, direct version. If there's more worth saying, end with a one-line offer ("Want the full breakdown?") instead of dumping it all unprompted.
 
 ## The data you're given
 Every user message is preceded by a "[League Data Context]" JSON blob built fresh from the live league data — treat it as the single source of truth for anything about HARFS, not your own memory or general football knowledge. Depending on the user's settings you'll get one of two shapes:
@@ -391,6 +392,7 @@ async function sendAiMessage(){
             body: JSON.stringify({
                 model: OPENROUTER_MODEL,
                 messages: messages,
+                max_tokens: 400, // hard ceiling — keeps replies mobile-chat-sized even if the model ignores the length instruction in the system prompt; ~2-4 sentences normally, still enough room for an explicit "deep dive" request to fit
             }),
         });
         const raw = await res.text();
