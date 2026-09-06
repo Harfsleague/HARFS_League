@@ -127,6 +127,13 @@ function syncAppearanceUI(){
             const el = document.getElementById('perf-toggle-'+k);
             if(el) el.classList.toggle('on', !!perfCustom[k]);
         });
+        // Nudge (not block) — if most of the heavy effects are on at once,
+        // let the person know that's the likely cause of any slowness,
+        // rather than leaving them guessing.
+        const heavyKeys = ['blur','particles','orbs','shadows'];
+        const heavyOnCount = heavyKeys.filter(k=>perfCustom[k]).length;
+        const hint = document.getElementById('perf-heavy-hint');
+        if(hint) hint.classList.toggle('visible', heavyOnCount>=3);
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
