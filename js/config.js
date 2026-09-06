@@ -38,6 +38,9 @@ const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 // pointing at the placeholder.
 // ============================================================
 const HARFS_AUTH_API = "https://harfs-auth.borobiron12.workers.dev";
+// Live Scores (API-Football, proxied+cached through a separate, independent
+// Worker — see worker/live-scores-worker.js + LIVE_SCORES_DEPLOY.md).
+const LIVE_SCORES_API = "https://harfs-livescores.borobiron12.workers.dev";
 let loggedInTeam = localStorage.getItem('harfs_team') || null;
 let harfsSessionToken = localStorage.getItem('harfs_session') || null;
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
