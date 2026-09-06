@@ -1373,16 +1373,51 @@ body.perf-no-sheen .hero-text{
     color:#ffffff !important;
     filter:none !important;
 }
-body.perf-no-anim *{
-    animation-duration:0.001s !important;
-    transition-duration:0.001s !important;
-}
+/* "Fast Transitions" — used to blanket-force transition-duration:0.001s
+   on EVERY element (`*`) with !important. That's what was breaking things
+   like the Playlist list scrolling and general responsiveness once other
+   toggles were also off: forcing a transition rule onto every element in a
+   scrolling list makes the browser recompute style on every scroll frame.
+   Now this only ever targets the actual continuous/looping decorative
+   animations (which is what "reduce motion" should mean) plus the two
+   biggest UI-chrome transitions — never a universal `*` selector. */
+body.perf-no-anim .ambient-orb{ animation:none !important; }
+body.perf-no-anim #hero-logo-container{ animation:none !important; }
+body.perf-no-anim #hero-logo-container .hero-text{ animation:none !important; }
+body.perf-no-anim .page-screen{ transition:none !important; }
+body.perf-no-anim .team-picker-sheet,
+body.perf-no-anim .team-picker-panel,
+body.perf-no-anim .modal-overlay,
+body.perf-no-anim .modal-content,
+body.perf-no-anim .nav-item{ transition:none !important; }
 .perf-option-row{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; gap:10px;
     padding:10px 4px; border-bottom:1px solid rgba(255,255,255,0.06);
-    font-size:0.72rem; font-weight:600; color:#e5e7eb;
 }
 .perf-option-row:last-child{ border-bottom:none; }
+.perf-option-icon{
+    width:30px;height:30px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:0.78rem;
+    background:rgba(255,255,255,0.06); color:#9ca3af;
+    transition:background 0.2s, color 0.2s;
+}
+.perf-option-row:has(.perf-toggle.on) .perf-option-icon{
+    background:var(--nav-active-bg); color:var(--primary);
+}
+.perf-option-textcol{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.perf-option-title{ font-size:0.74rem; font-weight:700; color:#e5e7eb; }
+.perf-option-sub{ font-size:0.6rem; color:#6b7280; }
+.perf-subsection-label{
+    font-size:0.58rem; font-weight:800; color:#4b5563;
+    text-transform:uppercase; letter-spacing:1px; margin:12px 4px 2px;
+}
+.perf-subsection-label:first-child{ margin-top:2px; }
+.perf-heavy-hint{
+    display:none; align-items:flex-start; gap:8px; margin-top:12px;
+    padding:10px 12px; border-radius:12px; font-size:0.62rem; line-height:1.5;
+    background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); color:#fbbf24;
+}
+.perf-heavy-hint.visible{ display:flex; }
 .perf-toggle{
     width:42px;height:24px;border-radius:99px;background:rgba(255,255,255,0.12);
     border:1px solid rgba(255,255,255,0.14); position:relative; cursor:pointer; flex-shrink:0;
@@ -1710,6 +1745,100 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 .ai-entry-title{ font-size:0.8rem; font-weight:800; color:#fff; }
 .ai-entry-sub{ font-size:0.64rem; color:#6b7280; }
 .ai-entry-chevron{ color:#4b5563; font-size:0.8rem; flex-shrink:0; }
+
+/* =====================================================
+   LIVE SCORES — entry capsule variant + full-page screen
+   ===================================================== */
+.live-scores-capsule{
+    background:linear-gradient(135deg, rgba(52,211,153,0.12), rgba(34,197,94,0.12));
+    margin-top:14px; margin-bottom:10px;
+}
+.live-scores-icon{
+    background:linear-gradient(135deg, #34d399, #22c55e);
+    box-shadow:0 4px 14px rgba(52,211,153,0.35);
+}
+.live-scores-header-actions{
+    position:absolute; top:14px; right:16px; display:flex; gap:8px;
+}
+.live-scores-refresh-btn{
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+    color:#9ca3af; cursor:pointer;
+}
+.live-scores-refresh-btn:active{ transform:scale(0.9); }
+.live-scores-refresh-btn.spinning i{ animation:spin 0.7s linear infinite; }
+.live-scores-filter-toggle{
+    display:flex; align-items:center; gap:6px; margin:0 auto;
+    padding:5px 14px; border-radius:99px; font-size:0.64rem; font-weight:700;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    color:#9ca3af; cursor:pointer;
+}
+.live-scores-filter-toggle.active{
+    background:var(--nav-active-bg); border-color:var(--nav-active-border); color:var(--primary);
+}
+.live-league-group{ margin-bottom:16px; }
+.live-league-header{
+    display:flex; align-items:center; gap:8px; padding:0 4px 8px;
+    font-size:0.66rem; font-weight:800; color:#9ca3af;
+    text-transform:uppercase; letter-spacing:0.6px;
+}
+.live-league-header img{ width:16px;height:16px;object-fit:contain;flex-shrink:0; }
+.live-league-header .live-league-country{ color:#4b5563; font-weight:600; text-transform:none; }
+.live-match-row{
+    display:flex; align-items:center; gap:10px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px; padding:11px 14px; margin-bottom:8px;
+}
+.live-match-row.is-favorite{ border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.05); }
+.live-match-teams{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.live-match-team{ display:flex; align-items:center; gap:8px; font-size:0.76rem; font-weight:700; color:#e5e7eb; }
+.live-match-team img{ width:18px;height:18px;object-fit:contain;flex-shrink:0;border-radius:50%;background:rgba(255,255,255,0.9); }
+.live-match-team-name{ overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.live-match-score{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    min-width:42px; flex-shrink:0;
+}
+.live-match-score-num{ font-size:0.95rem; font-weight:900; color:#fff; line-height:1.3; }
+.live-match-status{
+    flex-shrink:0; min-width:52px; text-align:center;
+    font-size:0.62rem; font-weight:800; padding:4px 8px; border-radius:99px;
+}
+.live-match-status.is-live{ background:rgba(239,68,68,0.15); color:#f87171; }
+.live-match-status.is-live::before{
+    content:''; display:inline-block; width:5px;height:5px;border-radius:50%;
+    background:#f87171; margin-right:4px; animation:musicPulse 1.2s infinite ease-in-out;
+}
+.live-match-status.is-upcoming{ background:rgba(255,255,255,0.06); color:#6b7280; }
+.live-match-status.is-finished{ background:rgba(255,255,255,0.06); color:#9ca3af; }
+.live-scores-empty{ text-align:center; color:#4b5563; font-size:0.75rem; padding:36px 0; line-height:1.6; }
+.live-scores-error{
+    text-align:center; color:#f87171; font-size:0.7rem; padding:24px 16px; line-height:1.6;
+    background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:14px; margin:0 4px;
+}
+
+/* ---- Live Scores Preferences sheet (favorite leagues/teams search) ---- */
+.fav-search-results{ max-height:160px; overflow-y:auto; margin-top:6px; }
+.fav-search-row{
+    display:flex; align-items:center; gap:8px; padding:8px 6px; cursor:pointer;
+    border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.72rem;
+}
+.fav-search-row:active{ background:rgba(255,255,255,0.05); }
+.fav-search-row img{ width:20px;height:20px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.9);flex-shrink:0; }
+.fav-search-name{ flex:1; min-width:0; font-weight:700; color:#e5e7eb; overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.fav-search-country{ font-size:0.6rem; color:#6b7280; flex-shrink:0; }
+.fav-search-add{ color:var(--primary); font-size:0.65rem; flex-shrink:0; }
+.fav-search-empty, .fav-search-loading{ text-align:center; font-size:0.68rem; color:#6b7280; padding:10px 0; }
+.fav-chips-row{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 14px; }
+.fav-chip{
+    display:flex; align-items:center; gap:6px; padding:5px 8px 5px 6px; border-radius:99px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+    font-size:0.66rem; font-weight:700; color:#e5e7eb;
+}
+.fav-chip img{ width:16px;height:16px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.9); }
+.fav-chip i{ color:#6b7280; cursor:pointer; font-size:0.6rem; padding:2px; }
+.fav-chip i:active{ color:#f87171; }
+.fav-chips-empty{ font-size:0.64rem; color:#4b5563; padding:4px 2px 12px; }
 
 /* =====================================================
    AI ASSISTANT — full-page chat screen (moved out of the old
