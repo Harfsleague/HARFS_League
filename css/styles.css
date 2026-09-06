@@ -1992,3 +1992,34 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 }
 .ai-toggle-switch input:checked + .ai-toggle-slider{ background:var(--primary); }
 .ai-toggle-switch input:checked + .ai-toggle-slider::before{ transform:translateX(18px); }
+
+/* =====================================================
+   OFFLINE SYNC STATUS DOT
+   ===================================================== */
+#sync-status-dot{
+    position:fixed; top:14px; left:14px; z-index:900;
+    width:10px;height:10px;border-radius:50%;
+    transition:opacity 0.4s ease, background 0.3s ease;
+    box-shadow:0 0 6px rgba(0,0,0,0.4);
+}
+.sync-status-dot.sync-offline{ background:#6b7280; }
+.sync-status-dot.sync-syncing{ background:#60a5fa; animation:musicPulse 1s infinite ease-in-out; }
+.sync-status-dot.sync-synced{ background:#22c55e; }
+.sync-status-dot.sync-error{ background:#ef4444; }
+
+/* =====================================================
+   LIVE SCORES PREFERENCES — categorized league/team picker
+   ===================================================== */
+.lsp-group-title{ font-size:0.62rem; font-weight:800; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin:12px 2px 4px; }
+.lsp-league-logo{ width:24px;height:24px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.9);flex-shrink:0; }
+.lsp-team-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-height:260px; overflow-y:auto; }
+.lsp-team-cell{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:10px 4px; border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+    transition:all 0.15s;
+}
+.lsp-team-cell:active{ transform:scale(0.94); }
+.lsp-team-cell.selected{ background:var(--nav-active-bg); border-color:var(--nav-active-border); }
+.lsp-team-cell img{ width:32px;height:32px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.9); }
+.lsp-team-cell span{ font-size:0.6rem; font-weight:700; text-align:center; overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%; }
