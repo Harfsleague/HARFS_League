@@ -71,29 +71,59 @@
         </div>
 
         <div id="perf-custom-options" style="display:none;">
+            <div class="perf-subsection-label">Visual Effects</div>
             <div class="perf-option-row">
-                <span><i class="fas fa-circle-nodes mr-1"></i> Background Orbs</span>
+                <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Background Orbs</span>
+                    <span class="perf-option-sub">Floating glow shapes behind the app</span>
+                </div>
                 <div class="perf-toggle" id="perf-toggle-orbs" onclick="togglePerfOption('orbs')"></div>
             </div>
             <div class="perf-option-row">
-                <span><i class="fas fa-braille mr-1"></i> Floating Particles</span>
+                <div class="perf-option-icon"><i class="fas fa-braille"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Floating Particles</span>
+                    <span class="perf-option-sub">Animated dots on the canvas layer</span>
+                </div>
                 <div class="perf-toggle" id="perf-toggle-particles" onclick="togglePerfOption('particles')"></div>
             </div>
             <div class="perf-option-row">
-                <span><i class="fas fa-droplet mr-1"></i> Glass Blur Effects</span>
+                <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Glass Blur</span>
+                    <span class="perf-option-sub">Frosted-glass panels (heaviest effect)</span>
+                </div>
                 <div class="perf-toggle" id="perf-toggle-blur" onclick="togglePerfOption('blur')"></div>
             </div>
             <div class="perf-option-row">
-                <span><i class="fas fa-sun mr-1"></i> Glow / Shadows</span>
+                <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Glow &amp; Shadows</span>
+                    <span class="perf-option-sub">Depth shadows around cards and buttons</span>
+                </div>
                 <div class="perf-toggle" id="perf-toggle-shadows" onclick="togglePerfOption('shadows')"></div>
             </div>
+            <div class="perf-subsection-label">Motion</div>
             <div class="perf-option-row">
-                <span><i class="fas fa-wand-sparkles mr-1"></i> Shimmer Animations</span>
+                <div class="perf-option-icon"><i class="fas fa-wand-sparkles"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Shimmer Animations</span>
+                    <span class="perf-option-sub">Looping shine on the logo &amp; panels</span>
+                </div>
                 <div class="perf-toggle" id="perf-toggle-sheen" onclick="togglePerfOption('sheen')"></div>
             </div>
             <div class="perf-option-row">
-                <span><i class="fas fa-forward mr-1"></i> Fast Transitions</span>
+                <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Motion Effects</span>
+                    <span class="perf-option-sub">Slide/fade transitions between screens</span>
+                </div>
                 <div class="perf-toggle" id="perf-toggle-anim" onclick="togglePerfOption('anim')"></div>
+            </div>
+            <div class="perf-heavy-hint" id="perf-heavy-hint">
+                <i class="fas fa-triangle-exclamation" style="margin-top:1px;"></i>
+                <span>Several heavy effects are on at once — if the app feels slow on your device, try turning a couple off.</span>
             </div>
         </div>
 
@@ -102,9 +132,9 @@
 
         <div id="custom-palette-editor" style="display:none;">
             <div class="custom-color-row">
-                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()"></label>
-                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()"></label>
-                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()"></label>
+                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
             </div>
         </div>
     </div>
@@ -151,7 +181,15 @@
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
             </div>
-            <button class="ai-entry-capsule" onclick="navigate('ai-chat')">
+            <button class="ai-entry-capsule live-scores-capsule" onclick="navigate('live-scores')">
+                <div class="ai-entry-icon live-scores-icon"><i class="fas fa-satellite-dish"></i></div>
+                <div class="ai-entry-text">
+                    <span class="ai-entry-title">Live Scores</span>
+                    <span class="ai-entry-sub">Matches happening right now, every league</span>
+                </div>
+                <i class="fas fa-chevron-right ai-entry-chevron"></i>
+            </button>
+            <button class="ai-entry-capsule" onclick="openAiPanel()">
                 <div class="ai-entry-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
                         <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
@@ -252,9 +290,12 @@
                 <i class="fas fa-arrow-left mr-1"></i>Back to Settings
             </button>
             <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Arena Shop</h2>
-            <div class="settings-team-badge" style="margin-top:0;margin-bottom:10px;">
-                <img id="shop-my-team-logo" src="">
-                <span id="shop-my-team-name">—</span>
+            <div class="account-card" style="margin-top:0;margin-bottom:10px;">
+                <img id="shop-my-team-logo" src="" class="account-avatar" style="width:44px;height:44px;">
+                <div class="account-textcol">
+                    <span id="shop-my-team-name" class="account-name">—</span>
+                    <span class="account-subtitle">Buying for this team</span>
+                </div>
             </div>
             <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">Requests are sent straight to the Bayern admin panel for approval — nothing is charged until it's approved.</p>
         </div>
@@ -469,6 +510,13 @@
                 </button>
             </div>
 
+            <div class="settings-section-label">Live Scores</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" onclick="openLiveScoresPreferences()">
+                    <i class="fas fa-satellite-dish" style="margin-right:8px;"></i><span>Favorite Leagues &amp; Teams</span>
+                </div>
+            </div>
+
             <div class="settings-section-label">Appearance &amp; Sound</div>
             <div class="settings-page-grid">
                 <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
@@ -621,7 +669,7 @@
             <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
             <div class="profile-header" style="flex-shrink:0;">
                 <div class="profile-header-bg"></div>
-                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='1'">
+                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'">
             </div>
             <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
                 <h4 id="team-panel-name" class="text-xl font-black text-white mb-0.5" style="text-align:center;">Team</h4>
@@ -703,6 +751,48 @@
         </div>
     </div>
 
+    <!-- ============ LIVE SCORES — every league, right now ============ -->
+    <div id="live-scores-screen" class="page-screen">
+        <div class="league-header" style="position:relative;">
+            <button onclick="navigate('main-league')" style="align-self:flex-start;margin-bottom:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Back
+            </button>
+            <div class="live-scores-header-actions">
+                <button class="live-scores-refresh-btn" id="live-scores-refresh-btn" onclick="fetchLiveScores(true)" title="Refresh"><i class="fas fa-rotate"></i></button>
+                <button class="live-scores-refresh-btn" onclick="openLiveScoresPreferences()" title="Favorites"><i class="fas fa-sliders"></i></button>
+            </div>
+            <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);"><i class="fas fa-satellite-dish mr-2"></i>Live Scores</h2>
+            <div id="live-scores-updated-label" style="font-size:0.6rem;color:#6b7280;margin-bottom:8px;">—</div>
+            <button class="live-scores-filter-toggle" id="live-scores-filter-toggle" style="display:none;" onclick="toggleFavoritesOnlyFilter()"></button>
+        </div>
+        <div class="w-full px-4" id="live-scores-body">
+            <div class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);" id="live-scores-loading">
+                <span class="spinner"></span> Loading...
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ LIVE SCORES PREFERENCES — favorite leagues & teams ============ -->
+    <div class="team-picker-sheet" id="live-scores-prefs-sheet" onclick="if(event.target===this)closeLiveScoresPreferences()">
+        <div class="team-picker-panel appearance-panel">
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title">Live Scores Preferences</div>
+            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-6px 0 14px;line-height:1.5;">Pick your favorite leagues and teams — Live Scores can then show only matches involving them.</p>
+
+            <div class="appearance-section-label">Favorite Leagues</div>
+            <input type="text" id="league-search-input" class="glass-input w-full p-2.5 rounded-xl text-sm" placeholder="Search leagues (e.g. Premier League)" oninput="onLeagueSearchInput()">
+            <div class="fav-search-results" id="league-search-results"></div>
+            <div class="fav-chips-row" id="fav-league-chips"></div>
+
+            <div class="appearance-section-label">Favorite Teams</div>
+            <input type="text" id="team-search-input" class="glass-input w-full p-2.5 rounded-xl text-sm" placeholder="Search teams (e.g. Real Madrid)" oninput="onTeamSearchInput()">
+            <div class="fav-search-results" id="team-search-results"></div>
+            <div class="fav-chips-row" id="fav-team-chips"></div>
+
+            <button class="glass-button w-full text-sm mt-4" onclick="closeLiveScoresPreferences()">Done</button>
+        </div>
+    </div>
+
     <!-- ============ AI ASSISTANT SETTINGS ============ -->
     <div id="ai-settings-modal" class="modal-overlay">
         <div class="modal-content" style="max-width:320px;" dir="ltr">
@@ -746,6 +836,7 @@
 <script src="js/audio.js"></script>
 <script src="js/ai-chat.js"></script>
 <script src="js/admin-music.js"></script>
+<script src="js/live-scores.js"></script>
 <script src="js/main.js"></script>
 
 <script>
