@@ -23,6 +23,9 @@
 <!-- Toast -->
 <div id="toast-container"></div>
 
+<!-- Offline sync status dot — see js/offline.js -->
+<div id="sync-status-dot" class="sync-status-dot sync-offline" title="Sync status"></div>
+
 <!-- Hero Logo (original HARFS wordmark — purely decorative now that
      Settings lives in the bottom nav; no hold-gesture action anymore) -->
 <div id="hero-logo-container">
@@ -772,22 +775,36 @@
         </div>
     </div>
 
-    <!-- ============ LIVE SCORES PREFERENCES — favorite leagues & teams ============ -->
+    <!-- ============ LIVE SCORES PREFERENCES — favorite leagues & teams ============
+         Categorized pick-list instead of free-text search: leagues are grouped
+         (Top Europe / European Cups / etc — see the Worker's /leagues/grouped),
+         and teams are picked by first choosing one of your favorite leagues,
+         then tapping teams from that league's roster (/teams-by-league). -->
     <div class="team-picker-sheet" id="live-scores-prefs-sheet" onclick="if(event.target===this)closeLiveScoresPreferences()">
         <div class="team-picker-panel appearance-panel">
             <div class="team-picker-handle"></div>
             <div class="team-picker-title">Live Scores Preferences</div>
-            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-6px 0 14px;line-height:1.5;">Pick your favorite leagues and teams — Live Scores can then show only matches involving them.</p>
+            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-6px 0 14px;line-height:1.5;">Pick your favorite leagues and teams from the list — Live Scores can then show only matches involving them.</p>
 
-            <div class="appearance-section-label">Favorite Leagues</div>
-            <input type="text" id="league-search-input" class="glass-input w-full p-2.5 rounded-xl text-sm" placeholder="Search leagues (e.g. Premier League)" oninput="onLeagueSearchInput()">
-            <div class="fav-search-results" id="league-search-results"></div>
-            <div class="fav-chips-row" id="fav-league-chips"></div>
+            <div class="segmented-control" id="lsp-segmented">
+                <button class="segmented-btn active" data-value="leagues" onclick="lspSetTab('leagues')"><i class="fas fa-trophy"></i> Leagues</button>
+                <button class="segmented-btn" data-value="teams" onclick="lspSetTab('teams')"><i class="fas fa-shield-halved"></i> Teams</button>
+            </div>
 
-            <div class="appearance-section-label">Favorite Teams</div>
-            <input type="text" id="team-search-input" class="glass-input w-full p-2.5 rounded-xl text-sm" placeholder="Search teams (e.g. Real Madrid)" oninput="onTeamSearchInput()">
-            <div class="fav-search-results" id="team-search-results"></div>
-            <div class="fav-chips-row" id="fav-team-chips"></div>
+            <div id="lsp-view-leagues">
+                <div class="appearance-section-label">Your Favorite Leagues</div>
+                <div class="fav-chips-row" id="fav-league-chips"></div>
+                <div class="appearance-section-label">Pick From The List</div>
+                <div id="lsp-league-groups"><div class="fav-search-loading"><span class="spinner"></span></div></div>
+            </div>
+
+            <div id="lsp-view-teams" style="display:none;">
+                <div class="appearance-section-label">Your Favorite Teams</div>
+                <div class="fav-chips-row" id="fav-team-chips"></div>
+                <div class="appearance-section-label">Pick A League First</div>
+                <div class="chip-bar" id="lsp-league-select-row"></div>
+                <div id="lsp-team-list" style="margin-top:10px;"></div>
+            </div>
 
             <button class="glass-button w-full text-sm mt-4" onclick="closeLiveScoresPreferences()">Done</button>
         </div>
@@ -824,6 +841,7 @@
 <audio id="background-music" style="display:none;"></audio>
 
 <script src="js/config.js"></script>
+<script src="js/offline.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/appearance.js"></script>
 <script src="js/ui-common.js"></script>
