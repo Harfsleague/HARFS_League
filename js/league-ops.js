@@ -226,12 +226,41 @@ async function auditCoinEconomy(){
     openReportSheet('Coin Economy Audit', summary + rows);
 }
 
+// Offline-first: show whatever's cached in IndexedDB immediately, then try
+// to fetch fresh data over the network and update both the in-memory state
+// and the cache. If the network fails (or there's no connection at all),
+// the cached copy — if any — is what stays on screen; see setSyncStatus().
 async function loadLeagueDataFromGitHub(){
     if(!Object.keys(leagueData).length)initializeLeagueData();
-    try{const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();sha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...c[k]};});}}catch(e){}return leagueData;
+    const cached = await idbGet('leagueData','v');
+    if(cached) Object.keys(cached).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...cached[k]};});
+    if(!navigator.onLine){ setSyncStatus('offline'); return leagueData; }
+    setSyncStatus('syncing');
+    try{
+        const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();sha=d.sha;
+            const c=await(await fetch(d.download_url)).json();
+            Object.keys(c).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...c[k]};});
+            await idbSet('leagueData','v',c);
+        }
+        setSyncStatus('synced');
+    }catch(e){ setSyncStatus(cached?'offline':'error'); }
+    return leagueData;
 }
 async function loadMatchHistoryFromGitHub(){
-    try{const r=await fetch(`${BASE_API}${GITHUB_MATCHES_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();matchesSha=d.sha;matchHistory=await(await fetch(d.download_url)).json();}}catch(e){matchHistory=[];}return matchHistory;
+    const cached = await idbGet('matchHistory','v');
+    if(cached) matchHistory = cached;
+    if(!navigator.onLine){ setSyncStatus('offline'); return matchHistory; }
+    try{
+        const r=await fetch(`${BASE_API}${GITHUB_MATCHES_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();matchesSha=d.sha;
+            matchHistory=await(await fetch(d.download_url)).json();
+            await idbSet('matchHistory','v',matchHistory);
+        }
+    }catch(e){ matchHistory=cached||[]; setSyncStatus(cached?'offline':'error'); return matchHistory; }
+    return matchHistory;
 }
 
 // ============================================================
