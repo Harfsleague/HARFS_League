@@ -31,6 +31,8 @@ function addFavLeague(league){
 function removeFavLeague(id){
     saveFavLeagues(getFavLeagues().filter(l=>l.id!==id));
     renderFavLeagueChips(); renderLiveScoresFromCache();
+    if(lspLeagueGroups) renderLspLeagueGroups();
+    renderLspLeagueSelectRow();
 }
 function addFavTeam(team){
     const list = getFavTeams();
@@ -41,6 +43,11 @@ function addFavTeam(team){
 function removeFavTeam(id){
     saveFavTeams(getFavTeams().filter(t=>t.id!==id));
     renderFavTeamChips(); renderLiveScoresFromCache();
+    const grid = document.getElementById('lsp-team-grid');
+    if(grid && grid._teams){
+        const idx = grid._teams.findIndex(t=>t.id===id);
+        if(idx>=0){ const cell = grid.children[idx]; if(cell) cell.classList.remove('selected'); }
+    }
 }
 function renderLiveScoresFromCache(){
     // Re-render with whatever we already have in memory — used right after
@@ -49,43 +56,114 @@ function renderLiveScoresFromCache(){
     if(liveScoresLastFixtures.length) renderLiveScores(liveScoresLastFixtures);
 }
 
-// ---- Search (leagues/teams) — used only from the preferences sheet ----
-let leagueSearchDebounce = null, teamSearchDebounce = null;
-function onLeagueSearchInput(){
-    clearTimeout(leagueSearchDebounce);
-    const q = document.getElementById('league-search-input').value.trim();
-    const resultsEl = document.getElementById('league-search-results');
-    if(q.length<2){ resultsEl.innerHTML=''; return; }
-    leagueSearchDebounce = setTimeout(()=>runFavoriteSearch('leagues', q, resultsEl, 'addFavLeague'), 400);
+// ============================================================
+// CATEGORIZED LEAGUE/TEAM PICKER — replaces free-text search.
+// Leagues come pre-grouped from the Worker's /leagues/grouped
+// endpoint (a fixed, hand-picked list — no quota-hungry search
+// calls needed just to browse). Teams are picked by first
+// choosing one of the user's favorite leagues, then tapping teams
+// from that league's roster via /teams-by-league.
+// ============================================================
+let lspLeagueGroups = null;
+let lspSelectedLeagueForTeams = null;
+
+function lspSetTab(tab){
+    document.querySelectorAll('#lsp-segmented .segmented-btn').forEach(b=>b.classList.toggle('active', b.dataset.value===tab));
+    document.getElementById('lsp-view-leagues').style.display = tab==='leagues' ? 'block' : 'none';
+    document.getElementById('lsp-view-teams').style.display = tab==='teams' ? 'block' : 'none';
+    if(tab==='teams') renderLspLeagueSelectRow();
 }
-function onTeamSearchInput(){
-    clearTimeout(teamSearchDebounce);
-    const q = document.getElementById('team-search-input').value.trim();
-    const resultsEl = document.getElementById('team-search-results');
-    if(q.length<2){ resultsEl.innerHTML=''; return; }
-    teamSearchDebounce = setTimeout(()=>runFavoriteSearch('teams', q, resultsEl, 'addFavTeam'), 400);
-}
-async function runFavoriteSearch(endpoint, query, resultsEl, onAddFnName){
-    resultsEl.innerHTML = '<div class="fav-search-loading"><span class="spinner"></span></div>';
+async function loadLspLeagueGroups(){
+    if(lspLeagueGroups){ renderLspLeagueGroups(); renderLspLeagueSelectRow(); return; }
+    const container = document.getElementById('lsp-league-groups');
     try{
-        const res = await fetch(`${LIVE_SCORES_API}/${endpoint}?search=${encodeURIComponent(query)}`);
+        const res = await fetch(`${LIVE_SCORES_API}/leagues/grouped`);
         const data = await res.json();
-        if(!res.ok || !data.ok){ resultsEl.innerHTML = `<div class="fav-search-empty">${escapeHtml(data.error||'Search failed')}</div>`; return; }
-        if(!data.results.length){ resultsEl.innerHTML = '<div class="fav-search-empty">No matches found</div>'; return; }
-        // Results are stashed on the element and looked up by index on click,
-        // rather than inlined as JSON in the onclick attribute — keeps this
-        // safe regardless of what characters end up in a team/league name.
-        resultsEl._searchResults = data.results;
-        resultsEl.innerHTML = data.results.map((r,i)=>`
-            <div class="fav-search-row" onclick="${onAddFnName}(document.getElementById('${resultsEl.id}')._searchResults[${i}])">
-                <img src="${r.logo||''}" onerror="this.style.visibility='hidden'">
-                <span class="fav-search-name">${escapeHtml(r.name)}</span>
-                <span class="fav-search-country">${escapeHtml(r.country||'')}</span>
-                <i class="fas fa-plus fav-search-add"></i>
-            </div>`).join('');
+        if(!res.ok || !data.ok) throw new Error(data.error||'failed');
+        lspLeagueGroups = data.groups;
+        renderLspLeagueGroups();
+        renderLspLeagueSelectRow();
     }catch(e){
-        resultsEl.innerHTML = '<div class="fav-search-empty">Could not reach the search server</div>';
+        if(container) container.innerHTML = '<div class="fav-search-empty">Could not load the league list — check your connection</div>';
     }
+}
+function renderLspLeagueGroups(){
+    const container = document.getElementById('lsp-league-groups');
+    if(!container || !lspLeagueGroups) return;
+    const favIds = new Set(getFavLeagues().map(l=>l.id));
+    container.innerHTML = lspLeagueGroups.map(g=>`
+        <div class="lsp-group">
+            <div class="lsp-group-title">${escapeHtml(g.group)}</div>
+            ${g.leagues.map(l=>`
+                <div class="perf-option-row">
+                    <img src="${l.logo}" onerror="this.style.visibility='hidden'" class="lsp-league-logo">
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">${escapeHtml(l.name)}</span>
+                        <span class="perf-option-sub">${escapeHtml(l.country)}</span>
+                    </div>
+                    <div class="perf-toggle ${favIds.has(l.id)?'on':''}" onclick="lspToggleLeague(${l.id},this)"></div>
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+}
+function lspToggleLeague(id, toggleEl){
+    const isFav = toggleEl.classList.contains('on');
+    if(isFav){
+        removeFavLeague(id);
+        toggleEl.classList.remove('on');
+    } else {
+        let league = null;
+        (lspLeagueGroups||[]).forEach(g=>g.leagues.forEach(l=>{ if(l.id===id) league=l; }));
+        if(league){ addFavLeague(league); toggleEl.classList.add('on'); }
+    }
+    renderLspLeagueSelectRow();
+}
+function renderLspLeagueSelectRow(){
+    const row = document.getElementById('lsp-league-select-row');
+    if(!row) return;
+    const favs = getFavLeagues();
+    if(!favs.length){ row.innerHTML = '<div class="fav-chips-empty">Add a few leagues from the "Leagues" tab first</div>'; return; }
+    row.innerHTML = favs.map(l=>{
+        const safeName = escapeHtml(l.name).replace(/'/g,'&#39;');
+        return `<div class="chip ${lspSelectedLeagueForTeams===l.id?'active':''}" onclick="lspSelectLeagueForTeams(${l.id})">${safeName}</div>`;
+    }).join('');
+}
+async function lspSelectLeagueForTeams(leagueId){
+    lspSelectedLeagueForTeams = leagueId;
+    renderLspLeagueSelectRow();
+    const listEl = document.getElementById('lsp-team-list');
+    if(!listEl) return;
+    listEl.innerHTML = '<div class="fav-search-loading"><span class="spinner"></span></div>';
+    try{
+        const res = await fetch(`${LIVE_SCORES_API}/teams-by-league?leagueId=${leagueId}`);
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error||'failed');
+        const favIds = new Set(getFavTeams().map(t=>t.id));
+        if(!data.teams.length){ listEl.innerHTML = '<div class="fav-search-empty">No teams found for this league</div>'; return; }
+        // Team data is stashed on the grid element and looked up by index on
+        // click, rather than inlined in the onclick attribute — keeps this
+        // safe regardless of what characters end up in a team name.
+        listEl.innerHTML = `<div class="lsp-team-grid" id="lsp-team-grid"></div>`;
+        const gridEl = document.getElementById('lsp-team-grid');
+        gridEl._teams = data.teams;
+        gridEl.innerHTML = data.teams.map((t,i)=>`
+            <div class="lsp-team-cell ${favIds.has(t.id)?'selected':''}" onclick="lspToggleTeam(${i},this)">
+                <img src="${t.logo}" onerror="this.style.visibility='hidden'">
+                <span>${escapeHtml(t.name)}</span>
+            </div>
+        `).join('');
+    }catch(e){
+        listEl.innerHTML = '<div class="fav-search-empty">Could not load teams — check your connection</div>';
+    }
+}
+function lspToggleTeam(index, cellEl){
+    const grid = document.getElementById('lsp-team-grid');
+    const team = grid && grid._teams && grid._teams[index];
+    if(!team) return;
+    const isFav = cellEl.classList.contains('selected');
+    if(isFav){ removeFavTeam(team.id); cellEl.classList.remove('selected'); }
+    else{ addFavTeam(team); cellEl.classList.add('selected'); }
 }
 function renderFavLeagueChips(){
     const el = document.getElementById('fav-league-chips');
@@ -112,10 +190,8 @@ function renderFavTeamChips(){
 function openLiveScoresPreferences(){
     renderFavLeagueChips();
     renderFavTeamChips();
-    document.getElementById('league-search-input').value='';
-    document.getElementById('team-search-input').value='';
-    document.getElementById('league-search-results').innerHTML='';
-    document.getElementById('team-search-results').innerHTML='';
+    lspSetTab('leagues');
+    loadLspLeagueGroups();
     document.getElementById('live-scores-prefs-sheet').classList.add('open');
 }
 function closeLiveScoresPreferences(){
