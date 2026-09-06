@@ -396,8 +396,21 @@ let weirdLoadInFlight=null;
 // producing duplicated/triplicated moments in the feed.
 function loadWeirdEventsFromGitHub(){
     if(weirdLoadInFlight)return weirdLoadInFlight;
-    weirdLoadInFlight=loadWeirdEventsFromGitHubInner().finally(()=>{weirdLoadInFlight=null;});
+    weirdLoadInFlight=loadWeirdEventsOffline().finally(()=>{weirdLoadInFlight=null;});
     return weirdLoadInFlight;
+}
+// Offline-first wrapper: the feed only ever holds text + small thumbnails
+// (full photos/videos/songs are fetched lazily on tap, see
+// fetchMomentMediaFile), so caching this in IndexedDB is cheap and gives a
+// fully usable Golden Moments feed even with no connection at all.
+async function loadWeirdEventsOffline(){
+    if(!navigator.onLine){
+        const cached=await idbGet('weirdEvents','v');
+        if(cached){ weirdEvents=cached; setSyncStatus('offline'); return weirdEvents; }
+    }
+    const result=await loadWeirdEventsFromGitHubInner();
+    idbSet('weirdEvents','v',weirdEvents);
+    return result;
 }
 async function loadWeirdEventsFromGitHubInner(){
     weirdShardFiles=[GITHUB_WEIRD_FILE];
