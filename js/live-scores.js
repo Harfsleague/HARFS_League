@@ -10,8 +10,174 @@ let liveScoresRefreshTimer = null;
 let liveScoresLastFixtures = [];
 
 // ============================================================
+// NETWORK HELPER — a plain fetch() with no timeout will just hang
+// indefinitely on a slow/flaky connection (some mobile carriers and
+// public wifi never send a proper error, they just stall), which is
+// what was showing up as "could not reach the live scores server" even
+// though the server itself was fine. This wraps fetch with an explicit
+// timeout and a couple of quick retries before giving up, so a single
+// slow round-trip doesn't fail the whole request.
+// ============================================================
+async function fetchWithRetry(url, {timeoutMs=9000, retries=2, retryDelayMs=1000} = {}){
+    let lastErr;
+    for(let attempt=0; attempt<=retries; attempt++){
+        const controller = new AbortController();
+        const timer = setTimeout(()=>controller.abort(), timeoutMs);
+        try{
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timer);
+            return res;
+        }catch(e){
+            clearTimeout(timer);
+            lastErr = e;
+            if(attempt<retries) await new Promise(r=>setTimeout(r, retryDelayMs*(attempt+1)));
+        }
+    }
+    throw lastErr;
+}
+
+// ============================================================
 // FAVORITES — stored per-device (localStorage), not per-team-account,
 // since this is about what this person wants to see, not the team's
+// ============================================================
+function getFavLeagues(){ try{ return JSON.parse(localStorage.getItem('liveScoresFavLeagues'))||[]; }catch(e){ return []; } }
+function getFavTeams(){ try{ return JSON.parse(localStorage.getItem('liveScoresFavTeams'))||[]; }catch(e){ return []; } }
+function saveFavLeagues(list){ localStorage.setItem('liveScoresFavLeagues', JSON.stringify(list)); pushLiveScorePrefsToAccount(); }
+function saveFavTeams(list){ localStorage.setItem('liveScoresFavTeams', JSON.stringify(list)); pushLiveScorePrefsToAccount(); }
+function isFavoritesOnly(){ return localStorage.getItem('liveScoresFavoritesOnly') !== 'off'; } // default ON once the user has favorites
+
+// ============================================================
+// ACCOUNT SYNC — favorites are read/written to localStorage for
+// instant, offline-safe access (as before), but are also mirrored
+// into mainLeagueData[loggedInTeam] and pushed to GitHub through the
+// existing wallet-save pipeline. That's what makes them survive an
+// app reset/reinstall: logging back in pulls mainLeagueData from
+// GitHub, and syncLiveScorePrefsForAccount() restores the favorites
+// from there onto the fresh device.
+// ============================================================
+let liveScorePrefsSaveTimer = null;
+function pushLiveScorePrefsToAccount(){
+    if(!loggedInTeam || !mainLeagueData[loggedInTeam]) return; // not logged in / account not loaded yet — localStorage still works, just won't sync until then
+    const acct = mainLeagueData[loggedInTeam];
+    acct.liveScoreFavLeagues = getFavLeagues();
+    acct.liveScoreFavTeams = getFavTeams();
+    acct.liveScoreFavoritesOnly = isFavoritesOnly();
+    acct.liveScorePrefsSynced = true;
+    // Debounced — toggling a few leagues/teams in a row shouldn't fire one
+    // GitHub commit per tap.
+    clearTimeout(liveScorePrefsSaveTimer);
+    liveScorePrefsSaveTimer = setTimeout(()=>{
+        saveMainLeagueDataToGitHub(mainLeagueData, `Live Scores preferences updated: ${loggedInTeam}`).catch(()=>{});
+    }, 1500);
+}
+// Called after login and whenever the Live Scores screen/preferences are
+// opened (once mainLeagueData has been (re)loaded from GitHub). If the
+// account already has synced prefs, they win (that's the "restore after
+// reset" case) — otherwise this is the first time this feature has run for
+// this account, so whatever's already on this device becomes the account's
+// starting point instead of being silently wiped by an empty account record.
+function syncLiveScorePrefsForAccount(){
+    if(!loggedInTeam || !mainLeagueData[loggedInTeam]) return;
+    const acct = mainLeagueData[loggedInTeam];
+    if(acct.liveScorePrefsSynced){
+        localStorage.setItem('liveScoresFavLeagues', JSON.stringify(acct.liveScoreFavLeagues||[]));
+        localStorage.setItem('liveScoresFavTeams', JSON.stringify(acct.liveScoreFavTeams||[]));
+        localStorage.setItem('liveScoresFavoritesOnly', acct.liveScoreFavoritesOnly===false ? 'off' : 'on');
+        renderFavLeagueChips(); renderFavTeamChips(); syncFavoritesOnlyToggle(); renderLiveScoresFromCache();
+        if(lspLeagueGroups) renderLspLeagueGroups();
+        renderLspLeagueSelectRow();
+    } else {
+        pushLiveScorePrefsToAccount();
+    }
+}
+
+function addFavLeague(league){
+    const list = getFavLeagues();
+    if(list.some(l=>l.id===league.id)) return;
+    if(lspLeagueGroups){ renderLspLeagueGroups(); renderLspLeagueSelectRow(); return; }
+    const container = document.getElementById('lsp-league-groups');
+    try{
+        const res = await fetchWithRetry(`${LIVE_SCORES_API}/leagues/grouped`);
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error||'failed');
+        lspLeagueGroups = data.groups;
+        renderLspLeagueGroups();
+        renderLspLeagueSelectRow();
+    }catch(e){
+        if(container) container.innerHTML = `<div class="fav-search-empty">Could not load the league list${navigator.onLine?' — try again in a moment':' — you\'re offline'}</div>`;
+    }
+}
+function renderLspLeagueGroups(){
+    if(!listEl) return;
+    listEl.innerHTML = '<div class="fav-search-loading"><span class="spinner"></span></div>';
+    try{
+        const res = await fetchWithRetry(`${LIVE_SCORES_API}/teams-by-league?leagueId=${leagueId}`);
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error||'failed');
+        const favIds = new Set(getFavTeams().map(t=>t.id));
+            </div>
+        `).join('');
+    }catch(e){
+        listEl.innerHTML = `<div class="fav-search-empty">Could not load teams${navigator.onLine?' — try again in a moment':' — you\'re offline'}</div>`;
+    }
+}
+function lspToggleTeam(index, cellEl){
+    lspSetTab('leagues');
+    loadLspLeagueGroups();
+    document.getElementById('live-scores-prefs-sheet').classList.add('open');
+    // Make sure we're showing this account's saved favorites, not whatever
+    // happens to be on this device — matters when this sheet is opened
+    // straight from Settings, before the Live Scores screen (which also
+    // triggers this) has had a chance to load mainLeagueData.
+    if(loggedInTeam){
+        loadMainLeagueDataFromGitHub().then(syncLiveScorePrefsForAccount).catch(()=>{});
+    }
+}
+function closeLiveScoresPreferences(){
+    document.getElementById('live-scores-prefs-sheet').classList.remove('open');
+    localStorage.setItem('liveScoresFavoritesOnly', next);
+    syncFavoritesOnlyToggle();
+    renderLiveScoresFromCache();
+    pushLiveScorePrefsToAccount();
+}
+function syncFavoritesOnlyToggle(){
+    const btn = document.getElementById('live-scores-filter-toggle');
+    const btn = document.getElementById('live-scores-refresh-btn');
+    if(manual && btn) btn.classList.add('spinning');
+    try{
+        const res = await fetchWithRetry(`${LIVE_SCORES_API}/livescores`);
+        const data = await res.json();
+        if(!res.ok || !data.ok){
+            // A real, well-formed error from our own Worker (bad key, upstream
+            // plan/quota issue, etc) — not a connectivity problem, so no point
+            // falling back to a stale cache; show the actual reason.
+            renderLiveScoresError(data.error || `HTTP ${res.status}`);
+            return;
+        }
+        renderLiveScores(liveScoresLastFixtures);
+        const updatedEl = document.getElementById('live-scores-updated-label');
+        if(updatedEl) updatedEl.textContent = 'Updated ' + new Date(data.fetchedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+        // Keep the last good response around in IndexedDB — this is what
+        // lets the screen show *something* (clearly marked as stale) instead
+        // of a hard error when offline or when the connection is too poor to
+        // reach the Worker at all.
+        idbSet('liveScoresCache','v',{fixtures:liveScoresLastFixtures, fetchedAt:data.fetchedAt});
+    }catch(e){
+        const cached = await idbGet('liveScoresCache','v');
+        if(cached && cached.fixtures && cached.fixtures.length){
+            liveScoresLastFixtures = cached.fixtures;
+            renderLiveScores(liveScoresLastFixtures);
+            const updatedEl = document.getElementById('live-scores-updated-label');
+            const stamp = new Date(cached.fetchedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+            if(updatedEl) updatedEl.textContent = `Offline — showing scores from ${stamp}`;
+        } else {
+            renderLiveScoresError(!navigator.onLine
+                ? "You're offline and no cached scores are saved yet — connect once to load them."
+                : 'Could not reach the live scores server. This can happen on a slow or unstable connection — try again in a moment.');
+        }
+    }finally{
+        if(manual && btn) setTimeout(()=>btn.classList.remove('spinning'), 400);
+    }
 // data. Empty by default: with no favorites set, Live Scores shows
 // everything (unfiltered) so the feature never looks "broken" before
 // someone's set anything up.
