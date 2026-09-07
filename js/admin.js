@@ -110,7 +110,15 @@ function navigate(route){
     if(route==='settings')renderSettingsScreen();
     // Live Scores auto-refreshes only while its screen is actually open —
     // stop the timer the moment we navigate anywhere else.
-    if(route==='live-scores') startLiveScoresAutoRefresh(); else stopLiveScoresAutoRefresh();
+    if(route==='live-scores'){
+        startLiveScoresAutoRefresh();
+        // Pull this account's saved Live Scores favorites (leagues/teams
+        // picked on any device) so a fresh install/reinstall shows them
+        // again right after logging back in.
+        if(loggedInTeam) loadMainLeagueDataFromGitHub().then(syncLiveScorePrefsForAccount).catch(()=>{});
+    } else {
+        stopLiveScoresAutoRefresh();
+    }
     if(route==='admin'){
         // Getting into the admin route at all already required a Bayern
         // login — there's no separate PIN gate anymore.
