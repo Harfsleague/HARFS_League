@@ -396,63 +396,11 @@ let weirdLoadInFlight=null;
 // producing duplicated/triplicated moments in the feed.
 function loadWeirdEventsFromGitHub(){
     if(weirdLoadInFlight)return weirdLoadInFlight;
-    weirdLoadInFlight=loadWeirdEventsOffline().finally(()=>{weirdLoadInFlight=null;});
+    weirdLoadInFlight=loadWeirdEventsFromGitHubInner().finally(()=>{weirdLoadInFlight=null;});
     return weirdLoadInFlight;
-}
-// Offline-first wrapper: the feed only ever holds text + small thumbnails
-// (full photos/videos/songs are fetched lazily on tap, see
-// fetchMomentMediaFile), so caching this in IndexedDB is cheap and gives a
-// fully usable Golden Moments feed even with no connection at all.
-async function loadWeirdEventsOffline(){
-    const cached=await idbGet('weirdEvents','v');
-    if(!navigator.onLine){
-        if(cached){ weirdEvents=cached; setSyncStatus('offline'); return weirdEvents; }
-        // Genuinely offline with nothing cached yet (first-ever open with no
-        // connection) — nothing we can show, but don't fall through to the
-        // network call below, it'll just hang/fail anyway.
-        weirdEvents=[];
-        setSyncStatus('offline');
-        return weirdEvents;
-    }
-    // navigator.onLine can report true on a flaky/unreachable connection
-    // (captive portals, dead wifi, etc) — the GitHub fetches below already
-    // catch per-request failures, but previously that meant a bad connection
-    // could silently save an EMPTY or partial result over a perfectly good
-    // cache. Guard against that: only overwrite the cache with what we just
-    // loaded if we actually got something (or genuinely have zero moments
-    // saved anywhere yet); otherwise keep serving the last known-good cache.
-    try{
-        const result=await loadWeirdEventsFromGitHubInner();
-        if(result.length || !cached || !cached.length){
-            idbSet('weirdEvents','v',weirdEvents);
-            setSyncStatus('synced');
-        } else {
-            weirdEvents=cached;
-            setSyncStatus('error');
-        }
-        return weirdEvents;
-    }catch(e){
-        if(cached){ weirdEvents=cached; setSyncStatus('error'); return weirdEvents; }
-        weirdEvents=[];
-        setSyncStatus('error');
-        return weirdEvents;
-    }
 }
 async function loadWeirdEventsFromGitHubInner(){
     weirdShardFiles=[GITHUB_WEIRD_FILE];
-const momentMediaCache={}; // path -> data URL string, so re-opening the same item this session doesn't re-download it
-function fetchMomentMediaFile(path){
-    if(momentMediaCache[path])return Promise.resolve(momentMediaCache[path]);
-    // No cache-busting query string here on purpose: each moment's media
-    // file is written once under a unique path (eventId_index.txt) and
-    // never overwritten, so it's safe — and worth it — to let the browser
-    // and the service worker cache it normally. A "?t=timestamp" busts that
-    // caching on every single view, which is exactly why a previously
-    // opened photo/video could still fail to reappear once offline.
-    const url=`${GITHUB_IMAGE_BASE_URL}${path}`;
-    return fetch(url).then(r=>{
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.text();
     weirdShardShas={};
     weirdShardData={};
     weirdManifestSha=null;
