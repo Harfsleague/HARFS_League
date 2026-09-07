@@ -30,21 +30,9 @@ function filenameToTitle(filename) {
     return name || filename;
 }
 
-// Offline-first: shows the last-known playlist immediately from
-// IndexedDB, tries to refresh it from GitHub, and — once online — makes
-// sure exactly one track (the current first track) is fully cached as a
-// Blob so at least something can play with zero connection. Only one
-// track is ever kept cached at a time, by design (see ensureOfflineTrackCached).
 async function loadPlaylistFromGitHub() {
     if (playlistLoadPromise) return playlistLoadPromise;
     playlistLoadPromise = (async () => {
-        const cachedList = await idbGet('playlist','v');
-        if (cachedList && cachedList.length) PLAYLIST = cachedList;
-        if (!navigator.onLine) {
-            setSyncStatus('offline');
-            if (!PLAYLIST.length) PLAYLIST = [FALLBACK_TRACK];
-            return PLAYLIST;
-        }
         try {
             const res = await fetch(MUSIC_API_URL);
             if (!res.ok) throw new Error('music folder not found');
@@ -53,77 +41,13 @@ async function loadPlaylistFromGitHub() {
                 .filter(it => it.type === 'file' && AUDIO_EXTENSIONS.some(ext => it.name.toLowerCase().endsWith(ext)))
                 .map(it => ({ title: filenameToTitle(it.name), src: MUSIC_RAW_BASE + encodeURIComponent(it.name) }));
             PLAYLIST = tracks.length ? tracks : [FALLBACK_TRACK];
-            await idbSet('playlist','v', PLAYLIST);
         } catch (e) {
-            PLAYLIST = (cachedList && cachedList.length) ? cachedList : [FALLBACK_TRACK];
+            PLAYLIST = [FALLBACK_TRACK];
         }
-        if (PLAYLIST.length) ensureOfflineTrackCached();
         return PLAYLIST;
     })();
     return playlistLoadPromise;
 }
-
-// Finds the most RECENTLY UPLOADED track in the music folder (not just
-// whatever GitHub's directory listing happens to return first — that
-// listing is alphabetical, not chronological, so PLAYLIST[0] was often an
-// old track rather than the newest one). Uses the repo's commit history for
-// the music folder: the latest commit that touched it, and whichever audio
-// file that commit actually added. Falls back to null on any failure so the
-// caller can fall back to a reasonable default instead.
-async function getLastUploadedTrack(){
-    try{
-        const commitsRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits?path=${MUSIC_FOLDER}&per_page=1&sha=${GITHUB_LEAGUE_BRANCH}`);
-        if(!commitsRes.ok) return null;
-        const commits = await commitsRes.json();
-        if(!Array.isArray(commits) || !commits.length || !commits[0].url) return null;
-        const commitRes = await fetch(commits[0].url);
-        if(!commitRes.ok) return null;
-        const commitData = await commitRes.json();
-        const addedFile = (commitData.files||[]).find(f=>
-            f.filename.startsWith(MUSIC_FOLDER+'/') &&
-            (f.status==='added'||f.status==='modified') &&
-            AUDIO_EXTENSIONS.some(ext=>f.filename.toLowerCase().endsWith(ext))
-        );
-        if(!addedFile) return null;
-        const name = addedFile.filename.slice(MUSIC_FOLDER.length+1);
-        const src = MUSIC_RAW_BASE + encodeURIComponent(name);
-        return PLAYLIST.find(t=>t.src===src) || { title: filenameToTitle(name), src };
-    }catch(e){ return null; }
-}
-
-// Keeps exactly ONE track fully downloaded (as a Blob in IndexedDB) for
-// offline playback — the most recently uploaded track, so the offline
-// fallback stays current as new songs are added. If that lookup fails for
-// any reason, falls back to the last item in the playlist rather than the
-// first, since folder listings are alphabetical and track files are
-// typically numbered, so the last one is usually the newest addition.
-async function ensureOfflineTrackCached(){
-    if (!PLAYLIST.length || !navigator.onLine) return;
-    const target = (await getLastUploadedTrack()) || PLAYLIST[PLAYLIST.length-1] || PLAYLIST[0];
-    if (!target) return;
-    try{
-        const existing = await idbGet('offlineTrack','v');
-        if (existing && existing.src === target.src && existing.blob && existing.blob.size > 0) return; // already cached
-        const res = await fetch(target.src);
-        if (!res.ok) return;
-        const blob = await res.blob();
-        if (!blob || !blob.size) return; // guard against caching an empty/broken response as if it were valid
-        await idbSet('offlineTrack','v', { title: target.title, src: target.src, blob });
-    }catch(e){ /* best-effort — a failed cache attempt just means no offline track this session */ }
-}
-    if (!backgroundMusicStarted && bgMusic) {
-        backgroundMusicStarted = true;
-        removeAudioListeners();
-        // Load (and cache an offline track from) the playlist on first
-        // interaction regardless of mute state — previously this only ran
-        // when unmuted, so anyone who had music muted never got an offline
-        // track cached at all, and offline playback had nothing to fall
-        // back to later even after unmuting.
-        await loadPlaylistFromGitHub();
-        if (!musicMuted) {
-            // Pick a random starting track
-            const startIndex = Math.floor(Math.random() * PLAYLIST.length);
-            playTrack(startIndex);
 
 let currentTrackIndex = 0;
 let backgroundMusicStarted = false;
@@ -138,32 +62,14 @@ function playTrack(index) {
     if (!bgMusic || PLAYLIST.length === 0) return;
     currentTrackIndex = ((index % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length;
     const track = PLAYLIST[currentTrackIndex];
-    playTrackWithFallback(track.src, track.title);
-}
-// Plays the requested track's normal (raw GitHub) URL when online; when
-// offline — or if that fetch fails mid-way — falls back to whatever
-// single track is cached as a Blob in IndexedDB (see
-// ensureOfflineTrackCached), so music never just goes silent offline.
-async function playTrackWithFallback(src, title){
-    if (!bgMusic) return;
+    bgMusic.src = track.src;
     bgMusic.volume = 0.15;
-    const playOffline = async () => {
-        const offline = await idbGet('offlineTrack','v');
-        if (offline && offline.blob) {
-            bgMusic.src = URL.createObjectURL(offline.blob);
-            bgMusic.play().then(() => showSongNotification(offline.title + ' (offline)')).catch(() => {});
-            return true;
-        }
-        return false;
-    };
-    if (!navigator.onLine) { await playOffline(); return; }
-    bgMusic.src = src;
     bgMusic.play()
         .then(() => {
-            showSongNotification(title);
+            showSongNotification(track.title);
             if(document.getElementById('playlist-sheet')?.classList.contains('open'))renderPlaylistSheet();
         })
-        .catch(async () => { await playOffline(); });
+        .catch(() => {});
 }
 
 function playNextTrack() {
