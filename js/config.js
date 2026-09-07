@@ -68,9 +68,5 @@ const MOMENT_AUDIO_BITRATE=48000; // ~48kbps audio — explicit, so total size s
 const MOMENT_AUDIO_MAX_MB=8;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
-function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,coins:0,coinLog:[],ownedItems:[],pinned:null,
-    // Live Scores favorites, mirrored here so they survive an app reset —
-    // logging back in restores them from this account record (see
-    // syncLiveScorePrefsForAccount() in live-scores.js).
-    liveScoreFavLeagues:[],liveScoreFavTeams:[],liveScoreFavoritesOnly:true,liveScorePrefsSynced:false});}
+function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,coins:0,coinLog:[],ownedItems:[],pinned:null});}
 function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
