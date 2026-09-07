@@ -411,14 +411,11 @@ function renderFormDots(teamKey){
 // GITHUB LOADERS
 // ============================================================
 async function loadArchiveDropdown(){
-    const cached=await idbGet('archivedSeasons','v');
-    if(cached) archivedSeasons=cached;
     try{
         const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
         if(r.ok){
             const d=await r.json();archiveSha=d.sha;
             archivedSeasons=await(await fetch(d.download_url)).json();
-            await idbSet('archivedSeasons','v',archivedSeasons);
             const sel=document.getElementById('season-selector');
             sel.innerHTML='<option value="current">Current Season</option>';
             // Build seasonOptions for pill nav (current first, then archived newest→oldest)
@@ -457,24 +454,7 @@ function loadSelectedSeason(val){
 }
 async function loadMainLeagueDataFromGitHub(){
     if(!Object.keys(mainLeagueData).length)initializeMainLeagueData();
-    const cached=await idbGet('mainLeagueData','v');
-    if(cached) Object.keys(cached).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...cached[k]};});
-    if(!navigator.onLine){
-        setSyncStatus('offline');
-        TEAM_NAMES.forEach(ensureWalletFields);
-        return mainLeagueData;
-    }
-    setSyncStatus('syncing');
-    try{
-        const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-        if(r.ok){
-            const d=await r.json();mainSha=d.sha;
-            const c=await(await fetch(d.download_url)).json();
-            Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});
-            await idbSet('mainLeagueData','v',c);
-        }
-        setSyncStatus('synced');
-    }catch(e){ setSyncStatus(cached?'offline':'error'); }
+    try{const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();mainSha=d.sha;const c=await(await fetch(d.download_url)).json();Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});}}catch(e){}
     TEAM_NAMES.forEach(ensureWalletFields); // backfills the wallet shape for any team the file predates
     return mainLeagueData;
 }
