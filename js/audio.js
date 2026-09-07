@@ -63,19 +63,51 @@ async function loadPlaylistFromGitHub() {
     return playlistLoadPromise;
 }
 
+// Finds the most RECENTLY UPLOADED track in the music folder (not just
+// whatever GitHub's directory listing happens to return first — that
+// listing is alphabetical, not chronological, so PLAYLIST[0] was often an
+// old track rather than the newest one). Uses the repo's commit history for
+// the music folder: the latest commit that touched it, and whichever audio
+// file that commit actually added. Falls back to null on any failure so the
+// caller can fall back to a reasonable default instead.
+async function getLastUploadedTrack(){
+    try{
+        const commitsRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits?path=${MUSIC_FOLDER}&per_page=1&sha=${GITHUB_LEAGUE_BRANCH}`);
+        if(!commitsRes.ok) return null;
+        const commits = await commitsRes.json();
+        if(!Array.isArray(commits) || !commits.length || !commits[0].url) return null;
+        const commitRes = await fetch(commits[0].url);
+        if(!commitRes.ok) return null;
+        const commitData = await commitRes.json();
+        const addedFile = (commitData.files||[]).find(f=>
+            f.filename.startsWith(MUSIC_FOLDER+'/') &&
+            (f.status==='added'||f.status==='modified') &&
+            AUDIO_EXTENSIONS.some(ext=>f.filename.toLowerCase().endsWith(ext))
+        );
+        if(!addedFile) return null;
+        const name = addedFile.filename.slice(MUSIC_FOLDER.length+1);
+        const src = MUSIC_RAW_BASE + encodeURIComponent(name);
+        return PLAYLIST.find(t=>t.src===src) || { title: filenameToTitle(name), src };
+    }catch(e){ return null; }
+}
+
 // Keeps exactly ONE track fully downloaded (as a Blob in IndexedDB) for
-// offline playback — always the current first track in the playlist. If
-// that track changes (reordered library, renamed file, etc), the old
-// cached blob is simply overwritten next time this runs while online.
+// offline playback — the most recently uploaded track, so the offline
+// fallback stays current as new songs are added. If that lookup fails for
+// any reason, falls back to the last item in the playlist rather than the
+// first, since folder listings are alphabetical and track files are
+// typically numbered, so the last one is usually the newest addition.
 async function ensureOfflineTrackCached(){
     if (!PLAYLIST.length || !navigator.onLine) return;
-    const target = PLAYLIST[0];
+    const target = (await getLastUploadedTrack()) || PLAYLIST[PLAYLIST.length-1] || PLAYLIST[0];
+    if (!target) return;
     try{
         const existing = await idbGet('offlineTrack','v');
-        if (existing && existing.src === target.src) return; // already cached
+        if (existing && existing.src === target.src && existing.blob && existing.blob.size > 0) return; // already cached
         const res = await fetch(target.src);
         if (!res.ok) return;
         const blob = await res.blob();
+        if (!blob || !blob.size) return; // guard against caching an empty/broken response as if it were valid
         await idbSet('offlineTrack','v', { title: target.title, src: target.src, blob });
     }catch(e){ /* best-effort — a failed cache attempt just means no offline track this session */ }
 }
@@ -154,8 +186,13 @@ async function initAudio() {
     if (!backgroundMusicStarted && bgMusic) {
         backgroundMusicStarted = true;
         removeAudioListeners();
+        // Load (and cache an offline track from) the playlist on first
+        // interaction regardless of mute state — previously this only ran
+        // when unmuted, so anyone who had music muted never got an offline
+        // track cached at all, and offline playback had nothing to fall
+        // back to later even after unmuting.
+        await loadPlaylistFromGitHub();
         if (!musicMuted) {
-            await loadPlaylistFromGitHub();
             // Pick a random starting track
             const startIndex = Math.floor(Math.random() * PLAYLIST.length);
             playTrack(startIndex);
