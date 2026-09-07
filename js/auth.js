@@ -107,6 +107,11 @@ async function submitLoginPassword(){
         updateHeaderForLogin();
         navigate('league');
         showToast(`Welcome, ${TEAM_DISPLAY_NAMES[team]||team} 👋`,'success',2400);
+        // Restore this team's saved Live Scores favorites (and any other
+        // per-account prefs) from GitHub right away — this is what makes a
+        // fresh install/reinstall come back with the same favorites once
+        // the person logs back in.
+        loadMainLeagueDataFromGitHub().then(syncLiveScorePrefsForAccount).catch(()=>{});
     }catch(e){
         errEl.textContent='Could not reach the login server — check your connection';
         errEl.style.display='block';
