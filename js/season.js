@@ -19,7 +19,7 @@ function renderLeagueTable(dataToRender){
             <td class="td-rank" style="${isFirst?'color:#fbbf24;':''}">${i+1}</td>
             <td class="td-team">
                 <div class="td-team-inner">
-                    <img src="${GITHUB_IMAGE_BASE_URL}${t.name}.png" onerror="this.style.opacity='0.3'">
+                    <img src="${teamLogoUrl(t.name)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                     <span style="${isFirst?'color:#fef3c7;':''}">${TEAM_DISPLAY_NAMES[t.name]}</span>
                 </div>
             </td>
@@ -78,13 +78,13 @@ function updateHistoryLayout(filter){
         }
         row.innerHTML=`
             <div class="mcm-team">
-                <img src="${GITHUB_IMAGE_BASE_URL}${leftTeam}.png" onerror="this.style.opacity='0.3'">
+                <img src="${teamLogoUrl(leftTeam)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 <span>${TEAM_DISPLAY_NAMES[leftTeam]||leftTeam}</span>
             </div>
             <div class="mcm-score">${leftScore}-${rightScore}</div>
             <div class="mcm-team mcm-team-away">
                 <span>${TEAM_DISPLAY_NAMES[rightTeam]||rightTeam}</span>
-                <img src="${GITHUB_IMAGE_BASE_URL}${rightTeam}.png" onerror="this.style.opacity='0.3'">
+                <img src="${teamLogoUrl(rightTeam)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
             </div>`;
     });
 }
@@ -140,13 +140,13 @@ function renderSeasonHistoryList(history){
             <div class="mcm-date"><span class="mcm-dot" style="display:none;"></span>${dt.date} · ${dt.time}</div>
             <div class="mcm-row">
                 <div class="mcm-team">
-                    <img src="${GITHUB_IMAGE_BASE_URL}${m.home}.png" onerror="this.style.opacity='0.3'">
+                    <img src="${teamLogoUrl(m.home)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                     <span>${TEAM_DISPLAY_NAMES[m.home]||m.home}</span>
                 </div>
                 <div class="mcm-score">${m.score}</div>
                 <div class="mcm-team mcm-team-away">
                     <span>${TEAM_DISPLAY_NAMES[m.away]||m.away}</span>
-                    <img src="${GITHUB_IMAGE_BASE_URL}${m.away}.png" onerror="this.style.opacity='0.3'">
+                    <img src="${teamLogoUrl(m.away)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 </div>
             </div>
         </div>`;
@@ -168,8 +168,8 @@ function updateMatchPreview(){
     const hl=document.getElementById('preview-home-logo');
     const al=document.getElementById('preview-away-logo');
     if(!h||!a)return;
-    hl.src=`${GITHUB_IMAGE_BASE_URL}${h}.png`;hl.style.opacity='1';
-    al.src=`${GITHUB_IMAGE_BASE_URL}${a}.png`;al.style.opacity='1';
+    hl.src=`${teamLogoUrl(h)}`;hl.style.opacity='1';
+    al.src=`${teamLogoUrl(a)}`;al.style.opacity='1';
     document.getElementById('preview-home-name').textContent=TEAM_DISPLAY_NAMES[h]||'Home';
     document.getElementById('preview-away-name').textContent=TEAM_DISPLAY_NAMES[a]||'Away';
     document.getElementById('preview-score-text').textContent=`${homeScore} : ${awayScore}`;
@@ -186,7 +186,7 @@ function setTeamPickerValue(side,teamKey){
         label.textContent='Select team';
         return;
     }
-    icon.src=`${GITHUB_IMAGE_BASE_URL}${teamKey}.png`;
+    icon.src=`${teamLogoUrl(teamKey)}`;
     icon.style.display='block';
     label.textContent=TEAM_DISPLAY_NAMES[teamKey]||teamKey;
 }
@@ -204,7 +204,7 @@ function openTeamPicker(side){
         const isSelected=t===currentSelected;
         const isDisabled=t===otherSelected;
         return `<div class="team-picker-option ${isSelected?'selected':''} ${isDisabled?'disabled':''}" onclick="selectTeamInPicker('${t}')">
-            <img src="${GITHUB_IMAGE_BASE_URL}${t}.png">
+            <img src="${teamLogoUrl(t)}">
             <span>${TEAM_DISPLAY_NAMES[t]||t}</span>
         </div>`;
     }).join('');
@@ -240,7 +240,7 @@ function selectTeamInPicker(teamKey){
 function showTeamProfile(key){
     haptic([8]);
     const t=leagueData[key];if(!t)return;
-    document.getElementById('profile-team-logo').src=`${GITHUB_IMAGE_BASE_URL}${key}.png`;
+    document.getElementById('profile-team-logo').src=`${teamLogoUrl(key)}`;
     document.getElementById('profile-team-name').textContent=TEAM_DISPLAY_NAMES[key];
     document.getElementById('profile-stat-pts').textContent=t.Pts;
     document.getElementById('profile-stat-p').textContent=t.P;

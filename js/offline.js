@@ -4,12 +4,12 @@
 // every other file can call idbGet/idbSet/setSyncStatus freely.
 // ============================================================
 const OFFLINE_DB_NAME = 'harfs-offline';
-// Bumped to 2 to add 'liveScoresCache' (last-known fixtures, so Live Scores
-// can show something instead of a hard error when offline/unreachable) —
-// onupgradeneeded below only adds missing stores, so existing data in the
-// other stores is untouched by this bump.
-const OFFLINE_DB_VERSION = 2;
-const OFFLINE_STORES = ['leagueData','mainLeagueData','matchHistory','archivedSeasons','weirdEvents','playlist','offlineTrack','liveScoresCache'];
+// v2 added 'liveScoresCache' (last-known fixtures so Live Scores can show
+// something instead of a hard error offline). v3 adds 'teamLogos' (see
+// below) — onupgradeneeded only adds missing stores, so existing data in
+// the other stores is untouched by either bump.
+const OFFLINE_DB_VERSION = 3;
+const OFFLINE_STORES = ['leagueData','mainLeagueData','matchHistory','archivedSeasons','weirdEvents','playlist','offlineTrack','liveScoresCache','teamLogos'];
 
 let _offlineDbPromise = null;
 function openOfflineDb(){
@@ -47,6 +47,63 @@ async function idbSet(store, key, value){
             tx.onerror = ()=>reject(tx.error);
         });
     }catch(e){ return false; }
+}
+
+// ============================================================
+// TEAM LOGOS — cached as base64 data URLs, IndexedDB-backed, the same
+// approach Golden Moments already uses for its thumbnails. This is more
+// durable than relying on the browser's Cache Storage (which the OS/browser
+// can evict under storage pressure) for a handful of tiny PNGs that
+// essentially never change — once cached, a team's logo stays available
+// offline indefinitely with no repeat network cost.
+//
+// `teamLogoDataUrls` is populated from IndexedDB once at boot (see
+// preloadTeamLogosFromCache(), awaited in main.js before first paint) and
+// kept in memory for the rest of the session, so teamLogoUrl() below can
+// resolve synchronously — no need to touch every render call site with
+// async/await, just swap the URL it builds.
+let teamLogoDataUrls = {};
+
+function teamLogoUrl(team){
+    return teamLogoDataUrls[team] || `${GITHUB_IMAGE_BASE_URL}${team}.png`;
+}
+
+async function preloadTeamLogosFromCache(){
+    try{
+        for(const team of TEAM_NAMES){
+            const rec = await idbGet('teamLogos', team);
+            if(rec && rec.dataUrl) teamLogoDataUrls[team] = rec.dataUrl;
+        }
+    }catch(e){ /* IndexedDB unavailable — falls back to live URLs, same as before this feature existed */ }
+}
+
+async function cacheTeamLogo(team){
+    try{
+        const res = await fetch(`${GITHUB_IMAGE_BASE_URL}${team}.png`);
+        if(!res.ok) return;
+        const blob = await res.blob();
+        if(!blob || !blob.size) return;
+        const dataUrl = await new Promise((resolve,reject)=>{
+            const reader = new FileReader();
+            reader.onload = ()=>resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+        await idbSet('teamLogos', team, { dataUrl, cachedAt: Date.now() });
+        teamLogoDataUrls[team] = dataUrl;
+    }catch(e){ /* best-effort — a failed cache attempt just means this logo stays on the live URL for now */ }
+}
+
+// Called once at boot (fire-and-forget, no need to block startup on it):
+// makes sure every team's logo gets cached at least once. Skips teams
+// already cached — logos are effectively static, no need to re-download
+// every session, only the first time (or after a manual re-sync).
+async function ensureTeamLogosCached(){
+    if(!navigator.onLine) return;
+    for(const team of TEAM_NAMES){
+        if(teamLogoDataUrls[team]) continue;
+        await cacheTeamLogo(team);
+    }
 }
 
 // ============================================================

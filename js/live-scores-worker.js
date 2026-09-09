@@ -121,13 +121,20 @@ async function handleLiveScores(request, env, ctx, url) {
   const { cached, cacheKey } = await cachedFetch(request, url);
   if (cached) return cached;
 
-  // One call covers the whole day across every league — live matches,
-  // matches already finished today, and matches still to come — so we
-  // never need more than this single endpoint per refresh.
+  // Accepts an optional ?date=YYYY-MM-DD (defaults to today) so the app can
+  // show past and future fixtures too, not just today's — this is also what
+  // makes a favorite league/team's past results and upcoming fixtures
+  // visible, since the client-side favorites filter just runs against
+  // whichever date's fixture list this returns.
+  const dateParam = url.searchParams.get("date");
+  const isValidDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam);
   const today = new Date().toISOString().slice(0, 10);
+  const date = isValidDate ? dateParam : today;
+  const isToday = date === today;
+
   let data;
   try {
-    const apiRes = await fetchUpstream(`${API_FOOTBALL_BASE}/fixtures?date=${today}`, {
+    const apiRes = await fetchUpstream(`${API_FOOTBALL_BASE}/fixtures?date=${date}`, {
       "x-apisports-key": env.API_FOOTBALL_KEY,
     });
     data = await apiRes.json();
@@ -179,12 +186,18 @@ async function handleLiveScores(request, env, ctx, url) {
     goalsAway: f.goals.away,
   }));
 
-  const body = JSON.stringify({ ok: true, fetchedAt: Date.now(), fixtures });
+  const body = JSON.stringify({ ok: true, fetchedAt: Date.now(), date, fixtures });
+  // Today's scores change minute to minute, so keep the short TTL there.
+  // A past day's results are final and a future day's schedule rarely
+  // shifts, so cache those far longer — this also means browsing around
+  // past/future dates costs almost nothing against the daily API quota
+  // after the first person loads a given day.
+  const ttl = isToday ? CACHE_SECONDS : 6 * 60 * 60;
   const response = new Response(body, {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": `public, max-age=${CACHE_SECONDS}`,
+      "Cache-Control": `public, max-age=${ttl}`,
       "X-HARFS-Cache": "MISS",
       ...corsHeaders(request),
     },

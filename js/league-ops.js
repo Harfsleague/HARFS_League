@@ -94,7 +94,13 @@ function openTeamPanel(team){
     const w = mainLeagueData[team];
     const trophies = computeTrophyCounts()[team] || {gold:0,silver:0,bronze:0};
 
-    document.getElementById('team-panel-logo').src = `${GITHUB_IMAGE_BASE_URL}${team}.png`;
+    const teamPanelLogo = document.getElementById('team-panel-logo');
+    // Reset opacity to full every time we open this panel — the onerror
+    // handler on this <img> dims it to 0.3 on a failed load, but nothing
+    // was ever setting it back to 1 on a later successful load, so once it
+    // failed once it stayed dim forever even after the image loaded fine.
+    teamPanelLogo.style.opacity = '1';
+    teamPanelLogo.src = teamLogoUrl(team);
     document.getElementById('team-panel-name').textContent = TEAM_DISPLAY_NAMES[team] || team;
 
     const pinnedEl = document.getElementById('team-panel-pinned');

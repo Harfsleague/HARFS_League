@@ -15,7 +15,7 @@ function renderLoginTeamGrid(){
     if(!grid) return;
     grid.innerHTML = TEAM_NAMES.map(t=>`
         <div class="login-team-card" onclick="pickLoginTeam('${t}')">
-            <img src="${GITHUB_IMAGE_BASE_URL}${t}.png" onerror="this.style.opacity=0.25;">
+            <img src="${teamLogoUrl(t)}" onerror="this.style.opacity=0.25;">
             <span>${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}</span>
         </div>`).join('');
 }
@@ -39,7 +39,7 @@ function backToTeamPick(){
 async function pickLoginTeam(team){
     haptic([8]);
     loginPickedTeam=team;
-    document.getElementById('login-selected-logo').src=`${GITHUB_IMAGE_BASE_URL}${team}.png`;
+    document.getElementById('login-selected-logo').src=`${teamLogoUrl(team)}`;
     document.getElementById('login-selected-name').textContent=TEAM_DISPLAY_NAMES[team]||team;
     document.getElementById('login-error').style.display='none';
     document.getElementById('login-password-input').value='';
@@ -136,7 +136,7 @@ function updateHeaderForLogin(){
     if(!iconEl||!logoEl) return;
     if(loggedInTeam){
         iconEl.style.display='none';
-        logoEl.src=`${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+        logoEl.src=`${teamLogoUrl(loggedInTeam)}`;
         logoEl.style.display='inline-block';
     } else {
         iconEl.style.display='inline-block';

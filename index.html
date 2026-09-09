@@ -672,7 +672,7 @@
             <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
             <div class="profile-header" style="flex-shrink:0;">
                 <div class="profile-header-bg"></div>
-                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'">
+                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
             </div>
             <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
                 <h4 id="team-panel-name" class="text-xl font-black text-white mb-0.5" style="text-align:center;">Team</h4>
@@ -765,6 +765,11 @@
                 <button class="live-scores-refresh-btn" onclick="openLiveScoresPreferences()" title="Favorites"><i class="fas fa-sliders"></i></button>
             </div>
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);"><i class="fas fa-satellite-dish mr-2"></i>Live Scores</h2>
+            <div class="live-scores-date-nav">
+                <button class="live-scores-date-btn" id="live-scores-prev-day" onclick="shiftLiveScoresDate(-1)" title="Previous day"><i class="fas fa-chevron-left"></i></button>
+                <span class="live-scores-date-label" id="live-scores-date-label">Today</span>
+                <button class="live-scores-date-btn" id="live-scores-next-day" onclick="shiftLiveScoresDate(1)" title="Next day"><i class="fas fa-chevron-right"></i></button>
+            </div>
             <div id="live-scores-updated-label" style="font-size:0.6rem;color:#6b7280;margin-bottom:8px;">—</div>
             <button class="live-scores-filter-toggle" id="live-scores-filter-toggle" style="display:none;" onclick="toggleFavoritesOnlyFilter()"></button>
         </div>

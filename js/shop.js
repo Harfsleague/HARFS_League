@@ -83,7 +83,7 @@ function renderShop(){
         return;
     }
     const logoEl=document.getElementById('shop-my-team-logo'), nameEl=document.getElementById('shop-my-team-name');
-    if(logoEl) logoEl.src=`${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+    if(logoEl) logoEl.src=`${teamLogoUrl(loggedInTeam)}`;
     if(nameEl) nameEl.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
     TEAM_NAMES.forEach(ensureWalletFields);
     const list = SHOP_ITEMS.arena;

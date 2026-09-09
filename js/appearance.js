@@ -288,7 +288,7 @@ function renderSettingsScreen(){
     const badgeLogo=document.getElementById('settings-team-badge-logo');
     const badgeName=document.getElementById('settings-team-badge-name');
     if(loggedInTeam){
-        if(badgeLogo) badgeLogo.src=`${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+        if(badgeLogo) badgeLogo.src=`${teamLogoUrl(loggedInTeam)}`;
         if(badgeName) badgeName.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
     }
     const adminSection=document.getElementById('settings-admin-section');

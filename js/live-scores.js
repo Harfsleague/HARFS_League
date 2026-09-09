@@ -10,6 +10,56 @@ let liveScoresRefreshTimer = null;
 let liveScoresLastFixtures = [];
 
 // ============================================================
+// DATE NAVIGATION — lets the screen show any day's fixtures, not just
+// today. This is what makes past/future games visible for a favorite
+// league or team too, since the favorites filter in renderLiveScores()
+// already applies to whatever date's fixture list is currently loaded —
+// no separate "team schedule" endpoint needed.
+// ============================================================
+const LIVE_SCORES_DATE_RANGE_DAYS = 14; // how far back/forward browsing is allowed
+let liveScoresDateOffset = 0; // 0 = today, -1 = yesterday, +1 = tomorrow, ...
+
+function liveScoresDateForOffset(offset){
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toISOString().slice(0,10); // YYYY-MM-DD
+}
+function liveScoresSelectedDate(){ return liveScoresDateForOffset(liveScoresDateOffset); }
+
+function renderLiveScoresDateNav(){
+    const label = document.getElementById('live-scores-date-label');
+    const prevBtn = document.getElementById('live-scores-prev-day');
+    const nextBtn = document.getElementById('live-scores-next-day');
+    if(label){
+        let text;
+        if(liveScoresDateOffset===0) text = 'Today';
+        else if(liveScoresDateOffset===-1) text = 'Yesterday';
+        else if(liveScoresDateOffset===1) text = 'Tomorrow';
+        else {
+            const d = new Date(); d.setDate(d.getDate()+liveScoresDateOffset);
+            text = d.toLocaleDateString(undefined,{weekday:'short', day:'numeric', month:'short'});
+        }
+        label.textContent = text;
+        label.classList.toggle('today', liveScoresDateOffset===0);
+    }
+    if(prevBtn) prevBtn.disabled = liveScoresDateOffset <= -LIVE_SCORES_DATE_RANGE_DAYS;
+    if(nextBtn) nextBtn.disabled = liveScoresDateOffset >= LIVE_SCORES_DATE_RANGE_DAYS;
+}
+
+function shiftLiveScoresDate(delta){
+    const next = liveScoresDateOffset + delta;
+    if(next < -LIVE_SCORES_DATE_RANGE_DAYS || next > LIVE_SCORES_DATE_RANGE_DAYS) return;
+    liveScoresDateOffset = next;
+    renderLiveScoresDateNav();
+    // Browsing a different day is a deliberate look-up, not a "keep this
+    // fresh" situation like today's live matches — auto-refresh only makes
+    // sense for today, so jumping off today pauses it (restarted if the
+    // user comes back to today) to avoid pointless quota use.
+    if(liveScoresDateOffset===0) startLiveScoresAutoRefresh();
+    else { stopLiveScoresAutoRefresh(); fetchLiveScores(true); }
+}
+
+// ============================================================
 // NETWORK HELPER — a plain fetch() with no timeout will just hang
 // indefinitely on a slow/flaky connection (some mobile carriers and
 // public wifi never send a proper error, they just stall), which is
@@ -311,8 +361,11 @@ function liveScoreStatusLabel(f){
 async function fetchLiveScores(manual){
     const btn = document.getElementById('live-scores-refresh-btn');
     if(manual && btn) btn.classList.add('spinning');
+    renderLiveScoresDateNav();
+    const date = liveScoresSelectedDate();
+    const cacheDbKey = 'v:'+date;
     try{
-        const res = await fetchWithRetry(`${LIVE_SCORES_API}/livescores`);
+        const res = await fetchWithRetry(`${LIVE_SCORES_API}/livescores?date=${date}`);
         const data = await res.json();
         if(!res.ok || !data.ok){
             // A real, well-formed error from our own Worker (bad key, upstream
@@ -321,17 +374,18 @@ async function fetchLiveScores(manual){
             renderLiveScoresError(data.error || `HTTP ${res.status}`);
             return;
         }
+        if(date !== liveScoresSelectedDate()) return; // user navigated to a different day while this was in flight
         liveScoresLastFixtures = data.fixtures || [];
         renderLiveScores(liveScoresLastFixtures);
         const updatedEl = document.getElementById('live-scores-updated-label');
         if(updatedEl) updatedEl.textContent = 'Updated ' + new Date(data.fetchedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
-        // Keep the last good response around in IndexedDB — this is what
-        // lets the screen show *something* (clearly marked as stale) instead
-        // of a hard error when offline or when the connection is too poor to
-        // reach the Worker at all.
-        idbSet('liveScoresCache','v',{fixtures:liveScoresLastFixtures, fetchedAt:data.fetchedAt});
+        // Keep the last good response around in IndexedDB, keyed per date —
+        // this is what lets the screen show *something* (clearly marked as
+        // stale) instead of a hard error when offline or unreachable.
+        idbSet('liveScoresCache',cacheDbKey,{fixtures:liveScoresLastFixtures, fetchedAt:data.fetchedAt});
     }catch(e){
-        const cached = await idbGet('liveScoresCache','v');
+        if(date !== liveScoresSelectedDate()) return;
+        const cached = await idbGet('liveScoresCache',cacheDbKey);
         if(cached && cached.fixtures && cached.fixtures.length){
             liveScoresLastFixtures = cached.fixtures;
             renderLiveScores(liveScoresLastFixtures);
@@ -367,9 +421,10 @@ function renderLiveScores(fixtures){
         : fixtures;
 
     if(!filtered.length){
+        const dayText = liveScoresDateOffset===0 ? 'today' : (liveScoresDateOffset===-1 ? 'yesterday' : (liveScoresDateOffset===1 ? 'tomorrow' : 'that day'));
         body.innerHTML = hasFavorites && isFavoritesOnly()
-            ? '<div class="live-scores-empty">None of your favorite leagues/teams are playing today.<br><span style="opacity:0.7;">Tap "Favorites" above to see everything instead.</span></div>'
-            : '<div class="live-scores-empty">No matches today across any tracked league.</div>';
+            ? `<div class="live-scores-empty">None of your favorite leagues/teams are playing ${dayText}.<br><span style="opacity:0.7;">Tap "Favorites" above to see everything instead.</span></div>`
+            : `<div class="live-scores-empty">No matches ${dayText} across any tracked league.</div>`;
         return;
     }
     // Live matches first, then upcoming (soonest first), then finished — within
@@ -427,9 +482,13 @@ function renderLiveScores(fixtures){
 // only while the screen is actually visible, never in the background.
 function startLiveScoresAutoRefresh(){
     stopLiveScoresAutoRefresh();
+    liveScoresDateOffset = 0; // opening the screen always starts on today
     fetchLiveScores(false);
     liveScoresRefreshTimer = setInterval(()=>{
-        if(!document.hidden) fetchLiveScores(false); // skip refreshes while the tab/app is backgrounded — no point burning API quota on a screen nobody's looking at
+        // Only today's scores actually change minute to minute — don't poll
+        // while the user is browsing a past/future day (shiftLiveScoresDate
+        // already stops this timer in that case, this is just a safety net).
+        if(!document.hidden && liveScoresDateOffset===0) fetchLiveScores(false);
     }, 60000);
 }
 function stopLiveScoresAutoRefresh(){
