@@ -46,6 +46,7 @@ function renderLiveScoresDateNav(){
     if(nextBtn) nextBtn.disabled = liveScoresDateOffset >= LIVE_SCORES_DATE_RANGE_DAYS;
 }
 
+let liveScoresDateFetchDebounce = null;
 function shiftLiveScoresDate(delta){
     const next = liveScoresDateOffset + delta;
     if(next < -LIVE_SCORES_DATE_RANGE_DAYS || next > LIVE_SCORES_DATE_RANGE_DAYS) return;
@@ -55,8 +56,16 @@ function shiftLiveScoresDate(delta){
     // fresh" situation like today's live matches — auto-refresh only makes
     // sense for today, so jumping off today pauses it (restarted if the
     // user comes back to today) to avoid pointless quota use.
-    if(liveScoresDateOffset===0) startLiveScoresAutoRefresh();
-    else { stopLiveScoresAutoRefresh(); fetchLiveScores(true); }
+    stopLiveScoresAutoRefresh();
+    if(liveScoresDateOffset===0){ startLiveScoresAutoRefresh(); return; }
+    // Debounced — someone tapping the arrow several times fast (flipping
+    // through a week) shouldn't fire one request per tap, each landing on
+    // a different, uncached date. Only the date they actually land on and
+    // pause at gets fetched. API-Football's free plan allows only ~10
+    // requests/minute, so a quick burst of taps was enough to trip that
+    // limit on its own.
+    clearTimeout(liveScoresDateFetchDebounce);
+    liveScoresDateFetchDebounce = setTimeout(()=>fetchLiveScores(true), 350);
 }
 
 // ============================================================

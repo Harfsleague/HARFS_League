@@ -132,6 +132,36 @@ async function handleLiveScores(request, env, ctx, url) {
   const date = isValidDate ? dateParam : today;
   const isToday = date === today;
 
+  // Helper for the two error paths below: try to serve stale-but-good data
+  // first, and if there isn't any, cache the ERROR ITSELF for a short
+  // "backoff" window. Previously an error response was never cached at
+  // all, so every request that came in while API-Football was rate-limiting
+  // us (its free plan allows only ~10 requests/minute) triggered another
+  // upstream call and got rate-limited again — our own Worker was
+  // amplifying the exact problem it exists to prevent. This backoff makes
+  // us wait it out instead of hammering an API that's already saying "slow
+  // down", while still recovering quickly (20s) once the limit resets.
+  async function errorOrStale(message, status) {
+    const stale = await caches.default.match(staleFallbackKey(url));
+    if (stale) {
+      const res = new Response(stale.body, stale);
+      Object.entries(corsHeaders(request)).forEach(([k, v]) => res.headers.set(k, v));
+      res.headers.set("X-HARFS-Cache", "STALE-FALLBACK");
+      return res;
+    }
+    const errRes = json({ ok: false, error: message }, status, request);
+    ctx.waitUntil(
+      caches.default.put(
+        cacheKey,
+        new Response(JSON.stringify({ ok: false, error: message }), {
+          status,
+          headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=20", ...corsHeaders(request) },
+        })
+      )
+    );
+    return errRes;
+  }
+
   let data;
   try {
     const apiRes = await fetchUpstream(`${API_FOOTBALL_BASE}/fixtures?date=${date}`, {
@@ -140,31 +170,15 @@ async function handleLiveScores(request, env, ctx, url) {
     data = await apiRes.json();
   } catch (err) {
     // Network-level failure reaching API-Football (timeout, DNS, etc) —
-    // not a quota issue. Serve the last known-good fixtures if we have any,
-    // clearly not as fresh data but far better than a hard error.
-    const stale = await caches.default.match(staleFallbackKey(url));
-    if (stale) {
-      const res = new Response(stale.body, stale);
-      Object.entries(corsHeaders(request)).forEach(([k, v]) => res.headers.set(k, v));
-      res.headers.set("X-HARFS-Cache", "STALE-FALLBACK");
-      return res;
-    }
-    return json({ ok: false, error: "Could not reach API-Football: " + err.message }, 502, request);
+    // not a quota issue.
+    return errorOrStale("Could not reach API-Football: " + err.message, 502);
   }
 
   if (data.errors && Object.keys(data.errors).length > 0) {
     // API-Football returns HTTP 200 even on quota-exceeded/bad-key/rate-limit
     // errors, with the actual problem inside `errors` — surface that text
-    // as-is instead of just calling everything "rate limited", and fall
-    // back to stale data the same way as a network error.
-    const stale = await caches.default.match(staleFallbackKey(url));
-    if (stale) {
-      const res = new Response(stale.body, stale);
-      Object.entries(corsHeaders(request)).forEach(([k, v]) => res.headers.set(k, v));
-      res.headers.set("X-HARFS-Cache", "STALE-FALLBACK");
-      return res;
-    }
-    return json({ ok: false, error: "API-Football error: " + JSON.stringify(data.errors) }, 429, request);
+    // as-is instead of just calling everything "rate limited".
+    return errorOrStale("API-Football error: " + JSON.stringify(data.errors), 429);
   }
 
   const fixtures = (data.response || []).map((f) => ({
@@ -353,7 +367,13 @@ async function handleTeamsByLeague(request, env, ctx, url) {
       const attemptData = await apiRes.json();
       if (attemptData.errors && Object.keys(attemptData.errors).length > 0) {
         lastErrorMsg = "API-Football error: " + JSON.stringify(attemptData.errors);
-        continue; // try an earlier season before giving up
+        // A rate-limit error means every other season will hit the exact
+        // same wall — trying seasonsToTry[1] and [2] right after would just
+        // burn 2 more calls against an API that's already saying "slow
+        // down", worsening the very rate limit we're hitting. Stop here
+        // instead of looping through every season.
+        if (attemptData.errors.rateLimit) break;
+        continue; // any other error (e.g. plan/season restriction) — an earlier season might still work
       }
       if ((attemptData.response || []).length > 0) {
         data = attemptData;
@@ -369,11 +389,20 @@ async function handleTeamsByLeague(request, env, ctx, url) {
   }
 
   if (!data) {
-    return json(
-      { ok: false, error: `Could not load teams for any recent season (tried ${seasonsToTry.join(", ")}). Last error: ${lastErrorMsg}` },
-      429,
-      request
+    const status = lastErrorMsg && lastErrorMsg.includes("rateLimit") ? 429 : 429;
+    const message = `Could not load teams for any recent season (tried ${seasonsToTry.join(", ")}). Last error: ${lastErrorMsg}`;
+    // Same backoff-caching as /livescores: don't let repeated requests
+    // during a rate-limited window keep re-triggering more upstream calls.
+    ctx.waitUntil(
+      caches.default.put(
+        cacheKey,
+        new Response(JSON.stringify({ ok: false, error: message }), {
+          status,
+          headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=20", ...corsHeaders(request) },
+        })
+      )
     );
+    return json({ ok: false, error: message }, status, request);
   }
 
   const teams = (data.response || []).map((t) => ({ id: t.team.id, name: t.team.name, logo: t.team.logo, country: t.team.country }));
