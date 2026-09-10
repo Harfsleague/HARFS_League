@@ -105,7 +105,7 @@ function navigate(route){
         renderSeasonHistoryList(h);
     });
     updateSeasonFabs(route);
-    if(route==='shop')loadMainLeagueDataFromGitHub().then(renderShop);
+    if(route==='shop')loadMainLeagueDataFromGitHub().then(renderMysteryBoxScreen);
     if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
     if(route==='settings')renderSettingsScreen();
     // Live Scores auto-refreshes only while its screen is actually open —

@@ -286,27 +286,37 @@
 
     </div><!-- /league-table-screen -->
 
-    <!-- ============ SHOP (now reached from Settings, not the bottom nav) ============ -->
+    <!-- ============ MYSTERY BOX (replaces the Arena Shop for now — reached from Settings) ============ -->
     <div id="shop-screen" class="page-screen">
         <div class="league-header">
             <button onclick="navigate('settings')" style="align-self:flex-start;margin-bottom:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
                 <i class="fas fa-arrow-left mr-1"></i>Back to Settings
             </button>
-            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Arena Shop</h2>
+            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Mystery Box</h2>
             <div class="account-card" style="margin-top:0;margin-bottom:10px;">
                 <img id="shop-my-team-logo" src="" class="account-avatar" style="width:44px;height:44px;">
                 <div class="account-textcol">
                     <span id="shop-my-team-name" class="account-name">—</span>
-                    <span class="account-subtitle">Buying for this team</span>
+                    <span class="account-subtitle">Balance: <span id="mbx-balance">—</span></span>
                 </div>
             </div>
-            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">Requests are sent straight to the Bayern admin panel for approval — nothing is charged until it's approved.</p>
+            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">25 coins for one random prize — could be an Arena perk, a coin payout, or nothing at all.</p>
         </div>
-        <div class="w-full px-4" id="shop-items-list"></div>
-        <div class="w-full px-4 mt-2" id="shop-my-requests-wrap" style="display:none;">
+
+        <div class="mbx-stage">
+            <canvas id="mbx-confetti-canvas" class="mbx-confetti-canvas"></canvas>
+            <div class="mbx-box" id="mbx-box" onclick="openMysteryBox()">
+                <div class="mbx-box-glow"></div>
+                <div class="mbx-box-icon">🎁</div>
+            </div>
+            <div class="mbx-reveal" id="mbx-reveal"></div>
+            <div class="mbx-open-label" id="mbx-open-label">Tap to Open — 25 🪙</div>
+        </div>
+
+        <div class="w-full px-4 mt-2">
             <div class="season-history-card">
-                <h3 class="season-history-title"><i class="fas fa-clock"></i> Your Pending Requests</h3>
-                <div id="shop-my-requests-list"></div>
+                <h3 class="season-history-title"><i class="fas fa-clock"></i> Recent Openings</h3>
+                <div id="mbx-history-list"></div>
             </div>
         </div>
     </div>
@@ -504,10 +514,10 @@
         <div class="w-full px-4">
             <div class="settings-page-grid">
                 <button class="settings-page-tile wide shop-tile-big" onclick="navigate('shop')">
-                    <div class="shop-tile-icon"><i class="fas fa-store"></i></div>
+                    <div class="shop-tile-icon"><i class="fas fa-gift"></i></div>
                     <div class="shop-tile-textcol">
-                        <span class="shop-tile-title">Arena Shop</span>
-                        <span class="shop-tile-sub">Spend coins, request items</span>
+                        <span class="shop-tile-title">Mystery Box</span>
+                        <span class="shop-tile-sub">25 coins for a random prize</span>
                     </div>
                     <i class="fas fa-chevron-right shop-tile-chevron"></i>
                 </button>
@@ -771,6 +781,10 @@
                 <button class="live-scores-date-btn" id="live-scores-next-day" onclick="shiftLiveScoresDate(1)" title="Next day"><i class="fas fa-chevron-right"></i></button>
             </div>
             <div id="live-scores-updated-label" style="font-size:0.6rem;color:#6b7280;margin-bottom:8px;">—</div>
+            <div class="live-scores-tabs" id="live-scores-tabs">
+                <button class="live-scores-tab active" id="live-scores-tab-scores" onclick="switchLiveScoresTab('scores')">Scores</button>
+                <button class="live-scores-tab" id="live-scores-tab-tables" onclick="switchLiveScoresTab('tables')">Tables</button>
+            </div>
             <button class="live-scores-filter-toggle" id="live-scores-filter-toggle" style="display:none;" onclick="toggleFavoritesOnlyFilter()"></button>
         </div>
         <div class="w-full px-4" id="live-scores-body">
@@ -778,6 +792,7 @@
                 <span class="spinner"></span> Loading...
             </div>
         </div>
+        <div class="w-full px-4" id="live-scores-tables-body" style="display:none;"></div>
     </div>
 
     <!-- ============ LIVE SCORES PREFERENCES — favorite leagues & teams ============

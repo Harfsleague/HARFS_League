@@ -16,7 +16,8 @@ let liveScoresLastFixtures = [];
 // already applies to whatever date's fixture list is currently loaded —
 // no separate "team schedule" endpoint needed.
 // ============================================================
-const LIVE_SCORES_DATE_RANGE_DAYS = 14; // how far back/forward browsing is allowed
+const LIVE_SCORES_DATE_RANGE_DAYS = 14; // beyond ±1 day we switch to per-favorite-league/team season lookups (see fetchLiveScores) since the plain date endpoint only covers yesterday/today/tomorrow
+const LIVE_SCORES_BULK_RANGE_DAYS = 1; // the /livescores?date= endpoint (all leagues at once) only works within this range
 let liveScoresDateOffset = 0; // 0 = today, -1 = yesterday, +1 = tomorrow, ...
 
 function liveScoresDateForOffset(offset){
@@ -66,6 +67,84 @@ function shiftLiveScoresDate(delta){
     // limit on its own.
     clearTimeout(liveScoresDateFetchDebounce);
     liveScoresDateFetchDebounce = setTimeout(()=>fetchLiveScores(true), 350);
+}
+
+// ============================================================
+// TABLES TAB — league standings for favorite leagues, alongside Scores.
+// Fetched from the Worker's /standings endpoint (heavily cached there,
+// several hours, since a table barely moves outside of matchdays), with
+// the same offline-cache fallback pattern as fixtures.
+// ============================================================
+let liveScoresActiveTab = 'scores';
+function switchLiveScoresTab(tab){
+    liveScoresActiveTab = tab;
+    document.getElementById('live-scores-tab-scores').classList.toggle('active', tab==='scores');
+    document.getElementById('live-scores-tab-tables').classList.toggle('active', tab==='tables');
+    document.getElementById('live-scores-body').style.display = tab==='scores' ? '' : 'none';
+    document.getElementById('live-scores-tables-body').style.display = tab==='tables' ? '' : 'none';
+    document.getElementById('live-scores-date-nav').style.display = tab==='scores' ? '' : 'none';
+    const filterBtn = document.getElementById('live-scores-filter-toggle');
+    if(filterBtn) filterBtn.style.display = tab==='scores' ? filterBtn.dataset.wasVisible==='1' ? '' : 'none' : 'none';
+    if(tab==='tables') loadLiveScoresStandings();
+}
+
+async function loadLiveScoresStandings(){
+    const container = document.getElementById('live-scores-tables-body');
+    const favLeagues = getFavLeagues();
+    if(!favLeagues.length){
+        container.innerHTML = '<div class="live-scores-empty">No favorite leagues yet.<br><span style="opacity:0.7;">Tap the sliders icon above to add some.</span></div>';
+        return;
+    }
+    container.innerHTML = '<div class="text-center mt-6 text-sm flex items-center justify-center gap-2" style="color:var(--primary);"><span class="spinner"></span> Loading tables...</div>';
+
+    const blocks = await Promise.all(favLeagues.map(async league=>{
+        const cacheDbKey = 'standings:'+league.id;
+        try{
+            const res = await fetchWithRetry(`${LIVE_SCORES_API}/standings?leagueId=${league.id}`);
+            const data = await res.json();
+            if(!res.ok || !data.ok) throw new Error(data.error||'failed');
+            idbSet('liveScoresCache', cacheDbKey, {standings:data.standings, fetchedAt:Date.now()});
+            return renderStandingsBlock(league, data.standings, false);
+        }catch(e){
+            const cached = await idbGet('liveScoresCache', cacheDbKey);
+            if(cached && cached.standings && cached.standings.length){
+                return renderStandingsBlock(league, cached.standings, true);
+            }
+            return `<div class="standings-league-block">
+                <div class="standings-league-title"><img src="${league.logo||''}" onerror="this.style.visibility='hidden'"><span>${escapeHtml(league.name)}</span></div>
+                <div class="live-scores-empty">${!navigator.onLine ? "Offline — no cached table for this league yet." : "Could not load this league's table right now."}</div>
+            </div>`;
+        }
+    }));
+    // Only replace once every league has resolved — avoids the list
+    // reshuffling itself piece by piece as each request lands.
+    if(liveScoresActiveTab==='tables') container.innerHTML = blocks.join('');
+}
+
+function renderStandingsBlock(league, standings, isStale){
+    const favTeamIds = new Set(getFavTeams().map(t=>t.id));
+    const rows = standings.map(r=>`
+        <tr class="${favTeamIds.has(r.teamId) ? 'std-fav' : ''}">
+            <td>${r.rank}</td>
+            <td class="std-team"><img src="${r.logo||''}" onerror="this.style.visibility='hidden'">${escapeHtml(r.team)}</td>
+            <td>${r.played}</td>
+            <td>${r.win}</td>
+            <td>${r.draw}</td>
+            <td>${r.lose}</td>
+            <td>${r.goalsDiff>0?'+':''}${r.goalsDiff}</td>
+            <td class="std-pts">${r.points}</td>
+        </tr>`).join('');
+    return `<div class="standings-league-block">
+        <div class="standings-league-title">
+            <img src="${league.logo||''}" onerror="this.style.visibility='hidden'">
+            <span>${escapeHtml(league.name)}</span>
+            ${isStale ? '<span style="color:#6b7280;font-weight:600;text-transform:none;font-size:0.62rem;">(offline — last saved)</span>' : ''}
+        </div>
+        <table class="standings-table">
+            <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+    </div>`;
 }
 
 // ============================================================
@@ -346,7 +425,8 @@ function syncFavoritesOnlyToggle(){
     const btn = document.getElementById('live-scores-filter-toggle');
     if(!btn) return;
     const hasFavs = getFavLeagues().length>0 || getFavTeams().length>0;
-    btn.style.display = hasFavs ? 'flex' : 'none';
+    btn.dataset.wasVisible = hasFavs ? '1' : '0'; // read by switchLiveScoresTab() when re-showing the Scores tab
+    btn.style.display = (hasFavs && liveScoresActiveTab==='scores') ? 'flex' : 'none';
     btn.classList.toggle('active', isFavoritesOnly());
     btn.innerHTML = isFavoritesOnly()
         ? '<i class="fas fa-star"></i> Favorites'
@@ -374,6 +454,10 @@ async function fetchLiveScores(manual){
     const date = liveScoresSelectedDate();
     const cacheDbKey = 'v:'+date;
     try{
+        if(Math.abs(liveScoresDateOffset) > LIVE_SCORES_BULK_RANGE_DAYS){
+            await fetchLiveScoresBeyondBulkRange(date, cacheDbKey);
+            return;
+        }
         const res = await fetchWithRetry(`${LIVE_SCORES_API}/livescores?date=${date}`);
         const data = await res.json();
         if(!res.ok || !data.ok){
@@ -408,6 +492,66 @@ async function fetchLiveScores(manual){
         }
     }finally{
         if(manual && btn) setTimeout(()=>btn.classList.remove('spinning'), 400);
+    }
+}
+
+// ============================================================
+// Browsing more than ±1 day away: API-Football's free plan only has
+// data for yesterday/today/tomorrow on the plain date-based endpoint,
+// so there's genuinely no "all leagues, that day" call available. What
+// IS available is a full season's fixtures for one specific league or
+// team — so for dates further out, we fetch that per favorite league
+// and favorite team instead (parallel requests, each cached for hours
+// on the Worker side) and merge the results. This is also why this
+// mode is favorites-only: fetching every tracked league's entire
+// season just to browse one day would be enormously wasteful.
+// ============================================================
+async function fetchLiveScoresBeyondBulkRange(date, cacheDbKey){
+    const favLeagues = getFavLeagues();
+    const favTeams = getFavTeams();
+    if(!favLeagues.length && !favTeams.length){
+        renderLiveScoresError('Beyond yesterday/tomorrow, the free API plan can only look up specific leagues or teams — add a favorite league or team (tap the sliders icon above) to browse further.');
+        return;
+    }
+    const requests = [
+        ...favLeagues.map(l=>({kind:'league', id:l.id, url:`${LIVE_SCORES_API}/fixtures-by-league?leagueId=${l.id}&date=${date}`})),
+        ...favTeams.map(t=>({kind:'team', id:t.id, url:`${LIVE_SCORES_API}/fixtures-by-team?teamId=${t.id}&date=${date}`})),
+    ];
+    const results = await Promise.allSettled(requests.map(async r=>{
+        const res = await fetchWithRetry(r.url);
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error||'failed');
+        return data.fixtures || [];
+    }));
+
+    if(date !== liveScoresSelectedDate()) return; // navigated elsewhere while these were in flight
+
+    const merged = new Map();
+    let anySucceeded = false;
+    results.forEach(r=>{
+        if(r.status==='fulfilled'){ anySucceeded = true; r.value.forEach(f=>merged.set(f.id, f)); }
+    });
+    const fixtures = [...merged.values()];
+
+    if(anySucceeded){
+        liveScoresLastFixtures = fixtures;
+        renderLiveScores(fixtures);
+        const updatedEl = document.getElementById('live-scores-updated-label');
+        if(updatedEl) updatedEl.textContent = fixtures.length ? 'Loaded from your favorites’ schedules' : 'No matches that day for your favorites';
+        idbSet('liveScoresCache', cacheDbKey, {fixtures, fetchedAt:Date.now()});
+    } else {
+        const cached = await idbGet('liveScoresCache', cacheDbKey);
+        if(cached && cached.fixtures){
+            liveScoresLastFixtures = cached.fixtures;
+            renderLiveScores(cached.fixtures);
+            const updatedEl = document.getElementById('live-scores-updated-label');
+            const stamp = new Date(cached.fetchedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+            if(updatedEl) updatedEl.textContent = `Offline/unreachable — showing scores from ${stamp}`;
+        } else {
+            renderLiveScoresError(!navigator.onLine
+                ? "You're offline and this day hasn't been loaded before."
+                : "Could not load your favorites' schedules for this day right now — try again in a moment.");
+        }
     }
 }
 

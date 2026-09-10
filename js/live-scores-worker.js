@@ -65,6 +65,9 @@ export default {
     if (path === "/teams") return handleSearch(request, env, ctx, url, "teams", mapTeam);
     if (path === "/leagues/grouped") return handleLeaguesGrouped(request, env, ctx, url);
     if (path === "/teams-by-league") return handleTeamsByLeague(request, env, ctx, url);
+    if (path === "/standings") return handleStandings(request, env, ctx, url);
+    if (path === "/fixtures-by-league") return handleFixturesByEntity(request, env, ctx, url, "league");
+    if (path === "/fixtures-by-team") return handleFixturesByEntity(request, env, ctx, url, "team");
     return json({ error: "Not found" }, 404, request);
   },
 };
@@ -115,6 +118,29 @@ async function fetchUpstream(url, headers, { timeoutMs = 8000, retries = 1 } = {
 const STALE_FALLBACK_TTL = 6 * 60 * 60; // 6h
 function staleFallbackKey(url) {
   return new Request(url.toString().replace(/([?&])/, "$1__stale=1&"), { method: "GET" });
+}
+
+// Shared by /livescores, /fixtures-by-league and /fixtures-by-team so all
+// three hand the client the exact same fixture shape.
+function mapFixture(f) {
+  return {
+    id: f.fixture.id,
+    status: f.fixture.status.short,       // NS, 1H, HT, 2H, ET, P, FT, AET, PEN, PST, CANC, ...
+    minute: f.fixture.status.elapsed,
+    kickoff: f.fixture.timestamp * 1000,  // ms epoch, in the client's local time zone once rendered
+    leagueId: f.league.id,
+    league: f.league.name,
+    leagueLogo: f.league.logo,
+    country: f.league.country,
+    homeId: f.teams.home.id,
+    home: f.teams.home.name,
+    homeLogo: f.teams.home.logo,
+    awayId: f.teams.away.id,
+    away: f.teams.away.name,
+    awayLogo: f.teams.away.logo,
+    goalsHome: f.goals.home,
+    goalsAway: f.goals.away,
+  };
 }
 
 async function handleLiveScores(request, env, ctx, url) {
@@ -181,24 +207,7 @@ async function handleLiveScores(request, env, ctx, url) {
     return errorOrStale("API-Football error: " + JSON.stringify(data.errors), 429);
   }
 
-  const fixtures = (data.response || []).map((f) => ({
-    id: f.fixture.id,
-    status: f.fixture.status.short,       // NS, 1H, HT, 2H, ET, P, FT, AET, PEN, PST, CANC, ...
-    minute: f.fixture.status.elapsed,
-    kickoff: f.fixture.timestamp * 1000,  // ms epoch, in the client's local time zone once rendered
-    leagueId: f.league.id,
-    league: f.league.name,
-    leagueLogo: f.league.logo,
-    country: f.league.country,
-    homeId: f.teams.home.id,
-    home: f.teams.home.name,
-    homeLogo: f.teams.home.logo,
-    awayId: f.teams.away.id,
-    away: f.teams.away.name,
-    awayLogo: f.teams.away.logo,
-    goalsHome: f.goals.home,
-    goalsAway: f.goals.away,
-  }));
+  const fixtures = (data.response || []).map(mapFixture);
 
   const body = JSON.stringify({ ok: true, fetchedAt: Date.now(), date, fixtures });
   // Today's scores change minute to minute, so keep the short TTL there.
@@ -418,4 +427,192 @@ async function handleTeamsByLeague(request, env, ctx, url) {
   });
   ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
   return response;
+}
+
+// ============================================================
+// STANDINGS — league table for a favorite league, shown as a "Tables" tab
+// alongside Live Scores. Same season-fallback trick as handleTeamsByLeague
+// above (the free plan doesn't always have the *current* season ready),
+// and the same rate-limit-aware backoff so a burst of table views doesn't
+// spiral the same way the fixtures endpoint used to.
+// ============================================================
+async function handleStandings(request, env, ctx, url) {
+  const leagueId = url.searchParams.get("leagueId");
+  if (!leagueId) return json({ ok: false, error: "leagueId is required" }, 400, request);
+
+  const { cached, cacheKey } = await cachedFetch(request, url);
+  if (cached) return cached;
+
+  const currentYear = new Date().getFullYear();
+  const seasonsToTry = [currentYear, currentYear - 1, currentYear - 2];
+
+  let data = null;
+  let lastErrorMsg = null;
+  let usedSeason = null;
+  for (const season of seasonsToTry) {
+    try {
+      const apiRes = await fetchUpstream(`${API_FOOTBALL_BASE}/standings?league=${encodeURIComponent(leagueId)}&season=${season}`, {
+        "x-apisports-key": env.API_FOOTBALL_KEY,
+      });
+      const attemptData = await apiRes.json();
+      if (attemptData.errors && Object.keys(attemptData.errors).length > 0) {
+        lastErrorMsg = "API-Football error: " + JSON.stringify(attemptData.errors);
+        if (attemptData.errors.rateLimit) break; // see handleTeamsByLeague — no point burning more calls on the same wall
+        continue;
+      }
+      const table = attemptData.response?.[0]?.league?.standings?.[0];
+      if (table && table.length) {
+        data = attemptData;
+        usedSeason = season;
+        break;
+      }
+      lastErrorMsg = `No standings returned for season ${season}`;
+    } catch (err) {
+      return json({ ok: false, error: "Could not reach API-Football: " + err.message }, 502, request);
+    }
+  }
+
+  if (!data) {
+    const message = `Could not load the table for any recent season (tried ${seasonsToTry.join(", ")}). Last error: ${lastErrorMsg}`;
+    ctx.waitUntil(
+      caches.default.put(
+        cacheKey,
+        new Response(JSON.stringify({ ok: false, error: message }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=20", ...corsHeaders(request) },
+        })
+      )
+    );
+    return json({ ok: false, error: message }, 429, request);
+  }
+
+  const rawTable = data.response[0].league.standings[0];
+  const standings = rawTable.map((row) => ({
+    rank: row.rank,
+    teamId: row.team.id,
+    team: row.team.name,
+    logo: row.team.logo,
+    played: row.all.played,
+    win: row.all.win,
+    draw: row.all.draw,
+    lose: row.all.lose,
+    goalsDiff: row.goalsDiff,
+    points: row.points,
+    form: row.form,
+  }));
+
+  const body = JSON.stringify({ ok: true, leagueId: Number(leagueId), season: usedSeason, standings });
+  // League tables barely move outside of matchdays — a few hours' cache is
+  // plenty and keeps this tab essentially free against the daily quota.
+  const response = new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": `public, max-age=${6 * 60 * 60}`,
+      "X-HARFS-Cache": "MISS",
+      ...corsHeaders(request),
+    },
+  });
+  ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+  return response;
+}
+
+// ============================================================
+// FIXTURES BY LEAGUE / TEAM — the free plan's /fixtures?date= endpoint
+// (used by handleLiveScores above) only actually has data for
+// yesterday/today/tomorrow; anything further out comes back empty or
+// with a plan-restriction error. But /fixtures?league=&season= (or
+// &team=&season=) is NOT date-scoped — it returns that league's or
+// team's WHOLE season, past and future. So to browse further than ±1
+// day, we fetch a favorite league's/team's full season once (cached
+// for hours — a season's schedule barely changes) and filter it down
+// to the requested date here, instead of asking for "that date" directly.
+// ============================================================
+const SEASON_FIXTURES_CACHE_TTL = 12 * 60 * 60; // 12h — a season's schedule is effectively static day to day
+
+// A European-style season spanning two calendar years is filed under the
+// year it STARTED (e.g. "2026" for the 2026/27 season). Guess which season
+// year a date belongs to under that convention, but also try the date's own
+// calendar year in case the league runs Jan–Dec instead (MLS, Brasileirão...).
+function guessSeasonsForDate(dateStr) {
+  const [y, m] = dateStr.split("-").map(Number);
+  const euroConvention = m >= 7 ? y : y - 1;
+  return [...new Set([euroConvention, y, euroConvention - 1])];
+}
+
+async function getSeasonFixtures(env, ctx, kind, id, season) {
+  const cacheUrl = `https://harfs-cache.internal/season-fixtures?kind=${kind}&id=${id}&season=${season}`;
+  const cacheKey = new Request(cacheUrl, { method: "GET" });
+  const cached = await caches.default.match(cacheKey);
+  if (cached) return cached.json();
+
+  const param = kind === "league" ? `league=${encodeURIComponent(id)}` : `team=${encodeURIComponent(id)}`;
+  const apiRes = await fetchUpstream(`${API_FOOTBALL_BASE}/fixtures?${param}&season=${season}`, {
+    "x-apisports-key": env.API_FOOTBALL_KEY,
+  });
+  const data = await apiRes.json();
+  if (data.errors && Object.keys(data.errors).length > 0) {
+    const err = new Error("API-Football error: " + JSON.stringify(data.errors));
+    err.isRateLimit = !!data.errors.rateLimit;
+    throw err;
+  }
+  const fixtures = (data.response || []).map(mapFixture);
+  ctx.waitUntil(
+    caches.default.put(
+      cacheKey,
+      new Response(JSON.stringify(fixtures), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${SEASON_FIXTURES_CACHE_TTL}` },
+      })
+    )
+  );
+  return fixtures;
+}
+
+async function handleFixturesByEntity(request, env, ctx, url, kind) {
+  const id = url.searchParams.get(kind === "league" ? "leagueId" : "teamId");
+  const dateParam = url.searchParams.get("date");
+  if (!id) return json({ ok: false, error: `${kind}Id is required` }, 400, request);
+  if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return json({ ok: false, error: "a valid date=YYYY-MM-DD is required" }, 400, request);
+
+  const { cached, cacheKey } = await cachedFetch(request, url);
+  if (cached) return cached;
+
+  const seasons = guessSeasonsForDate(dateParam);
+  let lastErrorMsg = null;
+  for (const season of seasons) {
+    try {
+      const fixtures = await getSeasonFixtures(env, ctx, kind, id, season);
+      // A genuinely empty day (no matches scheduled) is still a valid,
+      // cacheable answer as long as the SEASON lookup itself returned
+      // something — unlike handleTeamsByLeague, "nothing today" doesn't
+      // mean this season guess was wrong.
+      if (fixtures.length > 0) {
+        const dayFixtures = fixtures.filter((f) => new Date(f.kickoff).toISOString().slice(0, 10) === dateParam);
+        const body = JSON.stringify({ ok: true, season, fixtures: dayFixtures });
+        const response = new Response(body, {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${SEARCH_CACHE_SECONDS}`, "X-HARFS-Cache": "MISS", ...corsHeaders(request) },
+        });
+        ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+        return response;
+      }
+      lastErrorMsg = `No fixtures found for season ${season}`;
+    } catch (err) {
+      lastErrorMsg = err.message;
+      if (err.isRateLimit) break; // see handleTeamsByLeague — don't burn more calls into the same wall
+    }
+  }
+
+  const message = `Could not load fixtures for ${kind} ${id} (tried seasons ${seasons.join(", ")}). Last error: ${lastErrorMsg}`;
+  ctx.waitUntil(
+    caches.default.put(
+      cacheKey,
+      new Response(JSON.stringify({ ok: false, error: message }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=20", ...corsHeaders(request) },
+      })
+    )
+  );
+  return json({ ok: false, error: message }, 429, request);
 }
