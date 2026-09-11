@@ -16,8 +16,7 @@ let liveScoresLastFixtures = [];
 // already applies to whatever date's fixture list is currently loaded —
 // no separate "team schedule" endpoint needed.
 // ============================================================
-const LIVE_SCORES_DATE_RANGE_DAYS = 14; // beyond ±1 day we switch to per-favorite-league/team season lookups (see fetchLiveScores) since the plain date endpoint only covers yesterday/today/tomorrow
-const LIVE_SCORES_BULK_RANGE_DAYS = 1; // the /livescores?date= endpoint (all leagues at once) only works within this range
+const LIVE_SCORES_DATE_RANGE_DAYS = 14; // fixtures-by-league/-team have no plan-imposed date restriction, so this is just a sane UI browsing limit
 let liveScoresDateOffset = 0; // 0 = today, -1 = yesterday, +1 = tomorrow, ...
 
 function liveScoresDateForOffset(offset){
@@ -82,9 +81,9 @@ function switchLiveScoresTab(tab){
     document.getElementById('live-scores-tab-tables').classList.toggle('active', tab==='tables');
     document.getElementById('live-scores-body').style.display = tab==='scores' ? '' : 'none';
     document.getElementById('live-scores-tables-body').style.display = tab==='tables' ? '' : 'none';
+    // The day-changer only makes sense on the Scores tab — a league table
+    // isn't tied to a specific date.
     document.getElementById('live-scores-date-nav').style.display = tab==='scores' ? '' : 'none';
-    const filterBtn = document.getElementById('live-scores-filter-toggle');
-    if(filterBtn) filterBtn.style.display = tab==='scores' ? filterBtn.dataset.wasVisible==='1' ? '' : 'none' : 'none';
     if(tab==='tables') loadLiveScoresStandings();
 }
 
@@ -126,11 +125,11 @@ function renderStandingsBlock(league, standings, isStale){
     const rows = standings.map(r=>`
         <tr class="${favTeamIds.has(r.teamId) ? 'std-fav' : ''}">
             <td>${r.rank}</td>
-            <td class="std-team"><img src="${r.logo||''}" onerror="this.style.visibility='hidden'">${escapeHtml(r.team)}</td>
+            <td class="std-team"><img src="${r.logo||''}" onerror="this.style.visibility='hidden'"><span>${escapeHtml(r.team)}</span></td>
             <td>${r.played}</td>
             <td>${r.win}</td>
-            <td>${r.draw}</td>
-            <td>${r.lose}</td>
+            <td class="std-col-d">${r.draw}</td>
+            <td class="std-col-l">${r.lose}</td>
             <td>${r.goalsDiff>0?'+':''}${r.goalsDiff}</td>
             <td class="std-pts">${r.points}</td>
         </tr>`).join('');
@@ -140,10 +139,12 @@ function renderStandingsBlock(league, standings, isStale){
             <span>${escapeHtml(league.name)}</span>
             ${isStale ? '<span style="color:#6b7280;font-weight:600;text-transform:none;font-size:0.62rem;">(offline — last saved)</span>' : ''}
         </div>
-        <table class="standings-table">
-            <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
-            <tbody>${rows}</tbody>
-        </table>
+        <div class="standings-table-wrap">
+            <table class="standings-table">
+                <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th class="std-col-d">D</th><th class="std-col-l">L</th><th>GD</th><th>Pts</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
     </div>`;
 }
 
@@ -185,7 +186,6 @@ function getFavLeagues(){ try{ return JSON.parse(localStorage.getItem('liveScore
 function getFavTeams(){ try{ return JSON.parse(localStorage.getItem('liveScoresFavTeams'))||[]; }catch(e){ return []; } }
 function saveFavLeagues(list){ localStorage.setItem('liveScoresFavLeagues', JSON.stringify(list)); pushLiveScorePrefsToAccount(); }
 function saveFavTeams(list){ localStorage.setItem('liveScoresFavTeams', JSON.stringify(list)); pushLiveScorePrefsToAccount(); }
-function isFavoritesOnly(){ return localStorage.getItem('liveScoresFavoritesOnly') !== 'off'; } // default ON once the user has favorites
 
 // ============================================================
 // ACCOUNT SYNC — favorites are read/written to localStorage for
@@ -202,7 +202,6 @@ function pushLiveScorePrefsToAccount(){
     const acct = mainLeagueData[loggedInTeam];
     acct.liveScoreFavLeagues = getFavLeagues();
     acct.liveScoreFavTeams = getFavTeams();
-    acct.liveScoreFavoritesOnly = isFavoritesOnly();
     acct.liveScorePrefsSynced = true;
     // Debounced — toggling a few leagues/teams in a row shouldn't fire one
     // GitHub commit per tap.
@@ -223,8 +222,7 @@ function syncLiveScorePrefsForAccount(){
     if(acct.liveScorePrefsSynced){
         localStorage.setItem('liveScoresFavLeagues', JSON.stringify(acct.liveScoreFavLeagues||[]));
         localStorage.setItem('liveScoresFavTeams', JSON.stringify(acct.liveScoreFavTeams||[]));
-        localStorage.setItem('liveScoresFavoritesOnly', acct.liveScoreFavoritesOnly===false ? 'off' : 'on');
-        renderFavLeagueChips(); renderFavTeamChips(); syncFavoritesOnlyToggle(); renderLiveScoresFromCache();
+        renderFavLeagueChips(); renderFavTeamChips(); renderLiveScoresFromCache();
         if(lspLeagueGroups) renderLspLeagueGroups();
         renderLspLeagueSelectRow();
     } else {
@@ -414,24 +412,6 @@ function openLiveScoresPreferences(){
 function closeLiveScoresPreferences(){
     document.getElementById('live-scores-prefs-sheet').classList.remove('open');
 }
-function toggleFavoritesOnlyFilter(){
-    const next = isFavoritesOnly() ? 'off' : 'on';
-    localStorage.setItem('liveScoresFavoritesOnly', next);
-    syncFavoritesOnlyToggle();
-    renderLiveScoresFromCache();
-    pushLiveScorePrefsToAccount();
-}
-function syncFavoritesOnlyToggle(){
-    const btn = document.getElementById('live-scores-filter-toggle');
-    if(!btn) return;
-    const hasFavs = getFavLeagues().length>0 || getFavTeams().length>0;
-    btn.dataset.wasVisible = hasFavs ? '1' : '0'; // read by switchLiveScoresTab() when re-showing the Scores tab
-    btn.style.display = (hasFavs && liveScoresActiveTab==='scores') ? 'flex' : 'none';
-    btn.classList.toggle('active', isFavoritesOnly());
-    btn.innerHTML = isFavoritesOnly()
-        ? '<i class="fas fa-star"></i> Favorites'
-        : '<i class="far fa-star"></i> All Matches';
-}
 
 const LIVE_STATUS_CODES = { live: ['1H','2H','HT','ET','BT','P','LIVE','INT'], finished: ['FT','AET','PEN','PST','CANC','ABD','AWD','WO'] };
 function liveScoreStatusBucket(status){
@@ -454,68 +434,31 @@ async function fetchLiveScores(manual){
     const date = liveScoresSelectedDate();
     const cacheDbKey = 'v:'+date;
     try{
-        if(Math.abs(liveScoresDateOffset) > LIVE_SCORES_BULK_RANGE_DAYS){
-            await fetchLiveScoresBeyondBulkRange(date, cacheDbKey);
-            return;
-        }
-        const res = await fetchWithRetry(`${LIVE_SCORES_API}/livescores?date=${date}`);
-        const data = await res.json();
-        if(!res.ok || !data.ok){
-            // A real, well-formed error from our own Worker (bad key, upstream
-            // plan/quota issue, etc) — not a connectivity problem, so no point
-            // falling back to a stale cache; show the actual reason.
-            renderLiveScoresError(data.error || `HTTP ${res.status}`);
-            return;
-        }
-        if(date !== liveScoresSelectedDate()) return; // user navigated to a different day while this was in flight
-        liveScoresLastFixtures = data.fixtures || [];
-        renderLiveScores(liveScoresLastFixtures);
-        const updatedEl = document.getElementById('live-scores-updated-label');
-        if(updatedEl) updatedEl.textContent = 'Updated ' + new Date(data.fetchedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
-        // Keep the last good response around in IndexedDB, keyed per date —
-        // this is what lets the screen show *something* (clearly marked as
-        // stale) instead of a hard error when offline or unreachable.
-        idbSet('liveScoresCache',cacheDbKey,{fixtures:liveScoresLastFixtures, fetchedAt:data.fetchedAt});
-    }catch(e){
-        if(date !== liveScoresSelectedDate()) return;
-        const cached = await idbGet('liveScoresCache',cacheDbKey);
-        if(cached && cached.fixtures && cached.fixtures.length){
-            liveScoresLastFixtures = cached.fixtures;
-            renderLiveScores(liveScoresLastFixtures);
-            const updatedEl = document.getElementById('live-scores-updated-label');
-            const stamp = new Date(cached.fetchedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
-            if(updatedEl) updatedEl.textContent = `Offline — showing scores from ${stamp}`;
-        } else {
-            renderLiveScoresError(!navigator.onLine
-                ? "You're offline and no cached scores are saved yet — connect once to load them."
-                : 'Could not reach the live scores server. This can happen on a slow or unstable connection — try again in a moment.');
-        }
-    }finally{
+        await fetchLiveScoresForFavorites(date, cacheDbKey);
+    } finally {
         if(manual && btn) setTimeout(()=>btn.classList.remove('spinning'), 400);
     }
 }
 
 // ============================================================
-// Browsing more than ±1 day away: API-Football's free plan only has
-// data for yesterday/today/tomorrow on the plain date-based endpoint,
-// so there's genuinely no "all leagues, that day" call available. What
-// IS available is a full season's fixtures for one specific league or
-// team — so for dates further out, we fetch that per favorite league
-// and favorite team instead (parallel requests, each cached for hours
-// on the Worker side) and merge the results. This is also why this
-// mode is favorites-only: fetching every tracked league's entire
-// season just to browse one day would be enormously wasteful.
+// Live Scores only ever fetches data for the leagues/teams the user has
+// actually favorited — never "every league, everywhere" — both to avoid
+// pulling (and paying API-Football quota for) matches nobody asked to see,
+// and because /fixtures-by-league and /fixtures-by-team have no date-range
+// restriction (unlike the plain date-based endpoint), so the exact same
+// call works whether browsing today or three weeks out. Requests run in
+// parallel, one per favorite league and per favorite team, and are merged.
 // ============================================================
-async function fetchLiveScoresBeyondBulkRange(date, cacheDbKey){
+async function fetchLiveScoresForFavorites(date, cacheDbKey){
     const favLeagues = getFavLeagues();
     const favTeams = getFavTeams();
     if(!favLeagues.length && !favTeams.length){
-        renderLiveScoresError('Beyond yesterday/tomorrow, the free API plan can only look up specific leagues or teams — add a favorite league or team (tap the sliders icon above) to browse further.');
+        renderLiveScoresError('Add a favorite league or team (tap the sliders icon above) to see its matches here.');
         return;
     }
     const requests = [
-        ...favLeagues.map(l=>({kind:'league', id:l.id, url:`${LIVE_SCORES_API}/fixtures-by-league?leagueId=${l.id}&date=${date}`})),
-        ...favTeams.map(t=>({kind:'team', id:t.id, url:`${LIVE_SCORES_API}/fixtures-by-team?teamId=${t.id}&date=${date}`})),
+        ...favLeagues.map(l=>({url:`${LIVE_SCORES_API}/fixtures-by-league?leagueId=${l.id}&date=${date}`})),
+        ...favTeams.map(t=>({url:`${LIVE_SCORES_API}/fixtures-by-team?teamId=${t.id}&date=${date}`})),
     ];
     const results = await Promise.allSettled(requests.map(async r=>{
         const res = await fetchWithRetry(r.url);
@@ -537,7 +480,7 @@ async function fetchLiveScoresBeyondBulkRange(date, cacheDbKey){
         liveScoresLastFixtures = fixtures;
         renderLiveScores(fixtures);
         const updatedEl = document.getElementById('live-scores-updated-label');
-        if(updatedEl) updatedEl.textContent = fixtures.length ? 'Loaded from your favorites’ schedules' : 'No matches that day for your favorites';
+        if(updatedEl) updatedEl.textContent = 'Updated ' + new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
         idbSet('liveScoresCache', cacheDbKey, {fixtures, fetchedAt:Date.now()});
     } else {
         const cached = await idbGet('liveScoresCache', cacheDbKey);
@@ -550,7 +493,7 @@ async function fetchLiveScoresBeyondBulkRange(date, cacheDbKey){
         } else {
             renderLiveScoresError(!navigator.onLine
                 ? "You're offline and this day hasn't been loaded before."
-                : "Could not load your favorites' schedules for this day right now — try again in a moment.");
+                : "Could not load your favorites' schedules right now — try again in a moment.");
         }
     }
 }
@@ -564,20 +507,17 @@ function renderLiveScoresError(message){
 function renderLiveScores(fixtures){
     const body = document.getElementById('live-scores-body');
     if(!body) return;
-    syncFavoritesOnlyToggle();
 
     const favLeagueIds = new Set(getFavLeagues().map(l=>l.id));
     const favTeamIds = new Set(getFavTeams().map(t=>t.id));
-    const hasFavorites = favLeagueIds.size>0 || favTeamIds.size>0;
-    const filtered = (hasFavorites && isFavoritesOnly())
-        ? fixtures.filter(f=>favLeagueIds.has(f.leagueId) || favTeamIds.has(f.homeId) || favTeamIds.has(f.awayId))
-        : fixtures;
+    // No more "All Matches" mode — every fixture this function receives was
+    // already fetched specifically for a favorite league/team (see
+    // fetchLiveScoresForFavorites), so there's nothing left to filter here.
+    const filtered = fixtures;
 
     if(!filtered.length){
         const dayText = liveScoresDateOffset===0 ? 'today' : (liveScoresDateOffset===-1 ? 'yesterday' : (liveScoresDateOffset===1 ? 'tomorrow' : 'that day'));
-        body.innerHTML = hasFavorites && isFavoritesOnly()
-            ? `<div class="live-scores-empty">None of your favorite leagues/teams are playing ${dayText}.<br><span style="opacity:0.7;">Tap "Favorites" above to see everything instead.</span></div>`
-            : `<div class="live-scores-empty">No matches ${dayText} across any tracked league.</div>`;
+        body.innerHTML = `<div class="live-scores-empty">No matches ${dayText} for your favorite leagues/teams.</div>`;
         return;
     }
     // Live matches first, then upcoming (soonest first), then finished — within

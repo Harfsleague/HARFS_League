@@ -514,6 +514,10 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     z-index:2;
 }
 .mbx-box:active{ transform:scale(0.94); }
+.mbx-box.mbx-locked{
+    cursor:not-allowed; animation:none; opacity:0.45; filter:grayscale(0.6);
+}
+.mbx-box.mbx-locked .mbx-box-glow{ animation:none; opacity:0.15; }
 .mbx-box-glow{
     position:absolute; inset:-20px; border-radius:50%;
     background:radial-gradient(circle, rgba(167,139,250,0.35) 0%, rgba(167,139,250,0) 70%);
@@ -1866,23 +1870,51 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 }
 .live-scores-tab.active{ background:var(--nav-active-bg); border-color:var(--nav-active-border); color:var(--primary); }
 
-.standings-league-block{ margin-bottom:20px; }
+.standings-league-block{
+    margin-bottom:20px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px; padding:14px 14px 6px; overflow:hidden;
+}
 .standings-league-title{
     display:flex; align-items:center; gap:8px; font-size:0.78rem; font-weight:800;
-    color:#e5e7eb; margin-bottom:8px;
+    color:#e5e7eb; margin-bottom:10px; flex-wrap:wrap;
 }
-.standings-league-title img{ width:20px; height:20px; object-fit:contain; }
-.standings-table{ width:100%; border-collapse:collapse; font-size:0.68rem; }
+.standings-league-title img{ width:20px; height:20px; object-fit:contain; flex-shrink:0; }
+.standings-table-wrap{
+    width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    margin:0 -14px; padding:0 14px 10px;
+}
+.standings-table{
+    width:100%; min-width:280px; border-collapse:collapse;
+    font-size:clamp(0.62rem, 2.6vw, 0.72rem);
+}
 .standings-table th{
     color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;
-    padding:6px 4px; text-align:center; font-size:0.6rem;
+    padding:6px 3px; text-align:center; font-size:clamp(0.55rem, 2vw, 0.62rem);
+    white-space:nowrap; position:sticky; top:0;
 }
-.standings-table th:first-child, .standings-table td:first-child{ text-align:left; padding-inline-start:6px; }
-.standings-table td{ padding:7px 4px; text-align:center; border-top:1px solid rgba(255,255,255,0.06); }
-.standings-table .std-team{ display:flex; align-items:center; gap:6px; text-align:left; }
+.standings-table th:first-child, .standings-table td:first-child{
+    text-align:left; padding-inline-start:2px; width:1.6em;
+}
+.standings-table td{
+    padding:clamp(5px,1.4vw,8px) 3px; text-align:center;
+    border-top:1px solid rgba(255,255,255,0.06); white-space:nowrap;
+}
+.standings-table .std-team{
+    display:flex; align-items:center; gap:6px; text-align:left;
+    min-width:80px; max-width:36vw;
+}
+.standings-table .std-team span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .standings-table .std-team img{ width:16px; height:16px; object-fit:contain; flex-shrink:0; }
 .standings-table .std-pts{ font-weight:800; color:#e5e7eb; }
-.standings-table tr.std-fav{ background:rgba(255,255,255,0.03); }
+.standings-table tr.std-fav{ background:rgba(255,255,255,0.04); }
+.standings-table tr.std-fav td:first-child{ box-shadow:inset 2px 0 0 var(--primary); }
+/* On narrow phones, drop the least essential columns (D/L — derivable from
+   P/W/GD) rather than squeezing every column illegibly; the horizontal
+   scroll on .standings-table-wrap is still there as a safety net for
+   anything narrower than this. */
+@media (max-width:380px){
+    .standings-table .std-col-d, .standings-table .std-col-l{ display:none; }
+}
 .live-league-group{ margin-bottom:16px; }
 .live-league-header{
     display:flex; align-items:center; gap:8px; padding:0 4px 8px;

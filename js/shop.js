@@ -300,6 +300,14 @@ function computeTrophyCounts(){
 // True medal-table ranking: most gold wins outright; silver is the first
 // tie-break, bronze the second; total trophy count breaks any further tie,
 // then alphabetical for full stability. Expects {name,gold,silver,bronze}.
+function compareTrophies(a,b){
+    if(b.gold!==a.gold) return b.gold-a.gold;
+    if(b.silver!==a.silver) return b.silver-a.silver;
+    if(b.bronze!==a.bronze) return b.bronze-a.bronze;
+    const totalA=a.gold+a.silver+a.bronze, totalB=b.gold+b.silver+b.bronze;
+    if(totalB!==totalA) return totalB-totalA;
+    return a.name.localeCompare(b.name);
+}
 // ============================================================
 // MYSTERY BOX — replaces the Arena Shop's request/approval flow for
 // now. Unlike a normal purchase, the outcome here is entirely random
@@ -313,6 +321,27 @@ function computeTrophyCounts(){
 const MYSTERY_BOX_PRICE = 25;
 const MYSTERY_BOX_NOTHING_CHANCE = 0.45;
 const MYSTERY_BOX_COIN_AMOUNTS = [15, 25, 40, 60]; // one of these, picked at random, if the "coins" slot hits
+const MYSTERY_BOX_LIMIT_COUNT = 2;
+const MYSTERY_BOX_LIMIT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
+
+// Opens are timestamped in arenaHistory (id:'mystery_box'), so the limit is
+// just "how many of those fall within the last 14 days" — no separate
+// counter to keep in sync, and it naturally rolls off after two weeks.
+function getRecentMysteryBoxOpens(team){
+    const wallet = mainLeagueData[team];
+    if(!wallet || !Array.isArray(wallet.arenaHistory)) return [];
+    const cutoff = Date.now() - MYSTERY_BOX_LIMIT_WINDOW_MS;
+    return wallet.arenaHistory
+        .filter(h=>h.id==='mystery_box' && new Date(h.ts).getTime() >= cutoff)
+        .sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+}
+// When the limit is hit, the next box unlocks 14 days after the OLDEST of
+// the recent opens ages out — not 14 days from "now".
+function nextMysteryBoxAvailableAt(team){
+    const recent = getRecentMysteryBoxOpens(team);
+    if(recent.length < MYSTERY_BOX_LIMIT_COUNT) return null;
+    return new Date(recent[0].ts).getTime() + MYSTERY_BOX_LIMIT_WINDOW_MS;
+}
 
 function rollMysteryBox(){
     if(Math.random() < MYSTERY_BOX_NOTHING_CHANCE) return { type:'nothing' };
@@ -339,7 +368,24 @@ function renderMysteryBoxScreen(){
     if(nameEl) nameEl.textContent = TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
     const balEl = document.getElementById('mbx-balance');
     if(balEl) balEl.textContent = `${mainLeagueData[loggedInTeam].coins} 🪙`;
+    renderMysteryBoxLockState();
     renderMysteryBoxHistory();
+}
+
+function renderMysteryBoxLockState(){
+    const boxEl = document.getElementById('mbx-box');
+    const labelEl = document.getElementById('mbx-open-label');
+    if(!boxEl || !labelEl || !loggedInTeam) return;
+    const unlockAt = nextMysteryBoxAvailableAt(loggedInTeam);
+    const locked = unlockAt && unlockAt > Date.now();
+    boxEl.classList.toggle('mbx-locked', !!locked);
+    if(locked){
+        const days = Math.max(1, Math.ceil((unlockAt - Date.now()) / (24*60*60*1000)));
+        labelEl.textContent = `Used ${MYSTERY_BOX_LIMIT_COUNT}/${MYSTERY_BOX_LIMIT_COUNT} this fortnight — next box in ${days} day${days===1?'':'s'}`;
+    } else {
+        const used = getRecentMysteryBoxOpens(loggedInTeam).length;
+        labelEl.textContent = `Tap to Open — ${MYSTERY_BOX_PRICE} 🪙 (${used}/${MYSTERY_BOX_LIMIT_COUNT} used this fortnight)`;
+    }
 }
 
 function renderMysteryBoxHistory(){
@@ -356,6 +402,12 @@ async function openMysteryBox(){
     if(mysteryBoxBusy) return; // ignore double-taps mid-animation
     ensureWalletFields(loggedInTeam);
     const wallet = mainLeagueData[loggedInTeam];
+    const unlockAt = nextMysteryBoxAvailableAt(loggedInTeam);
+    if(unlockAt && unlockAt > Date.now()){
+        const days = Math.max(1, Math.ceil((unlockAt - Date.now()) / (24*60*60*1000)));
+        showToast(`Limit reached — ${MYSTERY_BOX_LIMIT_COUNT} boxes per 2 weeks. Next one in ${days} day${days===1?'':'s'}.`,'error',3600);
+        return;
+    }
     if(wallet.coins < MYSTERY_BOX_PRICE){
         showToast(`Not enough coins — ${TEAM_DISPLAY_NAMES[loggedInTeam]} has ${wallet.coins}, needs ${MYSTERY_BOX_PRICE}`,'error',3200);
         return;
@@ -430,7 +482,7 @@ function revealMysteryBoxResult(result){
     setTimeout(()=>{
         reveal.classList.remove('show');
         if(boxEl) boxEl.style.display = '';
-        if(labelEl) labelEl.textContent = `Tap to Open — ${MYSTERY_BOX_PRICE} 🪙`;
+        renderMysteryBoxLockState(); // shows the updated used-count/lock state, not a generic label
         mysteryBoxBusy = false;
     }, 2200);
 }

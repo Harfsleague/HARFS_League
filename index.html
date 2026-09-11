@@ -775,7 +775,7 @@
                 <button class="live-scores-refresh-btn" onclick="openLiveScoresPreferences()" title="Favorites"><i class="fas fa-sliders"></i></button>
             </div>
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);"><i class="fas fa-satellite-dish mr-2"></i>Live Scores</h2>
-            <div class="live-scores-date-nav">
+            <div class="live-scores-date-nav" id="live-scores-date-nav">
                 <button class="live-scores-date-btn" id="live-scores-prev-day" onclick="shiftLiveScoresDate(-1)" title="Previous day"><i class="fas fa-chevron-left"></i></button>
                 <span class="live-scores-date-label" id="live-scores-date-label">Today</span>
                 <button class="live-scores-date-btn" id="live-scores-next-day" onclick="shiftLiveScoresDate(1)" title="Next day"><i class="fas fa-chevron-right"></i></button>
@@ -785,7 +785,6 @@
                 <button class="live-scores-tab active" id="live-scores-tab-scores" onclick="switchLiveScoresTab('scores')">Scores</button>
                 <button class="live-scores-tab" id="live-scores-tab-tables" onclick="switchLiveScoresTab('tables')">Tables</button>
             </div>
-            <button class="live-scores-filter-toggle" id="live-scores-filter-toggle" style="display:none;" onclick="toggleFavoritesOnlyFilter()"></button>
         </div>
         <div class="w-full px-4" id="live-scores-body">
             <div class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);" id="live-scores-loading">

@@ -540,7 +540,7 @@ function guessSeasonsForDate(dateStr) {
   return [...new Set([euroConvention, y, euroConvention - 1])];
 }
 
-async function getSeasonFixtures(env, ctx, kind, id, season) {
+async function getSeasonFixtures(env, ctx, kind, id, season, ttlSeconds) {
   const cacheUrl = `https://harfs-cache.internal/season-fixtures?kind=${kind}&id=${id}&season=${season}`;
   const cacheKey = new Request(cacheUrl, { method: "GET" });
   const cached = await caches.default.match(cacheKey);
@@ -562,7 +562,7 @@ async function getSeasonFixtures(env, ctx, kind, id, season) {
       cacheKey,
       new Response(JSON.stringify(fixtures), {
         status: 200,
-        headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${SEASON_FIXTURES_CACHE_TTL}` },
+        headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${ttlSeconds}` },
       })
     )
   );
@@ -578,11 +578,23 @@ async function handleFixturesByEntity(request, env, ctx, url, kind) {
   const { cached, cacheKey } = await cachedFetch(request, url);
   if (cached) return cached;
 
+  // Today's request needs to stay genuinely live (a favorite team's match
+  // in progress right now shouldn't be frozen for hours); a past or future
+  // date's schedule barely changes, so cache those far longer. Since
+  // Live Scores no longer has a separate "all leagues, today" endpoint —
+  // every date, including today, goes through this same per-favorite path —
+  // this distinction is what keeps "today" feeling live without needlessly
+  // re-fetching a whole season for a date that's already settled.
+  const today = new Date().toISOString().slice(0, 10);
+  const isToday = dateParam === today;
+  const seasonTtl = isToday ? CACHE_SECONDS : SEASON_FIXTURES_CACHE_TTL;
+  const responseTtl = isToday ? CACHE_SECONDS : SEARCH_CACHE_SECONDS;
+
   const seasons = guessSeasonsForDate(dateParam);
   let lastErrorMsg = null;
   for (const season of seasons) {
     try {
-      const fixtures = await getSeasonFixtures(env, ctx, kind, id, season);
+      const fixtures = await getSeasonFixtures(env, ctx, kind, id, season, seasonTtl);
       // A genuinely empty day (no matches scheduled) is still a valid,
       // cacheable answer as long as the SEASON lookup itself returned
       // something — unlike handleTeamsByLeague, "nothing today" doesn't
@@ -592,7 +604,7 @@ async function handleFixturesByEntity(request, env, ctx, url, kind) {
         const body = JSON.stringify({ ok: true, season, fixtures: dayFixtures });
         const response = new Response(body, {
           status: 200,
-          headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${SEARCH_CACHE_SECONDS}`, "X-HARFS-Cache": "MISS", ...corsHeaders(request) },
+          headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${responseTtl}`, "X-HARFS-Cache": "MISS", ...corsHeaders(request) },
         });
         ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
         return response;

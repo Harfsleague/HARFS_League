@@ -12,7 +12,16 @@
 // whether the site is served from the domain root or from a
 // GitHub Pages subpath (username.github.io/repo-name/).
 // ============================================================
-const CACHE_VERSION = 'harfs-shell-v2';
+// IMPORTANT — bump this (e.g. v3 -> v4) on every deploy that changes ANY
+// app-shell file (index.html or anything in js/ or css/). Browsers only
+// re-fetch and re-install this service worker when sw.js's own bytes
+// change; if this constant stays the same, the old cache keeps being
+// served (this is a "serve cached immediately, refresh in the background"
+// strategy — see the fetch handler below), which can leave a user's
+// browser running a MIX of old-cached JS files alongside a freshly loaded
+// index.html (or vice versa) for a while after a patch — exactly the kind
+// of inconsistency that looks like "random things broke" after an update.
+const CACHE_VERSION = 'harfs-shell-v3';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
