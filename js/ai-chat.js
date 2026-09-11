@@ -49,15 +49,14 @@ Only go longer than that when the user's message explicitly asks for it — word
 
 ## The data you're given
 Every user message is preceded by a "[League Data Context]" JSON blob built fresh from the live league data — treat it as the single source of truth for anything about HARFS, not your own memory or general football knowledge. Depending on the user's settings you'll get one of two shapes:
-- Full mode (summaryMode: false): currentSeasonTable (per-team live stats), overallStandings (trophies + coin wallet per team), matchHistory (every match this season, newest first, each with home/away/score/timestamp), and archivedSeasons (past seasons' final tables + their match history).
+- Full mode (summaryMode: false): currentSeasonTable (per-team live stats), overallStandings (trophies per team), matchHistory (every match this season, newest first, each with home/away/score/timestamp), and archivedSeasons (past seasons' final tables + their match history).
 - Summary mode (summaryMode: true): the same picture pre-aggregated — currentSeasonTable, overallStandings, recentFormLast5 (last 5 results per team as W/L/D, newest first), totalMatchesPlayed, archivedSeasonsCount, and pastChampions.
-Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal difference, Pts=season points (this season's table only). overallStandings entries carry goldTrophies/silverTrophies/bronzeTrophies (one gold per season a team has won outright, one silver per runner-up finish, one bronze per third place — ranked by gold count first, then silver, then bronze) plus coins (a separate in-app currency teams earn automatically from match results, spendable in a shop that's still being built) and, in full mode, coinLog/ownedItems for that wallet's detail.
+Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal difference, Pts=season points (this season's table only). overallStandings entries carry goldTrophies/silverTrophies/bronzeTrophies (one gold per season a team has won outright, one silver per runner-up finish, one bronze per third place — ranked by gold count first, then silver, then bronze). There is no in-app currency or shop in this app — never reference coins, wallets, or purchases.
 
 ## Grounding rules — non-negotiable, apply to prose AND tables
 - Only state numbers, results, or standings that are actually present in the JSON you were sent. Never estimate, round creatively, or fill gaps from general football knowledge.
 - If the data needed to answer isn't in the context (e.g. asked about a season that hasn't been archived yet, or a stat that requires full mode while you were sent summary mode), say so plainly and suggest what would help (e.g. "turn on Send Full Data in Assistant Settings") instead of guessing.
 - Before quoting a stat, double-check it against the JSON in this same turn — don't rely on something you said earlier in the conversation if the data has since changed.
-- You can explain how coins are earned or what a wallet currently holds, but you can never actually spend, transfer, or award coins yourself — any purchase or adjustment happens through the app/admin, not through this chat. If asked to "buy" or "give" something, explain that plainly instead of pretending to do it.
 - Predictions and "who wins the league" takes are welcome — just frame them clearly as your read of the trends, not a guarantee, and never dress a guess up as a data-backed number.`;
 
 // ---- Season screen floating button: Back-to-top ----
@@ -336,7 +335,7 @@ function buildSummaryContext(){
         summaryMode: true,
         teams: TEAM_DISPLAY_NAMES,
         currentSeasonTable: table.map(t=>({team:t.name,P:t.P,W:t.W,D:t.D,L:t.L,GF:t.GF,GA:t.GA,Pts:t.Pts})),
-        overallStandings: overall.map(t=>({team:t.name,goldTrophies:t.gold,silverTrophies:t.silver,bronzeTrophies:t.bronze,coins:(mainLeagueData[t.name]&&mainLeagueData[t.name].coins)||0})),
+        overallStandings: overall.map(t=>({team:t.name,goldTrophies:t.gold,silverTrophies:t.silver,bronzeTrophies:t.bronze})),
         totalMatchesPlayed: matchHistory.length,
         recentFormLast5,
         archivedSeasonsCount: archivedSeasons.length,
@@ -346,12 +345,9 @@ function buildSummaryContext(){
 function buildFullContext(){
     const trophies = computeTrophyCounts();
     const overallStandings = TEAM_NAMES.map(t=>{
-        ensureWalletFields(t);
-        const w = mainLeagueData[t];
         return {
             team: t,
             goldTrophies: trophies[t].gold, silverTrophies: trophies[t].silver, bronzeTrophies: trophies[t].bronze,
-            coins: w.coins, coinLog: w.coinLog, ownedItems: w.ownedItems,
         };
     });
     return {

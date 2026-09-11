@@ -471,29 +471,12 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 .trophy-cabinet-grid{ display:flex; justify-content:space-around; text-align:center; }
 .trophy-cabinet-item .trophy-emoji{ font-size:1.6rem; display:block; margin-bottom:4px; }
 .trophy-cabinet-item .trophy-count{ font-size:1.05rem; font-weight:900; color:#e5e7eb; }
-.wallet-balance-row{ display:flex; align-items:center; justify-content:space-between; }
-.wallet-balance-num{ font-size:1.4rem; font-weight:900; color:var(--gold); }
-.coin-log-list{ display:flex; flex-direction:column; gap:6px; margin-top:10px; max-height:170px; overflow-y:auto; }
-.coin-log-list::-webkit-scrollbar{ display:none; }
-.coin-log-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.68rem; padding:7px 9px; border-radius:10px; background:rgba(255,255,255,0.03); color:#cbd5e1; }
-.coin-log-delta{ font-weight:800; flex-shrink:0; }
-.coin-log-delta.positive{ color:#34d399; }
-.coin-log-delta.negative{ color:#f87171; }
+.coin-log-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.68rem; padding:7px 9px; border-radius:10px; background:rgba(255,255,255,0.03); color:#cbd5e1; margin-bottom:6px; }
 .team-panel-empty{ text-align:center; color:#4b5563; font-size:0.7rem; padding:10px 0; }
-.team-panel-admin-row{ display:none; gap:8px; margin-top:10px; }
-.team-panel-admin-row.visible{ display:flex; }
 .report-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:0.72rem; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); color:#cbd5e1; }
 .report-row:last-child{ border-bottom:none; }
 .report-row .label{ color:#9ca3af; }
 .report-row .value{ font-weight:800; color:#e5e7eb; flex-shrink:0; }
-
-/* ---- Shop (Boutique + Arena) ---- */
-.shop-item-card{
-    display:flex; align-items:center; gap:12px;
-    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
-    border-radius:16px; padding:14px; margin-bottom:10px;
-}
-.shop-item-card.disabled{ opacity:0.5; }
 
 /* ---- Mystery Box ---- */
 .mbx-stage{
@@ -555,25 +538,11 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 @keyframes mbx-pop{ 0%{ transform:scale(0); } 60%{ transform:scale(1.25); } 100%{ transform:scale(1); } }
 .mbx-reveal-title{ font-size:1rem; font-weight:900; text-align:center; padding:0 24px; }
 .mbx-reveal.mbx-tier-none .mbx-reveal-title{ color:#9ca3af; }
-.mbx-reveal.mbx-tier-coins .mbx-reveal-title{ color:#fbbf24; text-shadow:0 0 18px rgba(251,191,36,0.5); }
 .mbx-reveal.mbx-tier-arena .mbx-reveal-title{ color:#c4b5fd; text-shadow:0 0 18px rgba(167,139,250,0.5); }
-.mbx-reveal.mbx-tier-coins .mbx-reveal-icon, .mbx-reveal.mbx-tier-arena .mbx-reveal-icon{
+.mbx-reveal.mbx-tier-arena .mbx-reveal-icon{
     animation:mbx-pop 0.5s cubic-bezier(.34,1.56,.64,1), mbx-glow-spin 1.8s ease-in-out infinite 0.5s;
 }
 @keyframes mbx-glow-spin{ 0%,100%{ filter:drop-shadow(0 0 6px currentColor); } 50%{ filter:drop-shadow(0 0 22px currentColor); } }
-.shop-item-info{ flex:1; min-width:0; }
-.shop-item-name{ font-size:0.85rem; font-weight:800; color:#f0f4f8; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.shop-item-tag{ font-size:0.55rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border-radius:99px; background:rgba(251,191,36,0.15); color:var(--gold); border:1px solid rgba(251,191,36,0.3); }
-.shop-item-desc{ font-size:0.68rem; color:#9ca3af; margin-top:4px; line-height:1.5; }
-.shop-item-meta{ font-size:0.78rem; font-weight:800; color:var(--gold); margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.shop-item-extra{ font-size:0.6rem; font-weight:600; color:#6b7280; }
-.shop-item-buy-btn{
-    flex-shrink:0; border:1px solid rgba(52,211,153,0.35); background:rgba(52,211,153,0.12);
-    color:#6ee7b7; font-weight:800; font-size:0.72rem; padding:9px 14px; border-radius:11px; cursor:pointer;
-    font-family:inherit;
-}
-.shop-item-buy-btn:active{ transform:scale(0.95); }
-.shop-item-status{ flex-shrink:0; font-size:0.62rem; font-weight:700; color:#6b7280; text-align:center; max-width:78px; line-height:1.4; }
 
 /* left accent bar */
 .ranking-card::before {

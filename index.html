@@ -286,7 +286,7 @@
 
     </div><!-- /league-table-screen -->
 
-    <!-- ============ MYSTERY BOX (replaces the Arena Shop for now — reached from Settings) ============ -->
+    <!-- ============ MYSTERY BOX (reached from Settings) ============ -->
     <div id="shop-screen" class="page-screen">
         <div class="league-header">
             <button onclick="navigate('settings')" style="align-self:flex-start;margin-bottom:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
@@ -297,10 +297,9 @@
                 <img id="shop-my-team-logo" src="" class="account-avatar" style="width:44px;height:44px;">
                 <div class="account-textcol">
                     <span id="shop-my-team-name" class="account-name">—</span>
-                    <span class="account-subtitle">Balance: <span id="mbx-balance">—</span></span>
                 </div>
             </div>
-            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">25 coins for one random prize — could be an Arena perk, a coin payout, or nothing at all.</p>
+            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">Free to open — up to 2 per team every 2 weeks. Could win an Arena perk, or nothing at all.</p>
         </div>
 
         <div class="mbx-stage">
@@ -380,23 +379,6 @@
                 </div>
             </div>
 
-            <!-- Pending Shop Purchases (submitted automatically via the HARFS
-                 auth/purchases Worker — see HARFS_AUTH_API. Approve/Reject
-                 here finalizes them the same way the old admin-approve-link
-                 used to, just without a link to send around.) -->
-            <div class="admin-section">
-                <div class="admin-section-bar" style="background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
-                <div class="admin-section-body">
-                    <h3 style="background:linear-gradient(90deg,#fdba74,#fca5a5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Pending Shop Purchases</h3>
-                    <div id="admin-purchases-list" class="overflow-y-auto space-y-2" style="max-height:320px;">
-                        <div class="text-center text-gray-600 text-xs">Loading...</div>
-                    </div>
-                    <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(245,158,11,0.3);color:#fdba74;" onclick="loadPendingPurchases()">
-                        <i class="fas fa-rotate mr-2"></i>Refresh
-                    </button>
-                </div>
-            </div>
-
             <!-- League Management -->
             <div class="admin-section">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#8b5cf6,#ec4899);"></div>
@@ -409,11 +391,8 @@
                         <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(59,130,246,0.3);color:#93c5fd;" onclick="recalculateLeagueTable()">
                             <i class="fas fa-shield-halved text-lg"></i><span>Verify Table</span>
                         </button>
-                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(234,179,8,0.3);color:#fde047;" onclick="auditCoinEconomy()">
-                            <i class="fas fa-coins text-lg"></i><span>Audit Coins</span>
-                        </button>
                     </div>
-                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history, or reviews every wallet for anything that looks broken — use after any edit to double-check everything lines up.</p>
+                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history — use after any edit to double-check everything lines up.</p>
                 </div>
             </div>
 
@@ -517,7 +496,7 @@
                     <div class="shop-tile-icon"><i class="fas fa-gift"></i></div>
                     <div class="shop-tile-textcol">
                         <span class="shop-tile-title">Mystery Box</span>
-                        <span class="shop-tile-sub">25 coins for a random prize</span>
+                        <span class="shop-tile-sub">Free — 2 per team every 2 weeks</span>
                     </div>
                     <i class="fas fa-chevron-right shop-tile-chevron"></i>
                 </button>
@@ -562,7 +541,7 @@
                         <div class="perf-toggle" id="admin-edit-mode-toggle" onclick="toggleAdminEditMode()"></div>
                     </div>
                 </div>
-                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories, and Adjust Coins appears in team panels.</p>
+                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories.</p>
             </div>
 
             <div class="settings-section-label">Account</div>
@@ -697,21 +676,7 @@
                         <div id="team-panel-records"></div>
                     </div>
                     <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-coins"></i> Coin Wallet</div>
-                        <div class="wallet-balance-row">
-                            <span class="wallet-balance-num"><span id="team-panel-coins">0</span> 🪙</span>
-                        </div>
-                        <div class="coin-log-list" id="team-panel-log"></div>
-                        <div class="team-panel-admin-row" id="team-panel-admin-adjust">
-                            <button class="glass-button flex-1 text-xs py-2" onclick="adjustTeamCoinsPrompt()"><i class="fas fa-pen"></i> Adjust Coins</button>
-                        </div>
-                    </div>
-                    <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-shirt"></i> Collection</div>
-                        <div id="team-panel-items"></div>
-                    </div>
-                    <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-bolt"></i> Arena Requests</div>
+                        <div class="team-panel-section-title"><i class="fas fa-gift"></i> Mystery Box Wins</div>
                         <div id="team-panel-arena"></div>
                     </div>
                 </div>
@@ -719,7 +684,7 @@
         </div>
     </div>
 
-    <!-- ============ GENERIC REPORT SHEET (e.g. coin economy audit) ============ -->
+    <!-- ============ GENERIC REPORT SHEET (e.g. table verification) ============ -->
     <div id="report-sheet-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeReportSheet()">
         <div class="team-picker-panel" style="max-height:82vh;">
             <div class="team-picker-handle"></div>

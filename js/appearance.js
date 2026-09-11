@@ -296,9 +296,8 @@ function renderSettingsScreen(){
     const editToggle=document.getElementById('admin-edit-mode-toggle');
     if(editToggle) editToggle.classList.toggle('on', isAdminUnlocked);
 }
-// Flips Edit Mode on/off — this is the single switch for both the
-// Pin/Edit/Delete controls on Memories cards and the Adjust Coins
-// button inside team panels (see isAdminUnlocked usages).
+// Flips Edit Mode on/off — this is the single switch for the
+// Pin/Edit/Delete controls on Memories cards (see isAdminUnlocked usages).
 function toggleAdminEditMode(){
     haptic([8]);
     isAdminUnlocked = !isAdminUnlocked;

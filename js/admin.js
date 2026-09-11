@@ -31,7 +31,6 @@ function showAdminDashboard(){
     // repeat dashboard visits (e.g. right after a save) since we already
     // keep the shard shas in sync locally after every successful save.
     Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub(),weirdEventsLoaded?Promise.resolve():loadWeirdEventsFromGitHub()]).then(([,h])=>renderAdminHistory(h));
-    loadPendingPurchases();
     // reset weird media upload
     weirdMedia=[];renderWeirdPreview();
     // Music library manager — always refetched on open so deletes/renames/
