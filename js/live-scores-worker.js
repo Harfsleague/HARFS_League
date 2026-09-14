@@ -21,12 +21,25 @@
 
 const API_FOOTBALL_BASE = "https://v3.football.api-sports.io";
 // How long we trust our own cached copy before asking API-Football again.
-// Free plan = 100 requests/day total, so keep this conservative — 60s
+// Free plan = 100 requests/day total, so keep this conservative — 90s
 // still feels "live" to someone glancing at the screen, and caps us at
-// a theoretical max of 1440 upstream calls/day even under constant
+// a theoretical max of 960 upstream calls/day even under constant
 // traffic (in practice, for a small private app, actual usage will be
-// far below the 100/day ceiling).
-const CACHE_SECONDS = 60;
+// far below the 100/day ceiling). Bumped from 60s -> 90s specifically to
+// cut down how often a favorites refresh lands on an expired cache and
+// has to go upstream at all.
+const CACHE_SECONDS = 90;
+
+// When /fixtures-by-favorites has to go upstream for more than one
+// league/team back-to-back (i.e. actual cache misses, not hits), this is
+// the pause between each upstream call. API-Football's free plan allows
+// only ~10 requests/minute; spacing real upstream calls out — instead of
+// firing them all in parallel like the client used to — is what actually
+// stops a single favorites refresh from tripping that limit on its own.
+const SEQUENTIAL_DELAY_MS = 350;
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 const ALLOWED_ORIGINS = ["*"]; // tighten to your site's origin once confirmed working, e.g. ["https://harfsleague.github.io"]
 
@@ -68,6 +81,7 @@ export default {
     if (path === "/standings") return handleStandings(request, env, ctx, url);
     if (path === "/fixtures-by-league") return handleFixturesByEntity(request, env, ctx, url, "league");
     if (path === "/fixtures-by-team") return handleFixturesByEntity(request, env, ctx, url, "team");
+    if (path === "/fixtures-by-favorites") return handleFixturesByFavorites(request, env, ctx, url);
     return json({ error: "Not found" }, 404, request);
   },
 };
@@ -540,11 +554,15 @@ function guessSeasonsForDate(dateStr) {
   return [...new Set([euroConvention, y, euroConvention - 1])];
 }
 
-async function getSeasonFixtures(env, ctx, kind, id, season, ttlSeconds) {
+async function getSeasonFixtures(env, ctx, kind, id, season, ttlSeconds, meta) {
   const cacheUrl = `https://harfs-cache.internal/season-fixtures?kind=${kind}&id=${id}&season=${season}`;
   const cacheKey = new Request(cacheUrl, { method: "GET" });
   const cached = await caches.default.match(cacheKey);
-  if (cached) return cached.json();
+  if (cached) {
+    if (meta) meta.fromCache = true;
+    return cached.json();
+  }
+  if (meta) meta.fromCache = false;
 
   const param = kind === "league" ? `league=${encodeURIComponent(id)}` : `team=${encodeURIComponent(id)}`;
   const apiRes = await fetchUpstream(`${API_FOOTBALL_BASE}/fixtures?${param}&season=${season}`, {
@@ -627,4 +645,135 @@ async function handleFixturesByEntity(request, env, ctx, url, kind) {
     )
   );
   return json({ ok: false, error: message }, 429, request);
+}
+
+// ============================================================
+// FIXTURES BY FAVORITES — the client used to fire one request per
+// favorite league AND per favorite team, all in parallel (Promise.all).
+// With even 5-7 favorites, an expired cache meant 5-7 upstream calls
+// landing on API-Football in the same instant, tripping its ~10
+// requests/minute free-plan limit on a single screen refresh — and once
+// tripped, every one of those requests got cached as a 429 for the next
+// 20s, so a page reload during that window failed identically.
+//
+// This single endpoint takes every favorite id at once and resolves them
+// ONE AT A TIME inside the Worker (see fetchFixturesSequential), pausing
+// SEQUENTIAL_DELAY_MS between any calls that actually reach upstream
+// (cache hits are free and skip the pause). The whole combined result is
+// also cached as one entry, so a second device/tab asking for the exact
+// same set of favorites+date within CACHE_SECONDS costs nothing at all.
+// ============================================================
+
+// Resolves one kind ("league" or "team") of ids sequentially. For each id,
+// tries the season guesses in order and keeps the first one that returns
+// an actual (even if empty) response — same logic as handleFixturesByEntity
+// used to run per-request, just reused here across a whole list of ids.
+async function fetchFixturesSequential(env, ctx, kind, ids, seasons, ttlSeconds) {
+  const fixtures = [];
+  const failed = [];
+  let rateLimited = false;
+
+  for (const id of ids) {
+    if (rateLimited) {
+      // Once API-Football has told us to back off, burning more calls into
+      // the same wall for the remaining ids only makes it worse — mark the
+      // rest as unresolved-for-now instead of trying them anyway.
+      failed.push(id);
+      continue;
+    }
+    let idFixtures = null;
+    for (const season of seasons) {
+      const meta = {};
+      try {
+        const result = await getSeasonFixtures(env, ctx, kind, id, season, ttlSeconds, meta);
+        if (!meta.fromCache) await sleep(SEQUENTIAL_DELAY_MS);
+        if (result.length > 0) {
+          idFixtures = result;
+          break; // found the right season for this id — no need to try the others
+        }
+        idFixtures = idFixtures || []; // a valid (if empty) answer — remember we resolved this id even if nothing else pans out
+      } catch (err) {
+        if (!meta.fromCache) await sleep(SEQUENTIAL_DELAY_MS);
+        if (err.isRateLimit) {
+          rateLimited = true;
+          break;
+        }
+        // any other error — an earlier/later season guess might still work
+      }
+    }
+    if (idFixtures === null) failed.push(id);
+    else fixtures.push(...idFixtures);
+  }
+
+  return { fixtures, failed, rateLimited };
+}
+
+async function handleFixturesByFavorites(request, env, ctx, url) {
+  const leagueIds = (url.searchParams.get("leagueIds") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const teamIds = (url.searchParams.get("teamIds") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const dateParam = url.searchParams.get("date");
+  if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return json({ ok: false, error: "a valid date=YYYY-MM-DD is required" }, 400, request);
+  if (!leagueIds.length && !teamIds.length) return json({ ok: false, error: "leagueIds or teamIds is required" }, 400, request);
+
+  // Normalize the id lists before using them as the cache key, so
+  // ?leagueIds=2,1 and ?leagueIds=1,2 (same favorites, different order)
+  // share one cache entry instead of each burning their own upstream calls.
+  const normalizedUrl = new URL(url.toString());
+  normalizedUrl.searchParams.set("leagueIds", [...leagueIds].sort().join(","));
+  normalizedUrl.searchParams.set("teamIds", [...teamIds].sort().join(","));
+
+  const { cached, cacheKey } = await cachedFetch(request, normalizedUrl);
+  if (cached) return cached;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const isToday = dateParam === today;
+  const seasonTtl = isToday ? CACHE_SECONDS : SEASON_FIXTURES_CACHE_TTL;
+  const responseTtl = isToday ? CACHE_SECONDS : SEARCH_CACHE_SECONDS;
+  const seasons = guessSeasonsForDate(dateParam);
+
+  const leagueResult = await fetchFixturesSequential(env, ctx, "league", leagueIds, seasons, seasonTtl);
+  // If leagues already tripped the rate limit, don't even attempt the
+  // teams — same reasoning as inside fetchFixturesSequential itself.
+  const teamResult = leagueResult.rateLimited
+    ? { fixtures: [], failed: teamIds, rateLimited: true }
+    : await fetchFixturesSequential(env, ctx, "team", teamIds, seasons, seasonTtl);
+
+  const merged = new Map();
+  [...leagueResult.fixtures, ...teamResult.fixtures].forEach((f) => {
+    if (new Date(f.kickoff).toISOString().slice(0, 10) === dateParam) merged.set(f.id, f);
+  });
+  const fixtures = [...merged.values()];
+
+  const totalRequested = leagueIds.length + teamIds.length;
+  const totalFailed = leagueResult.failed.length + teamResult.failed.length;
+  const rateLimited = leagueResult.rateLimited || teamResult.rateLimited;
+
+  // Only treat this as a hard failure if EVERY favorite failed to resolve —
+  // if even one league/team came back with a real (possibly empty) answer,
+  // that's a normal "nothing scheduled for some of your favorites today"
+  // result, not an error.
+  if (totalRequested > 0 && totalFailed === totalRequested) {
+    const message = rateLimited
+      ? "API-Football rate limit reached — please wait a moment and try again."
+      : "Could not load fixtures for your favorites right now.";
+    const errRes = new Response(JSON.stringify({ ok: false, error: message }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=20", ...corsHeaders(request) },
+    });
+    ctx.waitUntil(caches.default.put(cacheKey, errRes.clone()));
+    return errRes;
+  }
+
+  const body = JSON.stringify({ ok: true, fixtures, partial: totalFailed > 0, failedCount: totalFailed });
+  const response = new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": `public, max-age=${responseTtl}`,
+      "X-HARFS-Cache": "MISS",
+      ...corsHeaders(request),
+    },
+  });
+  ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+  return response;
 }
