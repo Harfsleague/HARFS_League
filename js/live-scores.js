@@ -444,10 +444,17 @@ async function fetchLiveScores(manual){
 // Live Scores only ever fetches data for the leagues/teams the user has
 // actually favorited — never "every league, everywhere" — both to avoid
 // pulling (and paying API-Football quota for) matches nobody asked to see,
-// and because /fixtures-by-league and /fixtures-by-team have no date-range
-// restriction (unlike the plain date-based endpoint), so the exact same
-// call works whether browsing today or three weeks out. Requests run in
-// parallel, one per favorite league and per favorite team, and are merged.
+// and because /fixtures-by-favorites has no date-range restriction (unlike
+// the plain date-based endpoint), so the exact same call works whether
+// browsing today or three weeks out.
+//
+// This used to fire one request per favorite league AND per favorite team
+// in parallel (Promise.all) — with 5-7 favorites that meant 5-7 simultaneous
+// upstream calls on any cache miss, which was enough on its own to trip
+// API-Football's free-plan ~10 requests/minute limit and turn into a wall
+// of 429s. All favorites now go out as ONE request to the combined
+// /fixtures-by-favorites endpoint, which resolves them one at a time
+// (paced) inside the Worker and caches the whole combined result together.
 // ============================================================
 async function fetchLiveScoresForFavorites(date, cacheDbKey){
     const favLeagues = getFavLeagues();
@@ -456,27 +463,27 @@ async function fetchLiveScoresForFavorites(date, cacheDbKey){
         renderLiveScoresError('Add a favorite league or team (tap the sliders icon above) to see its matches here.');
         return;
     }
-    const requests = [
-        ...favLeagues.map(l=>({url:`${LIVE_SCORES_API}/fixtures-by-league?leagueId=${l.id}&date=${date}`})),
-        ...favTeams.map(t=>({url:`${LIVE_SCORES_API}/fixtures-by-team?teamId=${t.id}&date=${date}`})),
-    ];
-    const results = await Promise.allSettled(requests.map(async r=>{
-        const res = await fetchWithRetry(r.url);
+    const params = new URLSearchParams({ date });
+    if(favLeagues.length) params.set('leagueIds', favLeagues.map(l=>l.id).join(','));
+    if(favTeams.length) params.set('teamIds', favTeams.map(t=>t.id).join(','));
+
+    let fixtures = null;
+    try{
+        // Favorites can take a bit longer to resolve now that they're fetched
+        // one at a time on the Worker side (paced to respect API-Football's
+        // rate limit) instead of all at once — give it more room than the
+        // default timeout before treating it as unreachable.
+        const res = await fetchWithRetry(`${LIVE_SCORES_API}/fixtures-by-favorites?${params.toString()}`, {timeoutMs:15000, retries:1});
         const data = await res.json();
         if(!res.ok || !data.ok) throw new Error(data.error||'failed');
-        return data.fixtures || [];
-    }));
+        fixtures = data.fixtures || [];
+    }catch(e){
+        fixtures = null;
+    }
 
-    if(date !== liveScoresSelectedDate()) return; // navigated elsewhere while these were in flight
+    if(date !== liveScoresSelectedDate()) return; // navigated elsewhere while this was in flight
 
-    const merged = new Map();
-    let anySucceeded = false;
-    results.forEach(r=>{
-        if(r.status==='fulfilled'){ anySucceeded = true; r.value.forEach(f=>merged.set(f.id, f)); }
-    });
-    const fixtures = [...merged.values()];
-
-    if(anySucceeded){
+    if(fixtures){
         liveScoresLastFixtures = fixtures;
         renderLiveScores(fixtures);
         const updatedEl = document.getElementById('live-scores-updated-label');
