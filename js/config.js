@@ -38,9 +38,6 @@ const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 // pointing at the placeholder.
 // ============================================================
 const HARFS_AUTH_API = "https://harfs-auth.borobiron12.workers.dev";
-// Live Scores (API-Football, proxied+cached through a separate, independent
-// Worker — see worker/live-scores-worker.js + LIVE_SCORES_DEPLOY.md).
-const LIVE_SCORES_API = "https://harfs-livescores.borobiron12.workers.dev";
 let loggedInTeam = localStorage.getItem('harfs_team') || null;
 let harfsSessionToken = localStorage.getItem('harfs_session') || null;
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
@@ -69,10 +66,6 @@ const MOMENT_AUDIO_MAX_MB=8;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
 function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,pinned:null,
-    // Live Scores favorites, mirrored here so they survive an app reset —
-    // logging back in restores them from this account record (see
-    // syncLiveScorePrefsForAccount() in live-scores.js).
-    liveScoreFavLeagues:[],liveScoreFavTeams:[],liveScorePrefsSynced:false,
     // Mystery Box outcomes — kept just to enforce the 2-opens-per-2-weeks
     // limit and show a short history; see shop.js.
     arenaHistory:[]});}

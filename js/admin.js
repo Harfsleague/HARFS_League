@@ -77,7 +77,7 @@ function navigate(route){
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-admin',
         'shop':'nav-settings','settings':'nav-settings','admin':'nav-settings',
-        'ai-chat':'nav-main','live-scores':'nav-main'
+        'ai-chat':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
@@ -85,7 +85,7 @@ function navigate(route){
     const idMap={
         'main-league':'main-league-screen','league':'league-table-screen',
         'shop':'shop-screen','weird':'weird-screen','admin':'admin-screen',
-        'settings':'settings-screen','ai-chat':'ai-chat-screen','live-scores':'live-scores-screen'
+        'settings':'settings-screen','ai-chat':'ai-chat-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{
@@ -107,17 +107,6 @@ function navigate(route){
     if(route==='shop')loadMainLeagueDataFromGitHub().then(renderMysteryBoxScreen);
     if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
     if(route==='settings')renderSettingsScreen();
-    // Live Scores auto-refreshes only while its screen is actually open —
-    // stop the timer the moment we navigate anywhere else.
-    if(route==='live-scores'){
-        startLiveScoresAutoRefresh();
-        // Pull this account's saved Live Scores favorites (leagues/teams
-        // picked on any device) so a fresh install/reinstall shows them
-        // again right after logging back in.
-        if(loggedInTeam) loadMainLeagueDataFromGitHub().then(syncLiveScorePrefsForAccount).catch(()=>{});
-    } else {
-        stopLiveScoresAutoRefresh();
-    }
     if(route==='admin'){
         // Getting into the admin route at all already required a Bayern
         // login — there's no separate PIN gate anymore.

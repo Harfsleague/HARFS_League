@@ -4,12 +4,13 @@
 // every other file can call idbGet/idbSet/setSyncStatus freely.
 // ============================================================
 const OFFLINE_DB_NAME = 'harfs-offline';
-// v2 added 'liveScoresCache' (last-known fixtures so Live Scores can show
-// something instead of a hard error offline). v3 adds 'teamLogos' (see
-// below) — onupgradeneeded only adds missing stores, so existing data in
-// the other stores is untouched by either bump.
+// v3 added 'teamLogos' — onupgradeneeded only adds missing stores, so
+// existing data in the other stores is untouched by a version bump.
+// ('liveScoresCache' was dropped from this list along with the Live
+// Scores feature; any leftover store of that name in an existing user's
+// browser is simply unused now, not deleted — harmless.)
 const OFFLINE_DB_VERSION = 3;
-const OFFLINE_STORES = ['leagueData','mainLeagueData','matchHistory','archivedSeasons','weirdEvents','playlist','offlineTrack','liveScoresCache','teamLogos'];
+const OFFLINE_STORES = ['leagueData','mainLeagueData','matchHistory','archivedSeasons','weirdEvents','playlist','offlineTrack','teamLogos'];
 
 let _offlineDbPromise = null;
 function openOfflineDb(){
