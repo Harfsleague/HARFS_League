@@ -10,6 +10,15 @@
     --orb3: #0ea5e9;
     --primary: #60a5fa;
     --primary-glow: rgba(96,165,250,0.35);
+    /* Performance intensity multipliers (0..1) — set inline on <body> by
+       applyAppearance() in js/appearance.js from each option's slider value.
+       Defaults here (1 = full/original look) are what a browser uses if JS
+       hasn't run yet, so first paint always looks like today's design. */
+    --glass-blur-mult: 1;
+    --glass-opacity-mult: 1;
+    --orb-mult: 1;
+    --sheen-mult: 1;
+    --anim-mult: 1;
     --accent: #818cf8;
     --gold: #fbbf24;
     --silver: #d1d5db;
@@ -113,7 +122,7 @@ body[data-palette="graphite"] {
 * { box-sizing: border-box; }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--app-font, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
     color: #fff;
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
@@ -134,6 +143,7 @@ body {
     position: fixed; border-radius:50%;
     filter: blur(64px); z-index:0; pointer-events:none;
     animation: floatOrb 14s infinite ease-in-out;
+    animation-duration: calc(14s / var(--anim-mult, 1));
     transition: background 0.8s ease;
     /* GPU-composited transform, off the main-thread paint path — smoother
        drift with noticeably less jank than the old 90px blur radius. */
@@ -141,9 +151,9 @@ body {
     transform: translateZ(0);
     backface-visibility: hidden;
 }
-.orb-1 { width:340px;height:340px; background:radial-gradient(circle,var(--orb1),transparent); top:-80px;left:-120px; opacity:0.38; }
-.orb-2 { width:430px;height:430px; background:radial-gradient(circle,var(--orb2),transparent); bottom:-120px;right:-120px; opacity:0.33; animation-delay:-6s; }
-.orb-3 { width:240px;height:240px; background:radial-gradient(circle,var(--orb3),transparent); top:40%;right:-80px; opacity:0.2; animation-delay:-3s; }
+.orb-1 { width:340px;height:340px; background:radial-gradient(circle,var(--orb1),transparent); top:-80px;left:-120px; opacity:calc(0.38 * var(--orb-mult, 1)); }
+.orb-2 { width:430px;height:430px; background:radial-gradient(circle,var(--orb2),transparent); bottom:-120px;right:-120px; opacity:calc(0.33 * var(--orb-mult, 1)); animation-delay:-6s; }
+.orb-3 { width:240px;height:240px; background:radial-gradient(circle,var(--orb3),transparent); top:40%;right:-80px; opacity:calc(0.2 * var(--orb-mult, 1)); animation-delay:-3s; }
 
 @keyframes floatOrb {
     0%,100%{transform:translate3d(0,0,0) scale(1);}
@@ -192,8 +202,11 @@ body {
 #hero-logo-container.box-forming {
     opacity: 1;
     background: rgba(255,255,255,0.04);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background:rgba(255,255,255,calc(0.04 * var(--glass-opacity-mult, 1)));
+    backdrop-filter:blur(24px) saturate(180%);
+    backdrop-filter:blur(calc(24px * var(--glass-blur-mult, 1))) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(calc(24px * var(--glass-blur-mult, 1))) saturate(180%);
     border: 1px solid rgba(255,255,255,0.12);
     border-top: 1px solid rgba(255,255,255,0.22);
     border-left: 1px solid rgba(255,255,255,0.22);
@@ -211,8 +224,11 @@ body {
     transform:translate(-50%,0);
     opacity: 1;
     background:rgba(255,255,255,0.04);
+    background:rgba(255,255,255,calc(0.04 * var(--glass-opacity-mult, 1)));
     backdrop-filter:blur(24px) saturate(180%);
+    backdrop-filter:blur(calc(24px * var(--glass-blur-mult, 1))) saturate(180%);
     -webkit-backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(calc(24px * var(--glass-blur-mult, 1))) saturate(180%);
     border:1px solid rgba(255,255,255,0.1);
     border-top:1px solid rgba(255,255,255,0.22);
     border-left:1px solid rgba(255,255,255,0.22);
@@ -232,6 +248,7 @@ body {
     background: var(--hero-grad);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent;
     animation:glowPulse 5s infinite ease-in-out;
+    animation-duration: calc(5s / var(--anim-mult, 1));
     opacity:0;
     transform: translateY(12px);
     transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s;
@@ -258,6 +275,7 @@ body {
     font-size:1.8rem;letter-spacing:4px;
     display:inline-block;
     animation:harfsBreathe 6s ease-in-out infinite;
+    animation-duration: calc(6s / var(--anim-mult, 1));
 }
 @keyframes harfsBreathe{
     0%,100%{ transform:scale(1); }
@@ -281,7 +299,9 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     transform:translateX(-50%); width:90%; max-width:360px;
     background:rgba(10,18,30,0.75);
     backdrop-filter:blur(28px) saturate(200%);
+    backdrop-filter:blur(calc(28px * var(--glass-blur-mult, 1))) saturate(200%);
     -webkit-backdrop-filter:blur(28px) saturate(200%);
+    -webkit-backdrop-filter:blur(calc(28px * var(--glass-blur-mult, 1))) saturate(200%);
     border-radius:9999px;
     display:flex; justify-content:space-between; align-items:center;
     padding:6px 8px; z-index:100;
@@ -340,6 +360,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     width:95%;margin-bottom:12px;
     background:rgba(10,18,30,0.65);
     backdrop-filter:blur(20px);
+    backdrop-filter:blur(calc(20px * var(--glass-blur-mult, 1)));
     border-radius:22px;border:1px solid rgba(255,255,255,0.07);
     padding:14px 16px;
     box-shadow:0 8px 24px rgba(0,0,0,0.25);
@@ -579,6 +600,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     border:1px solid rgba(255,255,255,0.06);
     background:rgba(10,18,30,0.6);
     backdrop-filter:blur(14px);
+    backdrop-filter:blur(calc(14px * var(--glass-blur-mult, 1)));
 }
 .season-table {
     width:100%;
@@ -697,7 +719,9 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
    GLASS CONTROLS
    ===================================================== */
 .glass-button{
-    background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);
+    background:rgba(255,255,255,0.07);
+    background:rgba(255,255,255,calc(0.07 * var(--glass-opacity-mult, 1)));backdrop-filter:blur(12px);
+backdrop-filter:blur(calc(12px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.13);color:white;
     padding:12px 24px;border-radius:16px;font-weight:700;
     display:flex;align-items:center;justify-content:center;
@@ -706,7 +730,9 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 }
 .glass-button:active{transform:scale(0.96);background:rgba(255,255,255,0.13);}
 .glass-input{
-    background:rgba(255,255,255,0.07);backdrop-filter:blur(10px);
+    background:rgba(255,255,255,0.07);
+    background:rgba(255,255,255,calc(0.07 * var(--glass-opacity-mult, 1)));backdrop-filter:blur(10px);
+backdrop-filter:blur(calc(10px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.11);color:white;outline:none;
     transition:all 0.3s;
 }
@@ -734,13 +760,15 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 .modal-overlay{
     position:fixed;inset:0;z-index:500;
     display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);padding:20px;
+    background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);
+backdrop-filter:blur(calc(6px * var(--glass-blur-mult, 1)));padding:20px;
     opacity:0;transition:opacity 0.25s;pointer-events:none;
 }
 .modal-overlay.open{opacity:1;pointer-events:auto;}
 .modal-content{
     background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
     backdrop-filter:blur(30px);
+    backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.09);
     border-top:1px solid rgba(255,255,255,0.16);
     border-radius:28px;padding:24px;
@@ -801,7 +829,9 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
    TEAM PICKER — custom replacement for native <select>
    ===================================================== */
 .team-picker-trigger{
-    background:rgba(255,255,255,0.07);backdrop-filter:blur(10px);
+    background:rgba(255,255,255,0.07);
+    background:rgba(255,255,255,calc(0.07 * var(--glass-opacity-mult, 1)));backdrop-filter:blur(10px);
+backdrop-filter:blur(calc(10px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.11);color:white;
     border-radius:14px;padding:8px 10px;
     display:flex;align-items:center;gap:8px;
@@ -825,6 +855,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     position:fixed;inset:0;z-index:600;
     display:flex;align-items:flex-end;justify-content:center;
     background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);
+backdrop-filter:blur(calc(6px * var(--glass-blur-mult, 1)));
     opacity:0;pointer-events:none;transition:opacity 0.25s;
 }
 .team-picker-sheet.open{opacity:1;pointer-events:auto;}
@@ -835,6 +866,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 .team-picker-panel{
     background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
     backdrop-filter:blur(30px);
+    backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.09);
     border-bottom:none;
     border-radius:26px 26px 0 0;
@@ -895,6 +927,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     display:flex;align-items:center;gap:10px;
     box-shadow:0 8px 32px rgba(0,0,0,0.4);
     backdrop-filter:blur(20px);
+    backdrop-filter:blur(calc(20px * var(--glass-blur-mult, 1)));
     font-size:0.8rem;font-weight:700;
     white-space:nowrap;
     animation:toastIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
@@ -1115,6 +1148,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 #weird-lightbox{
     position:fixed;inset:0;z-index:800;
     background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);
+backdrop-filter:blur(calc(8px * var(--glass-blur-mult, 1)));
     display:flex;align-items:center;justify-content:center;
     opacity:0;transition:opacity 0.25s;pointer-events:none;
 }
@@ -1252,6 +1286,7 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     background-size: 220% 100%;
     background-position: 130% 0;
     pointer-events:none;
+    opacity: var(--sheen-mult, 1);
     animation: liquidSheen 6s ease-in-out infinite;
     mix-blend-mode: overlay;
 }
@@ -1292,6 +1327,7 @@ body:not(.lite-mode):not(.perf-no-sheen) .season-history-card::before{
     background-size: 220% 100%;
     background-position: 130% 0;
     pointer-events:none;
+    opacity: var(--sheen-mult, 1);
     animation: liquidSheen 8s ease-in-out infinite;
     mix-blend-mode: overlay;
     border-radius: inherit;
@@ -1466,6 +1502,72 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 .perf-toggle.on{ background:var(--primary); border-color:var(--primary); }
 .perf-toggle.on::after{ transform:translateX(18px); }
 
+/* ---- Amount sliders (one under each performance toggle) ----
+   Grouped with the toggle row above into a shared bottom border via
+   .perf-option-block, so the divider sits after the slider instead of
+   between the two. Dims + disables while the toggle above is off — the
+   value itself is preserved so it's right where you left it if you flip
+   the toggle back on. */
+.perf-option-block{ border-bottom:1px solid rgba(255,255,255,0.06); }
+.perf-option-block:last-child{ border-bottom:none; }
+.perf-option-block .perf-option-row{ border-bottom:none; }
+.perf-amount-row{
+    display:flex; align-items:center; gap:10px;
+    padding:0 4px 12px 44px; /* 44px lines the slider up under the option's text, past the icon */
+    transition:opacity 0.2s;
+}
+.perf-amount-row.disabled{ opacity:0.35; pointer-events:none; }
+.perf-amount-slider{
+    -webkit-appearance:none; appearance:none;
+    flex:1; height:4px; border-radius:99px;
+    background:rgba(255,255,255,0.12);
+    outline:none; cursor:pointer;
+}
+.perf-amount-slider::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--primary); border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.4);
+    cursor:pointer;
+}
+.perf-amount-slider::-moz-range-thumb{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--primary); border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.4);
+    cursor:pointer;
+}
+.perf-amount-value{
+    font-size:0.62rem; font-weight:700; color:#9ca3af;
+    min-width:32px; text-align:right; flex-shrink:0;
+}
+.perf-glass-subrow{ display:flex; flex-direction:column; gap:8px; }
+.perf-glass-sublabel{ font-size:0.6rem; color:#6b7280; min-width:78px; flex-shrink:0; }
+.perf-glass-subrow .perf-amount-row{ padding:0; }
+
+/* ---- Fonts ---- */
+.font-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+    margin-bottom:4px;
+}
+.font-swatch{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:10px 4px; border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+    transition:background 0.2s, border-color 0.2s;
+}
+.font-swatch:active{ transform:scale(0.96); }
+.font-swatch.selected{ background:var(--nav-active-bg); border-color:var(--nav-active-border); }
+.font-swatch-preview{
+    font-size:1.3rem; color:#e5e7eb; line-height:1;
+    height:1.6rem; display:flex; align-items:center; justify-content:center;
+}
+.font-swatch.selected .font-swatch-preview{ color:var(--primary); }
+.font-swatch span{
+    font-size:0.56rem; font-weight:700; color:#9ca3af; text-align:center;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;
+}
+.font-swatch.selected span{ color:#fff; }
+
 /* =====================================================
    SETTINGS PANEL — small, square, centered, no explanations
    ===================================================== */
@@ -1476,6 +1578,7 @@ body.perf-no-anim .nav-item{ transition:none !important; }
     overflow:hidden;
     background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
     backdrop-filter:blur(30px);
+    backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.09);
     border-top:1px solid rgba(255,255,255,0.18);
     border-radius:28px;
@@ -1592,7 +1695,9 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 .login-panel{
     width:min(88vw,340px); background:linear-gradient(160deg,rgba(10,18,30,0.97),rgba(15,23,42,0.97));
     border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.18);
-    border-radius:24px; padding:22px 20px; backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+    border-radius:24px; padding:22px 20px; backdrop-filter:blur(30px);
+ backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1))); -webkit-backdrop-filter:blur(30px);
+ -webkit-backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1)));
     box-shadow:0 24px 60px rgba(0,0,0,0.6);
 }
 .login-title{ font-size:0.95rem; font-weight:900; text-align:center; color:#fff; letter-spacing:0.5px; margin-bottom:4px; }
@@ -1754,7 +1859,9 @@ body.perf-no-anim .nav-item{ transition:none !important; }
     color:#e5e7eb;
     border:1px solid rgba(255,255,255,0.16);
     box-shadow:0 8px 26px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
-    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+    backdrop-filter:blur(calc(14px * var(--glass-blur-mult, 1))); -webkit-backdrop-filter:blur(14px);
+ -webkit-backdrop-filter:blur(calc(14px * var(--glass-blur-mult, 1)));
 }
 .back-to-top-fab:active{ transform:translateX(-50%) scale(0.94); }
 .back-to-top-fab i{ font-size:0.85rem; }
@@ -1794,7 +1901,9 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 }
 .ai-panel{
     background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
-    backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+    backdrop-filter:blur(30px);
+    backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1))); -webkit-backdrop-filter:blur(30px);
+ -webkit-backdrop-filter:blur(calc(30px * var(--glass-blur-mult, 1)));
     border:1px solid rgba(255,255,255,0.09);
     border-radius:26px;
     width:100%; height:100%;
