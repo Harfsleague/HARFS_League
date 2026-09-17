@@ -1646,6 +1646,7 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 #perf-segmented.segmented-control{ padding:3px; gap:2px; }
 #perf-segmented .segmented-btn{ font-size:0.62rem; padding:9px 2px; gap:4px; }
 .perf-auto-note{
+    display:none;
     font-size:0.62rem; color:#6b7280; text-align:center;
     margin:8px 4px 14px; line-height:1.5;
 }
