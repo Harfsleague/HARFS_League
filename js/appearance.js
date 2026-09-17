@@ -24,131 +24,82 @@ const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
-// FONTS — a default plus a set of bold, football-scoreboard-styled
-// display faces (not the trademarked UEFA typeface itself — these are
-// free Google Fonts chosen for a similar stadium/jersey feel) and a
-// couple of clean general-purpose faces, Vazirmatn included since it
-// covers Persian text as well as Latin. All families are loaded once,
-// up front, via the <link> in index.html's <head> — selecting one here
-// just switches which family the whole app's --app-font variable points
-// to, so switching is instant with nothing left to fetch.
-// ------------------------------------------------------------
-const FONTS = [
-    { id:'default',  label:'Default',        family:"'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", category:'System' },
-    { id:'anton',     label:'Anton',          family:"'Anton', sans-serif",          category:'Football Style' },
-    { id:'bebas',     label:'Bebas Neue',     family:"'Bebas Neue', sans-serif",     category:'Football Style' },
-    { id:'russo',     label:'Russo One',      family:"'Russo One', sans-serif",      category:'Football Style' },
-    { id:'teko',      label:'Teko',           family:"'Teko', sans-serif",           category:'Football Style' },
-    { id:'oswald',    label:'Oswald',         family:"'Oswald', sans-serif",         category:'Football Style' },
-    { id:'racing',    label:'Racing Sans',    family:"'Racing Sans One', sans-serif",category:'Football Style' },
-    { id:'poppins',   label:'Poppins',        family:"'Poppins', sans-serif",        category:'General' },
-    { id:'inter',     label:'Inter',          family:"'Inter', sans-serif",          category:'General' },
-    { id:'vazir',     label:'Vazirmatn',      family:"'Vazirmatn', sans-serif",      category:'General' },
-];
-let currentFont = localStorage.getItem('appFont') || 'default';
-function selectFont(id){
-    haptic([6]);
-    currentFont = id;
-    localStorage.setItem('appFont', id);
-    applyFont();
-}
-function applyFont(){
-    const font = FONTS.find(f=>f.id===currentFont) || FONTS[0];
-    document.body.style.setProperty('--app-font', font.family);
-}
-function renderFontGrid(){
-    const grid = document.getElementById('font-grid');
-    if(!grid) return;
-    grid.innerHTML = FONTS.map(f => `
-        <div class="font-swatch" onclick="selectFont('${f.id}')" data-id="${f.id}">
-            <div class="font-swatch-preview" style="font-family:${f.family};">Aa</div>
-            <span>${f.label}</span>
-        </div>`).join('');
-}
-
-// ------------------------------------------------------------
-// PERFORMANCE — "Full performance" as a single on/off mode is gone.
-// Only two presets remain: Lite (a one-tap "everything off" shortcut)
-// and Custom (six independent switches — this is where "full" effects
-// live now, just selectable one at a time instead of all-or-nothing).
+// PERFORMANCE — four presets: Auto (device-detected), Full (everything
+// on), Lite (everything off), and Custom. Custom used to expose six
+// independent switches; that turned out to be more knobs than anyone
+// actually used, so it's now three grouped ones — each still flips the
+// same underlying flags CSS already keys off (see applyAppearance()
+// below and the body.perf-no-* rules in styles.css), just presented as
+// fewer, more meaningful choices:
+//   Glass              -> blur + shadows   (the frosted-panel look & its glow)
+//   Background Effects -> orbs + particles + sheen  (ambient decoration)
+//   Motion             -> anim             (screen transitions)
 // ------------------------------------------------------------
 const PERF_KEYS = ['orbs','particles','blur','shadows','sheen','anim'];
 const PERF_ALL_ON  = { orbs:true,  particles:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
 const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, sheen:false, anim:false };
+const PERF_GROUPS = {
+    glass:      ['blur','shadows'],
+    background: ['orbs','particles','sheen'],
+    motion:     ['anim'],
+};
 let performancePreset = localStorage.getItem('performancePreset')
-    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag; 'full' now maps to 'custom'
-if(performancePreset==='full') performancePreset='custom'; // migrates anyone who had the old preset saved
+    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'auto'); // migrates old flags; brand-new installs default to Auto
 let perfCustom = (()=>{
     try{ const saved = JSON.parse(localStorage.getItem('perfCustom')); if(saved) return {...PERF_ALL_ON, ...saved}; }catch(e){}
     return {...PERF_ALL_ON};
 })();
+
+// ---- Auto detection ----
+// A short, real rendering benchmark (not just reading hardwareConcurrency)
+// so the decision reflects how this device actually handles the kind of
+// canvas/blur work the app does, not just a raw core count. Runs once
+// per install and is cached — call resetAutoPerformance() to force a
+// fresh read (e.g. if this profile moves to a different device).
+function benchmarkRenderSpeed(){
+    const start = performance.now();
+    const canvas = document.createElement('canvas');
+    canvas.width = 220; canvas.height = 220;
+    const ctx = canvas.getContext('2d');
+    for(let i=0;i<300;i++){
+        ctx.filter = 'blur(3px)';
+        ctx.beginPath();
+        ctx.arc(Math.random()*220, Math.random()*220, 18, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${(i*37)%255},120,200,0.35)`;
+        ctx.fill();
+    }
+    let acc = 0; // just to stop the loop below getting optimized away
+    for(let i=0;i<150000;i++){ acc += Math.sin(i)*Math.cos(i*0.5); }
+    return performance.now() - start; // ms — higher means a weaker device
+}
+function detectAutoPerformance(){
+    const cores = navigator.hardwareConcurrency || 4;
+    const mem = navigator.deviceMemory || 4; // Chrome/Edge only; other browsers read as 4 (treated as "fine")
+    const saveData = !!(navigator.connection && navigator.connection.saveData);
+    const renderMs = benchmarkRenderSpeed();
+    // Any one clear "weak device" signal is enough to drop to Lite — on an
+    // ambiguous read, erring toward Lite is the safer default (a wrongly-
+    // Lite phone just looks a bit plainer; a wrongly-Full one actually lags).
+    const weak = saveData || cores <= 3 || mem <= 2 || renderMs > 35;
+    return weak ? 'lite' : 'full';
+}
+function getAutoResolvedPreset(){
+    let cached = localStorage.getItem('autoDetectedPreset');
+    if(cached !== 'full' && cached !== 'lite'){
+        cached = detectAutoPerformance();
+        localStorage.setItem('autoDetectedPreset', cached);
+    }
+    return cached;
+}
+function resetAutoPerformance(){
+    localStorage.removeItem('autoDetectedPreset');
+    if(performancePreset==='auto') applyAppearance();
+}
 function currentPerfValues(){
     if(performancePreset==='lite') return PERF_ALL_OFF;
-    return perfCustom;
-}
-
-// ------------------------------------------------------------
-// PERFORMANCE — AMOUNT SLIDERS. Each toggle above is "is this effect on
-// at all"; these are "how much of it" — so a slow device can still keep
-// Glass Blur on, just at a fraction of the blur radius/opacity, instead
-// of the old all-or-nothing choice. 'blur' has two independent amounts
-// (blur radius vs. panel transparency) since those are visually and
-// GPU-cost-wise two different things; every other key has one. Stored
-// separately from perfCustom (the on/off flags) so nothing about the
-// existing toggle logic/migration above has to change.
-// ------------------------------------------------------------
-const AMOUNT_KEYS = ['orbs','particles','blur','blurOpacity','shadows','sheen','anim'];
-const AMOUNT_DEFAULTS = { orbs:100, particles:100, blur:100, blurOpacity:100, shadows:100, sheen:100, anim:100 };
-// Which on/off toggle gates each amount slider (blur + blurOpacity both
-// live under the single "Glass Blur" toggle).
-const AMOUNT_GATE_KEY = { orbs:'orbs', particles:'particles', blur:'blur', blurOpacity:'blur', shadows:'shadows', sheen:'sheen', anim:'anim' };
-let perfAmounts = (()=>{
-    try{ const saved = JSON.parse(localStorage.getItem('perfAmounts')); if(saved) return {...AMOUNT_DEFAULTS, ...saved}; }catch(e){}
-    return {...AMOUNT_DEFAULTS};
-})();
-// Recomputes --primary-glow's alpha from the current --primary color,
-// scaled by the Glow & Shadows amount — every box-shadow that already
-// references var(--primary-glow) picks this up for free, no need to
-// touch each box-shadow declaration individually.
-function applyShadowIntensity(pct){
-    const primaryHex = getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#60a5fa';
-    let rgb;
-    try{ rgb = hexToRgb(primaryHex.startsWith('#') ? primaryHex : '#60a5fa'); }catch(e){ rgb = {r:96,g:165,b:250}; }
-    const alpha = 0.35 * (Math.max(0,Math.min(100,pct))/100);
-    document.body.style.setProperty('--primary-glow', `rgba(${Math.round(rgb.r)},${Math.round(rgb.g)},${Math.round(rgb.b)},${alpha.toFixed(3)})`);
-}
-// Applies one amount slider's live effect — a CSS variable for everything
-// except particle density, which is a canvas draw-loop setting in
-// ui-common.js. Called both on every slider drag (fast path, no
-// localStorage write) and once at startup/whenever a toggle flips.
-function applyPerfAmountVar(key, pct0to100){
-    const pct = Math.max(0,Math.min(100,Number(pct0to100)||0));
-    const s = document.body.style;
-    switch(key){
-        case 'orbs': s.setProperty('--orb-mult', pct/100); break;
-        case 'particles': if(window.setParticleDensity) window.setParticleDensity(pct); break;
-        case 'blur': s.setProperty('--glass-blur-mult', pct/100); break;
-        case 'blurOpacity': s.setProperty('--glass-opacity-mult', pct/100); break;
-        case 'shadows': applyShadowIntensity(pct); break;
-        case 'sheen': s.setProperty('--sheen-mult', pct/100); break;
-        case 'anim': s.setProperty('--anim-mult', Math.max(30,pct)/100); break; // floor at 30% so animation-duration calc() never divides by ~0
-    }
-}
-// Live preview while dragging — updates the % label and the visual effect
-// immediately, but doesn't touch localStorage or re-run the full
-// applyAppearance() sync on every single 'input' tick (that would mean
-// re-toggling six body classes per pixel of drag — exactly the kind of
-// jank someone lowering these settings for a slow device doesn't want).
-function previewPerfAmount(key, val){
-    const label = document.getElementById('perf-amount-value-'+key);
-    if(label) label.textContent = Math.round(val)+'%';
-    applyPerfAmountVar(key, val);
-}
-// Persists the slider's value once the user releases it ('change' event).
-function commitPerfAmount(key, val){
-    haptic([4]);
-    perfAmounts[key] = Math.max(0,Math.min(100,Number(val)||100));
-    localStorage.setItem('perfAmounts', JSON.stringify(perfAmounts));
+    if(performancePreset==='full') return PERF_ALL_ON;
+    if(performancePreset==='auto') return getAutoResolvedPreset()==='full' ? PERF_ALL_ON : PERF_ALL_OFF;
+    return perfCustom; // 'custom'
 }
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
 
@@ -169,45 +120,40 @@ function applyAppearance(){
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
     document.body.classList.toggle('perf-no-anim', !p.anim);
-    // Amount sliders: each only actually matters while its toggle is on —
-    // when off, the effect is already fully hidden by the perf-no-* rules
-    // above, so we just feed 0 through for consistency (harmless either way).
-    AMOUNT_KEYS.forEach(k=>{
-        const gate = AMOUNT_GATE_KEY[k];
-        applyPerfAmountVar(k, p[gate] ? perfAmounts[k] : 0);
-    });
-    applyFont();
     syncSettingsUI();
     syncAppearanceUI();
 }
 
 function openAppearanceSheet(){
     renderPaletteGrid();
-    renderFontGrid();
     syncAppearanceUI();
     document.getElementById('appearance-sheet').classList.add('open');
 }
 function closeAppearanceSheet(){
     document.getElementById('appearance-sheet').classList.remove('open');
 }
-// val is 'lite' | 'custom'. Picking 'custom' just switches the source
-// of truth to perfCustom (seeded from whatever was active) and reveals
-// the individual switches below.
+// val is 'auto' | 'full' | 'custom' | 'lite'. Picking 'custom' seeds
+// perfCustom from whatever was actually in effect a moment ago (so
+// switching into Custom from Auto/Full/Lite starts from what you were
+// just looking at, not some arbitrary default).
 function setPerformance(val){
     haptic([6]);
     if(val==='custom' && performancePreset!=='custom'){
-        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active
+        perfCustom = {...currentPerfValues()};
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
     performancePreset = val;
     localStorage.setItem('performancePreset', val);
     applyAppearance();
 }
-// Flips a single switch while in Custom mode.
-function togglePerfOption(key){
+// Flips one of the three grouped switches while in Custom mode — sets
+// every underlying key in that group together (see PERF_GROUPS above).
+function togglePerfGroup(group){
     if(performancePreset!=='custom') return;
     haptic([6]);
-    perfCustom[key] = !perfCustom[key];
+    const members = PERF_GROUPS[group];
+    const newVal = !perfCustom[members[0]];
+    members.forEach(k => perfCustom[k] = newVal);
     localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     applyAppearance();
 }
@@ -239,35 +185,24 @@ function syncAppearanceUI(){
     const customPanel = document.getElementById('perf-custom-options');
     if(customPanel) customPanel.style.display = (performancePreset==='custom') ? 'block' : 'none';
     if(performancePreset==='custom'){
-        PERF_KEYS.forEach(k=>{
-            const el = document.getElementById('perf-toggle-'+k);
-            if(el) el.classList.toggle('on', !!perfCustom[k]);
+        Object.keys(PERF_GROUPS).forEach(group=>{
+            const el = document.getElementById('perf-toggle-'+group);
+            if(el) el.classList.toggle('on', !!perfCustom[PERF_GROUPS[group][0]]);
         });
-        // Sliders: reflect the saved amount, and dim+disable while their
-        // gating toggle is off (value is kept, just not editable, so it's
-        // right where it was left if the toggle gets flipped back on).
-        AMOUNT_KEYS.forEach(k=>{
-            const slider = document.getElementById('perf-amount-'+k);
-            const label = document.getElementById('perf-amount-value-'+k);
-            const row = document.getElementById('perf-amount-row-'+k) || slider?.closest('.perf-amount-row');
-            if(slider) slider.value = perfAmounts[k];
-            if(label) label.textContent = Math.round(perfAmounts[k])+'%';
-            const gate = AMOUNT_GATE_KEY[k];
-            if(row) row.classList.toggle('disabled', !perfCustom[gate]);
-        });
-        // Nudge (not block) — if most of the heavy effects are on at once,
-        // let the person know that's the likely cause of any slowness,
-        // rather than leaving them guessing.
-        const heavyKeys = ['blur','particles','orbs','shadows'];
-        const heavyOnCount = heavyKeys.filter(k=>perfCustom[k]).length;
-        const hint = document.getElementById('perf-heavy-hint');
-        if(hint) hint.classList.toggle('visible', heavyOnCount>=3);
+    }
+    const autoNote = document.getElementById('perf-auto-note');
+    if(autoNote){
+        if(performancePreset==='auto'){
+            const resolved = getAutoResolvedPreset();
+            autoNote.textContent = resolved==='full'
+                ? 'Detected a capable device — running Full effects.'
+                : 'Detected a slower device or connection — running Lite for smoothness.';
+        } else {
+            autoNote.textContent = '';
+        }
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
-    });
-    document.querySelectorAll('.font-swatch').forEach(el=>{
-        el.classList.toggle('selected', el.dataset.id === currentFont);
     });
     const editor = document.getElementById('custom-palette-editor');
     if(editor) editor.style.display = (currentPalette === 'custom') ? 'block' : 'none';
