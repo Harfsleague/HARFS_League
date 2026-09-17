@@ -24,6 +24,49 @@ const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
+// FONTS — a default plus a set of bold, football-scoreboard-styled
+// display faces (not the trademarked UEFA typeface itself — these are
+// free Google Fonts chosen for a similar stadium/jersey feel) and a
+// couple of clean general-purpose faces, Vazirmatn included since it
+// covers Persian text as well as Latin. All families are loaded once,
+// up front, via the <link> in index.html's <head> — selecting one here
+// just switches which family the whole app's --app-font variable points
+// to, so switching is instant with nothing left to fetch.
+// ------------------------------------------------------------
+const FONTS = [
+    { id:'default',  label:'Default',        family:"'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", category:'System' },
+    { id:'anton',     label:'Anton',          family:"'Anton', sans-serif",          category:'Football Style' },
+    { id:'bebas',     label:'Bebas Neue',     family:"'Bebas Neue', sans-serif",     category:'Football Style' },
+    { id:'russo',     label:'Russo One',      family:"'Russo One', sans-serif",      category:'Football Style' },
+    { id:'teko',      label:'Teko',           family:"'Teko', sans-serif",           category:'Football Style' },
+    { id:'oswald',    label:'Oswald',         family:"'Oswald', sans-serif",         category:'Football Style' },
+    { id:'racing',    label:'Racing Sans',    family:"'Racing Sans One', sans-serif",category:'Football Style' },
+    { id:'poppins',   label:'Poppins',        family:"'Poppins', sans-serif",        category:'General' },
+    { id:'inter',     label:'Inter',          family:"'Inter', sans-serif",          category:'General' },
+    { id:'vazir',     label:'Vazirmatn',      family:"'Vazirmatn', sans-serif",      category:'General' },
+];
+let currentFont = localStorage.getItem('appFont') || 'default';
+function selectFont(id){
+    haptic([6]);
+    currentFont = id;
+    localStorage.setItem('appFont', id);
+    applyFont();
+}
+function applyFont(){
+    const font = FONTS.find(f=>f.id===currentFont) || FONTS[0];
+    document.body.style.setProperty('--app-font', font.family);
+}
+function renderFontGrid(){
+    const grid = document.getElementById('font-grid');
+    if(!grid) return;
+    grid.innerHTML = FONTS.map(f => `
+        <div class="font-swatch" onclick="selectFont('${f.id}')" data-id="${f.id}">
+            <div class="font-swatch-preview" style="font-family:${f.family};">Aa</div>
+            <span>${f.label}</span>
+        </div>`).join('');
+}
+
+// ------------------------------------------------------------
 // PERFORMANCE — "Full performance" as a single on/off mode is gone.
 // Only two presets remain: Lite (a one-tap "everything off" shortcut)
 // and Custom (six independent switches — this is where "full" effects
@@ -42,6 +85,70 @@ let perfCustom = (()=>{
 function currentPerfValues(){
     if(performancePreset==='lite') return PERF_ALL_OFF;
     return perfCustom;
+}
+
+// ------------------------------------------------------------
+// PERFORMANCE — AMOUNT SLIDERS. Each toggle above is "is this effect on
+// at all"; these are "how much of it" — so a slow device can still keep
+// Glass Blur on, just at a fraction of the blur radius/opacity, instead
+// of the old all-or-nothing choice. 'blur' has two independent amounts
+// (blur radius vs. panel transparency) since those are visually and
+// GPU-cost-wise two different things; every other key has one. Stored
+// separately from perfCustom (the on/off flags) so nothing about the
+// existing toggle logic/migration above has to change.
+// ------------------------------------------------------------
+const AMOUNT_KEYS = ['orbs','particles','blur','blurOpacity','shadows','sheen','anim'];
+const AMOUNT_DEFAULTS = { orbs:100, particles:100, blur:100, blurOpacity:100, shadows:100, sheen:100, anim:100 };
+// Which on/off toggle gates each amount slider (blur + blurOpacity both
+// live under the single "Glass Blur" toggle).
+const AMOUNT_GATE_KEY = { orbs:'orbs', particles:'particles', blur:'blur', blurOpacity:'blur', shadows:'shadows', sheen:'sheen', anim:'anim' };
+let perfAmounts = (()=>{
+    try{ const saved = JSON.parse(localStorage.getItem('perfAmounts')); if(saved) return {...AMOUNT_DEFAULTS, ...saved}; }catch(e){}
+    return {...AMOUNT_DEFAULTS};
+})();
+// Recomputes --primary-glow's alpha from the current --primary color,
+// scaled by the Glow & Shadows amount — every box-shadow that already
+// references var(--primary-glow) picks this up for free, no need to
+// touch each box-shadow declaration individually.
+function applyShadowIntensity(pct){
+    const primaryHex = getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#60a5fa';
+    let rgb;
+    try{ rgb = hexToRgb(primaryHex.startsWith('#') ? primaryHex : '#60a5fa'); }catch(e){ rgb = {r:96,g:165,b:250}; }
+    const alpha = 0.35 * (Math.max(0,Math.min(100,pct))/100);
+    document.body.style.setProperty('--primary-glow', `rgba(${Math.round(rgb.r)},${Math.round(rgb.g)},${Math.round(rgb.b)},${alpha.toFixed(3)})`);
+}
+// Applies one amount slider's live effect — a CSS variable for everything
+// except particle density, which is a canvas draw-loop setting in
+// ui-common.js. Called both on every slider drag (fast path, no
+// localStorage write) and once at startup/whenever a toggle flips.
+function applyPerfAmountVar(key, pct0to100){
+    const pct = Math.max(0,Math.min(100,Number(pct0to100)||0));
+    const s = document.body.style;
+    switch(key){
+        case 'orbs': s.setProperty('--orb-mult', pct/100); break;
+        case 'particles': if(window.setParticleDensity) window.setParticleDensity(pct); break;
+        case 'blur': s.setProperty('--glass-blur-mult', pct/100); break;
+        case 'blurOpacity': s.setProperty('--glass-opacity-mult', pct/100); break;
+        case 'shadows': applyShadowIntensity(pct); break;
+        case 'sheen': s.setProperty('--sheen-mult', pct/100); break;
+        case 'anim': s.setProperty('--anim-mult', Math.max(30,pct)/100); break; // floor at 30% so animation-duration calc() never divides by ~0
+    }
+}
+// Live preview while dragging — updates the % label and the visual effect
+// immediately, but doesn't touch localStorage or re-run the full
+// applyAppearance() sync on every single 'input' tick (that would mean
+// re-toggling six body classes per pixel of drag — exactly the kind of
+// jank someone lowering these settings for a slow device doesn't want).
+function previewPerfAmount(key, val){
+    const label = document.getElementById('perf-amount-value-'+key);
+    if(label) label.textContent = Math.round(val)+'%';
+    applyPerfAmountVar(key, val);
+}
+// Persists the slider's value once the user releases it ('change' event).
+function commitPerfAmount(key, val){
+    haptic([4]);
+    perfAmounts[key] = Math.max(0,Math.min(100,Number(val)||100));
+    localStorage.setItem('perfAmounts', JSON.stringify(perfAmounts));
 }
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
 
@@ -62,12 +169,21 @@ function applyAppearance(){
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
     document.body.classList.toggle('perf-no-anim', !p.anim);
+    // Amount sliders: each only actually matters while its toggle is on —
+    // when off, the effect is already fully hidden by the perf-no-* rules
+    // above, so we just feed 0 through for consistency (harmless either way).
+    AMOUNT_KEYS.forEach(k=>{
+        const gate = AMOUNT_GATE_KEY[k];
+        applyPerfAmountVar(k, p[gate] ? perfAmounts[k] : 0);
+    });
+    applyFont();
     syncSettingsUI();
     syncAppearanceUI();
 }
 
 function openAppearanceSheet(){
     renderPaletteGrid();
+    renderFontGrid();
     syncAppearanceUI();
     document.getElementById('appearance-sheet').classList.add('open');
 }
@@ -127,6 +243,18 @@ function syncAppearanceUI(){
             const el = document.getElementById('perf-toggle-'+k);
             if(el) el.classList.toggle('on', !!perfCustom[k]);
         });
+        // Sliders: reflect the saved amount, and dim+disable while their
+        // gating toggle is off (value is kept, just not editable, so it's
+        // right where it was left if the toggle gets flipped back on).
+        AMOUNT_KEYS.forEach(k=>{
+            const slider = document.getElementById('perf-amount-'+k);
+            const label = document.getElementById('perf-amount-value-'+k);
+            const row = document.getElementById('perf-amount-row-'+k) || slider?.closest('.perf-amount-row');
+            if(slider) slider.value = perfAmounts[k];
+            if(label) label.textContent = Math.round(perfAmounts[k])+'%';
+            const gate = AMOUNT_GATE_KEY[k];
+            if(row) row.classList.toggle('disabled', !perfCustom[gate]);
+        });
         // Nudge (not block) — if most of the heavy effects are on at once,
         // let the person know that's the likely cause of any slowness,
         // rather than leaving them guessing.
@@ -137,6 +265,9 @@ function syncAppearanceUI(){
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
+    });
+    document.querySelectorAll('.font-swatch').forEach(el=>{
+        el.classList.toggle('selected', el.dataset.id === currentFont);
     });
     const editor = document.getElementById('custom-palette-editor');
     if(editor) editor.style.display = (currentPalette === 'custom') ? 'block' : 'none';
