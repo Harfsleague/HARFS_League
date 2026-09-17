@@ -46,7 +46,25 @@ const PERF_GROUPS = {
 let performancePreset = localStorage.getItem('performancePreset')
     || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'auto'); // migrates old flags; brand-new installs default to Auto
 let perfCustom = (()=>{
-    try{ const saved = JSON.parse(localStorage.getItem('perfCustom')); if(saved) return {...PERF_ALL_ON, ...saved}; }catch(e){}
+    try{
+        const saved = JSON.parse(localStorage.getItem('perfCustom'));
+        if(saved){
+            const merged = {...PERF_ALL_ON, ...saved};
+            // Migration: the old Custom UI let each of these 6 keys be set
+            // independently; the new grouped toggles (Glass, Background
+            // Effects, Motion) only show/control ONE value per group. If an
+            // existing user had e.g. blur:true + shadows:false from before,
+            // normalize the whole group to the first member's value now —
+            // otherwise the Glass toggle would render "on" while shadows
+            // silently stayed off underneath, with no way to see the mismatch
+            // short of toggling it off and back on.
+            Object.values(PERF_GROUPS).forEach(members=>{
+                const val = merged[members[0]];
+                members.forEach(k=>merged[k]=val);
+            });
+            return merged;
+        }
+    }catch(e){}
     return {...PERF_ALL_ON};
 })();
 
@@ -75,12 +93,14 @@ function benchmarkRenderSpeed(){
 function detectAutoPerformance(){
     const cores = navigator.hardwareConcurrency || 4;
     const mem = navigator.deviceMemory || 4; // Chrome/Edge only; other browsers read as 4 (treated as "fine")
-    const saveData = !!(navigator.connection && navigator.connection.saveData);
     const renderMs = benchmarkRenderSpeed();
     // Any one clear "weak device" signal is enough to drop to Lite — on an
     // ambiguous read, erring toward Lite is the safer default (a wrongly-
     // Lite phone just looks a bit plainer; a wrongly-Full one actually lags).
-    const weak = saveData || cores <= 3 || mem <= 2 || renderMs > 35;
+    // NOTE: deliberately NOT using navigator.connection.saveData here — that
+    // reflects a bandwidth preference, not device power, and none of these
+    // effects use any network data, so it isn't a valid signal for this.
+    const weak = cores <= 3 || mem <= 2 || renderMs > 35;
     return weak ? 'lite' : 'full';
 }
 function getAutoResolvedPreset(){
@@ -192,13 +212,12 @@ function syncAppearanceUI(){
     }
     const autoNote = document.getElementById('perf-auto-note');
     if(autoNote){
+        autoNote.style.display = (performancePreset==='auto') ? 'block' : 'none';
         if(performancePreset==='auto'){
             const resolved = getAutoResolvedPreset();
             autoNote.textContent = resolved==='full'
                 ? 'Detected a capable device — running Full effects.'
-                : 'Detected a slower device or connection — running Lite for smoothness.';
-        } else {
-            autoNote.textContent = '';
+                : 'Detected a slower device — running Lite for smoothness.';
         }
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
