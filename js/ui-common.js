@@ -15,6 +15,15 @@
     // Fewer particles than before (36 vs 55) — noticeably lighter on the
     // main thread while staying visually indistinguishable at this size/opacity.
     const PARTICLE_COUNT=36;
+    // How many of the 36 pre-generated particles actually get drawn each
+    // frame — driven by the Floating Particles amount slider in the
+    // Appearance sheet (see setPerfAmount()/previewPerfAmount() in appearance.js). Keeping the
+    // full particle array around and just drawing a prefix of it is cheaper
+    // and simpler than rebuilding the array on every slider move.
+    let activeParticleCount = PARTICLE_COUNT;
+    window.setParticleDensity = function(pct){
+        activeParticleCount = Math.max(0, Math.round(PARTICLE_COUNT * (Math.max(0,Math.min(100,pct))/100)));
+    };
     function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
     resize();window.addEventListener('resize',resize);
     for(let i=0;i<PARTICLE_COUNT;i++){
@@ -34,7 +43,8 @@
     paletteObserver.observe(document.body,{attributes:true,attributeFilter:['data-palette','style']});
     function draw(){
         ctx.clearRect(0,0,W,H);
-        particles.forEach(p=>{
+        for(let i=0;i<activeParticleCount;i++){
+            const p=particles[i];
             p.pulse+=0.012;
             const o=p.o*(0.6+0.4*Math.sin(p.pulse));
             ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
@@ -42,7 +52,7 @@
             p.x+=p.dx;p.y+=p.dy;
             if(p.x<0)p.x=W;if(p.x>W)p.x=0;
             if(p.y<0)p.y=H;if(p.y>H)p.y=0;
-        });
+        }
         rafId=requestAnimationFrame(draw);
     }
     // Skip all work entirely when the canvas isn't visible: it's hidden via
