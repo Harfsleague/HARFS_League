@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Fonts for the Appearance → Font picker: a few football/scoreboard-styled
-         display faces plus a couple of general-purpose ones (Vazirmatn covers
-         Persian text too). Loaded once, up front — swapping fonts is instant
-         since nothing has to be fetched at selection time. -->
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Russo+One&family=Racing+Sans+One&family=Teko:wght@400;600;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Inter:wght@400;600;700&family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="manifest" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/manifest.json">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
@@ -76,113 +69,39 @@
 
         <div class="appearance-section-label">Performance</div>
         <div class="segmented-control" id="perf-segmented">
-            <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
+            <button class="segmented-btn" data-value="auto" onclick="setPerformance('auto')"><i class="fas fa-wand-magic-sparkles"></i> Auto</button>
+            <button class="segmented-btn" data-value="full" onclick="setPerformance('full')"><i class="fas fa-bolt"></i> Full</button>
             <button class="segmented-btn" data-value="custom" onclick="setPerformance('custom')"><i class="fas fa-sliders"></i> Custom</button>
+            <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
         </div>
+        <div class="perf-auto-note" id="perf-auto-note"></div>
 
         <div id="perf-custom-options" style="display:none;">
-            <div class="perf-subsection-label">Visual Effects</div>
-            <div class="perf-option-block">
-                <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Background Orbs</span>
-                        <span class="perf-option-sub">Floating glow shapes behind the app</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-orbs" onclick="togglePerfOption('orbs')"></div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Glass</span>
+                    <span class="perf-option-sub">Frosted-glass panels &amp; their glow</span>
                 </div>
-                <div class="perf-amount-row" id="perf-amount-row-orbs">
-                    <input type="range" class="perf-amount-slider" id="perf-amount-orbs" min="10" max="100" step="5" oninput="previewPerfAmount('orbs', this.value)" onchange="commitPerfAmount('orbs', this.value)">
-                    <span class="perf-amount-value" id="perf-amount-value-orbs">100%</span>
-                </div>
+                <div class="perf-toggle" id="perf-toggle-glass" onclick="togglePerfGroup('glass')"></div>
             </div>
-            <div class="perf-option-block">
-                <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-braille"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Floating Particles</span>
-                        <span class="perf-option-sub">Animated dots on the canvas layer</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-particles" onclick="togglePerfOption('particles')"></div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Background Effects</span>
+                    <span class="perf-option-sub">Floating orbs, particles &amp; shimmer</span>
                 </div>
-                <div class="perf-amount-row" id="perf-amount-row-particles">
-                    <input type="range" class="perf-amount-slider" id="perf-amount-particles" min="10" max="100" step="5" oninput="previewPerfAmount('particles', this.value)" onchange="commitPerfAmount('particles', this.value)">
-                    <span class="perf-amount-value" id="perf-amount-value-particles">100%</span>
-                </div>
+                <div class="perf-toggle" id="perf-toggle-background" onclick="togglePerfGroup('background')"></div>
             </div>
-            <div class="perf-option-block">
-                <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Glass Blur</span>
-                        <span class="perf-option-sub">Frosted-glass panels (heaviest effect)</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-blur" onclick="togglePerfOption('blur')"></div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Motion</span>
+                    <span class="perf-option-sub">Slide/fade transitions between screens</span>
                 </div>
-                <div class="perf-amount-row perf-glass-subrow" id="perf-amount-row-blur">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="perf-glass-sublabel">Blur amount</span>
-                        <input type="range" class="perf-amount-slider" id="perf-amount-blur" min="10" max="100" step="5" oninput="previewPerfAmount('blur', this.value)" onchange="commitPerfAmount('blur', this.value)">
-                        <span class="perf-amount-value" id="perf-amount-value-blur">100%</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="perf-glass-sublabel">Transparency</span>
-                        <input type="range" class="perf-amount-slider" id="perf-amount-blurOpacity" min="10" max="100" step="5" oninput="previewPerfAmount('blurOpacity', this.value)" onchange="commitPerfAmount('blurOpacity', this.value)">
-                        <span class="perf-amount-value" id="perf-amount-value-blurOpacity">100%</span>
-                    </div>
-                </div>
-            </div>
-            <div class="perf-option-block">
-                <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Glow &amp; Shadows</span>
-                        <span class="perf-option-sub">Depth shadows around cards and buttons</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-shadows" onclick="togglePerfOption('shadows')"></div>
-                </div>
-                <div class="perf-amount-row" id="perf-amount-row-shadows">
-                    <input type="range" class="perf-amount-slider" id="perf-amount-shadows" min="10" max="100" step="5" oninput="previewPerfAmount('shadows', this.value)" onchange="commitPerfAmount('shadows', this.value)">
-                    <span class="perf-amount-value" id="perf-amount-value-shadows">100%</span>
-                </div>
-            </div>
-            <div class="perf-subsection-label">Motion</div>
-            <div class="perf-option-block">
-                <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-wand-sparkles"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Shimmer Animations</span>
-                        <span class="perf-option-sub">Looping shine on the logo &amp; panels</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-sheen" onclick="togglePerfOption('sheen')"></div>
-                </div>
-                <div class="perf-amount-row" id="perf-amount-row-sheen">
-                    <input type="range" class="perf-amount-slider" id="perf-amount-sheen" min="10" max="100" step="5" oninput="previewPerfAmount('sheen', this.value)" onchange="commitPerfAmount('sheen', this.value)">
-                    <span class="perf-amount-value" id="perf-amount-value-sheen">100%</span>
-                </div>
-            </div>
-            <div class="perf-option-block">
-                <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Motion Effects</span>
-                        <span class="perf-option-sub">Slide/fade transitions between screens</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-anim" onclick="togglePerfOption('anim')"></div>
-                </div>
-                <div class="perf-amount-row" id="perf-amount-row-anim">
-                    <input type="range" class="perf-amount-slider" id="perf-amount-anim" min="30" max="100" step="5" oninput="previewPerfAmount('anim', this.value)" onchange="commitPerfAmount('anim', this.value)">
-                    <span class="perf-amount-value" id="perf-amount-value-anim">100%</span>
-                </div>
-            </div>
-            <div class="perf-heavy-hint" id="perf-heavy-hint">
-                <i class="fas fa-triangle-exclamation" style="margin-top:1px;"></i>
-                <span>Several heavy effects are on at once — if the app feels slow on your device, try turning a couple off or lowering their amount.</span>
+                <div class="perf-toggle" id="perf-toggle-motion" onclick="togglePerfGroup('motion')"></div>
             </div>
         </div>
-
-        <div class="appearance-section-label">Font</div>
-        <div class="font-grid" id="font-grid"><!-- filled by JS from FONTS --></div>
 
         <div class="appearance-section-label">Palette</div>
         <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
