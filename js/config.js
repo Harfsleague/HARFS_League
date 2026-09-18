@@ -68,5 +68,20 @@ function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,
 function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,pinned:null,
     // Mystery Box outcomes — kept just to enforce the 2-opens-per-2-weeks
     // limit and show a short history; see shop.js.
-    arenaHistory:[]});}
+    arenaHistory:[],
+    customName:null,   // per-team custom display name (null = show the internal key, e.g. "Bayern")
+    customLogo:null     // per-team custom logo, a compressed data URL (null = fall back to the repo's <team>.png)
+});}
+// TEAM_DISPLAY_NAMES is referenced by object identity everywhere else in the
+// app (table rows, Overall cards, the AI chat, admin screens, etc.), so
+// mutating its values here — instead of replacing the object — is what lets
+// a team's custom name show up everywhere immediately with no other file
+// needing to change. Call this any time mainLeagueData is loaded or a
+// team's own profile is edited (see season.js / appearance.js).
+function syncTeamDisplayNames(){
+    TEAM_NAMES.forEach(t=>{
+        const custom = mainLeagueData[t] && mainLeagueData[t].customName;
+        TEAM_DISPLAY_NAMES[t] = (custom && custom.trim()) ? custom.trim() : t;
+    });
+}
 function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
