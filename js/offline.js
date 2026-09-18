@@ -66,6 +66,10 @@ async function idbSet(store, key, value){
 let teamLogoDataUrls = {};
 
 function teamLogoUrl(team){
+    // A team's own custom logo (set via Profile → Edit Team) always wins —
+    // it's stored inline in mainLeagueData, no separate fetch needed.
+    const custom = mainLeagueData[team] && mainLeagueData[team].customLogo;
+    if(custom) return custom;
     return teamLogoDataUrls[team] || `${GITHUB_IMAGE_BASE_URL}${team}.png`;
 }
 
