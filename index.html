@@ -69,37 +69,64 @@
 
         <div class="appearance-section-label">Performance</div>
         <div class="segmented-control" id="perf-segmented">
-            <button class="segmented-btn" data-value="auto" onclick="setPerformance('auto')"><i class="fas fa-wand-magic-sparkles"></i> Auto</button>
-            <button class="segmented-btn" data-value="full" onclick="setPerformance('full')"><i class="fas fa-bolt"></i> Full</button>
-            <button class="segmented-btn" data-value="custom" onclick="setPerformance('custom')"><i class="fas fa-sliders"></i> Custom</button>
             <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
+            <button class="segmented-btn" data-value="custom" onclick="setPerformance('custom')"><i class="fas fa-sliders"></i> Custom</button>
         </div>
-        <div class="perf-auto-note" id="perf-auto-note"></div>
 
         <div id="perf-custom-options" style="display:none;">
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Glass</span>
-                    <span class="perf-option-sub">Frosted-glass panels &amp; their glow</span>
-                </div>
-                <div class="perf-toggle" id="perf-toggle-glass" onclick="togglePerfGroup('glass')"></div>
-            </div>
+            <div class="perf-subsection-label">Visual Effects</div>
             <div class="perf-option-row">
                 <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
                 <div class="perf-option-textcol">
-                    <span class="perf-option-title">Background Effects</span>
-                    <span class="perf-option-sub">Floating orbs, particles &amp; shimmer</span>
+                    <span class="perf-option-title">Background Orbs</span>
+                    <span class="perf-option-sub">Floating glow shapes behind the app</span>
                 </div>
-                <div class="perf-toggle" id="perf-toggle-background" onclick="togglePerfGroup('background')"></div>
+                <div class="perf-toggle" id="perf-toggle-orbs" onclick="togglePerfOption('orbs')"></div>
+            </div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-braille"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Floating Particles</span>
+                    <span class="perf-option-sub">Animated dots on the canvas layer</span>
+                </div>
+                <div class="perf-toggle" id="perf-toggle-particles" onclick="togglePerfOption('particles')"></div>
+            </div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Glass Blur</span>
+                    <span class="perf-option-sub">Frosted-glass panels (heaviest effect)</span>
+                </div>
+                <div class="perf-toggle" id="perf-toggle-blur" onclick="togglePerfOption('blur')"></div>
+            </div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Glow &amp; Shadows</span>
+                    <span class="perf-option-sub">Depth shadows around cards and buttons</span>
+                </div>
+                <div class="perf-toggle" id="perf-toggle-shadows" onclick="togglePerfOption('shadows')"></div>
+            </div>
+            <div class="perf-subsection-label">Motion</div>
+            <div class="perf-option-row">
+                <div class="perf-option-icon"><i class="fas fa-wand-sparkles"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Shimmer Animations</span>
+                    <span class="perf-option-sub">Looping shine on the logo &amp; panels</span>
+                </div>
+                <div class="perf-toggle" id="perf-toggle-sheen" onclick="togglePerfOption('sheen')"></div>
             </div>
             <div class="perf-option-row">
                 <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
                 <div class="perf-option-textcol">
-                    <span class="perf-option-title">Motion</span>
+                    <span class="perf-option-title">Motion Effects</span>
                     <span class="perf-option-sub">Slide/fade transitions between screens</span>
                 </div>
-                <div class="perf-toggle" id="perf-toggle-motion" onclick="togglePerfGroup('motion')"></div>
+                <div class="perf-toggle" id="perf-toggle-anim" onclick="togglePerfOption('anim')"></div>
+            </div>
+            <div class="perf-heavy-hint" id="perf-heavy-hint">
+                <i class="fas fa-triangle-exclamation" style="margin-top:1px;"></i>
+                <span>Several heavy effects are on at once — if the app feels slow on your device, try turning a couple off.</span>
             </div>
         </div>
 
@@ -122,6 +149,29 @@
         <div class="team-picker-handle"></div>
         <div class="team-picker-title">Playlist</div>
         <div id="playlist-list-container"><!-- filled by JS --></div>
+    </div>
+</div>
+
+<!-- Team Edit Sheet (Profile → My Team) — each team can only ever edit its
+     own record; see openTeamEditSheet()/saveTeamEdit() in appearance.js. -->
+<div class="team-picker-sheet" id="team-edit-sheet" onclick="if(event.target===this)closeTeamEditSheet()">
+    <div class="team-picker-panel">
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Edit Team</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding-bottom:6px;">
+            <div style="position:relative;">
+                <img id="team-edit-logo-preview" src="" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);">
+                <label for="team-edit-logo-input" style="position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:var(--primary);color:#0b1220;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.4);">
+                    <i class="fas fa-camera" style="font-size:0.75rem;"></i>
+                </label>
+                <input type="file" id="team-edit-logo-input" accept="image/*" style="display:none;" onchange="handleTeamEditLogoSelect(event)">
+            </div>
+            <input type="text" id="team-edit-name-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Team name" maxlength="24">
+            <div style="display:flex;gap:8px;width:100%;">
+                <button class="glass-button flex-1 font-bold text-xs py-2.5" style="color:#9ca3af;" onclick="resetTeamEditDefaults()"><i class="fas fa-rotate-left mr-2"></i>Reset</button>
+                <button class="glass-button flex-1 font-bold text-xs py-2.5" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" id="team-edit-save-btn" onclick="saveTeamEdit()"><i class="fas fa-check mr-2"></i>Save</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -465,6 +515,13 @@
                     </div>
                     <i class="fas fa-chevron-right shop-tile-chevron"></i>
                 </button>
+            </div>
+
+            <div class="settings-section-label">My Team</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" onclick="openTeamEditSheet()">
+                    <i class="fas fa-pen-to-square"></i><span>Edit Team Name &amp; Logo</span>
+                </div>
             </div>
 
             <div class="settings-section-label">Appearance &amp; Sound</div>
