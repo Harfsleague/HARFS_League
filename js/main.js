@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
     // delay startup, and avoids a flash-of-live-URL on every load.
     await preloadTeamLogosFromCache();
     ensureTeamLogosCached(); // best-effort background refresh/first-time cache, not awaited
+    // Awaited (unlike the other loaders below) so any team's custom
+    // name/logo — and TEAM_DISPLAY_NAMES/teamLogoUrl() derived from it — are
+    // already in place before the login screen or first render happens.
+    await loadMainLeagueDataFromGitHub();
     updateCurrentDateTime();
     setInterval(updateCurrentDateTime,60000);
     loadArchiveDropdown();
