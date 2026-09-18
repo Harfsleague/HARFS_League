@@ -24,102 +24,24 @@ const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
-// PERFORMANCE — four presets: Auto (device-detected), Full (everything
-// on), Lite (everything off), and Custom. Custom used to expose six
-// independent switches; that turned out to be more knobs than anyone
-// actually used, so it's now three grouped ones — each still flips the
-// same underlying flags CSS already keys off (see applyAppearance()
-// below and the body.perf-no-* rules in styles.css), just presented as
-// fewer, more meaningful choices:
-//   Glass              -> blur + shadows   (the frosted-panel look & its glow)
-//   Background Effects -> orbs + particles + sheen  (ambient decoration)
-//   Motion             -> anim             (screen transitions)
+// PERFORMANCE — "Full performance" as a single on/off mode is gone.
+// Only two presets remain: Lite (a one-tap "everything off" shortcut)
+// and Custom (six independent switches — this is where "full" effects
+// live now, just selectable one at a time instead of all-or-nothing).
 // ------------------------------------------------------------
 const PERF_KEYS = ['orbs','particles','blur','shadows','sheen','anim'];
 const PERF_ALL_ON  = { orbs:true,  particles:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
 const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, sheen:false, anim:false };
-const PERF_GROUPS = {
-    glass:      ['blur','shadows'],
-    background: ['orbs','particles','sheen'],
-    motion:     ['anim'],
-};
 let performancePreset = localStorage.getItem('performancePreset')
-    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'auto'); // migrates old flags; brand-new installs default to Auto
+    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag; 'full' now maps to 'custom'
+if(performancePreset==='full') performancePreset='custom'; // migrates anyone who had the old preset saved
 let perfCustom = (()=>{
-    try{
-        const saved = JSON.parse(localStorage.getItem('perfCustom'));
-        if(saved){
-            const merged = {...PERF_ALL_ON, ...saved};
-            // Migration: the old Custom UI let each of these 6 keys be set
-            // independently; the new grouped toggles (Glass, Background
-            // Effects, Motion) only show/control ONE value per group. If an
-            // existing user had e.g. blur:true + shadows:false from before,
-            // normalize the whole group to the first member's value now —
-            // otherwise the Glass toggle would render "on" while shadows
-            // silently stayed off underneath, with no way to see the mismatch
-            // short of toggling it off and back on.
-            Object.values(PERF_GROUPS).forEach(members=>{
-                const val = merged[members[0]];
-                members.forEach(k=>merged[k]=val);
-            });
-            return merged;
-        }
-    }catch(e){}
+    try{ const saved = JSON.parse(localStorage.getItem('perfCustom')); if(saved) return {...PERF_ALL_ON, ...saved}; }catch(e){}
     return {...PERF_ALL_ON};
 })();
-
-// ---- Auto detection ----
-// A short, real rendering benchmark (not just reading hardwareConcurrency)
-// so the decision reflects how this device actually handles the kind of
-// canvas/blur work the app does, not just a raw core count. Runs once
-// per install and is cached — call resetAutoPerformance() to force a
-// fresh read (e.g. if this profile moves to a different device).
-function benchmarkRenderSpeed(){
-    const start = performance.now();
-    const canvas = document.createElement('canvas');
-    canvas.width = 220; canvas.height = 220;
-    const ctx = canvas.getContext('2d');
-    for(let i=0;i<300;i++){
-        ctx.filter = 'blur(3px)';
-        ctx.beginPath();
-        ctx.arc(Math.random()*220, Math.random()*220, 18, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(${(i*37)%255},120,200,0.35)`;
-        ctx.fill();
-    }
-    let acc = 0; // just to stop the loop below getting optimized away
-    for(let i=0;i<150000;i++){ acc += Math.sin(i)*Math.cos(i*0.5); }
-    return performance.now() - start; // ms — higher means a weaker device
-}
-function detectAutoPerformance(){
-    const cores = navigator.hardwareConcurrency || 4;
-    const mem = navigator.deviceMemory || 4; // Chrome/Edge only; other browsers read as 4 (treated as "fine")
-    const renderMs = benchmarkRenderSpeed();
-    // Any one clear "weak device" signal is enough to drop to Lite — on an
-    // ambiguous read, erring toward Lite is the safer default (a wrongly-
-    // Lite phone just looks a bit plainer; a wrongly-Full one actually lags).
-    // NOTE: deliberately NOT using navigator.connection.saveData here — that
-    // reflects a bandwidth preference, not device power, and none of these
-    // effects use any network data, so it isn't a valid signal for this.
-    const weak = cores <= 3 || mem <= 2 || renderMs > 35;
-    return weak ? 'lite' : 'full';
-}
-function getAutoResolvedPreset(){
-    let cached = localStorage.getItem('autoDetectedPreset');
-    if(cached !== 'full' && cached !== 'lite'){
-        cached = detectAutoPerformance();
-        localStorage.setItem('autoDetectedPreset', cached);
-    }
-    return cached;
-}
-function resetAutoPerformance(){
-    localStorage.removeItem('autoDetectedPreset');
-    if(performancePreset==='auto') applyAppearance();
-}
 function currentPerfValues(){
     if(performancePreset==='lite') return PERF_ALL_OFF;
-    if(performancePreset==='full') return PERF_ALL_ON;
-    if(performancePreset==='auto') return getAutoResolvedPreset()==='full' ? PERF_ALL_ON : PERF_ALL_OFF;
-    return perfCustom; // 'custom'
+    return perfCustom;
 }
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
 
@@ -152,28 +74,24 @@ function openAppearanceSheet(){
 function closeAppearanceSheet(){
     document.getElementById('appearance-sheet').classList.remove('open');
 }
-// val is 'auto' | 'full' | 'custom' | 'lite'. Picking 'custom' seeds
-// perfCustom from whatever was actually in effect a moment ago (so
-// switching into Custom from Auto/Full/Lite starts from what you were
-// just looking at, not some arbitrary default).
+// val is 'lite' | 'custom'. Picking 'custom' just switches the source
+// of truth to perfCustom (seeded from whatever was active) and reveals
+// the individual switches below.
 function setPerformance(val){
     haptic([6]);
     if(val==='custom' && performancePreset!=='custom'){
-        perfCustom = {...currentPerfValues()};
+        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
     performancePreset = val;
     localStorage.setItem('performancePreset', val);
     applyAppearance();
 }
-// Flips one of the three grouped switches while in Custom mode — sets
-// every underlying key in that group together (see PERF_GROUPS above).
-function togglePerfGroup(group){
+// Flips a single switch while in Custom mode.
+function togglePerfOption(key){
     if(performancePreset!=='custom') return;
     haptic([6]);
-    const members = PERF_GROUPS[group];
-    const newVal = !perfCustom[members[0]];
-    members.forEach(k => perfCustom[k] = newVal);
+    perfCustom[key] = !perfCustom[key];
     localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     applyAppearance();
 }
@@ -205,20 +123,17 @@ function syncAppearanceUI(){
     const customPanel = document.getElementById('perf-custom-options');
     if(customPanel) customPanel.style.display = (performancePreset==='custom') ? 'block' : 'none';
     if(performancePreset==='custom'){
-        Object.keys(PERF_GROUPS).forEach(group=>{
-            const el = document.getElementById('perf-toggle-'+group);
-            if(el) el.classList.toggle('on', !!perfCustom[PERF_GROUPS[group][0]]);
+        PERF_KEYS.forEach(k=>{
+            const el = document.getElementById('perf-toggle-'+k);
+            if(el) el.classList.toggle('on', !!perfCustom[k]);
         });
-    }
-    const autoNote = document.getElementById('perf-auto-note');
-    if(autoNote){
-        autoNote.style.display = (performancePreset==='auto') ? 'block' : 'none';
-        if(performancePreset==='auto'){
-            const resolved = getAutoResolvedPreset();
-            autoNote.textContent = resolved==='full'
-                ? 'Detected a capable device — running Full effects.'
-                : 'Detected a slower device — running Lite for smoothness.';
-        }
+        // Nudge (not block) — if most of the heavy effects are on at once,
+        // let the person know that's the likely cause of any slowness,
+        // rather than leaving them guessing.
+        const heavyKeys = ['blur','particles','orbs','shadows'];
+        const heavyOnCount = heavyKeys.filter(k=>perfCustom[k]).length;
+        const hint = document.getElementById('perf-heavy-hint');
+        if(hint) hint.classList.toggle('visible', heavyOnCount>=3);
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
@@ -455,5 +370,88 @@ function settingsNextTrack(){
         return;
     }
     playNextTrack();
+}
+
+// ============================================================
+// TEAM EDIT — lets the logged-in team change its own display name and
+// logo. The internal team key (TEAM_NAMES / loggedInTeam / the admin
+// check for 'Bayern') never changes — only the customName/customLogo
+// shown everywhere via TEAM_DISPLAY_NAMES / teamLogoUrl() (see
+// syncTeamDisplayNames() in config.js). The actual GitHub write happens
+// on the Cloudflare Worker (POST /team-profile) using a server-side
+// secret — no GitHub PAT is ever stored in this browser for this flow,
+// and the Worker only ever touches the authenticated team's own record.
+// ============================================================
+let teamEditPendingLogo = null; // null = unchanged, 'RESET' = clear to default, or a data URL
+
+function openTeamEditSheet(){
+    if(!loggedInTeam){ showToast('Log in first','error',2000); return; }
+    ensureWalletFields(loggedInTeam);
+    teamEditPendingLogo = null;
+    const w = mainLeagueData[loggedInTeam];
+    document.getElementById('team-edit-name-input').value = w.customName || loggedInTeam;
+    document.getElementById('team-edit-logo-preview').src = teamLogoUrl(loggedInTeam);
+    document.getElementById('team-edit-sheet').classList.add('open');
+}
+function closeTeamEditSheet(){
+    document.getElementById('team-edit-sheet').classList.remove('open');
+}
+async function handleTeamEditLogoSelect(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async ev=>{
+        // Small, compressed image — like the Golden Moments thumbnails —
+        // since it's stored inline as base64 inside the shared JSON file.
+        const compressed = await compressImage(ev.target.result, 240, 240, 0.75);
+        teamEditPendingLogo = compressed;
+        document.getElementById('team-edit-logo-preview').src = compressed;
+    };
+    reader.readAsDataURL(file);
+}
+function resetTeamEditDefaults(){
+    teamEditPendingLogo = 'RESET';
+    document.getElementById('team-edit-name-input').value = loggedInTeam;
+    document.getElementById('team-edit-logo-preview').src = `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+}
+async function saveTeamEdit(){
+    if(!loggedInTeam) return;
+    const btn = document.getElementById('team-edit-save-btn');
+    const newName = document.getElementById('team-edit-name-input').value.trim();
+    if(!newName){ showToast('Name cannot be empty','error',2000); return; }
+    if(!harfsSessionToken){ showToast('Session expired — please log in again','error',2600); return; }
+
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    try{
+        const payload = { name: newName };
+        if(teamEditPendingLogo === 'RESET') payload.logo = null;
+        else if(teamEditPendingLogo) payload.logo = teamEditPendingLogo;
+
+        const res = await fetch(`${HARFS_AUTH_API}/team-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${harfsSessionToken}` },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+        ensureWalletFields(loggedInTeam);
+        mainLeagueData[loggedInTeam].customName = data.customName;
+        mainLeagueData[loggedInTeam].customLogo = data.customLogo;
+        syncTeamDisplayNames();
+
+        teamEditPendingLogo = null;
+        closeTeamEditSheet();
+        showToast('Team profile updated ✅','success',2200);
+        renderSettingsScreen();
+        updateHeaderForLogin();
+        if(document.getElementById('main-league-screen')?.classList.contains('active')) renderMainLeagueTable();
+        if(document.getElementById('league-table-screen')?.classList.contains('active')) renderLeagueTable(leagueData);
+    }catch(err){
+        showToast(`Save failed: ${err.message||'unknown error'}`,'error',3600);
+    }finally{
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-check mr-2"></i>Save';
+    }
 }
 
