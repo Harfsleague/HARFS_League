@@ -58,6 +58,8 @@ function ensureWalletFields(team){
     if(!w) return;
     if(!Array.isArray(w.arenaHistory)) w.arenaHistory = []; // Mystery Box outcomes — see below
     if(w.pinned === undefined) w.pinned = null;
+    if(w.customName === undefined) w.customName = null; // backfills teams saved before the team-profile feature existed
+    if(w.customLogo === undefined) w.customLogo = null;
     // Retired fields from the old coin economy — dropped if an old wallet
     // record still has them, so nothing stale lingers in what gets saved.
     delete w.coins; delete w.coinLog; delete w.ownedItems; delete w.arenaUsage; delete w.totalPoints;
