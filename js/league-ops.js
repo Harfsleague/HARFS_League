@@ -96,6 +96,14 @@ function openTeamPanel(team){
 
     document.getElementById('team-panel-records').innerHTML = renderRecordBadgesFor(team);
 
+    const mbaLogEl = document.getElementById('team-panel-mba');
+    const mbaLog = w.mbaChampionLog||[];
+    mbaLogEl.innerHTML = mbaLog.length ? mbaLog.slice().reverse().map(entry=>{
+        const d = new Date(entry.ts);
+        const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return `<div class="coin-log-row"><span>🏆 MBA Champion — Edition #${entry.edition}</span>${when?`<span style="color:#6b7280;font-weight:600;">${when}</span>`:''}</div>`;
+    }).join('') : '<div class="team-panel-empty">No MBA titles yet</div>';
+
     const arenaEl = document.getElementById('team-panel-arena');
     arenaEl.innerHTML = w.arenaHistory.length ? w.arenaHistory.slice(0,10).map(a=>{
         const d = new Date(a.ts);

@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     updateCurrentDateTime();
     setInterval(updateCurrentDateTime,60000);
     loadArchiveDropdown();
+    loadMbaDataFromGitHub();
     setupOverallHold();
     setupSeasonFabScroll();
     startApp();

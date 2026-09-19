@@ -794,6 +794,7 @@ function saveFile(filename,data,msg,curSha,onProgress){
                     if(filename===GITHUB_MAIN_LEAGUE_FILE)mainSha=d.content.sha;
                     else if(filename===GITHUB_MATCHES_FILE)matchesSha=d.content.sha;
                     else if(filename===GITHUB_ARCHIVE_FILE)archiveSha=d.content.sha;
+                    else if(filename===GITHUB_MBA_FILE)mbaSha=d.content.sha;
                     else if(filename===GITHUB_WEIRD_MANIFEST_FILE)weirdManifestSha=d.content.sha;
                     else if(filename===GITHUB_WEIRD_FILE||filename.startsWith('weird_events_')){weirdShardShas[filename]=d.content.sha;if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;}
                     else sha=d.content.sha;

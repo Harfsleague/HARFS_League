@@ -13,7 +13,7 @@ function showAdminDashboard(){
     // First time on this device: still need a GitHub PAT to actually save
     // anything — that's a device credential, separate from the team login.
     let t=localStorage.getItem('github_pat');
-    if(!t){t=prompt("Enter GitHub PAT (needed once per device to save changes):");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;}
+    if(!t){t=prompt("Enter GitHub PAT (needed once per device to save changes):");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;mbaSha=null;}
     // Edit Mode (isAdminUnlocked) is a separate on/off toggle in Profile →
     // Bayern Admin — visiting the dashboard itself doesn't turn it on.
     selectedHomeTeam=TEAM_NAMES[0]||null;
@@ -36,6 +36,7 @@ function showAdminDashboard(){
     // Music library manager — always refetched on open so deletes/renames/
     // uploads made from another session or device are reflected immediately.
     loadMusicManagerList();
+    renderMbaAdminSection();
 }
 
 // Called when admin navigates away or finishes — restore nav

@@ -246,8 +246,13 @@
             <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
                 <option value="current">Current Season</option>
             </select>
+            <div class="segmented-control" id="season-view-switch" style="margin-top:10px;">
+                <button class="segmented-btn active" data-value="league" onclick="switchSeasonView('league')"><i class="fas fa-table"></i> League</button>
+                <button class="segmented-btn" data-value="mba" onclick="switchSeasonView('mba')"><i class="fas fa-trophy"></i> MBA</button>
+            </div>
         </div>
 
+        <div id="season-league-body">
         <div class="w-full px-3">
             <div class="table-wrap">
                 <table class="season-table">
@@ -299,6 +304,10 @@
                 </div>
             </div>
         </div>
+
+        </div><!-- /season-league-body -->
+
+        <div id="mba-season-body" style="display:none;padding:0 12px;"><!-- filled by renderMbaSeasonView() --></div>
 
     </div><!-- /league-table-screen -->
 
@@ -409,6 +418,15 @@
                         </button>
                     </div>
                     <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history — use after any edit to double-check everything lines up.</p>
+                </div>
+            </div>
+
+            <!-- MBA Tournament -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f97316);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fde68a,#fdba74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MBA Tournament</h3>
+                    <div id="mba-admin-body"><!-- filled by renderMbaAdminSection() --></div>
                 </div>
             </div>
 
@@ -690,6 +708,10 @@
                         <div id="team-panel-records"></div>
                     </div>
                     <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> MBA Titles</div>
+                        <div id="team-panel-mba"></div>
+                    </div>
+                    <div class="team-panel-section">
                         <div class="team-panel-section-title"><i class="fas fa-gift"></i> Mystery Box Wins</div>
                         <div id="team-panel-arena"></div>
                     </div>
@@ -786,6 +808,7 @@
 <script src="js/league-ops.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/ai-chat.js"></script>
+<script src="js/mba.js"></script>
 <script src="js/admin-music.js"></script>
 <script src="js/main.js"></script>
 

@@ -20,6 +20,16 @@ function computeTrophyCounts(){
         if(table[1] && counts[table[1].name]) counts[table[1].name].silver++;
         if(table[2] && counts[table[2].name]) counts[table[2].name].bronze++;
     });
+    // MBA tournaments (js/mba.js) award medals the exact same way a league
+    // season does — gold/silver/bronze from each completed run just add
+    // into the same totals here, so the Overall table, a team's trophy
+    // cabinet, and the "Most Decorated" record badge all reflect MBA wins
+    // automatically without any of them needing their own MBA-aware logic.
+    ((mbaData&&mbaData.completed)||[]).forEach(t=>{
+        if(t.gold && counts[t.gold]) counts[t.gold].gold++;
+        if(t.silver && counts[t.silver]) counts[t.silver].silver++;
+        if(t.bronze && counts[t.bronze]) counts[t.bronze].bronze++;
+    });
     return counts;
 }
 // True medal-table ranking: most gold wins outright; silver is the first
@@ -60,6 +70,7 @@ function ensureWalletFields(team){
     if(w.pinned === undefined) w.pinned = null;
     if(w.customName === undefined) w.customName = null; // backfills teams saved before the team-profile feature existed
     if(w.customLogo === undefined) w.customLogo = null;
+    if(!Array.isArray(w.mbaChampionLog)) w.mbaChampionLog = []; // backfills teams saved before the MBA mode existed
     // Retired fields from the old coin economy — dropped if an old wallet
     // record still has them, so nothing stale lingers in what gets saved.
     delete w.coins; delete w.coinLog; delete w.ownedItems; delete w.arenaUsage; delete w.totalPoints;

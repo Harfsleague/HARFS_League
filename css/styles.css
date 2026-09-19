@@ -994,6 +994,47 @@ body.perf-no-anim .mini-player{ transition:none; }
 .admin-section-bar{height:3px;width:100%;}
 .admin-section-body{padding:14px;}
 .admin-section h3{font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;}
+/* =====================================================
+   MBA TOURNAMENT — bracket + history (js/mba.js)
+   ===================================================== */
+.mba-edition-label{
+    font-size:0.6rem; font-weight:800; color:#fbbf24; text-transform:uppercase;
+    letter-spacing:1px; text-align:center; margin-bottom:10px;
+}
+.mba-bracket-match{
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+    border-radius:14px; padding:10px 12px; margin-bottom:10px;
+}
+.mba-match-label{ font-size:0.6rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+.mba-pending-note{ font-size:0.66rem; color:#4b5563; text-align:center; padding:6px 0; }
+.mba-team-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 10px; border-radius:10px; margin-bottom:4px;
+    background:rgba(255,255,255,0.02); transition:background 0.15s;
+}
+.mba-team-row:last-child{ margin-bottom:0; }
+.mba-team-row.winner{ background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.25); }
+.mba-team-row[onclick]:active{ background:rgba(255,255,255,0.08); transform:scale(0.98); }
+.mba-team-label{ font-size:0.74rem; font-weight:700; color:#e5e7eb; display:flex; align-items:center; }
+.mba-leg-dots{ display:flex; gap:5px; }
+.mba-leg-dot{ width:9px;height:9px;border-radius:50%; background:rgba(255,255,255,0.12); }
+.mba-leg-dot.filled{ background:#fbbf24; }
+.mba-undo-btn{
+    width:100%; margin-top:8px; background:none; border:1px dashed rgba(255,255,255,0.14);
+    color:#6b7280; font-size:0.62rem; font-weight:700; padding:6px; border-radius:10px; cursor:pointer;
+}
+.mba-undo-btn:active{ background:rgba(255,255,255,0.05); }
+.mba-cancel-btn{
+    width:100%; margin-top:4px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2);
+    color:#f87171; font-size:0.64rem; font-weight:700; padding:9px; border-radius:12px; cursor:pointer;
+}
+.mba-cancel-btn:active{ transform:scale(0.98); }
+.mba-history-card{
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+    border-radius:14px; padding:10px 12px; margin-bottom:8px;
+}
+.mba-history-header{ display:flex; justify-content:space-between; font-size:0.68rem; font-weight:800; color:#e5e7eb; margin-bottom:8px; }
+.mba-history-podium{ display:flex; flex-direction:column; gap:5px; font-size:0.7rem; color:#cbd5e1; }
 #match-preview{
     background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);
     border-radius:14px;padding:10px 14px;margin-top:12px;

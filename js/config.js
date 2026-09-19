@@ -16,6 +16,7 @@ const GITHUB_LEAGUE_FILE="league_data.json";
 const GITHUB_MAIN_LEAGUE_FILE="main_league_data.json";
 const GITHUB_MATCHES_FILE="match_history.json";
 const GITHUB_ARCHIVE_FILE="seasons_archive.json";
+const GITHUB_MBA_FILE="mba_history.json";
 const GITHUB_WEIRD_FILE="weird_events.json";
 // Golden Moments are split across multiple "shard" files once the current
 // one gets close to GitHub's practical PUT size limit (~50MB). The manifest
@@ -45,8 +46,14 @@ let loginIsNewAccount = false;
 
 
 let leagueData={},mainLeagueData={};
-let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null;
+let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null,mbaSha=null;
 let matchHistory=[],archivedSeasons=[],weirdEvents=[];
+// MBA — the best-of-3-semis / single-match-final knockout mode (see js/mba.js).
+// 'current' is the in-progress tournament (or null between tournaments);
+// 'completed' is every finished one, in order — this is what
+// computeTrophyCounts() (js/shop.js) reads to award MBA medals alongside
+// regular season medals, and what the Season tab's MBA view lists as history.
+let mbaData = { current:null, completed:[] };
 // Per-shard bookkeeping for Golden Moments: which shard files exist, each
 // one's GitHub blob sha (needed to update it), and each one's own event
 // array (only the active shard is ever rewritten when saving).
@@ -69,6 +76,12 @@ function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={nam
     // Mystery Box outcomes — kept just to enforce the 2-opens-per-2-weeks
     // limit and show a short history; see shop.js.
     arenaHistory:[],
+    // MBA tournament wins only (never regular league titles — those already
+    // just add to the gold count with no log) — one entry per tournament
+    // this team has WON outright, so its own profile can show "MBA Champion
+    // — Edition #N" without having to search all of mbaData.completed for
+    // matches. See completeMbaTournament() in js/mba.js.
+    mbaChampionLog:[],
     customName:null,   // per-team custom display name (null = show the internal key, e.g. "Bayern")
     customLogo:null     // per-team custom logo, a compressed data URL (null = fall back to the repo's <team>.png)
 });}
