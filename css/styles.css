@@ -312,6 +312,46 @@ body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
     transition:width 0.3s ease;
 }
 .nav-item.active::after{width:18px;}
+/* =====================================================
+   MINI PLAYER — slim "now playing" pill docked above the bottom nav.
+   Sits at a fixed offset tuned for the bottom-nav's current height
+   (~12px screen gap + ~54px nav + ~10px breathing room) — if the bottom
+   nav's own padding/font-size ever changes, this offset may need a
+   matching nudge.
+   ===================================================== */
+.mini-player{
+    position:absolute; bottom:78px; left:50%;
+    transform:translateX(-50%); width:90%; max-width:360px;
+    background:rgba(10,18,30,0.8);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-radius:9999px; border:1px solid rgba(255,255,255,0.09);
+    box-shadow:0 6px 24px rgba(0,0,0,0.35);
+    display:flex; align-items:center; gap:4px;
+    padding:6px 6px 6px 10px; z-index:99;
+    opacity:0; transform:translateX(-50%) translateY(8px); pointer-events:none;
+    transition:opacity 0.25s, transform 0.25s;
+}
+.mini-player.visible{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+body.perf-no-blur .mini-player{ background:rgba(10,18,30,0.96); backdrop-filter:none; -webkit-backdrop-filter:none; }
+body.perf-no-anim .mini-player{ transition:none; }
+.mini-player-tap-area{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
+.mini-player-icon{
+    width:26px;height:26px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:0.66rem;
+    background:var(--nav-active-bg); color:var(--primary);
+}
+.mini-player-title{
+    font-size:0.68rem; font-weight:700; color:#e5e7eb;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+}
+.mini-player-btn{
+    width:30px;height:30px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:0.72rem;
+    background:rgba(255,255,255,0.07); color:#e5e7eb; border:none; cursor:pointer;
+    transition:background 0.15s;
+}
+.mini-player-btn:active{ background:rgba(255,255,255,0.14); transform:scale(0.92); }
 /* Overall / Season / History are disabled while the admin panel (PIN entry
    or dashboard) is open, so the admin can't accidentally navigate away
    mid-task — they must exit intentionally instead. */
@@ -1454,6 +1494,15 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 }
 .perf-toggle.on{ background:var(--primary); border-color:var(--primary); }
 .perf-toggle.on::after{ transform:translateX(18px); }
+.perf-auto-note{
+    display:none;
+    font-size:0.62rem; color:#6b7280; text-align:center;
+    margin:2px 4px 12px; line-height:1.5;
+}
+/* Greys out (and disables interaction with) the 3 grouped toggles while
+   Auto-Detect is choosing for you — the values still show through so you
+   can see what it picked, just not tap them. */
+#perf-group-toggles.disabled{ opacity:0.4; pointer-events:none; }
 
 /* =====================================================
    SETTINGS PANEL — small, square, centered, no explanations
@@ -1523,9 +1572,23 @@ body.perf-no-anim .nav-item{ transition:none !important; }
     border:2px solid rgba(255,255,255,0.16);
     box-shadow:0 6px 18px rgba(0,0,0,0.3);
 }
+.account-avatar-wrap{ position:relative; flex-shrink:0; }
+.account-avatar-edit-btn{
+    position:absolute; bottom:-2px; right:-2px; width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--primary); color:#0b1220; font-size:0.6rem;
+    border:2px solid var(--bg-mid); box-shadow:0 2px 6px rgba(0,0,0,0.4);
+    cursor:pointer; padding:0;
+}
+.account-avatar-edit-btn:active{ transform:scale(0.9); }
 .account-textcol{ display:flex; flex-direction:column; gap:1px; text-align:left; }
 .account-name{ font-size:0.85rem; font-weight:900; letter-spacing:0.3px; color:#fff; }
 .account-subtitle{ font-size:0.6rem; color:#6b7280; font-weight:600; letter-spacing:0.2px; }
+/* Reusable trailing slot (chevron and/or a small value label) for a wide
+   settings row — margin-left:auto pushes it flush right regardless of
+   how long the row's own label is. */
+.settings-row-trailing{ margin-left:auto; display:flex; align-items:center; gap:8px; color:#4b5563; font-size:0.72rem; }
+.settings-row-value{ color:#6b7280; font-size:0.66rem; font-weight:700; }
 .settings-section-label{
     font-size:0.62rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase;
     color:#6b7280; margin:16px 4px 8px;

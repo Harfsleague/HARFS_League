@@ -191,6 +191,7 @@ function startApp(){
         logo.classList.add('in-header');
         setTimeout(()=>{
             document.getElementById('bottom-navigation').classList.add('active');
+            if(typeof syncMiniPlayer === 'function') syncMiniPlayer();
             if(!loggedInTeam){
                 showLoginScreen();
             } else {

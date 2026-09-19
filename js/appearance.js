@@ -24,23 +24,99 @@ const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
-// PERFORMANCE — "Full performance" as a single on/off mode is gone.
-// Only two presets remain: Lite (a one-tap "everything off" shortcut)
-// and Custom (six independent switches — this is where "full" effects
-// live now, just selectable one at a time instead of all-or-nothing).
+// PERFORMANCE — two presets: Lite (a one-tap "everything off" shortcut)
+// and Custom. Custom itself starts with an Auto-Detect switch: when on,
+// a short real rendering benchmark decides Glass/Background/Motion for
+// you (cached after the first run); when off, those three are yours to
+// set by hand — each one groups a couple of the underlying effects that
+// always make sense to move together, rather than six separate switches:
+//   Glass              -> blur + shadows   (the frosted-panel look & its glow)
+//   Background Effects -> orbs + particles + sheen  (ambient decoration)
+//   Motion             -> anim             (screen transitions)
 // ------------------------------------------------------------
 const PERF_KEYS = ['orbs','particles','blur','shadows','sheen','anim'];
 const PERF_ALL_ON  = { orbs:true,  particles:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
 const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, sheen:false, anim:false };
+const PERF_GROUPS = {
+    glass:      ['blur','shadows'],
+    background: ['orbs','particles','sheen'],
+    motion:     ['anim'],
+};
 let performancePreset = localStorage.getItem('performancePreset')
-    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag; 'full' now maps to 'custom'
-if(performancePreset==='full') performancePreset='custom'; // migrates anyone who had the old preset saved
+    || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag
+if(performancePreset==='full' || performancePreset==='auto'){
+    // Migrates anyone who had an earlier preset name saved: 'full' becomes
+    // plain Custom with everything on (the existing default below already
+    // matches that); 'auto' becomes Custom with Auto-Detect switched on.
+    if(performancePreset==='auto') localStorage.setItem('perfAutoDetect','on');
+    performancePreset='custom';
+}
+let perfAutoDetect = localStorage.getItem('perfAutoDetect')==='on';
 let perfCustom = (()=>{
-    try{ const saved = JSON.parse(localStorage.getItem('perfCustom')); if(saved) return {...PERF_ALL_ON, ...saved}; }catch(e){}
+    try{
+        const saved = JSON.parse(localStorage.getItem('perfCustom'));
+        if(saved){
+            const merged = {...PERF_ALL_ON, ...saved};
+            // Normalizes any pre-existing independent values onto each
+            // group's first member, so e.g. blur:true+shadows:false from
+            // before this grouping existed doesn't leave the Glass toggle
+            // showing "on" while shadows silently stays off underneath.
+            Object.values(PERF_GROUPS).forEach(members=>{
+                const val = merged[members[0]];
+                members.forEach(k=>merged[k]=val);
+            });
+            return merged;
+        }
+    }catch(e){}
     return {...PERF_ALL_ON};
 })();
+
+// ---- Auto-Detect ----
+// A short, real rendering benchmark (not just reading hardwareConcurrency)
+// so the decision reflects how this device actually handles the kind of
+// canvas/blur work the app does. Runs once per install and is cached.
+function benchmarkRenderSpeed(){
+    const start = performance.now();
+    const canvas = document.createElement('canvas');
+    canvas.width = 220; canvas.height = 220;
+    const ctx = canvas.getContext('2d');
+    for(let i=0;i<300;i++){
+        ctx.filter = 'blur(3px)';
+        ctx.beginPath();
+        ctx.arc(Math.random()*220, Math.random()*220, 18, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${(i*37)%255},120,200,0.35)`;
+        ctx.fill();
+    }
+    let acc = 0; // just to stop the loop below getting optimized away
+    for(let i=0;i<150000;i++){ acc += Math.sin(i)*Math.cos(i*0.5); }
+    return performance.now() - start; // ms — higher means a weaker device
+}
+function detectAutoPerformance(){
+    const cores = navigator.hardwareConcurrency || 4;
+    const mem = navigator.deviceMemory || 4; // Chrome/Edge only; other browsers read as 4 (treated as "fine")
+    const renderMs = benchmarkRenderSpeed();
+    // Any one clear "weak device" signal is enough to drop to Lite-equivalent
+    // effects — on an ambiguous read, erring toward lighter is the safer
+    // default (a wrongly-light phone just looks a bit plainer; a wrongly-
+    // full one actually lags).
+    const weak = cores <= 3 || mem <= 2 || renderMs > 35;
+    return weak ? 'lite' : 'full';
+}
+function getAutoDetectedValues(){
+    let cached = localStorage.getItem('autoDetectedPerf');
+    if(cached !== 'full' && cached !== 'lite'){
+        cached = detectAutoPerformance();
+        localStorage.setItem('autoDetectedPerf', cached);
+    }
+    return cached==='full' ? PERF_ALL_ON : PERF_ALL_OFF;
+}
+function resetAutoDetection(){
+    localStorage.removeItem('autoDetectedPerf');
+    if(performancePreset==='custom' && perfAutoDetect) applyAppearance();
+}
 function currentPerfValues(){
     if(performancePreset==='lite') return PERF_ALL_OFF;
+    if(perfAutoDetect) return getAutoDetectedValues();
     return perfCustom;
 }
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
@@ -75,11 +151,11 @@ function closeAppearanceSheet(){
     document.getElementById('appearance-sheet').classList.remove('open');
 }
 // val is 'lite' | 'custom'. Picking 'custom' just switches the source
-// of truth to perfCustom (seeded from whatever was active) and reveals
-// the individual switches below.
+// of truth to perfCustom/Auto-Detect (seeded from whatever was active)
+// and reveals the panel below.
 function setPerformance(val){
     haptic([6]);
-    if(val==='custom' && performancePreset!=='custom'){
+    if(val==='custom' && performancePreset!=='custom' && !perfAutoDetect){
         perfCustom = {...currentPerfValues()}; // seed custom from whatever was active
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
@@ -87,11 +163,25 @@ function setPerformance(val){
     localStorage.setItem('performancePreset', val);
     applyAppearance();
 }
-// Flips a single switch while in Custom mode.
-function togglePerfOption(key){
-    if(performancePreset!=='custom') return;
+// Auto-Detect lives inside Custom — flipping it on hands control to the
+// device benchmark (see getAutoDetectedValues) and greys out the three
+// manual toggles below; flipping it off hands control back to whatever
+// perfCustom already had.
+function toggleAutoDetect(){
     haptic([6]);
-    perfCustom[key] = !perfCustom[key];
+    perfAutoDetect = !perfAutoDetect;
+    localStorage.setItem('perfAutoDetect', perfAutoDetect ? 'on' : 'off');
+    applyAppearance();
+}
+// Flips one of the three grouped switches while in Custom mode with
+// Auto-Detect off — sets every underlying key in that group together
+// (see PERF_GROUPS above).
+function togglePerfGroup(group){
+    if(performancePreset!=='custom' || perfAutoDetect) return;
+    haptic([6]);
+    const members = PERF_GROUPS[group];
+    const newVal = !perfCustom[members[0]];
+    members.forEach(k => perfCustom[k] = newVal);
     localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     applyAppearance();
 }
@@ -123,17 +213,24 @@ function syncAppearanceUI(){
     const customPanel = document.getElementById('perf-custom-options');
     if(customPanel) customPanel.style.display = (performancePreset==='custom') ? 'block' : 'none';
     if(performancePreset==='custom'){
-        PERF_KEYS.forEach(k=>{
-            const el = document.getElementById('perf-toggle-'+k);
-            if(el) el.classList.toggle('on', !!perfCustom[k]);
+        const autoToggle = document.getElementById('perf-toggle-auto');
+        if(autoToggle) autoToggle.classList.toggle('on', perfAutoDetect);
+        const autoNote = document.getElementById('perf-auto-note');
+        if(autoNote){
+            autoNote.style.display = perfAutoDetect ? 'block' : 'none';
+            if(perfAutoDetect){
+                const resolved = getAutoDetectedValues();
+                autoNote.textContent = resolved.blur
+                    ? 'Detected a capable device — running everything.'
+                    : 'Detected a slower device — running lighter for smoothness.';
+            }
+        }
+        const groupBlock = document.getElementById('perf-group-toggles');
+        if(groupBlock) groupBlock.classList.toggle('disabled', perfAutoDetect);
+        Object.keys(PERF_GROUPS).forEach(group=>{
+            const el = document.getElementById('perf-toggle-'+group);
+            if(el) el.classList.toggle('on', !!perfCustom[PERF_GROUPS[group][0]]);
         });
-        // Nudge (not block) — if most of the heavy effects are on at once,
-        // let the person know that's the likely cause of any slowness,
-        // rather than leaving them guessing.
-        const heavyKeys = ['blur','particles','orbs','shadows'];
-        const heavyOnCount = heavyKeys.filter(k=>perfCustom[k]).length;
-        const hint = document.getElementById('perf-heavy-hint');
-        if(hint) hint.classList.toggle('visible', heavyOnCount>=3);
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
@@ -269,6 +366,38 @@ function syncSettingsUI(){
         modeIcon.className = 'fas '+m.icon;
         modeLabel.textContent = m.label;
     }
+    syncMiniPlayer();
+}
+
+// ============================================================
+// MINI PLAYER — the slim "now playing" pill above the bottom nav.
+// Visible only when: the "Now-Playing Bar" setting is on, AND music has
+// actually started, AND it isn't muted — no point showing a player with
+// nothing playing. Called from every place that can change any of those
+// three things (syncSettingsUI above covers the mute/settings side;
+// playTrackWithFallback in audio.js calls it on every track change).
+// ============================================================
+let miniPlayerEnabled = localStorage.getItem('miniPlayerEnabled') !== 'off'; // on by default
+function toggleMiniPlayerSetting(){
+    haptic([6]);
+    miniPlayerEnabled = !miniPlayerEnabled;
+    localStorage.setItem('miniPlayerEnabled', miniPlayerEnabled ? 'on' : 'off');
+    document.getElementById('settings-miniplayer-toggle')?.classList.toggle('on', miniPlayerEnabled);
+    syncMiniPlayer();
+}
+function syncMiniPlayer(){
+    const bar = document.getElementById('mini-player');
+    if(!bar) return;
+    const shouldShow = miniPlayerEnabled && typeof backgroundMusicStarted!=='undefined'
+        && backgroundMusicStarted && !musicMuted
+        && typeof PLAYLIST!=='undefined' && PLAYLIST[currentTrackIndex];
+    bar.classList.toggle('visible', !!shouldShow);
+    if(shouldShow){
+        const titleEl = document.getElementById('mini-player-title');
+        if(titleEl) titleEl.textContent = PLAYLIST[currentTrackIndex].title;
+        const icon = document.getElementById('mini-player-playpause-icon');
+        if(icon) icon.className = 'fas ' + (musicMuted ? 'fa-play' : 'fa-pause');
+    }
 }
 
 function openSettings(){
@@ -285,6 +414,7 @@ function settingsToggleMusic(){
 function renderSettingsScreen(){
     syncSettingsUI();
     syncAppearanceUI();
+    document.getElementById('settings-miniplayer-toggle')?.classList.toggle('on', miniPlayerEnabled);
     const badgeLogo=document.getElementById('settings-team-badge-logo');
     const badgeName=document.getElementById('settings-team-badge-name');
     if(loggedInTeam){

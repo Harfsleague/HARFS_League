@@ -74,59 +74,41 @@
         </div>
 
         <div id="perf-custom-options" style="display:none;">
-            <div class="perf-subsection-label">Visual Effects</div>
             <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
+                <div class="perf-option-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
                 <div class="perf-option-textcol">
-                    <span class="perf-option-title">Background Orbs</span>
-                    <span class="perf-option-sub">Floating glow shapes behind the app</span>
+                    <span class="perf-option-title">Auto-Detect</span>
+                    <span class="perf-option-sub">Picks the best settings for this device</span>
                 </div>
-                <div class="perf-toggle" id="perf-toggle-orbs" onclick="togglePerfOption('orbs')"></div>
+                <div class="perf-toggle" id="perf-toggle-auto" onclick="toggleAutoDetect()"></div>
             </div>
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-braille"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Floating Particles</span>
-                    <span class="perf-option-sub">Animated dots on the canvas layer</span>
+            <div class="perf-auto-note" id="perf-auto-note"></div>
+
+            <div id="perf-group-toggles">
+                <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Glass</span>
+                        <span class="perf-option-sub">Frosted-glass panels &amp; their glow</span>
+                    </div>
+                    <div class="perf-toggle" id="perf-toggle-glass" onclick="togglePerfGroup('glass')"></div>
                 </div>
-                <div class="perf-toggle" id="perf-toggle-particles" onclick="togglePerfOption('particles')"></div>
-            </div>
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Glass Blur</span>
-                    <span class="perf-option-sub">Frosted-glass panels (heaviest effect)</span>
+                <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Background Effects</span>
+                        <span class="perf-option-sub">Floating orbs, particles &amp; shimmer</span>
+                    </div>
+                    <div class="perf-toggle" id="perf-toggle-background" onclick="togglePerfGroup('background')"></div>
                 </div>
-                <div class="perf-toggle" id="perf-toggle-blur" onclick="togglePerfOption('blur')"></div>
-            </div>
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Glow &amp; Shadows</span>
-                    <span class="perf-option-sub">Depth shadows around cards and buttons</span>
+                <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Motion</span>
+                        <span class="perf-option-sub">Slide/fade transitions between screens</span>
+                    </div>
+                    <div class="perf-toggle" id="perf-toggle-motion" onclick="togglePerfGroup('motion')"></div>
                 </div>
-                <div class="perf-toggle" id="perf-toggle-shadows" onclick="togglePerfOption('shadows')"></div>
-            </div>
-            <div class="perf-subsection-label">Motion</div>
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-wand-sparkles"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Shimmer Animations</span>
-                    <span class="perf-option-sub">Looping shine on the logo &amp; panels</span>
-                </div>
-                <div class="perf-toggle" id="perf-toggle-sheen" onclick="togglePerfOption('sheen')"></div>
-            </div>
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Motion Effects</span>
-                    <span class="perf-option-sub">Slide/fade transitions between screens</span>
-                </div>
-                <div class="perf-toggle" id="perf-toggle-anim" onclick="togglePerfOption('anim')"></div>
-            </div>
-            <div class="perf-heavy-hint" id="perf-heavy-hint">
-                <i class="fas fa-triangle-exclamation" style="margin-top:1px;"></i>
-                <span>Several heavy effects are on at once — if the app feels slow on your device, try turning a couple off.</span>
             </div>
         </div>
 
@@ -193,6 +175,25 @@
             <span>Profile</span>
         </div>
     </nav>
+
+    <!-- ============ MINI PLAYER — slim "now playing" bar docked just above
+         the bottom nav. Only shows once music has actually started and
+         isn't muted, and only if the "Now-Playing Bar" setting is on (see
+         toggleMiniPlayerSetting() in appearance.js). Tapping the title
+         opens the full Playlist sheet; play/pause and next have their own
+         buttons so a stray tap on the bar itself doesn't skip a track. ============ -->
+    <div class="mini-player" id="mini-player">
+        <div class="mini-player-tap-area" onclick="openPlaylistSheet()">
+            <div class="mini-player-icon"><i class="fas fa-music"></i></div>
+            <span class="mini-player-title" id="mini-player-title">—</span>
+        </div>
+        <button class="mini-player-btn" onclick="settingsToggleMusic()" aria-label="Play/Pause">
+            <i class="fas" id="mini-player-playpause-icon"></i>
+        </button>
+        <button class="mini-player-btn" onclick="settingsNextTrack()" aria-label="Next track">
+            <i class="fas fa-forward-step"></i>
+        </button>
+    </div>
 
     <!-- ============ MAIN LEAGUE ============ -->
     <div id="main-league-screen" class="page-screen">
@@ -497,7 +498,10 @@
         <div class="league-header settings-screen-header">
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Profile</h2>
             <div class="account-card">
-                <img id="settings-team-badge-logo" src="" class="account-avatar">
+                <div class="account-avatar-wrap">
+                    <img id="settings-team-badge-logo" src="" class="account-avatar">
+                    <button class="account-avatar-edit-btn" onclick="openTeamEditSheet()" aria-label="Edit team name and logo"><i class="fas fa-pen"></i></button>
+                </div>
                 <div class="account-textcol">
                     <span id="settings-team-badge-name" class="account-name">—</span>
                     <span class="account-subtitle">HARFS League Account</span>
@@ -517,31 +521,26 @@
                 </button>
             </div>
 
-            <div class="settings-section-label">My Team</div>
-            <div class="settings-page-grid">
-                <div class="settings-page-tile wide" onclick="openTeamEditSheet()">
-                    <i class="fas fa-pen-to-square"></i><span>Edit Team Name &amp; Logo</span>
-                </div>
-            </div>
-
             <div class="settings-section-label">Appearance &amp; Sound</div>
             <div class="settings-page-grid">
                 <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
                     <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
+                    <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
                 </div>
-                <div class="settings-page-tile" id="settings-music-tile" onclick="settingsToggleMusic()">
-                    <i class="fas fa-music" id="settings-music-icon"></i>
-                    <span id="settings-music-label">Music: On</span>
+                <div class="settings-page-tile wide" id="settings-music-tile" onclick="settingsToggleMusic()">
+                    <i class="fas fa-music" id="settings-music-icon"></i><span id="settings-music-label">Music</span>
                 </div>
-                <div class="settings-page-tile" onclick="openPlaylistSheet()">
+                <div class="settings-page-tile wide" onclick="openPlaylistSheet()">
                     <i class="fas fa-list-ul"></i><span>Playlist</span>
+                    <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
                 </div>
-                <div class="settings-page-tile" onclick="settingsNextTrack()">
-                    <i class="fas fa-forward-step"></i><span>Next Track</span>
+                <div class="settings-page-tile wide" id="settings-mode-tile" onclick="cyclePlaybackMode()">
+                    <i class="fas fa-random" id="settings-mode-icon"></i><span>Playback Mode</span>
+                    <div class="settings-row-trailing"><span class="settings-row-value" id="settings-mode-label">Shuffle</span><i class="fas fa-chevron-right"></i></div>
                 </div>
-                <div class="settings-page-tile" id="settings-mode-tile" onclick="cyclePlaybackMode()">
-                    <i class="fas fa-random" id="settings-mode-icon"></i>
-                    <span id="settings-mode-label">Shuffle</span>
+                <div class="settings-page-tile wide" style="cursor:default;" onclick="event.stopPropagation()">
+                    <i class="fas fa-rectangle-list"></i><span>Now-Playing Bar</span>
+                    <div class="perf-toggle" id="settings-miniplayer-toggle" onclick="toggleMiniPlayerSetting()" style="margin-left:auto;"></div>
                 </div>
             </div>
 

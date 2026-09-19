@@ -119,6 +119,7 @@ const bgMusic = document.getElementById('background-music');
 
 function showSongNotification(title) {
     showToast(title, 'music', 3000);
+    if(typeof syncMiniPlayer === 'function') syncMiniPlayer();
 }
 
 function playTrack(index) {
