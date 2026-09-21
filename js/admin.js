@@ -58,6 +58,9 @@ function navigate(route){
         updateCurrentDateTime();
     }
 
+    // MBA edition picker is independent — reset it to "newest" when leaving Season
+    if(prevRoute === 'league' && route !== 'league' && typeof resetMbaView === 'function') resetMbaView();
+
     // Lock the HARFS capsule while the admin panel is open, so a stray
     // hold can't pull the admin out of it mid-task.
     const capsuleEl=document.getElementById('hero-logo-container');
@@ -104,6 +107,7 @@ function navigate(route){
         isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
         renderSeasonHistoryList(h);
     });
+    if(route==='league' && typeof loadMbaDataFromGitHub === 'function') loadMbaDataFromGitHub();
     updateSeasonFabs(route);
     if(route==='shop')loadMainLeagueDataFromGitHub().then(renderMysteryBoxScreen);
     if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);

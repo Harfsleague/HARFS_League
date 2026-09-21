@@ -366,38 +366,6 @@ function syncSettingsUI(){
         modeIcon.className = 'fas '+m.icon;
         modeLabel.textContent = m.label;
     }
-    syncMiniPlayer();
-}
-
-// ============================================================
-// MINI PLAYER — the slim "now playing" pill above the bottom nav.
-// Visible only when: the "Now-Playing Bar" setting is on, AND music has
-// actually started, AND it isn't muted — no point showing a player with
-// nothing playing. Called from every place that can change any of those
-// three things (syncSettingsUI above covers the mute/settings side;
-// playTrackWithFallback in audio.js calls it on every track change).
-// ============================================================
-let miniPlayerEnabled = localStorage.getItem('miniPlayerEnabled') !== 'off'; // on by default
-function toggleMiniPlayerSetting(){
-    haptic([6]);
-    miniPlayerEnabled = !miniPlayerEnabled;
-    localStorage.setItem('miniPlayerEnabled', miniPlayerEnabled ? 'on' : 'off');
-    document.getElementById('settings-miniplayer-toggle')?.classList.toggle('on', miniPlayerEnabled);
-    syncMiniPlayer();
-}
-function syncMiniPlayer(){
-    const bar = document.getElementById('mini-player');
-    if(!bar) return;
-    const shouldShow = miniPlayerEnabled && typeof backgroundMusicStarted!=='undefined'
-        && backgroundMusicStarted && !musicMuted
-        && typeof PLAYLIST!=='undefined' && PLAYLIST[currentTrackIndex];
-    bar.classList.toggle('visible', !!shouldShow);
-    if(shouldShow){
-        const titleEl = document.getElementById('mini-player-title');
-        if(titleEl) titleEl.textContent = PLAYLIST[currentTrackIndex].title;
-        const icon = document.getElementById('mini-player-playpause-icon');
-        if(icon) icon.className = 'fas ' + (musicMuted ? 'fa-play' : 'fa-pause');
-    }
 }
 
 function openSettings(){
@@ -414,7 +382,6 @@ function settingsToggleMusic(){
 function renderSettingsScreen(){
     syncSettingsUI();
     syncAppearanceUI();
-    document.getElementById('settings-miniplayer-toggle')?.classList.toggle('on', miniPlayerEnabled);
     const badgeLogo=document.getElementById('settings-team-badge-logo');
     const badgeName=document.getElementById('settings-team-badge-name');
     if(loggedInTeam){
@@ -436,6 +403,7 @@ function toggleAdminEditMode(){
     showToast(isAdminUnlocked ? 'Edit Mode on' : 'Edit Mode off', 'info', 1600);
     // Refresh anything already on screen that depends on this flag
     if(document.getElementById('weird-screen')?.classList.contains('active')) renderWeirdEvents();
+    if(typeof renderMbaSeasonView==='function') renderMbaSeasonView(); // MBA ✏️ buttons follow Edit Mode
 }
 
 // ============================================================
@@ -488,18 +456,6 @@ function cyclePlaybackMode(){
     localStorage.setItem('playbackMode', playbackMode);
     syncSettingsUI();
     showToast('Playback: '+PLAYBACK_MODES[playbackMode].label, 'info', 1600);
-}
-function settingsNextTrack(){
-    if(musicMuted){ showToast('Music is off','info',1600); return; }
-    if(!backgroundMusicStarted){
-        loadPlaylistFromGitHub().then(()=>{
-            const startIndex=Math.floor(Math.random()*PLAYLIST.length);
-            playTrack(startIndex);
-            backgroundMusicStarted=true;
-        });
-        return;
-    }
-    playNextTrack();
 }
 
 // ============================================================
