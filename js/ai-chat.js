@@ -1,20 +1,13 @@
-// ============================================================
-// ai-chat.js  —  AI-CHAT — AI assistant
-// Loaded as a classic (non-module) script — shares the global scope
-// with every other file below, in load order, exactly as this code
-// used to run when it was one inline <script> block.
-// ============================================================
-// ============================================================
-// AI ASSISTANT — calls OpenRouter directly from the client.
-// This is a private, personal app, so the API key is hardcoded
-// below instead of being proxied through a separate Worker.
-// ============================================================
+
 const OPENROUTER_MODEL = "gemini-3.5-flash";
 // The API key is NEVER stored in this client-side file.
 // Requests go through the Cloudflare Worker proxy.
 const OPENROUTER_URL = "https://harfs-ai-proxy.borobiron12.workers.dev/chat";
 
-let aiFullData   = localStorage.getItem('ai_full_data') === null ? true : (localStorage.getItem('ai_full_data') === 'on');
+// Default changed to OFF: summary mode is much smaller/faster to send.
+// Users who want full-detail grounding can still flip "Send Full Data"
+// on in Assistant Settings.
+let aiFullData   = localStorage.getItem('ai_full_data') === null ? false : (localStorage.getItem('ai_full_data') === 'on');
 let aiChatHistory = (()=>{ try{ return JSON.parse(localStorage.getItem('ai_chat_history')) || []; }catch(e){ return []; } })();
 
 const AI_SYSTEM_PROMPT = `You are "HARFS Assistant" — the resident football analyst for HARFS, a private league between four teams: HOSI, Sezar, Bayern and Yellow. Always write "HARFS" in Latin letters exactly like that, even in an otherwise-Persian sentence — never transliterate or translate it. You're talking to people inside that league (players, managers, fans), never the general public.
@@ -42,6 +35,7 @@ If the user asks for a table, a standings sheet, a comparison, or anything clear
 - Use short column headers (e.g. "Team", "Pts", "GD" not "Goal Difference").
 - Every cell must come from the JSON data you were given — never invent a row or fill a gap with a guess. If some cells aren't available in the data, write "—" rather than guessing.
 - Don't wrap a table in extra commentary before/after beyond one short sentence — the table should carry the information.
+- Always put the header row, then the "|---|---|" separator row, then the data rows, each on its OWN line — never merge rows together.
 
 ## Length — this is a hard rule, not a suggestion
 Default reply length: 2–4 short sentences, or a short list/table if that's clearer. This is a mobile chat bubble, not an essay — a wall of text is a failure even if every fact in it is correct.
@@ -52,11 +46,11 @@ Every user message is preceded by a "[League Data Context]" JSON blob built fres
 - Full mode (summaryMode: false): currentSeasonTable (per-team live stats), overallStandings (trophies per team), matchHistory (every match this season, newest first, each with home/away/score/timestamp), and archivedSeasons (past seasons' final tables + their match history).
 - Summary mode (summaryMode: true): the same picture pre-aggregated — currentSeasonTable, overallStandings, recentFormLast5 (last 5 results per team as W/L/D, newest first), totalMatchesPlayed, archivedSeasonsCount, and pastChampions.
 Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal difference, Pts=season points (this season's table only). overallStandings entries carry goldTrophies/silverTrophies/bronzeTrophies (one gold per season a team has won outright, one silver per runner-up finish, one bronze per third place — ranked by gold count first, then silver, then bronze). There is no in-app currency or shop in this app — never reference coins, wallets, or purchases.
+IMPORTANT: this data may not be attached to the CURRENT message if nothing changed since it was last sent earlier in this same conversation — in that case, keep using the numbers from the most recent "[League Data Context]" block you can see earlier in the chat. It is still accurate; it just wasn't worth resending.
 
 ## Grounding rules — non-negotiable, apply to prose AND tables
-- Only state numbers, results, or standings that are actually present in the JSON you were sent. Never estimate, round creatively, or fill gaps from general football knowledge.
+- Only state numbers, results, or standings that are actually present in the JSON you were sent (this message or an earlier one in this conversation). Never estimate, round creatively, or fill gaps from general football knowledge.
 - If the data needed to answer isn't in the context (e.g. asked about a season that hasn't been archived yet, or a stat that requires full mode while you were sent summary mode), say so plainly and suggest what would help (e.g. "turn on Send Full Data in Assistant Settings") instead of guessing.
-- Before quoting a stat, double-check it against the JSON in this same turn — don't rely on something you said earlier in the conversation if the data has since changed.
 - Predictions and "who wins the league" takes are welcome — just frame them clearly as your read of the trends, not a guarantee, and never dress a guess up as a data-backed number.`;
 
 // ---- Season screen floating button: Back-to-top ----
@@ -68,7 +62,6 @@ function updateSeasonFabs(route){
     const onSeasonScreen = route==='league';
     topFab.classList.toggle('season-fab-active', onSeasonScreen);
     if(onSeasonScreen){
-        // Always re-enter hidden, not mid-fade from a previous scroll position
         topFab.classList.add('season-fab-faded');
     }
 }
@@ -114,23 +107,36 @@ function saveAiSettings(){
 function toggleAiDataMode(){
     aiFullData = document.getElementById('ai-full-data-toggle').checked;
     localStorage.setItem('ai_full_data', aiFullData ? 'on' : 'off');
+    // Fingerprint includes the mode, so the next message will automatically
+    // resend fresh data in the new mode — no extra bookkeeping needed here.
 }
 function clearAiChat(){
     aiChatHistory = [];
     localStorage.removeItem('ai_chat_history');
     aiDynamicSuggestions = null; // force a fresh, re-grounded batch next time chat is empty
+    aiDataCarrierMsg = null;     // next message starts a brand-new "memory" for this chat
     renderAiMessages();
     renderAiSuggestions();
     closeAiSettings();
     showToast('Chat cleared', 'info', 1600);
 }
 
+// Returns the pushed message object (callers may attach extra, non-persisted
+// bookkeeping fields to it — see aiDataCarrierMsg in sendAiMessage).
 function pushAiMessage(role, text){
-    aiChatHistory.push({ role, text });
+    const msg = { role, text };
+    aiChatHistory.push(msg);
     if(aiChatHistory.length > 40) aiChatHistory = aiChatHistory.slice(-40);
-    try{ localStorage.setItem('ai_chat_history', JSON.stringify(aiChatHistory)); }catch(e){}
+    try{
+        // Only role/text are ever persisted — any bookkeeping fields (like
+        // the cached data payload on a "carrier" message) stay in memory
+        // only, so localStorage never bloats with old JSON snapshots.
+        const persistable = aiChatHistory.map(m=>({ role:m.role, text:m.text }));
+        localStorage.setItem('ai_chat_history', JSON.stringify(persistable));
+    }catch(e){}
     renderAiMessages();
     renderAiSuggestions();
+    return msg;
 }
 function escapeHtml(s){
     const d=document.createElement('div');
@@ -139,8 +145,12 @@ function escapeHtml(s){
 }
 
 // ---- Lightweight pipe-table detector/renderer for AI chat bubbles ----
+// Trailing \r (seen from some proxies/streaming chunks) used to silently
+// break every table — endsWith('|') would fail on "...|\r". Now stripped
+// before every check.
 function isTableRow(line){
-    const t = (line||'').trim();
+    const t = (line||'').replace(/\r$/,'').trim();
+    if(!t) return false;
     return t.startsWith('|') && t.endsWith('|') && t.length > 2;
 }
 function isTableSeparator(line){
@@ -148,7 +158,7 @@ function isTableSeparator(line){
     return splitRow(line).every(c => /^:?-{2,}:?$/.test(c.trim()));
 }
 function splitRow(line){
-    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+    return line.replace(/\r$/,'').trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
 }
 function buildTableHtml(rows){
     const header = rows[0], body = rows.slice(1);
@@ -163,7 +173,11 @@ function buildTableHtml(rows){
     return html + '</tbody></table>';
 }
 function renderAiMessageBody(text){
-    const lines = String(text==null ? '' : text).split('\n');
+    // Split on any line-ending style (\n, \r\n, or a lone \r) — a mixed or
+    // \r\n-heavy stream (common when reading a fetch body in chunks) used to
+    // leave stray \r characters at the end of lines and break table
+    // detection further down.
+    const lines = String(text==null ? '' : text).split(/\r\n|\r|\n/);
     let html = '', i = 0;
     while(i < lines.length){
         if(isTableRow(lines[i]) && isTableSeparator(lines[i+1])){
@@ -179,11 +193,6 @@ function renderAiMessageBody(text){
     return html;
 }
 
-// dir="auto" makes each bubble detect its own base direction from its own
-// text (Persian vs English vs mixed) instead of inheriting a single fixed
-// direction from the panel — combined with formatAiInlineText()'s bidi
-// isolation, that's what keeps mixed Persian/English readable, while
-// renderAiMessageBody still renders any pipe-table lines as a real <table>.
 function renderAiMessages(){
     const box=document.getElementById('ai-chat-messages');
     if(!box) return;
@@ -192,12 +201,38 @@ function renderAiMessages(){
     if(scroller) scroller.scrollTop = scroller.scrollHeight;
 }
 
+// ---- Live "typing" bubble used while a reply is streaming in ----
+// Kept as a plain DOM element outside aiChatHistory until the stream
+// finishes, at which point it's removed and the final text goes through
+// the normal pushAiMessage() -> renderAiMessages() path (guarantees the
+// final table/formatting pass is always run on the complete text, even if
+// mid-stream it looked like raw pipe characters for a moment).
+function startStreamingBubble(){
+    const box=document.getElementById('ai-chat-messages');
+    if(!box) return null;
+    const id = 'ai-stream-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'ai-msg model';
+    div.id = id;
+    div.dir = 'auto';
+    box.appendChild(div);
+    const scroller=document.getElementById('ai-chat-scroll');
+    if(scroller) scroller.scrollTop = scroller.scrollHeight;
+    return id;
+}
+function updateStreamingBubble(id, text){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = renderAiMessageBody(text) + ' <span style="opacity:.45;">▌</span>';
+    const scroller=document.getElementById('ai-chat-scroll');
+    // Only auto-follow if the user was already near the bottom — avoids
+    // yanking their scroll position if they scrolled up mid-stream to read.
+    if(scroller && scroller.scrollTop > scroller.scrollHeight - scroller.clientHeight - 80){
+        scroller.scrollTop = scroller.scrollHeight;
+    }
+}
+
 // ---- Quick-ask suggestion chips ----
-// Shown above the input bar (like the prompt suggestions in most chat apps),
-// but NOT hardcoded — the assistant itself generates a fresh batch (grounded
-// in the current league data, in Persian) the first time the chat is empty.
-// They disappear once the user sends a real message, and are regenerated
-// from scratch after Clear Chat, since the data may have changed by then.
 let aiDynamicSuggestions = null; // null = not fetched yet for this empty-chat state
 let aiSuggestionsLoading = false;
 const AI_SUGGESTION_COUNT = 4;
@@ -215,11 +250,11 @@ function renderAiSuggestions(){
         return;
     }
     if(aiDynamicSuggestions===null){
-        fetchAiSuggestions(); // sets loading + re-renders (skeleton) synchronously before its own await
+        fetchAiSuggestions();
         return;
     }
     if(!aiDynamicSuggestions.length){
-        row.innerHTML=''; // generation failed — fail quietly, no chips this time
+        row.innerHTML='';
         return;
     }
     row.innerHTML = aiDynamicSuggestions.map(p=>
@@ -258,15 +293,13 @@ async function fetchAiSuggestions(){
     aiSuggestionsLoading = false;
     renderAiSuggestions();
 }
-// Pulls a JSON array of strings out of the model's reply even if it wrapped
-// it in ```json fences or added stray commentary around it.
 function parseSuggestionList(raw){
     let s = String(raw).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
     try{
         const arr = JSON.parse(s);
         if(Array.isArray(arr)) return arr.map(x=>String(x).trim()).filter(Boolean);
     }catch(e){}
-    const m = s.match(/\[[\s\S]*\]/); // fallback: grab the first [...] block in the text
+    const m = s.match(/\[[\s\S]*\]/);
     if(m){
         try{
             const arr = JSON.parse(m[0]);
@@ -281,27 +314,16 @@ function useAiSuggestion(btn){
     sendAiMessage();
 }
 
-// Wraps runs of Latin letters/digits (team names, scores, dates…) with Unicode
-// directional-isolate marks (LRI…PDI) when they sit inside Persian text. Bidi
-// text rendering can otherwise reorder a Latin/number run relative to its
-// surrounding RTL words in a way that reads as scrambled — this is the actual
-// fix for that, on top of instructing the model not to code-switch needlessly.
 function wrapBidiIsolates(text){
-    if(!/[\u0600-\u06FF]/.test(text)) return text; // only needed once Persian is present
+    if(!/[\u0600-\u06FF]/.test(text)) return text;
     return text.replace(/[A-Za-z0-9][A-Za-z0-9\-\/:.,]*(?:\s[A-Za-z0-9][A-Za-z0-9\-\/:.,]*)*/g, run => `\u2066${run}\u2069`);
 }
-// Turns one line of a raw model reply into safe, correctly-formatted chat
-// HTML. The model is told never to use Markdown (this UI can't render it),
-// but as a safety net any stray **bold**/## heading syntax that slips
-// through is converted into real formatting instead of being shown as
-// literal asterisks/hashes. Called per non-table line by renderAiMessageBody
-// (pipe-table lines are handled separately, via buildTableHtml).
 function formatAiInlineText(raw){
-    let s = wrapBidiIsolates(raw == null ? '' : String(raw)); // run first, while it's still plain text
+    let s = wrapBidiIsolates(raw == null ? '' : String(raw));
     s = escapeHtml(s);
-    s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');           // **bold** -> real bold
-    s = s.replace(/^#{1,6}\s*(.+)$/, '<b>$1</b>');           // ## heading -> bold line
-    s = s.replace(/[*#]{1,}/g, '');                           // any remaining stray */# -> removed
+    s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    s = s.replace(/^#{1,6}\s*(.+)$/, '<b>$1</b>');
+    s = s.replace(/[*#]{1,}/g, '');
     return s;
 }
 function setAiTyping(on){
@@ -360,51 +382,152 @@ function buildFullContext(){
     };
 }
 
+// ============================================================
+// MEMORY — decide whether the league-data JSON needs to be resent.
+// A stateless chat API has no server-side memory of its own: the only
+// real "memory" is whatever is still present in the conversation history
+// sent along with each request. So instead of attaching a fresh JSON
+// blob to EVERY message, we attach it only to one "carrier" message and
+// keep reusing that same carrier (re-sent as part of the normal history
+// window) for as long as: (a) it's still inside the history window we
+// send, and (b) nothing about the live data has actually changed.
+// The moment either stops being true, the next message becomes the new
+// carrier with a fresh snapshot.
+// ============================================================
+const AI_HISTORY_WINDOW = 10; // how many past turns (not counting the new one) are sent for context
+let aiDataCarrierMsg = null;  // reference to the aiChatHistory entry currently holding the data payload
+
+function computeAiDataFingerprint(){
+    try{
+        const table = TEAM_NAMES.map(t=>{
+            const r = leagueData[t] || {};
+            return `${t}:${r.Pts||0}:${r.P||0}:${r.GF||0}:${r.GA||0}`;
+        }).join(',');
+        const mbaCur = (mbaData && mbaData.current) ? ('cur'+mbaData.current.edition) : 'none';
+        const mbaDone = (mbaData && mbaData.completed) ? mbaData.completed.length : 0;
+        return [table, matchHistory.length, archivedSeasons.length, mbaDone, mbaCur, aiFullData?'full':'sum'].join('|');
+    }catch(e){ return 'unknown'; }
+}
+
+const AI_DEEP_DIVE_PATTERN = /(deep dive|breakdown|explain in detail|full analysis|تحلیل کن|کامل توضیح|توضیح بده|جزئیات|با جزئیات|تفصیل)/i;
+
+// ---- Streaming ----
+// Reads the response as Server-Sent Events (OpenAI/OpenRouter-style
+// `data: {...}` chunks) and calls onDelta(accumulatedTextSoFar) as each
+// piece arrives, producing the live "typing" effect. Falls back cleanly
+// to a normal one-shot parse if the proxy doesn't actually stream back
+// (e.g. if it currently buffers the whole reply before responding) —
+// nothing breaks either way, you just don't get the live-typing effect
+// until the Worker is updated to pass the stream through.
+async function streamAiResponse(messages, maxTokens, onDelta){
+    const res = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: OPENROUTER_MODEL,
+            messages: messages,
+            max_tokens: maxTokens,
+            stream: true,
+        }),
+    });
+    if(!res.ok){
+        let errText=''; try{ errText = await res.text(); }catch(e){}
+        let payload; try{ payload = JSON.parse(errText); }catch(e){}
+        throw new Error((payload && payload.error && payload.error.message) || ('HTTP ' + res.status));
+    }
+    if(!res.body || typeof res.body.getReader !== 'function'){
+        const raw = await res.text();
+        return parseNonStreamingReply(raw, onDelta);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '', full = '', rawAll = '', sawStreamChunk = false;
+    while(true){
+        const { done, value } = await reader.read();
+        if(done) break;
+        const chunkText = decoder.decode(value, { stream:true });
+        rawAll += chunkText;
+        buffer += chunkText;
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep the possibly-incomplete last line for next round
+        for(const line of lines){
+            const trimmed = line.replace(/\r$/,'').trim();
+            if(!trimmed.startsWith('data:')) continue;
+            const data = trimmed.slice(5).trim();
+            if(data === '[DONE]' || !data) continue;
+            try{
+                const json = JSON.parse(data);
+                const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
+                if(delta){ sawStreamChunk = true; full += delta; onDelta(full); }
+            }catch(e){ /* ignore partial/malformed chunk — next read() may complete it */ }
+        }
+    }
+    if(sawStreamChunk && full) return full;
+    // Nothing parsed as SSE — proxy likely returned a normal buffered JSON body.
+    return parseNonStreamingReply(rawAll, onDelta);
+}
+function parseNonStreamingReply(raw, onDelta){
+    let payload; try{ payload = JSON.parse(raw); }catch(e){ payload = null; }
+    const reply = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
+    if(!reply) throw new Error((payload && payload.error && payload.error.message) || 'Empty response from AI provider');
+    onDelta(reply);
+    return reply;
+}
+
 async function sendAiMessage(){
     const input = document.getElementById('ai-chat-input');
     const text = input.value.trim();
     if(!text) return;
     input.value = '';
-    pushAiMessage('user', text);
+    const userMsg = pushAiMessage('user', text);
     setAiTyping(true);
-    const dataPayload = aiFullData ? buildFullContext() : buildSummaryContext();
 
-    // Build the OpenRouter chat-completions message list: system prompt,
-    // recent history, then the new user message with the league data
-    // context prepended so the model can ground its answer in real numbers.
+    // ---- Decide whether the league-data context needs to be (re)sent ----
+    const fp = computeAiDataFingerprint();
+    const windowMsgs = aiChatHistory.slice(-(AI_HISTORY_WINDOW+1), -1); // history excluding the message just pushed
+    const carrierValid = !!aiDataCarrierMsg && aiDataCarrierMsg._fp === fp && windowMsgs.includes(aiDataCarrierMsg);
+
     const messages = [{ role: 'system', content: AI_SYSTEM_PROMPT }];
-    aiChatHistory.slice(-13, -1).forEach(m=>{
-        messages.push({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text });
+    windowMsgs.forEach(m=>{
+        const content = (carrierValid && m===aiDataCarrierMsg) ? (m._data + m.text) : m.text;
+        messages.push({ role: m.role === 'model' ? 'assistant' : 'user', content });
     });
-    const dataContext = `[League Data Context]:\n${JSON.stringify(dataPayload)}\n\n`;
-    messages.push({ role: 'user', content: dataContext + text });
 
+    let currentContent = text;
+    if(!carrierValid){
+        const dataPayload = aiFullData ? buildFullContext() : buildSummaryContext();
+        const dataContext = `[League Data Context]:\n${JSON.stringify(dataPayload)}\n\n`;
+        currentContent = dataContext + text;
+        userMsg._data = dataContext; // kept in memory only — never persisted to localStorage
+        userMsg._fp = fp;
+        aiDataCarrierMsg = userMsg;
+    }
+    messages.push({ role: 'user', content: currentContent });
+
+    const isDeepDive = AI_DEEP_DIVE_PATTERN.test(text);
+    const maxTokens = isDeepDive ? 700 : 220; // short by default; only a real "deep dive" ask earns more room
+
+    let bubbleId = null;
     try{
-        const res = await fetch(OPENROUTER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: OPENROUTER_MODEL,
-                messages: messages,
-                max_tokens: 400, // hard ceiling — keeps replies mobile-chat-sized even if the model ignores the length instruction in the system prompt; ~2-4 sentences normally, still enough room for an explicit "deep dive" request to fit
-            }),
+        const full = await streamAiResponse(messages, maxTokens, chunk=>{
+            if(!bubbleId){
+                setAiTyping(false);
+                bubbleId = startStreamingBubble();
+            }
+            updateStreamingBubble(bubbleId, chunk);
         });
-        const raw = await res.text();
-        let payload; try{ payload = JSON.parse(raw); }catch(e){ payload = null; }
-        if(!res.ok || !payload){
-            throw new Error((payload && payload.error && payload.error.message) ? payload.error.message : ('HTTP ' + res.status));
+        if(bubbleId){
+            const el = document.getElementById(bubbleId);
+            if(el) el.remove();
         }
-        const reply = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
-        if(!reply){
-            throw new Error('Empty response from AI provider');
-        }
-        pushAiMessage('model', reply);
+        pushAiMessage('model', full);
     }catch(err){
+        if(bubbleId){
+            const el = document.getElementById(bubbleId);
+            if(el) el.remove();
+        }
         pushAiMessage('model', '⚠️ Could not reach the assistant (' + (err.message || 'unknown error') + '). Check your internet connection and try again.');
     }finally{
         setAiTyping(false);
     }
 }
-
