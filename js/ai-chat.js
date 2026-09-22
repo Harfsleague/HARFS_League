@@ -1,5 +1,5 @@
 
-const OPENROUTER_MODEL = "gemini-3.5-flash";
+const GEMINI_MODEL = "gemini-3.5-flash";
 // The API key is NEVER stored in this client-side file.
 // Requests go through the Cloudflare Worker proxy.
 const OPENROUTER_URL = "https://harfs-ai-proxy.borobiron12.workers.dev/chat";
