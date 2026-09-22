@@ -1,4 +1,7 @@
-
+// NOTE: this value is sent to the Worker as body.model, but the Worker's
+// /chat endpoint currently ignores it entirely — each provider function on
+// the Worker side uses its own hardcoded model constant. Kept here so the
+// request shape doesn't change; harmless, just not actually wired up.
 const OPENROUTER_MODEL = "gemini-3.5-flash";
 // The API key is NEVER stored in this client-side file.
 // Requests go through the Cloudflare Worker proxy.
@@ -433,7 +436,16 @@ async function streamAiResponse(messages, maxTokens, onDelta){
     if(!res.ok){
         let errText=''; try{ errText = await res.text(); }catch(e){}
         let payload; try{ payload = JSON.parse(errText); }catch(e){}
-        throw new Error((payload && payload.error && payload.error.message) || ('HTTP ' + res.status));
+        // The backend may return the error as either a plain string
+        // ({ error: "message here" }) or a nested object
+        // ({ error: { message: "message here" } }) depending on which
+        // provider/layer produced it. Handle both shapes so the real
+        // reason is always shown instead of a generic "HTTP 400".
+        let reason = null;
+        if(payload && payload.error){
+            reason = typeof payload.error === 'string' ? payload.error : payload.error.message;
+        }
+        throw new Error(reason || ('HTTP ' + res.status));
     }
     if(!res.body || typeof res.body.getReader !== 'function'){
         const raw = await res.text();
@@ -469,7 +481,13 @@ async function streamAiResponse(messages, maxTokens, onDelta){
 function parseNonStreamingReply(raw, onDelta){
     let payload; try{ payload = JSON.parse(raw); }catch(e){ payload = null; }
     const reply = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
-    if(!reply) throw new Error((payload && payload.error && payload.error.message) || 'Empty response from AI provider');
+    if(!reply){
+        let reason = null;
+        if(payload && payload.error){
+            reason = typeof payload.error === 'string' ? payload.error : payload.error.message;
+        }
+        throw new Error(reason || 'Empty response from AI provider');
+    }
     onDelta(reply);
     return reply;
 }
