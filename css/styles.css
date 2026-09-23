@@ -1784,6 +1784,39 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 }
 
 /* =====================================================
+   CUSTOM FONTS — TTF files dropped into /fonts. See APP_FONTS
+   in js/appearance.js — each entry below needs a matching id there.
+   Add more @font-face blocks here as more .ttf files are added.
+   ===================================================== */
+@font-face{ font-family:'harfs-font-1'; src:url('../fonts/harfs-font-1.ttf') format('truetype'); font-display:swap; }
+@font-face{ font-family:'harfs-font-2'; src:url('../fonts/harfs-font-2.ttf') format('truetype'); font-display:swap; }
+@font-face{ font-family:'harfs-font-3'; src:url('../fonts/harfs-font-3.ttf') format('truetype'); font-display:swap; }
+@font-face{ font-family:'harfs-font-4'; src:url('../fonts/harfs-font-4.ttf') format('truetype'); font-display:swap; }
+
+.font-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px 8px;
+}
+.font-swatch{
+    display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+}
+.font-swatch-preview{
+    width:46px; height:46px; border-radius:15px; display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; font-weight:700; color:#e5e7eb; background:rgba(255,255,255,0.05);
+    border:2px solid rgba(255,255,255,0.10);
+    transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.font-swatch.selected .font-swatch-preview{
+    border-color:#fff; box-shadow:0 0 0 2px var(--primary),0 4px 14px var(--primary-glow);
+    transform:scale(1.06);
+}
+.font-swatch:active .font-swatch-preview{ transform:scale(0.92); }
+.font-swatch span{
+    font-size:0.58rem; font-weight:700; color:#9ca3af; text-align:center;
+    max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.font-swatch.selected span{ color:#fff; }
+
+/* =====================================================
    PLAYLIST SHEET — list of songs, opened from Settings
    ===================================================== */
 .playlist-panel{
@@ -2066,7 +2099,45 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
    direction, or the bidi algorithm scrambles word/number order. */
 #magazine-screen{direction:rtl;text-align:right;}
 #magazine-screen .magazine-inner{max-width:640px;margin:0 auto;padding:0 0 40px;}
-.magazine-panel-header{display:flex;align-items:center;gap:10px;padding:14px 16px;position:sticky;top:0;background:var(--bg,#0f172a);z-index:5;}
+.magazine-panel-header{display:flex;flex-direction:column;gap:6px;padding:14px 16px 8px;position:sticky;top:0;background:var(--bg,#0f172a);z-index:5;}
+.magazine-panel-header-row{display:flex;align-items:center;gap:10px;}
+/* Content scrolling underneath the sticky "HARFS Weekly Magazine" header used
+   to butt straight up against it with a hard, ugly cut. This fade strip sits
+   just below the header (moves with it, since it's sticky too) and fades the
+   background from the header's solid color down to transparent, so text
+   dissolves away right as it passes under the header instead of clipping. */
+.magazine-panel-header::after{
+    content:'';position:absolute;top:100%;left:0;right:0;height:28px;
+    background:linear-gradient(180deg,var(--bg,#0f172a) 0%,rgba(15,23,42,0) 100%);
+    pointer-events:none;
+}
+.magazine-issue-nav{
+    display:flex;align-items:center;gap:8px;
+}
+.magazine-issue-nav:empty{ display:none; }
+.magazine-nav-arrow{
+    width:30px;height:30px;border-radius:10px;border:none;flex-shrink:0;
+    background:rgba(255,255,255,0.06);color:#e5e7eb;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.magazine-nav-arrow:disabled{ opacity:0.3; cursor:default; }
+.magazine-nav-arrow:active:not(:disabled){ transform:scale(0.92); }
+.magazine-issue-picker-wrap{ position:relative; }
+.magazine-issue-pill{
+    display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:none;cursor:pointer;
+    background:rgba(255,255,255,0.06);color:#e5e7eb;font-size:0.72rem;font-weight:700;
+}
+.magazine-issue-picker{
+    display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:170px;max-height:240px;overflow-y:auto;
+    background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:6px;z-index:10;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.magazine-issue-picker.open{ display:block; }
+.magazine-issue-picker-row{
+    display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;
+    font-size:0.72rem;color:#cbd5e1;
+}
+.magazine-issue-picker-row:hover,.magazine-issue-picker-row.active{ background:rgba(255,255,255,0.07);color:#fff; }
+.magazine-issue-picker-date{ color:#6b7280;font-size:0.64rem; }
 .magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;letter-spacing:0.02em;}
 .magazine-panel-back-btn{background:none;border:none;color:inherit;font-size:1.1rem;}
 
