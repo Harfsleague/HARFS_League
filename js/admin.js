@@ -81,7 +81,7 @@ function navigate(route){
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-admin',
         'shop':'nav-settings','settings':'nav-settings','admin':'nav-settings',
-        'ai-chat':'nav-main'
+        'magazine':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
@@ -89,7 +89,7 @@ function navigate(route){
     const idMap={
         'main-league':'main-league-screen','league':'league-table-screen',
         'shop':'shop-screen','weird':'weird-screen','admin':'admin-screen',
-        'settings':'settings-screen','ai-chat':'ai-chat-screen'
+        'settings':'settings-screen','magazine':'magazine-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{
