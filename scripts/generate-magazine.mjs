@@ -19,6 +19,26 @@ const API_BASE = `https://api.github.com/repos/${DATA_REPO}/contents/`;
 
 const TEAM_NAMES = ["HOSI", "Sezar", "Bayern", "Yellow"];
 
+// Shown instead of an AI cover whenever the image call fails (or, on the
+// client side, whenever an issue has no cover at all) — already sits in the
+// HARFS_Data repo alongside the team logos and other static assets, so it's
+// referenced by name only and never uploaded by this script.
+const DEFAULT_COVER_FILE = "mag1.png";
+
+// "Memories" (the Golden Moments / weird_events.json feed) should only ever
+// be referenced if they were actually posted in roughly the last publishing
+// cycle — otherwise the magazine ends up narrating a "this week" moment that
+// actually happened a month ago. The magazine runs weekly (see
+// .github/workflows/weekly-magazine.yml), so one week plus a small buffer
+// for a late/manual run is the right cutoff.
+const MEMORIES_WINDOW_DAYS = 8;
+function isWithinLastWindow(isoTimestamp, days = MEMORIES_WINDOW_DAYS) {
+  if (!isoTimestamp) return false;
+  const t = new Date(isoTimestamp).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t <= days * 24 * 60 * 60 * 1000;
+}
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const HARFS_DATA_TOKEN = process.env.HARFS_DATA_TOKEN;
 
@@ -194,8 +214,12 @@ async function gatherData() {
   }));
 
   // weird_events.json holds base64 media thumbnails — strip everything but
-  // the short text captions, and only the most recent handful.
+  // the short text captions. Only moments actually posted within the recent
+  // publishing window are eligible (see isWithinLastWindow above): without
+  // this filter, the magazine could pick up and narrate a "memory" from a
+  // month ago as if it just happened, which is exactly what we must avoid.
   const recentMoments = (weirdEventsRaw || [])
+    .filter((e) => isWithinLastWindow(e?.timestamp))
     .slice(0, 8)
     .map((e) => e.text)
     .filter(Boolean);
@@ -222,6 +246,31 @@ async function gatherData() {
     titleRace,
     allTimeStats,
   };
+}
+
+// Deterministic weekly interview rotation — NOT left up to the AI, so it's
+// guaranteed rather than merely likely that each of the 4 teams gets
+// interviewed exactly once every 4 issues. issueNumber is 1-based, so issue
+// #1 -> TEAM_NAMES[0], #2 -> TEAM_NAMES[1], ..., #5 -> TEAM_NAMES[0] again.
+function computeInterviewTeam(issueNumber) {
+  return TEAM_NAMES[(issueNumber - 1) % TEAM_NAMES.length];
+}
+
+// A short digest of the last few issues so the new issue doesn't repeat the
+// same jokes/angles/headlines and stays aware of the ongoing storyline. Kept
+// intentionally compact (a few fields, last 3 issues only) since this is
+// context for the model, not something that needs to be exhaustive.
+function buildPreviousIssuesSummary(archive) {
+  return (archive || []).slice(0, 3).map((issue) => ({
+    issueNumber: issue.issueNumber,
+    issueDate: issue.issueDate,
+    issueTitle: issue.issueTitle,
+    coverSubtitle: issue.coverSubtitle,
+    matchReportGist: (issue.matchReport || "").slice(0, 300),
+    funnyClosing: issue.funnyClosing,
+    interviewTeam: issue.interview?.team || null,
+    interviewGist: (issue.interview?.headline || "").slice(0, 200),
+  }));
 }
 
 // ------------------------------------------------------------
@@ -261,6 +310,26 @@ const MAGAZINE_SCHEMA = {
       description: "یک یا دو پاراگراف دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords) و اتفاق‌های عجیب/بامزهٔ این هفته (از recentMoments). اگر weeklyRecords یا recentMoments خالی بود، صادقانه بگو این هفته رکورد یا اتفاق خاصی ثبت نشده.",
     },
     funnyClosing: { type: "string", description: "یک جمله یا پاراگراف کوتاه طنز برای پایان مجله" },
+    interview: {
+      type: "object",
+      description: "یک مصاحبهٔ کاملاً خیالی (ساخته‌ذهن نویسنده، نه واقعی) و تا حدی طنز با یکی از اعضای تیمی که در دیتا با کلید interviewTeam مشخص شده — این تیم از قبل تعیین شده، تو فقط شخصیت و پاسخ‌ها را خلق می‌کنی.",
+      properties: {
+        team: { type: "string", description: "دقیقاً همان مقدار interviewTeam در دیتای ورودی" },
+        intervieweeRole: { type: "string", description: "نقش شخصیت مصاحبه‌شونده: مثلاً «بازیکن»، «کاپیتان» یا «سرمربی» — خودت انتخاب کن" },
+        intervieweeName: { type: "string", description: "یک نام خیالی و بامزه برای این شخصیت (چون بازیکن‌های واقعی و اسم‌هایشان در دیتا نیست، این کاملاً از خودت است)" },
+        headline: { type: "string", description: "یک تیتر کوتاه و بامزه برای این مصاحبه" },
+        qAndA: {
+          type: "array",
+          description: "۳ تا ۵ جفت پرسش و پاسخ خیالی و طنزآمیز، اما با اشاره‌های ظریف به وضعیت واقعی تیم (جدول، فرم اخیر) تا کاملاً بی‌ربط به دیتا نباشد",
+          items: {
+            type: "object",
+            properties: { question: { type: "string" }, answer: { type: "string" } },
+            required: ["question", "answer"],
+          },
+        },
+      },
+      required: ["team", "intervieweeRole", "intervieweeName", "headline", "qAndA"],
+    },
     imagePromptEn: {
       type: "string",
       description: "An English-language prompt describing a magazine-cover illustration that captures this week's storyline (no text/letters in the image, no real logos/brands).",
@@ -276,6 +345,7 @@ const MAGAZINE_SCHEMA = {
     "titleRaceCommentary",
     "recordsAndOddities",
     "funnyClosing",
+    "interview",
     "imagePromptEn",
   ],
 };
@@ -284,6 +354,13 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 لحن تو باید مثل یک روزنامه‌نگار ورزشی باتجربه باشد که کمی هم شوخ‌طبع است — نه کمدین محض، بلکه تحلیل‌گر دقیقی که می‌داند کی باید بخنداند و کی باید جدی باشد. همیشه به فارسی بنویس (نام تیم‌ها و HARFS را به لاتین نگه دار).
 تمام اعداد، نتایج و آماری که ارائه می‌دهی باید دقیقاً از دیتای JSON داده‌شده باشد — هرگز عددی را حدس نزن یا نسازی. اگر داده‌ای برای بخشی کافی نیست، آن بخش را کوتاه و صادقانه بنویس (مثلاً بگو این هفته اتفاق خاصی ثبت نشده) به‌جای این‌که چیزی بسازی.
 دیتای ورودی شامل چند بخش آمار حساب‌شده هم هست: formGuide (فرم ۵ بازی اخیر و روند برد/باخت هر تیم)، weeklyRecords (پرگل‌ترین بازی و بزرگ‌ترین اختلاف نتیجهٔ این هفته)، titleRace (فاصلهٔ امتیازی تیم‌ها تا صدرنشین)، و allTimeStats (مجموع کل فصل‌ها: تعداد قهرمانی لیگ، تعداد مدال MBA، و آمار کلی بازی‌ها و گل‌ها). این اعداد از قبل محاسبه شده‌اند و درست هستند؛ کارِ تو فقط روایت و تحلیلِ آن‌ها به فارسی است، نه بازمحاسبه یا حدس زدن درصد شانس.
+
+دربارهٔ recentMoments (خاطرات/لحظات ثبت‌شده توسط کاربران): این‌ها از قبل فیلتر شده‌اند و فقط شامل مواردیست که در همین هفتهٔ اخیر ثبت شده‌اند — هرگز به رویداد یا خاطره‌ای که در دیتای ورودی نیست اشاره نکن و هرگز چیزی را به‌عنوان «این هفته» جا نزن مگر این‌که واقعاً در همین آرایه باشد. اگر recentMoments خالی بود، صادقانه بگو این هفته خاطرهٔ خاصی ثبت نشده.
+
+دربارهٔ previousIssuesSummary: خلاصه‌ای از ۱ تا ۳ شمارهٔ قبلی مجله است (عنوان، بخشی از گزارش، جملهٔ پایانی طنز، و مصاحبهٔ قبلی). این را فقط برای این می‌بینی که: (۱) از تکرار همان تیترها، جوک‌ها، توصیف‌ها و زاویه‌های قبلی خودداری کنی و لحن/محتوای تازه‌ای بسازی، و (۲) در صورت لزوم پیوستگی روایی با هفته‌های قبل را حفظ کنی (مثلاً اگر هفتهٔ قبل به یک روند اشاره شده، می‌توانی ادامه یا تغییرش را ببینی). هرگز محتوای previousIssuesSummary را عیناً یا با کمی تغییر در خروجی این هفته تکرار نکن.
+
+دربارهٔ بخش interview: دیتای ورودی یک مقدار به اسم interviewTeam دارد که همان تیمی است که باید امسال — یعنی همین شماره — با او «مصاحبه» کنی. این مصاحبه کاملاً خیالی و ساختهٔ ذهن توست (چون بازیکن یا مربی واقعی در دیتا نداریم)، می‌تواند تا حدی طنز و اغراق‌آمیز باشد، اما باید مقدار team را دقیقاً برابر interviewTeam بگذاری — تیم را خودت انتخاب نکن. سعی کن با اشاره‌های سطحی به وضعیت واقعی همان تیم (رتبه در جدول، فرم اخیر، فاصله تا صدر) مصاحبه را به دیتای واقعی گره بزنی، بدون این‌که هیچ عدد یا نتیجهٔ ساختگی به‌عنوان واقعیت مطرح کنی.
+
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
 // Retries a Gemini fetch call on transient errors (503 overloaded, 429 rate
@@ -387,25 +464,36 @@ async function main() {
   console.log("Gathering league data...");
   const data = await gatherData();
 
-  console.log("Asking Gemini 3.5 Flash to write the magazine...");
-  const magazine = await callGeminiText(data);
-
-  // ---- load the existing archive so past issues are never lost ----
+  // ---- load the existing archive first: issue numbering, the "don't
+  // repeat yourself" summary, and the interview rotation all depend on it,
+  // and none of them can wait until after the text call like before. ----
   const archive = (await fetchJson(`${RAW_BASE}weekly_magazine_archive.json`, [])) || [];
   const issueNumber = archive.reduce((max, i) => Math.max(max, i.issueNumber || 0), 0) + 1;
+
+  data.previousIssuesSummary = buildPreviousIssuesSummary(archive);
+  data.interviewTeam = computeInterviewTeam(issueNumber);
+
+  console.log(`Asking Gemini 3.5 Flash to write the magazine (interview team: ${data.interviewTeam})...`);
+  const magazine = await callGeminiText(data);
+  // The rotation must be guaranteed, not just requested — if the model
+  // ignored interviewTeam for any reason, force it back to the scheduled
+  // team rather than letting the rotation silently drift.
+  if (magazine.interview) magazine.interview.team = data.interviewTeam;
 
   console.log("Asking Gemini 3.1 Flash-Lite Image for the cover...");
   let coverBase64 = null;
   try {
     coverBase64 = await callGeminiImage(magazine.imagePromptEn);
   } catch (err) {
-    console.error("Cover image generation failed, publishing without it:", err.message);
+    console.error("Cover image generation failed, falling back to the default cover:", err.message);
   }
 
   const now = new Date();
   // Each issue's cover gets its own filename (suffixed with the issue
   // number) so publishing a new issue never overwrites an older one's cover.
-  const coverFile = coverBase64 ? `weekly_magazine_cover_${issueNumber}.png` : null;
+  // When generation failed, fall back to the shared default image (already
+  // committed in the data repo) instead of shipping an issue with no cover.
+  const coverFile = coverBase64 ? `weekly_magazine_cover_${issueNumber}.png` : DEFAULT_COVER_FILE;
   const issue = {
     issueNumber,
     issueDate: now.toISOString().slice(0, 10),

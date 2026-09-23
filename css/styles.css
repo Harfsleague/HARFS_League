@@ -113,12 +113,11 @@ body[data-palette="graphite"] {
 * { box-sizing: border-box; }
 
 body {
-    /* Falls back to the hardcoded stack until appearance.js runs and sets
-       --app-font-family from the saved/selected font — previously this was
-       hardcoded with nothing anywhere reading the CSS variable appearance.js
-       sets, so picking a font (including the Persian fonts meant for the
-       magazine) never visibly changed anything, anywhere in the app. */
-    font-family: var(--app-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+    /* Always the hardcoded system stack. The custom fonts picked in
+       Settings → Appearance → Font are for the magazine only (see
+       #magazine-screen below) — every other screen in the app must keep
+       the default font regardless of which font is selected there. */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #fff;
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
@@ -2111,7 +2110,7 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 /* Only ever scroll this screen vertically: whatever a piece of content does
    (a long custom team name, a cramped admin-controls row, etc.) it must
    never force the user to drag left/right to read it. */
-#magazine-screen{direction:rtl;text-align:right;overflow-x:hidden;}
+#magazine-screen{direction:rtl;text-align:right;overflow-x:hidden;font-family:var(--app-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);}
 #magazine-screen .magazine-inner{max-width:640px;width:100%;margin:0 auto;padding:0 0 40px;overflow-x:hidden;}
 #magazine-screen img,#magazine-screen table{max-width:100%;}
 .magazine-panel-header{display:flex;flex-direction:column;gap:6px;padding:14px 16px 8px;position:sticky;top:0;background:var(--bg,#0f172a);z-index:5;}
@@ -2221,6 +2220,14 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 .magazine-spotlight-headline{font-weight:800;font-size:0.85rem;margin:4px 0;}
 .magazine-spotlight-note{font-size:0.78rem;color:#cbd5e1;line-height:1.8;}
 
+.magazine-interview-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.magazine-interview-team{font-weight:800;font-size:0.85rem;color:#fbbf24;}
+.magazine-interview-role{font-size:0.75rem;color:#9ca3af;}
+.magazine-interview-headline{font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#f8fafc;}
+.magazine-interview-qa{display:flex;flex-direction:column;gap:4px;}
+.magazine-interview-q{font-weight:700;font-size:0.82rem;color:#93c5fd;margin-top:10px;}
+.magazine-interview-a{font-size:0.85rem;line-height:1.9;color:#e2e8f0;}
+.magazine-interview-disclaimer{margin-top:14px;font-size:0.66rem;color:#6b7280;font-style:italic;}
 .magazine-recommendations{padding-inline-start:20px;font-size:0.85rem;line-height:2.1;color:#e2e8f0;}
 .magazine-closing{text-align:center;font-style:italic;color:#cbd5e1;background:radial-gradient(circle at 50% 0%,rgba(251,191,36,0.07),transparent 70%);}
 .magazine-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 20px;text-align:center;color:#9ca3af;}

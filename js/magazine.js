@@ -9,6 +9,12 @@
 // ============================================================
 
 const GITHUB_MAGAZINE_FILE = "weekly_magazine_archive.json";
+// Same default cover the generator (scripts/generate-magazine.mjs) falls
+// back to when the AI image call fails — kept here too as a client-side
+// safety net, so an older issue that shipped with coverImage:null (or a
+// cover file that 404s for any reason) still shows something instead of a
+// blank hero.
+const DEFAULT_MAGAZINE_COVER = "mag1.png";
 
 let magazineArchive = [];
 let magazineLoaded = false;
@@ -152,8 +158,9 @@ function renderMagazine(issue) {
     const body = document.getElementById('magazine-body');
     if (!body) return;
 
-    const coverFile = issue.coverImage || null;
-    const coverUrl = coverFile ? `${GITHUB_IMAGE_BASE_URL}${coverFile}?v=${issue.issueDate}` : null;
+    const coverFile = issue.coverImage || DEFAULT_MAGAZINE_COVER;
+    const coverUrl = `${GITHUB_IMAGE_BASE_URL}${coverFile}?v=${issue.issueDate}`;
+    const defaultCoverUrl = `${GITHUB_IMAGE_BASE_URL}${DEFAULT_MAGAZINE_COVER}?v=${issue.issueDate}`;
 
     // ---- standings ----
     const standingsRows = (issue.standingsTable || [])
@@ -240,9 +247,27 @@ function renderMagazine(issue) {
 
     const recommendations = (issue.recommendations || []).map(r => `<li>${escapeHtml(r)}</li>`).join('');
 
+    // ---- interview (fictional, one team per issue — see interview.team) ----
+    const iv = issue.interview;
+    const interviewSection = iv ? `
+        <div class="magazine-page magazine-interview">
+            <h2 class="magazine-section-title"><i class="fas fa-microphone"></i> مصاحبهٔ این هفته</h2>
+            <div class="magazine-interview-head">
+                <span class="magazine-interview-team">${teamLabel(iv.team)}</span>
+                <span class="magazine-interview-role">${escapeHtml(iv.intervieweeRole || '')} · ${escapeHtml(iv.intervieweeName || '')}</span>
+            </div>
+            ${iv.headline ? `<div class="magazine-interview-headline">${escapeHtml(iv.headline)}</div>` : ''}
+            <div class="magazine-interview-qa">
+                ${(iv.qAndA || []).map(qa => `
+                <div class="magazine-interview-q">${escapeHtml(qa.question)}</div>
+                <div class="magazine-interview-a">${escapeHtml(qa.answer)}</div>`).join('')}
+            </div>
+            <div class="magazine-interview-disclaimer">این مصاحبه کاملاً خیالی و طنزآمیز است.</div>
+        </div>` : '';
+
     body.innerHTML = `
         <div class="magazine-hero">
-            ${coverUrl ? `<img src="${coverUrl}" class="magazine-hero-img" alt="cover" onerror="this.style.display='none'">` : ''}
+            <img src="${coverUrl}" class="magazine-hero-img" alt="cover" onerror="if(this.src!=='${defaultCoverUrl}'){this.src='${defaultCoverUrl}';}else{this.style.display='none';}">
             <div class="magazine-hero-scrim"></div>
             <div class="magazine-hero-content">
                 <div class="magazine-masthead">HARFS WEEKLY</div>
@@ -290,6 +315,8 @@ function renderMagazine(issue) {
             <h2 class="magazine-section-title"><i class="fas fa-star"></i> نکات برجسته</h2>
             <div class="magazine-spotlight-grid">${spotlights}</div>
         </div>` : ''}
+
+        ${interviewSection}
 
         ${allTimeCards ? `
         <div class="magazine-page">
