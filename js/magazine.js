@@ -1,16 +1,18 @@
 // ============================================================
 // magazine.js  —  Weekly HARFS Magazine viewer
-// Replaces the old ai-chat.js panel. Reads the JSON + cover image that
-// scripts/generate-magazine.mjs commits to HARFS_Data every Friday
-// morning (see .github/workflows/weekly-magazine.yml) and renders it
-// as a simple multi-section magazine page.
+// Reads weekly_magazine_archive.json (an array of every issue ever
+// published, newest first — see scripts/generate-magazine.mjs and
+// .github/workflows/weekly-magazine.yml) and renders one issue at a
+// time, with next/previous navigation through the archive so past
+// weeks are never lost. Admins (Bayern, Edit Mode on) can edit or
+// delete the issue currently being viewed.
 // ============================================================
 
-const GITHUB_MAGAZINE_FILE = "weekly_magazine.json";
-const GITHUB_MAGAZINE_COVER_FILE = "weekly_magazine_cover.png";
+const GITHUB_MAGAZINE_FILE = "weekly_magazine_archive.json";
 
-let magazineIssue = null;
+let magazineArchive = [];
 let magazineLoaded = false;
+let magazineIssueIdx = 0; // index into magazineArchive; 0 = newest
 
 function openMagazinePanel() {
     haptic([8]);
@@ -31,10 +33,14 @@ async function loadMagazine() {
     try {
         const res = await fetch(`${GITHUB_IMAGE_BASE_URL}${GITHUB_MAGAZINE_FILE}?cachebust=${Date.now()}`);
         if (!res.ok) throw new Error('not found');
-        magazineIssue = await res.json();
+        const data = await res.json();
+        magazineArchive = Array.isArray(data) ? data : (data ? [data] : []); // tolerate an old single-issue file
+        magazineArchive.sort((a, b) => (b.issueNumber || 0) - (a.issueNumber || 0));
         magazineLoaded = true;
-        renderMagazine(magazineIssue);
+        magazineIssueIdx = 0;
+        renderCurrentIssue();
     } catch (e) {
+        magazineArchive = [];
         renderMagazineEmpty();
     } finally {
         if (loading) loading.style.display = 'none';
@@ -50,6 +56,7 @@ function renderMagazineEmpty() {
             <p>هنوز شمارهٔ این هفته آماده نشده.</p>
             <p class="magazine-empty-sub">مجله هر جمعه ساعت ۹ صبح به‌صورت خودکار منتشر می‌شود.</p>
         </div>`;
+    renderMagazineIssueNav();
 }
 
 function jFormatDate(iso) {
@@ -63,11 +70,80 @@ function teamLabel(name) {
     return escapeHtml(TEAM_DISPLAY_NAMES[name] || name || '—');
 }
 
+// ---- archive navigation (older = higher index, newer = lower index) ----
+function magazineGoNewer() {
+    if (magazineIssueIdx <= 0) return;
+    haptic([6]);
+    magazineIssueIdx--;
+    renderCurrentIssue();
+}
+function magazineGoOlder() {
+    if (magazineIssueIdx >= magazineArchive.length - 1) return;
+    haptic([6]);
+    magazineIssueIdx++;
+    renderCurrentIssue();
+}
+function magazineJumpTo(idx) {
+    haptic([6]);
+    magazineIssueIdx = idx;
+    renderCurrentIssue();
+    closeMagazineIssuePicker();
+}
+function toggleMagazineIssuePicker() {
+    const menu = document.getElementById('magazine-issue-picker');
+    if (!menu) return;
+    const opening = !menu.classList.contains('open');
+    if (opening) {
+        menu.innerHTML = magazineArchive.map((iss, idx) => `
+            <div class="magazine-issue-picker-row${idx === magazineIssueIdx ? ' active' : ''}" onclick="magazineJumpTo(${idx})">
+                <span>شمارهٔ ${iss.issueNumber ?? (magazineArchive.length - idx)}</span>
+                <span class="magazine-issue-picker-date">${jFormatDate(iss.issueDate)}</span>
+            </div>`).join('') || '<div class="magazine-issue-picker-row">آرشیوی وجود ندارد</div>';
+    }
+    menu.classList.toggle('open', opening);
+}
+function closeMagazineIssuePicker() {
+    const menu = document.getElementById('magazine-issue-picker');
+    if (menu) menu.classList.remove('open');
+}
+
+function renderMagazineIssueNav() {
+    const nav = document.getElementById('magazine-issue-nav');
+    if (!nav) return;
+    if (!magazineArchive.length) { nav.innerHTML = ''; return; }
+    const issue = magazineArchive[magazineIssueIdx];
+    const atNewest = magazineIssueIdx <= 0;
+    const atOldest = magazineIssueIdx >= magazineArchive.length - 1;
+    const isAdmin = typeof isAdminUnlocked !== 'undefined' && isAdminUnlocked && loggedInTeam === 'Bayern';
+    nav.innerHTML = `
+        <button class="magazine-nav-arrow" onclick="magazineGoOlder()" ${atOldest ? 'disabled' : ''} title="شمارهٔ قدیمی‌تر"><i class="fas fa-chevron-left"></i></button>
+        <div class="magazine-issue-picker-wrap">
+            <button class="magazine-issue-pill" onclick="toggleMagazineIssuePicker()">
+                شمارهٔ ${issue.issueNumber ?? (magazineArchive.length - magazineIssueIdx)} <i class="fas fa-caret-down"></i>
+            </button>
+            <div class="magazine-issue-picker" id="magazine-issue-picker"></div>
+        </div>
+        <button class="magazine-nav-arrow" onclick="magazineGoNewer()" ${atNewest ? 'disabled' : ''} title="شمارهٔ جدیدتر"><i class="fas fa-chevron-right"></i></button>
+        ${isAdmin ? `
+        <button class="weird-admin-btn" style="margin-inline-start:auto;" onclick="editMagazineIssue(${magazineIssueIdx})"><i class="fas fa-pen"></i> ادیت</button>
+        <button class="weird-admin-btn weird-admin-btn-danger" onclick="deleteMagazineIssue(${magazineIssueIdx})"><i class="fas fa-trash"></i> حذف</button>` : ''}
+    `;
+}
+
+function renderCurrentIssue() {
+    if (!magazineArchive.length) { renderMagazineEmpty(); return; }
+    if (magazineIssueIdx < 0) magazineIssueIdx = 0;
+    if (magazineIssueIdx >= magazineArchive.length) magazineIssueIdx = magazineArchive.length - 1;
+    renderMagazine(magazineArchive[magazineIssueIdx]);
+    renderMagazineIssueNav();
+}
+
 function renderMagazine(issue) {
     const body = document.getElementById('magazine-body');
     if (!body) return;
 
-    const coverUrl = issue.coverImage ? `${GITHUB_IMAGE_BASE_URL}${GITHUB_MAGAZINE_COVER_FILE}?v=${issue.issueDate}` : null;
+    const coverFile = issue.coverImage || null;
+    const coverUrl = coverFile ? `${GITHUB_IMAGE_BASE_URL}${coverFile}?v=${issue.issueDate}` : null;
 
     // ---- standings ----
     const standingsRows = (issue.standingsTable || [])
@@ -155,7 +231,7 @@ function renderMagazine(issue) {
             <div class="magazine-hero-scrim"></div>
             <div class="magazine-hero-content">
                 <div class="magazine-masthead">HARFS WEEKLY</div>
-                <div class="magazine-issue-date">شمارهٔ ${jFormatDate(issue.issueDate)}</div>
+                <div class="magazine-issue-date">شمارهٔ ${issue.issueNumber ?? ''} · ${jFormatDate(issue.issueDate)}</div>
                 <h1 class="magazine-title">${escapeHtml(issue.issueTitle)}</h1>
                 <div class="magazine-subtitle">${escapeHtml(issue.coverSubtitle)}</div>
             </div>
@@ -220,4 +296,84 @@ function renderMagazine(issue) {
             <p>${escapeHtml(issue.funnyClosing)}</p>
         </div>
     `;
+}
+
+// ============================================================
+// Admin — edit / delete the issue currently being viewed.
+// Uses the same GitHub PAT + saveFile() pattern as every other admin
+// write in the app (see js/memories.js).
+// ============================================================
+let magazineEditIdx = null;
+
+// The regular `loadMagazine()` above reads via the fast raw.githubusercontent
+// mirror (no sha in the response), so before the first admin write in a
+// session we fetch the file's current sha via the GitHub Contents API —
+// exactly like every other admin section in this app (see js/memories.js).
+async function ensureMagazineArchiveSha() {
+    if (magazineArchiveSha) return magazineArchiveSha;
+    try {
+        const res = await fetch(`${BASE_API}${GITHUB_MAGAZINE_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if (res.ok) { const d = await res.json(); magazineArchiveSha = d.sha; }
+    } catch (e) {}
+    return magazineArchiveSha;
+}
+
+function editMagazineIssue(idx) {
+    const issue = magazineArchive[idx];
+    if (!issue) return;
+    magazineEditIdx = idx;
+    document.getElementById('magazine-edit-title').value = issue.issueTitle || '';
+    document.getElementById('magazine-edit-subtitle').value = issue.coverSubtitle || '';
+    document.getElementById('magazine-edit-standings').value = issue.standingsCommentary || '';
+    document.getElementById('magazine-edit-titlerace').value = issue.titleRaceCommentary || '';
+    document.getElementById('magazine-edit-report').value = issue.matchReport || '';
+    document.getElementById('magazine-edit-records').value = issue.recordsAndOddities || '';
+    document.getElementById('magazine-edit-closing').value = issue.funnyClosing || '';
+    document.getElementById('magazine-edit-recs').value = (issue.recommendations || []).join('\n');
+    document.getElementById('magazine-edit-modal').classList.add('open');
+}
+function closeMagazineEditModal() {
+    document.getElementById('magazine-edit-modal').classList.remove('open');
+    magazineEditIdx = null;
+}
+async function saveMagazineEdit() {
+    if (magazineEditIdx === null) return;
+    const issue = magazineArchive[magazineEditIdx];
+    if (!issue) return;
+    await ensureMagazineArchiveSha();
+    issue.issueTitle = document.getElementById('magazine-edit-title').value.trim();
+    issue.coverSubtitle = document.getElementById('magazine-edit-subtitle').value.trim();
+    issue.standingsCommentary = document.getElementById('magazine-edit-standings').value.trim();
+    issue.titleRaceCommentary = document.getElementById('magazine-edit-titlerace').value.trim();
+    issue.matchReport = document.getElementById('magazine-edit-report').value.trim();
+    issue.recordsAndOddities = document.getElementById('magazine-edit-records').value.trim();
+    issue.funnyClosing = document.getElementById('magazine-edit-closing').value.trim();
+    issue.recommendations = document.getElementById('magazine-edit-recs').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+    const saved = await saveFile(GITHUB_MAGAZINE_ARCHIVE_FILE, magazineArchive, `Edit magazine issue #${issue.issueNumber}`, magazineArchiveSha);
+    if (saved) {
+        showToast('مجله ذخیره شد', 'success', 1800);
+        closeMagazineEditModal();
+        renderCurrentIssue();
+    } else {
+        showToast('خطا در ذخیره: ' + (lastSaveFileError || 'نامشخص'), 'error', 3000);
+    }
+}
+async function deleteMagazineIssue(idx) {
+    const issue = magazineArchive[idx];
+    if (!issue) return;
+    if (!confirm(`شمارهٔ ${issue.issueNumber} حذف شود؟ این کار قابل بازگشت نیست.`)) return;
+    await ensureMagazineArchiveSha();
+    const prevArchive = magazineArchive.slice();
+    const updated = magazineArchive.filter((_, i) => i !== idx);
+    const saved = await saveFile(GITHUB_MAGAZINE_ARCHIVE_FILE, updated, `Delete magazine issue #${issue.issueNumber}`, magazineArchiveSha);
+    if (saved) {
+        magazineArchive = updated;
+        magazineIssueIdx = Math.min(idx, magazineArchive.length - 1);
+        showToast('شماره حذف شد', 'success', 1800);
+        renderCurrentIssue();
+    } else {
+        magazineArchive = prevArchive;
+        showToast('خطا در حذف: ' + (lastSaveFileError || 'نامشخص'), 'error', 3000);
+    }
 }
