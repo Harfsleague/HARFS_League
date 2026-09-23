@@ -2,8 +2,8 @@
 // generate-magazine.mjs
 // Builds the "HARFS Weekly Magazine": reads the live league data,
 // asks Gemini 3.5 Flash to write it up (Persian, light comedic tone),
-// asks Gemini 2.5 Flash Image ("Nano Banana") for a cover image, and
-// commits both to the HARFS_Data repo so the app can display them.
+// asks Gemini 3.1 Flash-Lite Image ("Nano Banana 2 Lite") for a cover
+// image, and commits both to the HARFS_Data repo so the app can display them.
 //
 // Runs from GitHub Actions (see .github/workflows/weekly-magazine.yml).
 // Requires two repo secrets:
@@ -334,7 +334,7 @@ async function callGeminiText(data) {
 // 3) ask Gemini's image model for a cover image
 // ------------------------------------------------------------
 async function callGeminiImage(promptEn) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent`;
   const res = await fetchGeminiWithRetry(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
@@ -375,7 +375,7 @@ async function main() {
   const archive = (await fetchJson(`${RAW_BASE}weekly_magazine_archive.json`, [])) || [];
   const issueNumber = archive.reduce((max, i) => Math.max(max, i.issueNumber || 0), 0) + 1;
 
-  console.log("Asking Gemini 2.5 Flash Image for the cover...");
+  console.log("Asking Gemini 3.1 Flash-Lite Image for the cover...");
   let coverBase64 = null;
   try {
     coverBase64 = await callGeminiImage(magazine.imagePromptEn);
