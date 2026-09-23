@@ -123,6 +123,9 @@
                 <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
             </div>
         </div>
+
+        <div class="appearance-section-label">Font</div>
+        <div class="font-grid" id="font-grid"><!-- filled by JS from APP_FONTS --></div>
     </div>
 </div>
 
@@ -197,6 +200,19 @@
                         <span class="magazine-entry-sub">تحلیل، جدول و اخبار هر جمعه صبح</span>
                 </div>
                 <i class="fas fa-chevron-right magazine-entry-chevron"></i>
+            </button>
+            <button class="ai-entry-capsule" onclick="openAiPanel()">
+                <div class="ai-entry-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
+                        <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+                        <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
+                    </svg>
+                </div>
+                <div class="ai-entry-text">
+                    <span class="ai-entry-title">HARFS Assistant</span>
+                    <span class="ai-entry-sub">Ask about the table, results &amp; trends</span>
+                </div>
+                <i class="fas fa-chevron-right ai-entry-chevron"></i>
             </button>
         </div>
     </div>
@@ -767,8 +783,11 @@
     <div id="magazine-screen" class="page-screen" dir="rtl">
     <div class="magazine-inner">
         <div class="magazine-panel-header">
-            <button class="magazine-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-right"></i></button>
-            <div class="magazine-panel-title">HARFS Weekly Magazine</div>
+            <div class="magazine-panel-header-row">
+                <button class="magazine-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-right"></i></button>
+                <div class="magazine-panel-title">HARFS Weekly Magazine</div>
+            </div>
+            <div class="magazine-issue-nav" id="magazine-issue-nav"></div>
         </div>
         <div id="magazine-loading" style="display:flex;justify-content:center;padding:40px;">
             <span class="spinner"></span>
@@ -776,6 +795,57 @@
         <div id="magazine-body"></div>
     </div>
 </div>
+
+<!-- ============ MAGAZINE — admin edit modal ============ -->
+<div class="modal-overlay" id="magazine-edit-modal">
+    <div class="modal-content text-center" style="max-width:420px;text-align:right;">
+        <div class="modal-x-close" onclick="closeMagazineEditModal()"><i class="fas fa-times"></i></div>
+        <h3 style="margin-bottom:12px;">ادیت شمارهٔ مجله</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;max-height:55vh;overflow-y:auto;text-align:right;">
+            <input type="text" id="magazine-edit-title" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="عنوان">
+            <input type="text" id="magazine-edit-subtitle" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="زیرعنوان جلد">
+            <textarea id="magazine-edit-standings" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="تحلیل جدول رده‌بندی"></textarea>
+            <textarea id="magazine-edit-titlerace" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="تحلیل جدال قهرمانی"></textarea>
+            <textarea id="magazine-edit-report" rows="4" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="گزارش هفته"></textarea>
+            <textarea id="magazine-edit-records" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="رکوردها و اتفاق‌های عجیب"></textarea>
+            <textarea id="magazine-edit-closing" rows="2" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="جمله پایانی"></textarea>
+            <textarea id="magazine-edit-recs" rows="4" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="توصیه‌ها (هر خط یک مورد)"></textarea>
+        </div>
+        <div class="confirm-btn-row" style="margin-top:14px;">
+            <button class="confirm-btn confirm-btn-cancel" onclick="closeMagazineEditModal()">انصراف</button>
+            <button class="confirm-btn confirm-btn-ok green" onclick="saveMagazineEdit()">ذخیره</button>
+        </div>
+    </div>
+</div>
+
+    <!-- ============ AI ASSISTANT — full-page chat ============ -->
+    <div id="ai-chat-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel" dir="ltr">
+                <div class="ai-panel-header">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
+                    </div>
+                </div>
+                <div class="ai-chat-scroll" id="ai-chat-scroll">
+                    <div id="ai-chat-messages"></div>
+                    <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
+                        <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+                <!-- Quick-ask suggestions — shown until the user sends their first
+                     real message (see renderAiSuggestions), same pattern as the
+                     suggestion chips in most chat apps. -->
+                <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
+                <div class="ai-input-bar">
+                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
+                    <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ============ AI ASSISTANT SETTINGS ============ -->
     <div id="ai-settings-modal" class="modal-overlay">
@@ -820,6 +890,7 @@
 <script src="js/league-ops.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/magazine.js"></script>
+<script src="js/ai-chat.js"></script>
 <script src="js/ai-chat.js"></script>
 <script src="js/mba.js"></script>
 <script src="js/verify.js"></script>
