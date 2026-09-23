@@ -18,6 +18,7 @@ const GITHUB_MATCHES_FILE="match_history.json";
 const GITHUB_ARCHIVE_FILE="seasons_archive.json";
 const GITHUB_MBA_FILE="mba_history.json";
 const GITHUB_WEIRD_FILE="weird_events.json";
+const GITHUB_MAGAZINE_ARCHIVE_FILE="weekly_magazine_archive.json";
 // Golden Moments are split across multiple "shard" files once the current
 // one gets close to GitHub's practical PUT size limit (~50MB). The manifest
 // lists every shard filename in creation order; the last one is always the
@@ -46,7 +47,7 @@ let loginIsNewAccount = false;
 
 
 let leagueData={},mainLeagueData={};
-let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null,mbaSha=null;
+let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null,mbaSha=null,magazineArchiveSha=null;
 let matchHistory=[],archivedSeasons=[],weirdEvents=[];
 // MBA — the best-of-3-semis / single-match-final knockout mode (see js/mba.js).
 // 'current' is the in-progress tournament (or null between tournaments);
