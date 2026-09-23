@@ -154,7 +154,8 @@ body {
    APP CONTAINER
    ===================================================== */
 .app-container {
-    width:100%; height:100vh;
+    width:100%; height:100vh; /* fallback for browsers without dvh support */
+    height:100dvh; /* real visible mobile viewport — 100vh includes the area hidden behind the browser's address/toolbar, which was pushing app content (incl. the magazine screen) outside the visible frame on phones */
     position:relative; overflow:hidden;
     display:flex; flex-direction:column; align-items:center;
     background:rgba(15,23,42,0.12); z-index:10;
@@ -371,7 +372,14 @@ body.perf-no-anim .mini-player{ transition:none; }
     transform:translateX(28px);
 }
 .page-screen::-webkit-scrollbar{display:none;}
-.page-screen.active{opacity:1;transform:translateX(0);}
+/* transform:none (not translateX(0)) once settled — any non-`none` transform,
+   even a zero-offset one, turns this element into a new containing block for
+   its descendants, which breaks position:sticky/fixed children (see the
+   .season-fab note above, and this is also why the magazine's sticky header
+   used to stop sticking and let content scroll up above it). Transitioning
+   to `none` animates exactly the same as translateX(0) since `none` is the
+   identity transform. */
+.page-screen.active{opacity:1;transform:none;}
 
 /* =====================================================
    HEADER CARD
@@ -1784,14 +1792,12 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 }
 
 /* =====================================================
-   CUSTOM FONTS — TTF files dropped into /fonts. See APP_FONTS
-   in js/appearance.js — each entry below needs a matching id there.
-   Add more @font-face blocks here as more .ttf files are added.
+   CUSTOM FONTS — no @font-face rules live here anymore. Drop a .ttf/.otf/
+   .woff/.woff2 file into /fonts and push: a GitHub Action regenerates
+   fonts/manifest.json automatically, and loadCustomFonts() in
+   js/appearance.js injects the matching @font-face rule and Settings
+   swatch at runtime. See fonts/README.md.
    ===================================================== */
-@font-face{ font-family:'harfs-font-1'; src:url('../fonts/harfs-font-1.ttf') format('truetype'); font-display:swap; }
-@font-face{ font-family:'harfs-font-2'; src:url('../fonts/harfs-font-2.ttf') format('truetype'); font-display:swap; }
-@font-face{ font-family:'harfs-font-3'; src:url('../fonts/harfs-font-3.ttf') format('truetype'); font-display:swap; }
-@font-face{ font-family:'harfs-font-4'; src:url('../fonts/harfs-font-4.ttf') format('truetype'); font-display:swap; }
 
 .font-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:12px 8px;
