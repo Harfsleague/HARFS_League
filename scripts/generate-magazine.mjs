@@ -377,45 +377,66 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
-// Retries a Gemini fetch call on transient errors (503 overloaded, 429 rate
-// limited, and generic network blips) with exponential backoff, since these
-// are common and usually resolve within a minute or two. Anything else
-// (400 bad request, 401/403 auth, etc.) is a real problem, so it fails fast.
-async function fetchGeminiWithRetry(url, options, { retries = 4, baseDelayMs = 5000 } = {}) {
+// Retries a fetch call on transient errors — bad HTTP statuses (503
+// overloaded, 429 rate limited, 5xx) AND network-level failures (DNS
+// hiccups, connection resets, timeouts — anything where fetch() itself
+// throws before we even get a response, which shows up as a bare "fetch
+// failed" with no status code). Both are common and usually resolve within
+// a minute or two. A non-retryable status (400 bad request, 401/403 auth,
+// etc.) still fails fast, since retrying that would never help.
+async function fetchWithRetry(url, options, { retries = 4, baseDelayMs = 5000, label = "API" } = {}) {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, options);
+    let res;
+    try {
+      res = await fetch(url, options);
+    } catch (networkErr) {
+      if (attempt >= retries) {
+        throw new Error(`${label} call failed before getting a response: ${networkErr.message}`);
+      }
+      const delay = baseDelayMs * 2 ** attempt;
+      console.log(
+        `${label} call errored (${networkErr.message}), retrying in ${delay / 1000}s (attempt ${attempt + 1}/${retries})...`
+      );
+      await new Promise((r) => setTimeout(r, delay));
+      continue;
+    }
+
     if (res.ok) return res;
 
     const retryable = res.status === 503 || res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= retries) {
-      throw new Error(`Gemini call failed: ${res.status} ${await res.text()}`);
+      throw new Error(`${label} call failed: ${res.status} ${await res.text()}`);
     }
 
     const delay = baseDelayMs * 2 ** attempt; // 5s, 10s, 20s, 40s...
-    console.log(`Gemini call got ${res.status}, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${retries})...`);
+    console.log(`${label} call got ${res.status}, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${retries})...`);
     await new Promise((r) => setTimeout(r, delay));
   }
 }
 
 async function callGeminiText(data) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
-  const res = await fetchGeminiWithRetry(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `این دیتای این هفتهٔ لیگ HARFS است:\n\n${JSON.stringify(data, null, 2)}` }],
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `این دیتای این هفتهٔ لیگ HARFS است:\n\n${JSON.stringify(data, null, 2)}` }],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: MAGAZINE_SCHEMA,
         },
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: MAGAZINE_SCHEMA,
-      },
-    }),
-  });
+      }),
+    },
+    { label: "Gemini" }
+  );
   const json = await res.json();
   const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
   return JSON.parse(text);
@@ -448,28 +469,32 @@ async function callOpenRouterText(data) {
     2
   )}`;
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+  const res = await fetchWithRetry(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_TEXT_MODEL,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: `${SYSTEM_PROMPT}\n\n${schemaInstruction}` },
+          {
+            role: "user",
+            content: `این دیتای این هفتهٔ لیگ HARFS است:\n\n${JSON.stringify(data, null, 2)}`,
+          },
+        ],
+      }),
     },
-    body: JSON.stringify({
-      model: OPENROUTER_TEXT_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: `${SYSTEM_PROMPT}\n\n${schemaInstruction}` },
-        {
-          role: "user",
-          content: `این دیتای این هفتهٔ لیگ HARFS است:\n\n${JSON.stringify(data, null, 2)}`,
-        },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`OpenRouter call failed: ${res.status} ${await res.text()}`);
-  }
+    // OpenRouter's free model runs on a shared community pool, so a 429
+    // there ("temporarily rate-limited upstream") is usually about *other*
+    // people's traffic, not ours — worth a few retries with backoff, same
+    // as Gemini above, rather than giving up on the first one.
+    { label: "OpenRouter", retries: 3, baseDelayMs: 8000 }
+  );
 
   const json = await res.json();
   const text = json.choices?.[0]?.message?.content || "";
@@ -481,32 +506,36 @@ async function callOpenRouterText(data) {
 // ------------------------------------------------------------
 async function callGeminiImage(promptEn) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent`;
-  const res = await fetchGeminiWithRetry(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `Magazine cover illustration, widescreen, vibrant, stylized sports-magazine art (not a photo, no readable text, no real club logos): ${promptEn}`,
-            },
-          ],
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `Magazine cover illustration, widescreen, vibrant, stylized sports-magazine art (not a photo, no readable text, no real club logos): ${promptEn}`,
+              },
+            ],
+          },
+        ],
+        // gemini-3.1-flash-lite-image is a dedicated image model, not a chat
+        // model — it only accepts "IMAGE" here. Asking for "TEXT" alongside it
+        // (a workaround that's needed on general-purpose chat models like the
+        // older gemini-2.5-flash-image, to stop them replying with text only)
+        // makes this specific model reject the whole request, which is why
+        // every single cover was failing.
+        generationConfig: {
+          responseModalities: ["IMAGE"],
+          imageConfig: { aspectRatio: "16:9" }, // matches the "widescreen" cover we ask for in the prompt
         },
-      ],
-      // gemini-3.1-flash-lite-image is a dedicated image model, not a chat
-      // model — it only accepts "IMAGE" here. Asking for "TEXT" alongside it
-      // (a workaround that's needed on general-purpose chat models like the
-      // older gemini-2.5-flash-image, to stop them replying with text only)
-      // makes this specific model reject the whole request, which is why
-      // every single cover was failing.
-      generationConfig: {
-        responseModalities: ["IMAGE"],
-        imageConfig: { aspectRatio: "16:9" }, // matches the "widescreen" cover we ask for in the prompt
-      },
-    }),
-  });
+      }),
+    },
+    { label: "Gemini" }
+  );
   const json = await res.json();
   const part = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
   if (!part) {
