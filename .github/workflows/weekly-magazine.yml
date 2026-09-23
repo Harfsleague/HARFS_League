@@ -23,4 +23,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           HARFS_DATA_TOKEN: ${{ secrets.HARFS_DATA_TOKEN }}
+          # Optional. Only used as a text-generation fallback if Gemini
+          # itself fails (e.g. quota exhausted). Safe to leave unset.
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: node scripts/generate-magazine.mjs
