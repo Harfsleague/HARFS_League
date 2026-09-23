@@ -2051,3 +2051,38 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 .sync-status-dot.sync-syncing{ background:#60a5fa; animation:musicPulse 1s infinite ease-in-out; }
 .sync-status-dot.sync-synced{ background:#22c55e; }
 .sync-status-dot.sync-error{ background:#ef4444; }
+
+/* ============================================================
+   Weekly Magazine styles — append to css/styles.css
+   ============================================================ */
+.magazine-entry-capsule{display:flex;align-items:center;gap:12px;width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(96,165,250,0.08));border:1px solid rgba(251,191,36,0.25);border-radius:16px;padding:14px 16px;margin-top:14px;cursor:pointer;color:inherit;}
+.magazine-entry-icon{font-size:1.3rem;color:#fbbf24;}
+.magazine-entry-text{display:flex;flex-direction:column;text-align:right;flex:1;}
+.magazine-entry-title{font-weight:800;font-size:0.85rem;}
+.magazine-entry-sub{font-size:0.68rem;color:#9ca3af;margin-top:2px;}
+.magazine-entry-chevron{color:#9ca3af;}
+
+#magazine-screen .magazine-inner{max-width:640px;margin:0 auto;padding:0 0 40px;}
+.magazine-panel-header{display:flex;align-items:center;gap:10px;padding:14px 16px;position:sticky;top:0;background:var(--bg,#0f172a);z-index:5;}
+.magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;}
+.magazine-panel-back-btn{background:none;border:none;color:inherit;font-size:1.1rem;}
+
+.magazine-cover{width:100%;border-radius:0 0 18px 18px;display:block;object-fit:cover;max-height:260px;}
+.magazine-page{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.magazine-issue-date{font-size:0.7rem;color:#9ca3af;margin-bottom:6px;}
+.magazine-title{font-size:1.3rem;font-weight:900;margin-bottom:4px;}
+.magazine-subtitle{font-size:0.85rem;color:#cbd5e1;}
+.magazine-section-title{font-size:0.95rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.magazine-text,.magazine-commentary{font-size:0.85rem;line-height:1.9;color:#e2e8f0;}
+.magazine-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:0.78rem;}
+.magazine-table th,.magazine-table td{padding:8px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.08);}
+.magazine-spotlight-grid{display:flex;flex-direction:column;gap:10px;}
+.magazine-spotlight-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;}
+.magazine-spotlight-team{font-size:0.7rem;color:#fbbf24;font-weight:800;}
+.magazine-spotlight-headline{font-weight:800;font-size:0.85rem;margin:4px 0;}
+.magazine-spotlight-note{font-size:0.78rem;color:#cbd5e1;}
+.magazine-recommendations{padding-inline-start:20px;font-size:0.85rem;line-height:2;color:#e2e8f0;}
+.magazine-closing{text-align:center;font-style:italic;color:#cbd5e1;}
+.magazine-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 20px;text-align:center;color:#9ca3af;}
+.magazine-empty i{font-size:2rem;color:#fbbf24;margin-bottom:8px;}
+.magazine-empty-sub{font-size:0.75rem;}
