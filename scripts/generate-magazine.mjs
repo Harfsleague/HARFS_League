@@ -371,6 +371,10 @@ async function main() {
   console.log("Asking Gemini 3.5 Flash to write the magazine...");
   const magazine = await callGeminiText(data);
 
+  // ---- load the existing archive so past issues are never lost ----
+  const archive = (await fetchJson(`${RAW_BASE}weekly_magazine_archive.json`, [])) || [];
+  const issueNumber = archive.reduce((max, i) => Math.max(max, i.issueNumber || 0), 0) + 1;
+
   console.log("Asking Gemini 2.5 Flash Image for the cover...");
   let coverBase64 = null;
   try {
@@ -380,10 +384,14 @@ async function main() {
   }
 
   const now = new Date();
+  // Each issue's cover gets its own filename (suffixed with the issue
+  // number) so publishing a new issue never overwrites an older one's cover.
+  const coverFile = coverBase64 ? `weekly_magazine_cover_${issueNumber}.png` : null;
   const issue = {
+    issueNumber,
     issueDate: now.toISOString().slice(0, 10),
     generatedAt: now.toISOString(),
-    coverImage: coverBase64 ? "weekly_magazine_cover.png" : null,
+    coverImage: coverFile,
     standingsTable: data.currentSeasonTable,
     recentMatches: data.recentMatches,
     formGuide: data.formGuide,
@@ -394,17 +402,20 @@ async function main() {
   };
   delete issue.imagePromptEn; // internal-only, no need to ship it to the client
 
+  // Newest issue first — this is the order js/magazine.js expects.
+  const updatedArchive = [issue, ...archive];
+
   await githubPutFile(
-    "weekly_magazine.json",
-    Buffer.from(JSON.stringify(issue, null, 2)).toString("base64"),
-    `Weekly magazine: ${issue.issueDate}`
+    "weekly_magazine_archive.json",
+    Buffer.from(JSON.stringify(updatedArchive, null, 2)).toString("base64"),
+    `Weekly magazine #${issueNumber}: ${issue.issueDate}`
   );
 
   if (coverBase64) {
-    await githubPutFile("weekly_magazine_cover.png", coverBase64, `Weekly magazine cover: ${issue.issueDate}`);
+    await githubPutFile(coverFile, coverBase64, `Weekly magazine #${issueNumber} cover: ${issue.issueDate}`);
   }
 
-  console.log("Done.");
+  console.log(`Done. Published issue #${issueNumber}.`);
 }
 
 main().catch((err) => {
