@@ -349,15 +349,34 @@ async function callGeminiImage(promptEn) {
           ],
         },
       ],
-      // Without this, the image model can silently reply with text only
-      // (no inlineData part at all) — this was why every issue shipped
-      // without a cover.
-      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+      // gemini-3.1-flash-lite-image is a dedicated image model, not a chat
+      // model — it only accepts "IMAGE" here. Asking for "TEXT" alongside it
+      // (a workaround that's needed on general-purpose chat models like the
+      // older gemini-2.5-flash-image, to stop them replying with text only)
+      // makes this specific model reject the whole request, which is why
+      // every single cover was failing.
+      generationConfig: {
+        responseModalities: ["IMAGE"],
+        imageConfig: { aspectRatio: "16:9" }, // matches the "widescreen" cover we ask for in the prompt
+      },
     }),
   });
   const json = await res.json();
   const part = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
-  if (!part) throw new Error("Gemini image call returned no image data");
+  if (!part) {
+    // Surface *why* there's no image (safety block, wrong modality, prompt
+    // rejected, etc.) instead of a bare "no image data" — the previous
+    // version threw this same generic message no matter the real cause,
+    // which made every failure equally undiagnosable from the Actions log.
+    const blockReason = json.promptFeedback?.blockReason;
+    const finishReason = json.candidates?.[0]?.finishReason;
+    const detail = [blockReason && `blockReason=${blockReason}`, finishReason && `finishReason=${finishReason}`]
+      .filter(Boolean)
+      .join(", ");
+    throw new Error(
+      `Gemini image call returned no image data${detail ? ` (${detail})` : ""}. Full response: ${JSON.stringify(json)}`
+    );
+  }
   return part.inlineData.data; // already base64
 }
 

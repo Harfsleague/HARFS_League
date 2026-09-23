@@ -17,7 +17,17 @@ let magazineIssueIdx = 0; // index into magazineArchive; 0 = newest
 function openMagazinePanel() {
     haptic([8]);
     navigate('magazine');
-    if (!magazineLoaded) loadMagazine();
+    if (!magazineLoaded) {
+        loadMagazine();
+    } else {
+        // Re-render even on a repeat visit: Edit Mode (and the Bayern login
+        // itself) can change while the magazine screen isn't the active one
+        // (e.g. toggled from Settings), and the issue/nav markup was only
+        // ever refreshed while this screen was already open — so reopening
+        // it could still show stale edit/delete buttons (or miss showing
+        // them) until the admin flipped Edit Mode a second time.
+        renderCurrentIssue();
+    }
 }
 
 function closeMagazinePanel() {
@@ -197,24 +207,29 @@ function renderMagazine(issue) {
         </div>` : '';
 
     // ---- all-time cross-season stats ----
-    const allTimeRows = (issue.allTimeStats || [])
+    // Rendered as a stacked card per team (not a wide table) so the panel
+    // never needs horizontal dragging on a phone — every stat wraps inside
+    // its own small block instead of forcing a 12-column row to fit.
+    const allTimeCards = (issue.allTimeStats || [])
         .slice()
         .sort((a, b) => (b.leagueTitles - a.leagueTitles) || (b.Pts - a.Pts) || (b.GF - a.GF))
         .map(s => `
-            <tr>
-                <td>${teamLabel(s.team)}</td>
-                <td>${s.leagueTitles ?? 0} 🏆</td>
-                <td>${s.mbaMedals ?? 0} 🥇</td>
-                <td>${s.seasonsPlayed ?? '—'}</td>
-                <td>${s.P ?? '—'}</td>
-                <td>${s.W ?? '—'}</td>
-                <td>${s.D ?? '—'}</td>
-                <td>${s.L ?? '—'}</td>
-                <td>${s.GF ?? '—'}</td>
-                <td>${s.GA ?? '—'}</td>
-                <td>${s.GD ?? '—'}</td>
-                <td>${s.winRate ?? 0}%</td>
-            </tr>`).join('');
+            <div class="magazine-alltime-card">
+                <div class="magazine-alltime-card-head">${teamLabel(s.team)}</div>
+                <div class="magazine-alltime-stats">
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">قهرمانی</span><span class="magazine-alltime-stat-value">${s.leagueTitles ?? 0} 🏆</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">مدال MBA</span><span class="magazine-alltime-stat-value">${s.mbaMedals ?? 0} 🥇</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">فصل</span><span class="magazine-alltime-stat-value">${s.seasonsPlayed ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">بازی</span><span class="magazine-alltime-stat-value">${s.P ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">برد</span><span class="magazine-alltime-stat-value">${s.W ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">مساوی</span><span class="magazine-alltime-stat-value">${s.D ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">باخت</span><span class="magazine-alltime-stat-value">${s.L ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">گل زده</span><span class="magazine-alltime-stat-value">${s.GF ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">گل خورده</span><span class="magazine-alltime-stat-value">${s.GA ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">تفاضل</span><span class="magazine-alltime-stat-value">${s.GD ?? '—'}</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">٪ برد</span><span class="magazine-alltime-stat-value">${s.winRate ?? 0}%</span></div>
+                </div>
+            </div>`).join('');
 
     const spotlights = (issue.playerSpotlights || []).map(s => `
         <div class="magazine-spotlight-card">
@@ -276,15 +291,10 @@ function renderMagazine(issue) {
             <div class="magazine-spotlight-grid">${spotlights}</div>
         </div>` : ''}
 
-        ${allTimeRows ? `
+        ${allTimeCards ? `
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-trophy"></i> آمار کلی تمام فصل‌ها</h2>
-            <div class="magazine-table-scroll">
-                <table class="magazine-table">
-                    <thead><tr><th>تیم</th><th>قهرمانی</th><th>مدال</th><th>فصل</th><th>ب</th><th>برد</th><th>مساوی</th><th>باخت</th><th>گل زده</th><th>گل خورده</th><th>تفاضل</th><th>٪ برد</th></tr></thead>
-                    <tbody>${allTimeRows}</tbody>
-                </table>
-            </div>
+            <div class="magazine-alltime-grid">${allTimeCards}</div>
         </div>` : ''}
 
         <div class="magazine-page">

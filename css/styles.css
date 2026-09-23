@@ -113,7 +113,12 @@ body[data-palette="graphite"] {
 * { box-sizing: border-box; }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Falls back to the hardcoded stack until appearance.js runs and sets
+       --app-font-family from the saved/selected font — previously this was
+       hardcoded with nothing anywhere reading the CSS variable appearance.js
+       sets, so picking a font (including the Persian fonts meant for the
+       magazine) never visibly changed anything, anywhere in the app. */
+    font-family: var(--app-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
     color: #fff;
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
@@ -2103,8 +2108,12 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 
 /* Persian text mixed with Latin team names needs an explicit RTL base
    direction, or the bidi algorithm scrambles word/number order. */
-#magazine-screen{direction:rtl;text-align:right;}
-#magazine-screen .magazine-inner{max-width:640px;margin:0 auto;padding:0 0 40px;}
+/* Only ever scroll this screen vertically: whatever a piece of content does
+   (a long custom team name, a cramped admin-controls row, etc.) it must
+   never force the user to drag left/right to read it. */
+#magazine-screen{direction:rtl;text-align:right;overflow-x:hidden;}
+#magazine-screen .magazine-inner{max-width:640px;width:100%;margin:0 auto;padding:0 0 40px;overflow-x:hidden;}
+#magazine-screen img,#magazine-screen table{max-width:100%;}
 .magazine-panel-header{display:flex;flex-direction:column;gap:6px;padding:14px 16px 8px;position:sticky;top:0;background:var(--bg,#0f172a);z-index:5;}
 .magazine-panel-header-row{display:flex;align-items:center;gap:10px;}
 /* Content scrolling underneath the sticky "HARFS Weekly Magazine" header used
@@ -2118,7 +2127,7 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
     pointer-events:none;
 }
 .magazine-issue-nav{
-    display:flex;align-items:center;gap:8px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;
 }
 .magazine-issue-nav:empty{ display:none; }
 .magazine-nav-arrow{
@@ -2165,16 +2174,25 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 .magazine-text,.magazine-commentary{font-size:0.85rem;line-height:2;color:#e2e8f0;}
 
 .magazine-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:0.78rem;}
-.magazine-table th{padding:8px 6px;text-align:center;color:#9ca3af;font-weight:700;font-size:0.7rem;border-bottom:1px solid rgba(255,255,255,0.12);}
-.magazine-table td{padding:9px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);}
+.magazine-table th{padding:8px 4px;text-align:center;color:#9ca3af;font-weight:700;font-size:0.68rem;border-bottom:1px solid rgba(255,255,255,0.12);word-break:break-word;}
+.magazine-table td{padding:9px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);word-break:break-word;}
 .magazine-table tbody tr:first-child{background:linear-gradient(90deg,rgba(251,191,36,0.14),transparent);}
 .magazine-table tbody tr:first-child td:nth-child(2){font-weight:800;color:#fbbf24;}
-.magazine-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;}
-.magazine-table-scroll .magazine-table{min-width:560px;margin-bottom:0;}
+
+/* All-time cross-season stats: a stacked card per team instead of a wide
+   table, so this section never needs the left-right drag a 12-column table
+   would force on a phone — see js/magazine.js allTimeCards. */
+.magazine-alltime-grid{display:flex;flex-direction:column;gap:12px;}
+.magazine-alltime-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 14px;}
+.magazine-alltime-card-head{font-weight:800;font-size:0.85rem;color:#fbbf24;margin-bottom:10px;}
+.magazine-alltime-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.magazine-alltime-stat{display:flex;flex-direction:column;gap:2px;background:rgba(255,255,255,0.03);border-radius:8px;padding:6px 4px;text-align:center;min-width:0;}
+.magazine-alltime-stat-label{font-size:0.6rem;color:#9ca3af;overflow-wrap:anywhere;}
+.magazine-alltime-stat-value{font-size:0.78rem;font-weight:800;color:#e2e8f0;direction:ltr;overflow-wrap:anywhere;}
 
 /* ---- Title race ---- */
 .magazine-race-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.magazine-race-team{width:64px;flex-shrink:0;font-size:0.75rem;font-weight:700;text-align:left;direction:ltr;}
+.magazine-race-team{width:64px;flex-shrink:0;font-size:0.75rem;font-weight:700;text-align:left;direction:ltr;overflow-wrap:anywhere;}
 .magazine-race-bar-track{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,0.08);overflow:hidden;}
 .magazine-race-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#fbbf24,#f59e0b);}
 .magazine-race-pts{width:34px;flex-shrink:0;font-size:0.75rem;color:#cbd5e1;text-align:left;direction:ltr;}
@@ -2182,7 +2200,7 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 /* ---- Form guide chips ---- */
 .magazine-form-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:4px;}
 .magazine-form-row{display:flex;align-items:center;gap:10px;}
-.magazine-form-team{flex:1;font-size:0.8rem;font-weight:700;direction:ltr;text-align:left;}
+.magazine-form-team{flex:1;min-width:0;font-size:0.8rem;font-weight:700;direction:ltr;text-align:left;overflow-wrap:anywhere;}
 .magazine-form-chips{display:flex;gap:4px;direction:ltr;}
 .magazine-form-chip{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:#0f172a;}
 .magazine-form-chip.W{background:#4ade80;}
