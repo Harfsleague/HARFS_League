@@ -190,18 +190,13 @@
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
             </div>
-            <button class="ai-entry-capsule" onclick="openAiPanel()">
-                <div class="ai-entry-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
-                        <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
-                        <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
-                    </svg>
+           <button class="magazine-entry-capsule" onclick="openMagazinePanel()">
+                <div class="magazine-entry-icon"><i class="fas fa-newspaper"></i></div>
+                <div class="magazine-entry-text">
+                    <span class="magazine-entry-title">مجله هفتگی HARFS</span>
+                        <span class="magazine-entry-sub">تحلیل، جدول و اخبار هر جمعه صبح</span>
                 </div>
-                <div class="ai-entry-text">
-                    <span class="ai-entry-title">HARFS Assistant</span>
-                    <span class="ai-entry-sub">Ask about the table, results &amp; trends</span>
-                </div>
-                <i class="fas fa-chevron-right ai-entry-chevron"></i>
+                <i class="fas fa-chevron-right magazine-entry-chevron"></i>
             </button>
         </div>
     </div>
@@ -768,34 +763,19 @@
         </div>
     </div>
 
-    <!-- ============ AI ASSISTANT — full-page chat ============ -->
-    <div id="ai-chat-screen" class="page-screen">
-        <div class="ai-chat-inner">
-            <div class="ai-panel" dir="ltr">
-                <div class="ai-panel-header">
-                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
-                    <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
-                    <div class="ai-panel-header-actions">
-                        <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
-                    </div>
-                </div>
-                <div class="ai-chat-scroll" id="ai-chat-scroll">
-                    <div id="ai-chat-messages"></div>
-                    <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
-                        <div class="ai-typing-dots"><span></span><span></span><span></span></div>
-                    </div>
-                </div>
-                <!-- Quick-ask suggestions — shown until the user sends their first
-                     real message (see renderAiSuggestions), same pattern as the
-                     suggestion chips in most chat apps. -->
-                <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
-                <div class="ai-input-bar">
-                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
-                    <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
+    <!-- ============ magazine-scree  ============ -->
+    <div id="magazine-screen" class="page-screen">
+    <div class="magazine-inner">
+        <div class="magazine-panel-header">
+            <button class="magazine-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-right"></i></button>
+            <div class="magazine-panel-title">مجله هفتگی HARFS</div>
         </div>
+        <div id="magazine-loading" style="display:flex;justify-content:center;padding:40px;">
+            <span class="spinner"></span>
+        </div>
+        <div id="magazine-body"></div>
     </div>
+</div>
 
     <!-- ============ AI ASSISTANT SETTINGS ============ -->
     <div id="ai-settings-modal" class="modal-overlay">
@@ -839,7 +819,7 @@
 <script src="js/shop.js"></script>
 <script src="js/league-ops.js"></script>
 <script src="js/audio.js"></script>
-<script src="js/ai-chat.js"></script>
+<script src="js/magazine.js"></script>
 <script src="js/mba.js"></script>
 <script src="js/verify.js"></script>
 <script src="js/admin-music.js"></script>
