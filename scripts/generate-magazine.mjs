@@ -75,6 +75,103 @@ async function githubPutFile(path, base64Content, message) {
 // ------------------------------------------------------------
 // 1) gather this week's data (all of it is small — no need to chunk it)
 // ------------------------------------------------------------
+
+// match_history.json is stored newest-first (confirmed from the live data:
+// timestamps descend down the array), which every helper below relies on.
+function resultForTeam(team, m) {
+  const parts = String(m.score || "").split("-").map(Number);
+  if (parts.length !== 2 || parts.some(Number.isNaN)) return null;
+  const [h, a] = parts;
+  if (m.home === team) return h > a ? "W" : h < a ? "L" : "D";
+  if (m.away === team) return a > h ? "W" : a < h ? "L" : "D";
+  return null;
+}
+
+// Last-5 form + current streak per team, computed from real results only —
+// no AI involved, so it can never be wrong or made up.
+function computeFormGuide(matchHistory) {
+  return TEAM_NAMES.map((team) => {
+    const teamMatches = (matchHistory || []).filter((m) => m.home === team || m.away === team);
+    const last5 = teamMatches.slice(0, 5).map((m) => resultForTeam(team, m)).filter(Boolean);
+    const streakType = last5[0] || null;
+    let streakCount = 0;
+    for (const r of last5) {
+      if (r === streakType) streakCount++;
+      else break;
+    }
+    return { team, form: last5, streakType, streakCount };
+  });
+}
+
+// Objective "records of the week" (highest-scoring game, biggest margin of
+// victory) pulled straight from this week's results — again, no AI guessing.
+function computeWeeklyRecords(recentMatches) {
+  if (!recentMatches.length) return null;
+  let highestScoring = null;
+  let biggestMargin = null;
+  for (const m of recentMatches) {
+    const parts = String(m.score || "").split("-").map(Number);
+    if (parts.length !== 2 || parts.some(Number.isNaN)) continue;
+    const [h, a] = parts;
+    const total = h + a;
+    const margin = Math.abs(h - a);
+    if (!highestScoring || total > highestScoring.total) highestScoring = { ...m, total };
+    if (!biggestMargin || margin > biggestMargin.margin) biggestMargin = { ...m, margin };
+  }
+  return { highestScoring, biggestMargin };
+}
+
+// Title-race snapshot: leader, runner-up, and the point gap between every
+// team and the leader — real arithmetic on the live table, not a guess.
+function computeTitleRace(currentSeasonTable) {
+  const sorted = [...currentSeasonTable].sort((a, b) => (b.Pts || 0) - (a.Pts || 0));
+  const leader = sorted[0] || null;
+  return {
+    leader: leader?.name || null,
+    leaderPts: leader?.Pts ?? null,
+    gaps: sorted.map((t) => ({ team: t.name, pts: t.Pts ?? 0, gapToLeader: (leader?.Pts ?? 0) - (t.Pts ?? 0) })),
+  };
+}
+
+// All-time cross-season summary: every completed season's final table plus
+// the in-progress current one, added up per team, plus MBA cup medals.
+function computeAllTimeStats(seasonsArchive, currentSeasonTable, mainLeagueData) {
+  const base = Object.fromEntries(
+    TEAM_NAMES.map((t) => [
+      t,
+      {
+        team: t,
+        seasonsPlayed: 0,
+        leagueTitles: 0,
+        mbaMedals: (mainLeagueData[t]?.mbaChampionLog || []).length,
+        P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0,
+      },
+    ])
+  );
+
+  for (const season of seasonsArchive || []) {
+    const table = season.table || [];
+    if (!table.length) continue;
+    const champion = [...table].sort((a, b) => (b.Pts || 0) - (a.Pts || 0))[0]?.name;
+    if (champion && base[champion]) base[champion].leagueTitles++;
+  }
+
+  for (const table of [...(seasonsArchive || []).map((s) => s.table || []), currentSeasonTable]) {
+    for (const row of table || []) {
+      const s = base[row.name];
+      if (!s) continue;
+      s.seasonsPlayed++;
+      s.P += row.P || 0; s.W += row.W || 0; s.D += row.D || 0; s.L += row.L || 0;
+      s.GF += row.GF || 0; s.GA += row.GA || 0;
+    }
+  }
+
+  return TEAM_NAMES.map((t) => {
+    const s = base[t];
+    return { ...s, GD: s.GF - s.GA, winRate: s.P ? Math.round((s.W / s.P) * 1000) / 10 : 0 };
+  });
+}
+
 async function gatherData() {
   const [leagueData, mainLeagueData, matchHistory, seasonsArchive, weirdEventsRaw] = await Promise.all([
     fetchJson(`${RAW_BASE}league_data.json`, {}),
@@ -109,7 +206,22 @@ async function gatherData() {
     customName: mainLeagueData[t]?.customName || null,
   }));
 
-  return { currentSeasonTable, recentMatches, pastChampions, recentMoments, arenaHighlights };
+  const formGuide = computeFormGuide(matchHistory);
+  const weeklyRecords = computeWeeklyRecords(recentMatches);
+  const titleRace = computeTitleRace(currentSeasonTable);
+  const allTimeStats = computeAllTimeStats(seasonsArchive, currentSeasonTable, mainLeagueData);
+
+  return {
+    currentSeasonTable,
+    recentMatches,
+    pastChampions,
+    recentMoments,
+    arenaHighlights,
+    formGuide,
+    weeklyRecords,
+    titleRace,
+    allTimeStats,
+  };
 }
 
 // ------------------------------------------------------------
@@ -140,6 +252,14 @@ const MAGAZINE_SCHEMA = {
       description: "۳ تا ۵ توصیهٔ تاکتیکی یا شوخ‌طبعانه برای تیم‌ها برای هفتهٔ بعد",
       items: { type: "string" },
     },
+    titleRaceCommentary: {
+      type: "string",
+      description: "تحلیل کوتاه دربارهٔ وضعیت قهرمانی: فاصلهٔ امتیازی تیم‌ها تا صدرنشین، و اینکه با این روند چه کسی شانس بیشتری برای قهرمانی این فصل دارد. فقط بر اساس عدد‌های titleRace استدلال کن، هیچ درصد شانسی از خودت نساز.",
+    },
+    recordsAndOddities: {
+      type: "string",
+      description: "یک یا دو پاراگراف دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords) و اتفاق‌های عجیب/بامزهٔ این هفته (از recentMoments). اگر weeklyRecords یا recentMoments خالی بود، صادقانه بگو این هفته رکورد یا اتفاق خاصی ثبت نشده.",
+    },
     funnyClosing: { type: "string", description: "یک جمله یا پاراگراف کوتاه طنز برای پایان مجله" },
     imagePromptEn: {
       type: "string",
@@ -153,6 +273,8 @@ const MAGAZINE_SCHEMA = {
     "matchReport",
     "playerSpotlights",
     "recommendations",
+    "titleRaceCommentary",
+    "recordsAndOddities",
     "funnyClosing",
     "imagePromptEn",
   ],
@@ -161,6 +283,7 @@ const MAGAZINE_SCHEMA = {
 const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — یک لیگ خصوصی فوتبال بین چهار تیم: HOSI، Sezar، Bayern و Yellow. همیشه کلمهٔ HARFS را دقیقاً به همین شکل لاتین بنویس.
 لحن تو باید مثل یک روزنامه‌نگار ورزشی باتجربه باشد که کمی هم شوخ‌طبع است — نه کمدین محض، بلکه تحلیل‌گر دقیقی که می‌داند کی باید بخنداند و کی باید جدی باشد. همیشه به فارسی بنویس (نام تیم‌ها و HARFS را به لاتین نگه دار).
 تمام اعداد، نتایج و آماری که ارائه می‌دهی باید دقیقاً از دیتای JSON داده‌شده باشد — هرگز عددی را حدس نزن یا نسازی. اگر داده‌ای برای بخشی کافی نیست، آن بخش را کوتاه و صادقانه بنویس (مثلاً بگو این هفته اتفاق خاصی ثبت نشده) به‌جای این‌که چیزی بسازی.
+دیتای ورودی شامل چند بخش آمار حساب‌شده هم هست: formGuide (فرم ۵ بازی اخیر و روند برد/باخت هر تیم)، weeklyRecords (پرگل‌ترین بازی و بزرگ‌ترین اختلاف نتیجهٔ این هفته)، titleRace (فاصلهٔ امتیازی تیم‌ها تا صدرنشین)، و allTimeStats (مجموع کل فصل‌ها: تعداد قهرمانی لیگ، تعداد مدال MBA، و آمار کلی بازی‌ها و گل‌ها). این اعداد از قبل محاسبه شده‌اند و درست هستند؛ کارِ تو فقط روایت و تحلیلِ آن‌ها به فارسی است، نه بازمحاسبه یا حدس زدن درصد شانس.
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
 // Retries a Gemini fetch call on transient errors (503 overloaded, 429 rate
@@ -226,6 +349,10 @@ async function callGeminiImage(promptEn) {
           ],
         },
       ],
+      // Without this, the image model can silently reply with text only
+      // (no inlineData part at all) — this was why every issue shipped
+      // without a cover.
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     }),
   });
   const json = await res.json();
@@ -259,6 +386,10 @@ async function main() {
     coverImage: coverBase64 ? "weekly_magazine_cover.png" : null,
     standingsTable: data.currentSeasonTable,
     recentMatches: data.recentMatches,
+    formGuide: data.formGuide,
+    weeklyRecords: data.weeklyRecords,
+    titleRace: data.titleRace,
+    allTimeStats: data.allTimeStats,
     ...magazine,
   };
   delete issue.imagePromptEn; // internal-only, no need to ship it to the client
