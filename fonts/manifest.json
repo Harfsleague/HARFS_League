@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "danstevis",
+    "label": "Danstevis",
+    "file": "danstevis.otf",
+    "format": "otf"
+  },
+  {
+    "id": "far-mashintahrir",
+    "label": "Far MashinTahrir",
+    "file": "Far_MashinTahrir.ttf",
+    "format": "ttf"
+  }
+]
