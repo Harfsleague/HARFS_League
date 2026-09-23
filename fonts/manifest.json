@@ -1,5 +1,11 @@
 [
   {
+    "id": "champions-bold",
+    "label": "Champions Bold",
+    "file": "Champions-Bold.ttf",
+    "format": "ttf"
+  },
+  {
     "id": "danstevis",
     "label": "Danstevis",
     "file": "danstevis.otf",
