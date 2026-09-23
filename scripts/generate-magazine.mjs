@@ -163,9 +163,29 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 تمام اعداد، نتایج و آماری که ارائه می‌دهی باید دقیقاً از دیتای JSON داده‌شده باشد — هرگز عددی را حدس نزن یا نسازی. اگر داده‌ای برای بخشی کافی نیست، آن بخش را کوتاه و صادقانه بنویس (مثلاً بگو این هفته اتفاق خاصی ثبت نشده) به‌جای این‌که چیزی بسازی.
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
+// Retries a Gemini fetch call on transient errors (503 overloaded, 429 rate
+// limited, and generic network blips) with exponential backoff, since these
+// are common and usually resolve within a minute or two. Anything else
+// (400 bad request, 401/403 auth, etc.) is a real problem, so it fails fast.
+async function fetchGeminiWithRetry(url, options, { retries = 4, baseDelayMs = 5000 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, options);
+    if (res.ok) return res;
+
+    const retryable = res.status === 503 || res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= retries) {
+      throw new Error(`Gemini call failed: ${res.status} ${await res.text()}`);
+    }
+
+    const delay = baseDelayMs * 2 ** attempt; // 5s, 10s, 20s, 40s...
+    console.log(`Gemini call got ${res.status}, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${retries})...`);
+    await new Promise((r) => setTimeout(r, delay));
+  }
+}
+
 async function callGeminiText(data) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
-  const res = await fetch(url, {
+  const res = await fetchGeminiWithRetry(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
     body: JSON.stringify({
@@ -182,7 +202,6 @@ async function callGeminiText(data) {
       },
     }),
   });
-  if (!res.ok) throw new Error(`Gemini text call failed: ${res.status} ${await res.text()}`);
   const json = await res.json();
   const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
   return JSON.parse(text);
@@ -193,7 +212,7 @@ async function callGeminiText(data) {
 // ------------------------------------------------------------
 async function callGeminiImage(promptEn) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`;
-  const res = await fetch(url, {
+  const res = await fetchGeminiWithRetry(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
     body: JSON.stringify({
@@ -209,7 +228,6 @@ async function callGeminiImage(promptEn) {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`Gemini image call failed: ${res.status} ${await res.text()}`);
   const json = await res.json();
   const part = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
   if (!part) throw new Error("Gemini image call returned no image data");
