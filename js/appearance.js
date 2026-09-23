@@ -21,6 +21,22 @@ const PALETTES = [
 ];
 const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 
+// ------------------------------------------------------------
+// FONTS — custom TTF fonts, dropped into the /fonts folder of this repo.
+// To add a font: 1) put its .ttf file in /fonts (e.g. fonts/vazir.ttf),
+// 2) add a matching @font-face rule in css/styles.css (search "CUSTOM FONTS"),
+// 3) add an entry here with the same `id` as the @font-face's font-family.
+// The "System Default" entry always stays first and needs no file.
+// ------------------------------------------------------------
+const APP_FONTS = [
+    { id:'system', label:'System Default', stack:"'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    { id:'harfs-font-1', label:'Font 1', stack:"'harfs-font-1', 'Segoe UI', Tahoma, sans-serif" },
+    { id:'harfs-font-2', label:'Font 2', stack:"'harfs-font-2', 'Segoe UI', Tahoma, sans-serif" },
+    { id:'harfs-font-3', label:'Font 3', stack:"'harfs-font-3', 'Segoe UI', Tahoma, sans-serif" },
+    { id:'harfs-font-4', label:'Font 4', stack:"'harfs-font-4', 'Segoe UI', Tahoma, sans-serif" },
+];
+let currentFont = localStorage.getItem('appFont') || 'system';
+
 let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
@@ -138,12 +154,30 @@ function applyAppearance(){
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
     document.body.classList.toggle('perf-no-anim', !p.anim);
+    const font = APP_FONTS.find(f=>f.id===currentFont) || APP_FONTS[0];
+    document.documentElement.style.setProperty('--app-font-family', font.stack);
     syncSettingsUI();
     syncAppearanceUI();
+}
+function selectFont(id){
+    haptic([6]);
+    currentFont = id;
+    localStorage.setItem('appFont', id);
+    applyAppearance();
+}
+function renderFontGrid(){
+    const grid = document.getElementById('font-grid');
+    if(!grid) return;
+    grid.innerHTML = APP_FONTS.map(f => `
+        <div class="font-swatch" onclick="selectFont('${f.id}')" data-id="${f.id}">
+            <div class="font-swatch-preview" style="font-family:${f.stack};">Aa</div>
+            <span>${f.label}</span>
+        </div>`).join('');
 }
 
 function openAppearanceSheet(){
     renderPaletteGrid();
+    renderFontGrid();
     syncAppearanceUI();
     document.getElementById('appearance-sheet').classList.add('open');
 }
@@ -234,6 +268,9 @@ function syncAppearanceUI(){
     }
     document.querySelectorAll('.palette-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === currentPalette);
+    });
+    document.querySelectorAll('.font-swatch').forEach(el=>{
+        el.classList.toggle('selected', el.dataset.id === currentFont);
     });
     const editor = document.getElementById('custom-palette-editor');
     if(editor) editor.style.display = (currentPalette === 'custom') ? 'block' : 'none';
@@ -404,6 +441,7 @@ function toggleAdminEditMode(){
     // Refresh anything already on screen that depends on this flag
     if(document.getElementById('weird-screen')?.classList.contains('active')) renderWeirdEvents();
     if(typeof renderMbaSeasonView==='function') renderMbaSeasonView(); // MBA ✏️ buttons follow Edit Mode
+    if(document.getElementById('magazine-screen')?.classList.contains('active') && typeof renderMagazineIssueNav==='function') renderMagazineIssueNav();
 }
 
 // ============================================================
