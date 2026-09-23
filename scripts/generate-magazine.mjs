@@ -10,6 +10,15 @@
 //   GEMINI_API_KEY     - an API key from https://aistudio.google.com
 //   HARFS_DATA_TOKEN   - a GitHub PAT with "Contents: Read & write"
 //                         permission on the Harfsleague/HARFS_Data repo
+// Plus one optional secret:
+//   OPENROUTER_API_KEY - an API key from https://openrouter.ai. Only used as
+//                         a fallback for the magazine TEXT if Gemini itself
+//                         fails (e.g. its free daily quota runs out), via
+//                         OpenRouter's free google/gemma-4-31b-it:free model.
+//                         Gemini is always tried first. If this secret is
+//                         missing and Gemini fails, the run just fails like
+//                         before — the cover image always stays on Gemini
+//                         either way, since the fallback model can't draw.
 // ============================================================
 
 const DATA_REPO = "Harfsleague/HARFS_Data";
@@ -41,6 +50,11 @@ function isWithinLastWindow(isoTimestamp, days = MEMORIES_WINDOW_DAYS) {
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const HARFS_DATA_TOKEN = process.env.HARFS_DATA_TOKEN;
+// Optional: only needed for the OpenRouter fallback below. If it's missing,
+// the script still runs fine as long as Gemini itself doesn't fail — it
+// just won't have anywhere to fall back to.
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || null;
+const OPENROUTER_TEXT_MODEL = "google/gemma-4-31b-it:free";
 
 if (!GEMINI_API_KEY) throw new Error("Missing GEMINI_API_KEY secret");
 if (!HARFS_DATA_TOKEN) throw new Error("Missing HARFS_DATA_TOKEN secret");
@@ -407,6 +421,61 @@ async function callGeminiText(data) {
   return JSON.parse(text);
 }
 
+// Strips ```json / ``` fences some models wrap their JSON output in, since
+// not every provider honors "respond with JSON only" as strictly as Gemini
+// does with responseSchema.
+function stripJsonFences(text) {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced ? fenced[1] : trimmed;
+}
+
+// Fallback text generator, used only when Gemini itself fails (e.g. its free
+// daily quota is exhausted). Runs on OpenRouter's free Gemma model instead.
+// Same job as callGeminiText — data in, magazine JSON out — but talks to
+// OpenRouter's OpenAI-compatible /chat/completions endpoint, and asks for
+// JSON via a plain instruction + response_format instead of Gemini's
+// dedicated responseSchema field (support for strict JSON-schema enforcement
+// varies across OpenRouter's free models/providers, so we don't rely on it).
+async function callOpenRouterText(data) {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY secret is not set, so the OpenRouter fallback can't run");
+  }
+
+  const schemaInstruction = `خروجی را دقیقاً و فقط به‌صورت یک JSON معتبر برگردان که با این JSON Schema مطابقت داشته باشد (بدون هیچ توضیح اضافه، بدون Markdown، بدون سه‌بک‌تیک):\n\n${JSON.stringify(
+    MAGAZINE_SCHEMA,
+    null,
+    2
+  )}`;
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_TEXT_MODEL,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: `${SYSTEM_PROMPT}\n\n${schemaInstruction}` },
+        {
+          role: "user",
+          content: `این دیتای این هفتهٔ لیگ HARFS است:\n\n${JSON.stringify(data, null, 2)}`,
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`OpenRouter call failed: ${res.status} ${await res.text()}`);
+  }
+
+  const json = await res.json();
+  const text = json.choices?.[0]?.message?.content || "";
+  return JSON.parse(stripJsonFences(text));
+}
+
 // ------------------------------------------------------------
 // 3) ask Gemini's image model for a cover image
 // ------------------------------------------------------------
@@ -474,7 +543,17 @@ async function main() {
   data.interviewTeam = computeInterviewTeam(issueNumber);
 
   console.log(`Asking Gemini 3.5 Flash to write the magazine (interview team: ${data.interviewTeam})...`);
-  const magazine = await callGeminiText(data);
+  let magazine;
+  try {
+    magazine = await callGeminiText(data);
+  } catch (err) {
+    // Gemini is always tried first. We only reach for the OpenRouter/Gemma
+    // fallback if Gemini itself failed (e.g. its free daily quota is
+    // exhausted, or it's down) — never the other way around.
+    console.error("Gemini text generation failed:", err.message);
+    console.log(`Falling back to OpenRouter (${OPENROUTER_TEXT_MODEL})...`);
+    magazine = await callOpenRouterText(data);
+  }
   // The rotation must be guaranteed, not just requested — if the model
   // ignored interviewTeam for any reason, force it back to the scheduled
   // team rather than letting the rotation silently drift.
