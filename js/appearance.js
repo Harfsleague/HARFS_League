@@ -22,20 +22,69 @@ const PALETTES = [
 const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 
 // ------------------------------------------------------------
-// FONTS — custom TTF fonts, dropped into the /fonts folder of this repo.
-// To add a font: 1) put its .ttf file in /fonts (e.g. fonts/vazir.ttf),
-// 2) add a matching @font-face rule in css/styles.css (search "CUSTOM FONTS"),
-// 3) add an entry here with the same `id` as the @font-face's font-family.
-// The "System Default" entry always stays first and needs no file.
+// FONTS — custom fonts, dropped into the /fonts folder of this repo.
+// To add a font: just push a .ttf/.otf/.woff/.woff2 file to /fonts. A
+// GitHub Action (.github/workflows/fonts-manifest.yml) scans the folder
+// and regenerates fonts/manifest.json automatically; loadCustomFonts()
+// below reads that manifest at runtime, injects the matching @font-face
+// rule, and appends it here. No manual CSS/JS edit is needed for a new
+// font. The "System Default" entry always stays first and needs no file.
 // ------------------------------------------------------------
 const APP_FONTS = [
     { id:'system', label:'System Default', stack:"'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
-    { id:'harfs-font-1', label:'Font 1', stack:"'harfs-font-1', 'Segoe UI', Tahoma, sans-serif" },
-    { id:'harfs-font-2', label:'Font 2', stack:"'harfs-font-2', 'Segoe UI', Tahoma, sans-serif" },
-    { id:'harfs-font-3', label:'Font 3', stack:"'harfs-font-3', 'Segoe UI', Tahoma, sans-serif" },
-    { id:'harfs-font-4', label:'Font 4', stack:"'harfs-font-4', 'Segoe UI', Tahoma, sans-serif" },
 ];
 let currentFont = localStorage.getItem('appFont') || 'system';
+
+// Fetches fonts/manifest.json (kept up to date by the fonts-manifest
+// GitHub Action — see fonts/README.md), injects one @font-face rule per
+// entry (multiple files with the same `id`, e.g. a .woff2 + a .ttf
+// fallback of the same font, are merged into a single rule with multiple
+// src sources), and appends each font to APP_FONTS. Best-effort and
+// non-blocking: if it fails or the manifest is empty, the app just keeps
+// working with System Default. Re-applies the saved font and re-renders
+// the Settings grid afterwards, in case the user's saved choice or an
+// already-open Settings sheet needs the newly-registered font.
+const FONT_FORMAT_BY_EXT = { woff2:'woff2', woff:'woff', ttf:'truetype', otf:'opentype' };
+async function loadCustomFonts(){
+    let manifest;
+    try{
+        const res = await fetch(`fonts/manifest.json?cachebust=${Date.now()}`);
+        if(!res.ok) return;
+        manifest = await res.json();
+    }catch(e){ return; }
+    if(!Array.isArray(manifest) || !manifest.length) return;
+
+    // Group entries by id, since one font can ship as several files
+    // (different formats of the same face) that should become one
+    // selectable entry with automatic format fallback, not several.
+    const byId = new Map();
+    for(const entry of manifest){
+        if(!entry || !entry.id || !entry.file || !entry.format) continue;
+        if(!byId.has(entry.id)) byId.set(entry.id, { id:entry.id, label:entry.label||entry.id, files:[] });
+        byId.get(entry.id).files.push({ file:entry.file, format:FONT_FORMAT_BY_EXT[entry.format]||entry.format });
+    }
+    if(!byId.size) return;
+
+    const rules = [];
+    for(const {id, label, files} of byId.values()){
+        const src = files.map(f=>`url('fonts/${f.file}') format('${f.format}')`).join(', ');
+        rules.push(`@font-face{ font-family:'${id}'; src:${src}; font-display:swap; }`);
+        if(!APP_FONTS.some(f=>f.id===id)){
+            APP_FONTS.push({ id, label, stack:`'${id}', 'Segoe UI', Tahoma, sans-serif` });
+        }
+    }
+    let styleTag = document.getElementById('custom-fonts-style');
+    if(!styleTag){
+        styleTag = document.createElement('style');
+        styleTag.id = 'custom-fonts-style';
+        document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = rules.join('\n');
+
+    applyAppearance(); // in case the saved font choice was one of these
+    renderFontGrid();  // in case Settings → Appearance is already open
+}
+loadCustomFonts();
 
 let currentPalette = localStorage.getItem('palette') || 'ocean';
 
