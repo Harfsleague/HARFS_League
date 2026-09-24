@@ -1,5 +1,5 @@
 // ============================================================
-// offline.js  —  OFFLINE — IndexedDB cache layer + sync status dot
+// offline.js  —  OFFLINE — IndexedDB cache layer + network status glow
 // Loaded as a classic (non-module) script, right after config.js —
 // every other file can call idbGet/idbSet/setSyncStatus freely.
 // ============================================================
@@ -113,26 +113,65 @@ async function ensureTeamLogosCached(){
 }
 
 // ============================================================
-// SYNC STATUS — a soft status glow around the HARFS capsule's edge (see
-// css/styles.css). States: offline (grey), syncing (pulsing blue),
-// synced (green, auto-fades back to no glow), error (red, stays until
-// the next sync attempt).
+// NETWORK STATUS — only two states: online / offline.
+// No notification or glow is shown for "syncing" or "synced" anymore.
+// Something is shown ONLY when the connection state actually changes:
+//   • going offline → "You are offline" notification + a permanent
+//                     grey glow around the capsule until we're back online
+//   • going online  → "Back online" notification + a brief green glow,
+//                     then nothing
+// setSyncStatus() still exists (audio.js / memories.js / season.js /
+// league-ops.js call it) but ignores its argument and just compares the
+// real navigator.onLine against the last recorded state; if nothing
+// changed, nothing happens.
 // ============================================================
-let _syncFadeTimer = null;
-function setSyncStatus(state){
+let _netOnline = null;      // null = not initialised yet
+let _netFadeTimer = null;
+
+// The capsule can't show a notification until the startup animation has
+// moved it to the header (.in-header). If the app was opened offline,
+// wait for that before showing the message.
+function _notifyWhenCapsuleReady(msg, type, dur, expectedOnline){
     const capsule = document.getElementById('hero-logo-container');
     if(!capsule) return;
-    clearTimeout(_syncFadeTimer);
-    capsule.classList.remove('sync-offline','sync-syncing','sync-synced','sync-error');
-    capsule.classList.add('sync-' + state);
-    const titles = { offline:'Offline — showing cached data', syncing:'Syncing…', synced:'Up to date', error:'Sync failed — showing cached data' };
-    capsule.title = titles[state] || '';
-    if(state === 'synced'){
-        _syncFadeTimer = setTimeout(()=>{ capsule.classList.remove('sync-synced'); capsule.title=''; }, 2200);
-    }
+    const fire = ()=>{ if(_netOnline === expectedOnline) showToast(msg, type, dur); };
+    if(capsule.classList.contains('in-header')){ fire(); return; }
+    const poll = setInterval(()=>{
+        if(capsule.classList.contains('in-header')){
+            clearInterval(poll);
+            setTimeout(fire, 900);
+        }
+    }, 300);
 }
-window.addEventListener('online', ()=>setSyncStatus('syncing'));
-window.addEventListener('offline', ()=>setSyncStatus('offline'));
-document.addEventListener('DOMContentLoaded', ()=>{
-    setSyncStatus(navigator.onLine ? 'syncing' : 'offline');
-});
+
+function applyNetworkState(){
+    const capsule = document.getElementById('hero-logo-container');
+    if(!capsule) return;
+    const online = navigator.onLine;
+    if(online === _netOnline) return;          // state unchanged → do nothing
+    const isFirstCheck = (_netOnline === null);
+    _netOnline = online;
+
+    clearTimeout(_netFadeTimer);
+    capsule.classList.remove('sync-offline','sync-syncing','sync-synced','sync-error');
+
+    if(!online){
+        capsule.classList.add('sync-offline');  // permanent glow while offline
+        capsule.title = 'Offline — showing cached data';
+        _notifyWhenCapsuleReady('You are offline', 'info', 3200, false);
+        return;
+    }
+
+    capsule.title = '';
+    if(isFirstCheck) return;                    // app opened while online → stay silent
+    capsule.classList.add('sync-synced');       // brief green glow
+    _notifyWhenCapsuleReady('Back online', 'success', 2600, true);
+    _netFadeTimer = setTimeout(()=>capsule.classList.remove('sync-synced'), 2200);
+}
+
+// Backwards-compatible shim for the existing calls elsewhere in the app.
+function setSyncStatus(){ applyNetworkState(); }
+
+window.addEventListener('online',  applyNetworkState);
+window.addEventListener('offline', applyNetworkState);
+document.addEventListener('DOMContentLoaded', applyNetworkState);
