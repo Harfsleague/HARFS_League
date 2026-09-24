@@ -105,7 +105,7 @@ async function submitLoginPassword(){
         haptic([10,40,10]);
         hideLoginScreen();
         updateHeaderForLogin();
-        navigate('league');
+        navigate('main-league');
         showToast(`Welcome, ${TEAM_DISPLAY_NAMES[team]||team} 👋`,'success',2400);
     }catch(e){
         errEl.textContent='Could not reach the login server — check your connection';
@@ -138,5 +138,3 @@ function updateHeaderForLogin(){
         logoEl.style.display='none';
     }
 }
-
-
