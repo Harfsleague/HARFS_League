@@ -29,7 +29,7 @@
        - .hero-capsule-notif : one in-app notification at a time
      showToast() (js/ui-common.js) toggles the .showing-notif class on
      the capsule to crossfade between them; setSyncStatus() (js/offline.js)
-     drives a sync-status halo around the capsule's edge. See
+     drives a sync-status bar around the capsule's edge. See
      css/styles.css for both animations.
      ============================================================ -->
 <div id="hero-logo-container">
@@ -126,8 +126,11 @@
             </div>
         </div>
 
-        <div class="appearance-section-label">Font</div>
+        <div class="appearance-section-label">App Font</div>
         <div class="font-grid" id="font-grid"><!-- filled by JS from APP_FONTS --></div>
+
+        <div class="appearance-section-label">Magazine Font</div>
+        <div class="font-grid" id="font-grid-magazine"><!-- filled by JS from APP_FONTS --></div>
     </div>
 </div>
 

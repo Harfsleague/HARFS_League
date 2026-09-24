@@ -33,7 +33,14 @@ const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
 const APP_FONTS = [
     { id:'system', label:'System Default', stack:"'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
 ];
-let currentFont = localStorage.getItem('appFont') || 'system';
+// Two independent font choices (Settings → Appearance):
+//   currentAppFont      -> the whole app (everything except the magazine)
+//   currentMagazineFont -> the Weekly Magazine screen only
+// Before they were split there was a single 'appFont' key that only ever
+// affected the magazine, so it is read once as the magazine font's
+// starting value — nobody's saved magazine font changes.
+let currentAppFont      = localStorage.getItem('appUiFont') || 'system';
+let currentMagazineFont = localStorage.getItem('magazineFont') || localStorage.getItem('appFont') || 'system';
 
 // Fetches fonts/manifest.json (kept up to date by the fonts-manifest
 // GitHub Action — see fonts/README.md), injects one @font-face rule per
@@ -157,25 +164,35 @@ function applyAppearance(){
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
     document.body.classList.toggle('perf-no-anim', !p.anim);
-    const font = APP_FONTS.find(f=>f.id===currentFont) || APP_FONTS[0];
-    document.documentElement.style.setProperty('--app-font-family', font.stack);
+    const appFont = APP_FONTS.find(f=>f.id===currentAppFont) || APP_FONTS[0];
+    const magFont = APP_FONTS.find(f=>f.id===currentMagazineFont) || APP_FONTS[0];
+    document.documentElement.style.setProperty('--app-font-family', appFont.stack);
+    document.documentElement.style.setProperty('--magazine-font-family', magFont.stack);
     syncSettingsUI();
     syncAppearanceUI();
 }
-function selectFont(id){
+// target: 'app' | 'magazine'
+function selectFont(target, id){
     haptic([6]);
-    currentFont = id;
-    localStorage.setItem('appFont', id);
+    if(target==='magazine'){
+        currentMagazineFont = id;
+        localStorage.setItem('magazineFont', id);
+    } else {
+        currentAppFont = id;
+        localStorage.setItem('appUiFont', id);
+    }
     applyAppearance();
 }
 function renderFontGrid(){
-    const grid = document.getElementById('font-grid');
-    if(!grid) return;
-    grid.innerHTML = APP_FONTS.map(f => `
-        <div class="font-swatch" onclick="selectFont('${f.id}')" data-id="${f.id}">
+    [['app','font-grid'],['magazine','font-grid-magazine']].forEach(([target,gridId])=>{
+        const grid = document.getElementById(gridId);
+        if(!grid) return;
+        grid.innerHTML = APP_FONTS.map(f => `
+        <div class="font-swatch" onclick="selectFont('${target}','${f.id}')" data-id="${f.id}" data-target="${target}">
             <div class="font-swatch-preview" style="font-family:${f.stack};">Aa</div>
             <span>${f.label}</span>
         </div>`).join('');
+    });
 }
 
 function openAppearanceSheet(){
@@ -248,7 +265,7 @@ function syncAppearanceUI(){
         el.classList.toggle('selected', el.dataset.id === currentPalette);
     });
     document.querySelectorAll('.font-swatch').forEach(el=>{
-        el.classList.toggle('selected', el.dataset.id === currentFont);
+        el.classList.toggle('selected', el.dataset.id === (el.dataset.target==='magazine' ? currentMagazineFont : currentAppFont));
     });
     const editor = document.getElementById('custom-palette-editor');
     if(editor) editor.style.display = (currentPalette === 'custom') ? 'block' : 'none';
