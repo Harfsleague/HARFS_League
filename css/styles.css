@@ -228,6 +228,7 @@ body {
                 transform 0.9s cubic-bezier(0.25,0.46,0.45,0.94),
                 border-radius 0.6s ease,
                 padding 0.6s ease,
+                min-width 0.35s ease,
                 opacity 0.4s ease;
 }
 
@@ -270,6 +271,47 @@ body {
 }
 body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
 #hero-logo-container.in-header .hero-subtext{font-size:0.65rem;margin-top:-2px;}
+
+/* =====================================================
+   HARFS CAPSULE — notification face
+   The capsule (#hero-logo-container) doubles as the app's in-app
+   notification surface: .hero-capsule-brand (the wordmark) and
+   .hero-capsule-notif (one message at a time) are stacked on top of
+   each other and crossfade via the .showing-notif class, which
+   showToast() (js/ui-common.js) toggles. Both are absolutely
+   positioned within the capsule so swapping between them never
+   changes the pill's own size — only .in-header gets a fixed height,
+   since that's the only state either face is ever shown in.
+   ===================================================== */
+#hero-logo-container.in-header{ min-height:58px; }
+#hero-logo-container.in-header.showing-notif{ min-width:260px; }
+.hero-capsule-face{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity 0.32s ease, transform 0.32s ease;
+}
+#hero-logo-container:not(.in-header) .hero-capsule-brand{ position:static; inset:auto; }
+#hero-logo-container:not(.in-header) .hero-capsule-notif{ display:none; }
+.hero-capsule-brand{ flex-direction:column; }
+/* Hidden by default; only .in-header.showing-notif reveals it — this
+   must not depend on .in-header alone, or it'd flash open behind the
+   giant wordmark during the pre-login startup animation. */
+.hero-capsule-notif{ opacity:0; pointer-events:none; transform:translateY(-10px); }
+#hero-logo-container.showing-notif .hero-capsule-brand{ opacity:0; pointer-events:none; transform:translateY(10px); }
+#hero-logo-container.in-header.showing-notif .hero-capsule-notif{ opacity:1; pointer-events:auto; transform:translateY(0); }
+body.perf-no-anim .hero-capsule-face{ transition:opacity 0.32s ease; }
+body.perf-no-anim .hero-capsule-notif,
+body.perf-no-anim #hero-logo-container.showing-notif .hero-capsule-brand,
+body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-notif{ transform:none; }
+/* The notif face reuses the .toast icon-bubble/label/msg color coding
+   (see the TOAST COLORS section) but not its standalone pill chrome —
+   inside the capsule it just sits on the capsule's own background. */
+.hero-capsule-notif.toast{
+    background:none; border:none; box-shadow:none; padding:0 6px;
+    border-radius:0; backdrop-filter:none; animation:none;
+    gap:10px; max-width:100%;
+}
+.hero-capsule-notif .toast-msg{ max-width:170px; }
 #nav-settings-team-logo{
     display:none;
     width:1.1rem; height:1.1rem; border-radius:50%; object-fit:cover;
@@ -932,27 +974,10 @@ body.perf-no-anim .mini-player{ transition:none; }
 .team-picker-option.disabled{opacity:0.32;pointer-events:none;}
 
 /* =====================================================
-   TOAST — pill style matching song notification
+   TOAST COLORS — the icon bubble / label coloring per notification
+   type, shared by the capsule's notification face (.hero-capsule-notif,
+   see the HARFS CAPSULE section) via the same .toast + type classes.
    ===================================================== */
-#toast-container{
-    position:fixed;top:74px;left:50%;transform:translateX(-50%);
-    z-index:1000;display:flex;flex-direction:column;align-items:center;gap:8px;
-    pointer-events:none;width:90%;max-width:380px;
-}
-.toast{
-    background:rgba(10,18,30,0.92);
-    border:1px solid rgba(255,255,255,0.09);
-    border-radius:99px;
-    padding:9px 20px 9px 10px;
-    display:flex;align-items:center;gap:10px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.4);
-    backdrop-filter:blur(20px);
-    font-size:0.8rem;font-weight:700;
-    white-space:nowrap;
-    animation:toastIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-}
-.toast.hide{animation:toastOut 0.3s ease forwards;}
-/* icon bubble */
 .toast .toast-icon-bubble{
     width:28px;height:28px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
@@ -964,21 +989,15 @@ body.perf-no-anim .mini-player{ transition:none; }
 .toast .toast-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;line-height:1.2;}
 .toast .toast-msg{font-size:0.8rem;font-weight:800;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;}
 /* type colours */
-.toast.success{border-color:rgba(34,197,94,0.35);}
 .toast.success .toast-icon-bubble{background:linear-gradient(135deg,#22c55e,#16a34a);}
 .toast.success .toast-label{color:#4ade80;}
-.toast.error{border-color:rgba(239,68,68,0.35);}
 .toast.error .toast-icon-bubble{background:linear-gradient(135deg,#ef4444,#dc2626);}
 .toast.error .toast-label{color:#f87171;}
-.toast.info{border-color:rgba(96,165,250,0.3);}
 .toast.info .toast-icon-bubble{background:linear-gradient(135deg,var(--primary),var(--accent));}
 .toast.info .toast-label{color:var(--primary);}
-.toast.music{border-color:rgba(96,165,250,0.3);}
 .toast.music .toast-icon-bubble{background:linear-gradient(135deg,var(--primary),var(--accent));animation:musicPulse 1.5s infinite ease-in-out;}
 .toast.music .toast-label{color:var(--primary);}
 @keyframes musicPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
-@keyframes toastIn{from{opacity:0;transform:translateY(-18px) scale(0.88);}to{opacity:1;transform:translateY(0) scale(1);}}
-@keyframes toastOut{to{opacity:0;transform:translateY(-12px) scale(0.93);}}
 @keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 
 /* =====================================================
@@ -1547,15 +1566,6 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 }
 .perf-toggle.on{ background:var(--primary); border-color:var(--primary); }
 .perf-toggle.on::after{ transform:translateX(18px); }
-.perf-auto-note{
-    display:none;
-    font-size:0.62rem; color:#6b7280; text-align:center;
-    margin:2px 4px 12px; line-height:1.5;
-}
-/* Greys out (and disables interaction with) the 3 grouped toggles while
-   Auto-Detect is choosing for you — the values still show through so you
-   can see what it picked, just not tap them. */
-#perf-group-toggles.disabled{ opacity:0.4; pointer-events:none; }
 
 /* =====================================================
    SETTINGS PANEL — small, square, centered, no explanations
@@ -1757,15 +1767,8 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 .segmented-btn:active{ transform:scale(0.96); }
 .segmented-btn:disabled{ opacity:0.35; cursor:not-allowed; }
 .segmented-btn:disabled:active{ transform:none; }
-/* Performance now has 4 segments instead of 2 — a bit more compact so
-   "Auto"/"Full"/"Custom"/"Lite" all sit comfortably on one row. */
 #perf-segmented.segmented-control{ padding:3px; gap:2px; }
 #perf-segmented .segmented-btn{ font-size:0.62rem; padding:9px 2px; gap:4px; }
-.perf-auto-note{
-    display:none;
-    font-size:0.62rem; color:#6b7280; text-align:center;
-    margin:8px 4px 14px; line-height:1.5;
-}
 .palette-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:12px 8px;
 }
@@ -2082,18 +2085,23 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 .ai-toggle-switch input:checked + .ai-toggle-slider::before{ transform:translateX(18px); }
 
 /* =====================================================
-   OFFLINE SYNC STATUS DOT
+   OFFLINE SYNC STATUS DOT — now lives pinned to the HARFS capsule's
+   corner instead of floating on its own in the top-left. Only shown
+   once the capsule has settled into its header pill (see .in-header
+   below); hidden during the startup animation and on the login screen.
    ===================================================== */
-#sync-status-dot{
-    position:fixed; top:14px; left:14px; z-index:900;
-    width:10px;height:10px;border-radius:50%;
+.hero-sync-dot{
+    position:absolute; top:6px; left:10px; z-index:2;
+    width:8px;height:8px;border-radius:50%;
+    opacity:0;
     transition:opacity 0.4s ease, background 0.3s ease;
     box-shadow:0 0 6px rgba(0,0,0,0.4);
 }
-.sync-status-dot.sync-offline{ background:#6b7280; }
-.sync-status-dot.sync-syncing{ background:#60a5fa; animation:musicPulse 1s infinite ease-in-out; }
-.sync-status-dot.sync-synced{ background:#22c55e; }
-.sync-status-dot.sync-error{ background:#ef4444; }
+#hero-logo-container.in-header .hero-sync-dot{ opacity:1; }
+.hero-sync-dot.sync-offline{ background:#6b7280; }
+.hero-sync-dot.sync-syncing{ background:#60a5fa; animation:musicPulse 1s infinite ease-in-out; }
+.hero-sync-dot.sync-synced{ background:#22c55e; }
+.hero-sync-dot.sync-error{ background:#ef4444; }
 
 /* ============================================================
    Weekly Magazine styles — append to css/styles.css
@@ -2142,9 +2150,11 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 }
 .magazine-issue-picker{
     display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:170px;max-height:240px;overflow-y:auto;
+    -ms-overflow-style:none;scrollbar-width:none;
     background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:6px;z-index:10;
     box-shadow:0 10px 30px rgba(0,0,0,0.4);
 }
+.magazine-issue-picker::-webkit-scrollbar{ display:none; }
 .magazine-issue-picker.open{ display:block; }
 .magazine-issue-picker-row{
     display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;
@@ -2152,7 +2162,7 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 }
 .magazine-issue-picker-row:hover,.magazine-issue-picker-row.active{ background:rgba(255,255,255,0.07);color:#fff; }
 .magazine-issue-picker-date{ color:#6b7280;font-size:0.64rem; }
-.magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;letter-spacing:0.02em;}
+.magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;letter-spacing:0.02em;background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .magazine-panel-back-btn{background:none;border:none;color:inherit;font-size:1.1rem;}
 
 /* ---- Cover hero: title/subtitle overlaid on the image like a real
