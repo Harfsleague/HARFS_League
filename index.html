@@ -21,17 +21,30 @@
 <div class="ambient-orb orb-2"></div>
 <div class="ambient-orb orb-3"></div>
 
-<!-- Toast -->
-<div id="toast-container"></div>
 
-<!-- Offline sync status dot — see js/offline.js -->
-<div id="sync-status-dot" class="sync-status-dot sync-offline" title="Sync status"></div>
-
-<!-- Hero Logo (original HARFS wordmark — purely decorative now that
-     Settings lives in the bottom nav; no hold-gesture action anymore) -->
+<!-- ============================================================
+     HARFS capsule — doubles as the app's notification surface.
+     Two stacked "faces" inside the same pill:
+       - .hero-capsule-brand : the HARFS wordmark (default state)
+       - .hero-capsule-notif : one in-app notification at a time
+     showToast() (js/ui-common.js) toggles the .showing-notif class on
+     the capsule to crossfade between them; setSyncStatus() (js/offline.js)
+     drives the small dot in the corner. See css/styles.css for the
+     animation itself.
+     ============================================================ -->
 <div id="hero-logo-container">
-    <div class="hero-text" id="harfs-text">HARFS</div>
-    <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
+    <div class="hero-sync-dot" id="hero-sync-dot" title="Sync status"></div>
+    <div class="hero-capsule-face hero-capsule-brand" id="hero-capsule-brand">
+        <div class="hero-text" id="harfs-text">HARFS</div>
+        <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
+    </div>
+    <div class="hero-capsule-face hero-capsule-notif" id="hero-capsule-notif">
+        <div class="toast-icon-bubble" id="hero-notif-icon"><i class="fas fa-info-circle"></i></div>
+        <div class="toast-body">
+            <div class="toast-label" id="hero-notif-label">Info</div>
+            <div class="toast-msg" id="hero-notif-msg"></div>
+        </div>
+    </div>
 </div>
 
 <!-- ============ LOGIN SCREEN ============
@@ -75,16 +88,6 @@
         </div>
 
         <div id="perf-custom-options" style="display:none;">
-            <div class="perf-option-row">
-                <div class="perf-option-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
-                <div class="perf-option-textcol">
-                    <span class="perf-option-title">Auto-Detect</span>
-                    <span class="perf-option-sub">Picks the best settings for this device</span>
-                </div>
-                <div class="perf-toggle" id="perf-toggle-auto" onclick="toggleAutoDetect()"></div>
-            </div>
-            <div class="perf-auto-note" id="perf-auto-note"></div>
-
             <div id="perf-group-toggles">
                 <div class="perf-option-row">
                     <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
