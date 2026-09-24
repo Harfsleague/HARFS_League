@@ -1,5 +1,5 @@
 // ============================================================
-// mba.js — MBA TOURNAMENT MODE
+// mba.js — CUP TOURNAMENT MODE
 // ------------------------------------------------------------
 // A knockout mode separate from the regular league: the app's 4 teams
 // are randomly split into two semifinal pairs. Each semifinal is a
@@ -15,7 +15,7 @@
 //    still running) — see the result sheet (#mba-result-sheet);
 //  - the bracket is drawn as a real tree: semifinals → final, with the
 //    third-place match underneath;
-//  - the edition picker on the Season → MBA tab is fully independent
+//  - the edition picker on the Season → CUP tab is fully independent
 //    from the League season picker;
 //  - auditMbaData() (used by "Verify Table" in js/verify.js) re-derives
 //    everything from the stored games and repairs medals / champion logs.
@@ -35,7 +35,7 @@
 
 const MBA_SEMI_WINS_NEEDED = 3;   // change to 2 for a true "best of 3"
 
-let mbaViewValue = null;  // edition shown on Season → MBA: 'current' | 'ed:<n>' | null (= newest)
+let mbaViewValue = null;  // edition shown on Season → CUP: 'current' | 'ed:<n>' | null (= newest)
 let mbaEditCtx   = null;  // state of the result-editor sheet
 let mbaBusy      = false; // blocks double-taps / overlapping saves
 
@@ -190,9 +190,9 @@ async function startNewMbaTournament(){
     mbaViewValue = 'current';
     haptic([10]);
     renderMbaAdminSection(); renderMbaSeasonView();
-    await mbaPersist(`Started MBA Edition ${edition}`);
+    await mbaPersist(`Started CUP Edition ${edition}`);
     mbaBusy = false;
-    showToast(`MBA Edition ${edition} started 🏆`,'success',2400);
+    showToast(`CUP Edition ${edition} started 🏆`,'success',2400);
 }
 async function cancelMbaTournament(){
     if(!mbaData.current || mbaBusy) return;
@@ -201,7 +201,7 @@ async function cancelMbaTournament(){
     mbaBusy = true;
     mbaData.current = null;
     mbaViewValue = null;
-    await mbaPersist('MBA tournament cancelled');
+    await mbaPersist('CUP tournament cancelled');
     mbaBusy = false;
     renderMbaAdminSection(); renderMbaSeasonView();
     showToast('Tournament cancelled','info',2000);
@@ -223,11 +223,11 @@ async function completeMbaTournament(){
     mainLeagueData[m.gold].mbaChampionLog = (mainLeagueData[m.gold].mbaChampionLog||[]).filter(e=>e.edition!==t.edition);
     mainLeagueData[m.gold].mbaChampionLog.push({ edition: t.edition, ts: Date.now() });
 
-    await saveMbaDataToGitHub(`MBA Edition ${t.edition} complete — ${m.gold} champion`);
-    await saveMainLeagueDataToGitHub(mainLeagueData, `MBA Edition ${t.edition} champion logged`);
+    await saveMbaDataToGitHub(`CUP Edition ${t.edition} complete — ${m.gold} champion`);
+    await saveMainLeagueDataToGitHub(mainLeagueData, `CUP Edition ${t.edition} champion logged`);
     mbaBusy = wasBusy;
 
-    showToast(`🏆 ${mbaName(m.gold)} wins MBA Edition ${t.edition}!`,'success',4200);
+    showToast(`🏆 ${mbaName(m.gold)} wins CUP Edition ${t.edition}!`,'success',4200);
     renderMbaAdminSection(); renderMbaSeasonView();
     if(document.getElementById('main-league-screen')?.classList.contains('active') && typeof renderMainLeagueTable==='function') renderMainLeagueTable();
 }
@@ -249,8 +249,8 @@ async function reopenLastMbaEdition(){
         mainLeagueData[team].mbaChampionLog = (mainLeagueData[team].mbaChampionLog||[]).filter(e=>e.edition!==rec.edition);
     });
     mbaViewValue = 'current';
-    await saveMbaDataToGitHub(`MBA Edition ${rec.edition} reopened`);
-    await saveMainLeagueDataToGitHub(mainLeagueData, `MBA Edition ${rec.edition} reopened — champion entry withdrawn`);
+    await saveMbaDataToGitHub(`CUP Edition ${rec.edition} reopened`);
+    await saveMainLeagueDataToGitHub(mainLeagueData, `CUP Edition ${rec.edition} reopened — champion entry withdrawn`);
     mbaBusy = false;
     renderMbaAdminSection(); renderMbaSeasonView();
     if(typeof renderMainLeagueTable==='function') renderMainLeagueTable();
@@ -349,7 +349,7 @@ async function saveMbaResult(){
         mbaBusy = true;
         target.scores = scores; target.editedAt = now;
         closeMbaResultSheet();
-        await mbaPersist(`MBA Edition ${rec.edition} — result edited`);
+        await mbaPersist(`CUP Edition ${rec.edition} — result edited`);
         mbaBusy = false;
         showToast('Result updated ✏️','success',2000);
         renderMbaSeasonView();
@@ -383,7 +383,7 @@ async function saveMbaResult(){
     if(c.kind!=='semi' && !existed && mbaIsFullyDecided(draft)){
         await completeMbaTournament(); // last missing result → award medals right away
     } else {
-        await mbaPersist(`MBA Edition ${draft.edition} — result ${existed?'edited':'recorded'}`);
+        await mbaPersist(`CUP Edition ${draft.edition} — result ${existed?'edited':'recorded'}`);
         showToast(existed ? 'Result updated ✏️' : 'Result saved ✅','success',1800);
     }
     mbaBusy = false;
@@ -404,7 +404,7 @@ async function deleteMbaResult(){
     mbaBusy = true;
     mbaData.current = draft;
     closeMbaResultSheet();
-    await mbaPersist(`MBA Edition ${draft.edition} — result deleted`);
+    await mbaPersist(`CUP Edition ${draft.edition} — result deleted`);
     mbaBusy = false;
     showToast('Result deleted','success',1800);
     renderMbaAdminSection(); renderMbaSeasonView();
@@ -538,7 +538,7 @@ function renderMbaAdminSection(){
     }
     const t = mbaData.current;
     const ctx = mbaMakeCtx('admin','current',t.edition);
-    let html = `<div class="mba-edition-label">MBA — Edition ${t.edition} · In progress</div>` + mbaTreeHtml(t, ctx);
+    let html = `<div class="mba-edition-label">CUP — Edition ${t.edition} · In progress</div>` + mbaTreeHtml(t, ctx);
     html += `<p class="mba-admin-hint">Add each game’s score under its block. Tap ✏️ on any game to correct it.</p>`;
     if(mbaIsFullyDecided(t)){
         html += `<button class="mba-finish-btn" onclick="completeMbaTournament()"><i class="fas fa-flag-checkered mr-2"></i>Finish tournament &amp; award medals</button>`;
@@ -548,7 +548,7 @@ function renderMbaAdminSection(){
 }
 
 // ------------------------------------------------------------
-// Season tab → MBA view. Has its OWN edition picker (pill + arrows +
+// Season tab → CUP view. Has its OWN edition picker (pill + arrows +
 // sheet) that never touches the League season picker, and vice versa.
 // Index 0 = newest (the running tournament if any, else the latest finished).
 // ------------------------------------------------------------
@@ -583,7 +583,7 @@ function navigateMbaEdition(dir){
 function openMbaPicker(){
     haptic([6]);
     const { opts, idx } = mbaSelected();
-    if(!opts.length){ showToast('No MBA tournaments yet','info'); return; }
+    if(!opts.length){ showToast('No CUP tournaments yet','info'); return; }
     document.getElementById('mba-picker-list').innerHTML = opts.map((o,i)=>`
         <div class="playlist-track-item ${i===idx?'playing':''}" onclick="selectMbaEdition('${o.value}')">
             <div class="playlist-track-icon"><i class="fas fa-trophy"></i></div>
@@ -606,7 +606,7 @@ function renderMbaSeasonView(){
     if(!el) return;
     const { opt } = mbaSelected();
     if(!opt){
-        el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No MBA tournaments yet.</p>';
+        el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No CUP tournaments yet.</p>';
         return;
     }
     const isCur = opt.scope==='current';
@@ -615,7 +615,7 @@ function renderMbaSeasonView(){
     const ctx = mbaMakeCtx('view', opt.scope, t.edition);
     let html = '';
     if(!isCur) html += mbaCompletedSummaryHtml(t);
-    html += `<div class="mba-edition-label">MBA — Edition ${t.edition}${isCur?' · In progress':''}</div>`;
+    html += `<div class="mba-edition-label">CUP — Edition ${t.edition}${isCur?' · In progress':''}</div>`;
     html += mbaTreeHtml(t, ctx);
     const last = mbaData.completed[mbaData.completed.length-1];
     if(!isCur && ctx.canEdit && !mbaData.current && last && last.edition===t.edition){
@@ -624,7 +624,7 @@ function renderMbaSeasonView(){
     el.innerHTML = html;
 }
 
-// ---- Season tab: League ⇄ MBA switch (each has its own picker) ----
+// ---- Season tab: League ⇄ CUP switch (each has its own picker) ----
 function switchSeasonView(view){
     haptic([6]);
     const isMba = view==='mba';
@@ -635,7 +635,7 @@ function switchSeasonView(view){
     if(leagueNav) leagueNav.style.display = isMba ? 'none' : 'flex';
     if(mbaNav) mbaNav.style.display = isMba ? 'flex' : 'none';
     const title = document.getElementById('season-screen-title');
-    if(title) title.textContent = isMba ? 'MBA Tournament' : 'Season Table';
+    if(title) title.textContent = isMba ? 'CUP Tournament' : 'Season Table';
     const dt = document.getElementById('current-datetime');
     if(dt) dt.style.display = isMba ? 'none' : '';
     document.querySelectorAll('#season-view-switch .segmented-btn').forEach(b=>{
@@ -660,7 +660,7 @@ function auditMbaData(){
     const list = [];
     if(mbaData.current) list.push({ t:mbaData.current, scope:'current' });
     mbaData.completed.forEach(r=>list.push({ t:r, scope:'completed' }));
-    if(!list.length) push('ok','No MBA tournaments yet — nothing to check.');
+    if(!list.length) push('ok','No CUP tournaments yet — nothing to check.');
 
     const seen = new Set();
     mbaData.completed.forEach(r=>{
@@ -669,7 +669,7 @@ function auditMbaData(){
     });
 
     list.forEach(({ t, scope })=>{
-        const tag = `MBA Edition ${t.edition}`;
+        const tag = `CUP Edition ${t.edition}`;
         const before = items.length;
         const malformed = !Array.isArray(t.semis) || t.semis.length!==2 ||
             t.semis.some(s=>!s || !Array.isArray(s.teams) || s.teams.length!==2 || !Array.isArray(s.legs));
@@ -754,7 +754,7 @@ function auditMbaData(){
         if(!log.some(e=>e.edition===r.edition)){
             log.push({ edition:r.edition, ts:r.finishedAt || Date.now() });
             changedMain = true;
-            push('fixed',`${mbaName(r.gold)}: missing “MBA Champion — Edition ${r.edition}” entry added.`);
+            push('fixed',`${mbaName(r.gold)}: missing “CUP Champion — Edition ${r.edition}” entry added.`);
         }
     });
     TEAM_NAMES.forEach(team=>{
@@ -769,7 +769,7 @@ function auditMbaData(){
         if(cleaned.length!==log.length){
             mainLeagueData[team].mbaChampionLog = cleaned;
             changedMain = true;
-            push('fixed',`${mbaName(team)}: removed ${log.length-cleaned.length} invalid MBA champion entr${log.length-cleaned.length===1?'y':'ies'}.`);
+            push('fixed',`${mbaName(team)}: removed ${log.length-cleaned.length} invalid CUP champion entr${log.length-cleaned.length===1?'y':'ies'}.`);
         }
     });
 

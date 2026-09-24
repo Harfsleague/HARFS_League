@@ -49,11 +49,11 @@ let loginIsNewAccount = false;
 let leagueData={},mainLeagueData={};
 let sha=null,mainSha=null,matchesSha=null,archiveSha=null,weirdSha=null,mbaSha=null,magazineArchiveSha=null;
 let matchHistory=[],archivedSeasons=[],weirdEvents=[];
-// MBA — the best-of-3-semis / single-match-final knockout mode (see js/mba.js).
+// CUP — the best-of-3-semis / single-match-final knockout mode (see js/mba.js).
 // 'current' is the in-progress tournament (or null between tournaments);
 // 'completed' is every finished one, in order — this is what
-// computeTrophyCounts() (js/shop.js) reads to award MBA medals alongside
-// regular season medals, and what the Season tab's MBA view lists as history.
+// computeTrophyCounts() (js/shop.js) reads to award CUP medals alongside
+// regular season medals, and what the Season tab's CUP view lists as history.
 let mbaData = { current:null, completed:[] };
 // Per-shard bookkeeping for Golden Moments: which shard files exist, each
 // one's GitHub blob sha (needed to update it), and each one's own event
@@ -77,9 +77,9 @@ function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={nam
     // Mystery Box outcomes — kept just to enforce the 2-opens-per-2-weeks
     // limit and show a short history; see shop.js.
     arenaHistory:[],
-    // MBA tournament wins only (never regular league titles — those already
+    // CUP tournament wins only (never regular league titles — those already
     // just add to the gold count with no log) — one entry per tournament
-    // this team has WON outright, so its own profile can show "MBA Champion
+    // this team has WON outright, so its own profile can show "CUP Champion
     // — Edition #N" without having to search all of mbaData.completed for
     // matches. See completeMbaTournament() in js/mba.js.
     mbaChampionLog:[],

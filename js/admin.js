@@ -58,7 +58,7 @@ function navigate(route){
         updateCurrentDateTime();
     }
 
-    // MBA edition picker is independent — reset it to "newest" when leaving Season
+    // CUP edition picker is independent — reset it to "newest" when leaving Season
     if(prevRoute === 'league' && route !== 'league' && typeof resetMbaView === 'function') resetMbaView();
 
     // Lock the HARFS capsule while the admin panel is open, so a stray

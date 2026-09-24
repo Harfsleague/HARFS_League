@@ -4,7 +4,7 @@
 // every other file can call idbGet/idbSet/setSyncStatus freely.
 // ============================================================
 const OFFLINE_DB_NAME = 'harfs-offline';
-// v3 added 'teamLogos'. v4 adds 'mbaData' (MBA tournament state/history —
+// v3 added 'teamLogos'. v4 adds 'mbaData' (CUP tournament state/history —
 // see js/mba.js) — onupgradeneeded only adds missing stores, so existing
 // data in every other store is untouched by this bump.
 // ('liveScoresCache' was dropped from this list along with the Live
@@ -113,7 +113,7 @@ async function ensureTeamLogosCached(){
 }
 
 // ============================================================
-// SYNC STATUS — a faint glow around the HARFS capsule's edge (see
+// SYNC STATUS — a clearly visible halo around the HARFS capsule's edge (see
 // css/styles.css). States: offline (grey), syncing (pulsing blue),
 // synced (green, auto-fades back to no glow), error (red, stays until
 // the next sync attempt).

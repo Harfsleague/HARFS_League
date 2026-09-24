@@ -101,8 +101,8 @@ function openTeamPanel(team){
     mbaLogEl.innerHTML = mbaLog.length ? mbaLog.slice().reverse().map(entry=>{
         const d = new Date(entry.ts);
         const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-        return `<div class="coin-log-row"><span>🏆 MBA Champion — Edition #${entry.edition}</span>${when?`<span style="color:#6b7280;font-weight:600;">${when}</span>`:''}</div>`;
-    }).join('') : '<div class="team-panel-empty">No MBA titles yet</div>';
+        return `<div class="coin-log-row"><span>🏆 CUP Champion — Edition #${entry.edition}</span>${when?`<span style="color:#6b7280;font-weight:600;">${when}</span>`:''}</div>`;
+    }).join('') : '<div class="team-panel-empty">No CUP titles yet</div>';
 
     const arenaEl = document.getElementById('team-panel-arena');
     arenaEl.innerHTML = w.arenaHistory.length ? w.arenaHistory.slice(0,10).map(a=>{

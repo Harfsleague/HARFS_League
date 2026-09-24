@@ -225,7 +225,7 @@ function renderMagazine(issue) {
                 <div class="magazine-alltime-card-head">${teamLabel(s.team)}</div>
                 <div class="magazine-alltime-stats">
                     <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">قهرمانی</span><span class="magazine-alltime-stat-value">${s.leagueTitles ?? 0} 🏆</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">مدال MBA</span><span class="magazine-alltime-stat-value">${s.mbaMedals ?? 0} 🥇</span></div>
+                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">مدال CUP</span><span class="magazine-alltime-stat-value">${s.mbaMedals ?? 0} 🥇</span></div>
                     <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">فصل</span><span class="magazine-alltime-stat-value">${s.seasonsPlayed ?? '—'}</span></div>
                     <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">بازی</span><span class="magazine-alltime-stat-value">${s.P ?? '—'}</span></div>
                     <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">برد</span><span class="magazine-alltime-stat-value">${s.W ?? '—'}</span></div>

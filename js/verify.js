@@ -1,5 +1,5 @@
 // ============================================================
-// verify.js — VERIFY TABLE (league + MBA), one button
+// verify.js — VERIFY TABLE (league + CUP), one button
 // ------------------------------------------------------------
 // Loaded AFTER league-ops.js and mba.js. It re-declares
 // recalculateLeagueTable(), so this version replaces the old
@@ -8,7 +8,7 @@
 //
 // One tap now:
 //   1) rebuilds the season table from match history (as before),
-//   2) re-derives every MBA series from its saved games, repairs
+//   2) re-derives every CUP series from its saved games, repairs
 //      winners / medals / champion logs, and reports what it can't fix,
 //   3) sanity-checks archived league seasons' podium (report only),
 //   4) shows a report sheet with the final medal tally per team.
@@ -56,7 +56,7 @@ function auditArchivedSeasons(){
     return items;
 }
 
-// Medal tally per team, computed independently for League and MBA and
+// Medal tally per team, computed independently for League and CUP and
 // cross-checked against computeTrophyCounts() (what the Overall screen shows).
 function buildMedalReport(){
     const lg = {}, mb = {};
@@ -74,7 +74,7 @@ function buildMedalReport(){
         const tot = { gold:lg[t].gold+mb[t].gold, silver:lg[t].silver+mb[t].silver, bronze:lg[t].bronze+mb[t].bronze };
         const ok = tot.gold===shown[t].gold && tot.silver===shown[t].silver && tot.bronze===shown[t].bronze;
         if(!ok) mismatch = true;
-        return `<div class="report-row"><span class="label" style="flex:1;">${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}<br><span style="font-size:0.58rem;color:#6b7280;">League ${lg[t].gold}/${lg[t].silver}/${lg[t].bronze} · MBA ${mb[t].gold}/${mb[t].silver}/${mb[t].bronze}</span></span><span class="value">🥇 ${tot.gold} 🥈 ${tot.silver} 🥉 ${tot.bronze}${ok?'':' ❌'}</span></div>`;
+        return `<div class="report-row"><span class="label" style="flex:1;">${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}<br><span style="font-size:0.58rem;color:#6b7280;">League ${lg[t].gold}/${lg[t].silver}/${lg[t].bronze} · CUP ${mb[t].gold}/${mb[t].silver}/${mb[t].bronze}</span></span><span class="value">🥇 ${tot.gold} 🥈 ${tot.silver} 🥉 ${tot.bronze}${ok?'':' ❌'}</span></div>`;
     }).join('');
     return { html: rows, mismatch };
 }
@@ -82,7 +82,7 @@ function buildMedalReport(){
 async function recalculateLeagueTable(){
     const ok = await showConfirm({
         icon:'🛡️', title:'Verify & Repair?',
-        message:'The season table is rebuilt from match history. MBA results, medals and champion records are checked too, and repaired where possible.',
+        message:'The season table is rebuilt from match history. CUP results, medals and champion records are checked too, and repaired where possible.',
         okLabel:'Verify', okColor:'purple'
     });
     if(!ok) return;
@@ -108,13 +108,13 @@ async function recalculateLeagueTable(){
     if(!leagueItems.length) leagueItems.push({ level:'ok', text:`Season table matches all ${matchHistory.length} saved match${matchHistory.length===1?'':'es'}.` });
     if(!leagueSaved) leagueItems.push({ level:'warn', text:'Table rebuilt locally but could not be saved to GitHub — check your connection.' });
 
-    // ---- 2) MBA ----
+    // ---- 2) CUP ----
     await loadMbaDataFromGitHub();
     await loadMainLeagueDataFromGitHub();
     const mba = auditMbaData();
     let mbaSaved = true, mainSaved = true;
-    if(mba.changedMba)  mbaSaved  = await saveMbaDataToGitHub('Verified & repaired MBA data');
-    if(mba.changedMain) mainSaved = await saveMainLeagueDataToGitHub(mainLeagueData, 'Verified MBA champion records');
+    if(mba.changedMba)  mbaSaved  = await saveMbaDataToGitHub('Verified & repaired CUP data');
+    if(mba.changedMain) mainSaved = await saveMainLeagueDataToGitHub(mainLeagueData, 'Verified CUP champion records');
     if(!mbaSaved || !mainSaved) mba.items.push({ level:'warn', text:'Repairs were applied locally but could not be saved to GitHub — run Verify again once you’re online.' });
     renderMbaSeasonView();
     renderMbaAdminSection();
@@ -134,9 +134,9 @@ async function recalculateLeagueTable(){
     const html =
         `<div style="text-align:center;font-size:0.8rem;font-weight:800;color:${nErr?'#f87171':'#4ade80'};margin-bottom:2px;">${escapeHtml(summary)}</div>`
         + verifyReportSection('League table', leagueItems)
-        + verifyReportSection('MBA tournaments', mba.items)
+        + verifyReportSection('CUP tournaments', mba.items)
         + verifyReportSection('Archived league seasons', archiveItems)
-        + verifyReportSection('Medal totals (League + MBA)', [])
+        + verifyReportSection('Medal totals (League + CUP)', [])
         + medals.html
         + (medals.mismatch ? verifyReportRow('error','Medal totals don’t match the Overall screen — please report this.') : '');
 

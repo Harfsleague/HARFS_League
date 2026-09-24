@@ -29,7 +29,7 @@
        - .hero-capsule-notif : one in-app notification at a time
      showToast() (js/ui-common.js) toggles the .showing-notif class on
      the capsule to crossfade between them; setSyncStatus() (js/offline.js)
-     drives a faint sync-status glow around the capsule's edge. See
+     drives a sync-status halo around the capsule's edge. See
      css/styles.css for both animations.
      ============================================================ -->
 <div id="hero-logo-container">
@@ -237,7 +237,7 @@
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
-            <!-- MBA edition navigation — independent from the League season pills above -->
+            <!-- CUP edition navigation — independent from the League season pills above -->
             <div id="mba-nav-wrapper" style="display:none;align-items:center;gap:8px;margin-top:8px;">
                 <button id="mba-prev-btn" onclick="navigateMbaEdition(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
                     <i class="fas fa-chevron-left"></i>
@@ -255,7 +255,7 @@
             </select>
             <div class="segmented-control" id="season-view-switch" style="margin-top:10px;">
                 <button class="segmented-btn active" data-value="league" onclick="switchSeasonView('league')"><i class="fas fa-table"></i> League</button>
-                <button class="segmented-btn" data-value="mba" onclick="switchSeasonView('mba')"><i class="fas fa-trophy"></i> MBA</button>
+                <button class="segmented-btn" data-value="mba" onclick="switchSeasonView('mba')"><i class="fas fa-trophy"></i> CUP</button>
             </div>
         </div>
 
@@ -425,15 +425,15 @@
                             <i class="fas fa-shield-halved text-lg"></i><span>Verify Table</span>
                         </button>
                     </div>
-                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history, then checks MBA results, medals and champion records and repairs anything that does not add up.</p>
+                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history, then checks CUP results, medals and champion records and repairs anything that does not add up.</p>
                 </div>
             </div>
 
-            <!-- MBA Tournament -->
+            <!-- CUP Tournament -->
             <div class="admin-section">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f97316);"></div>
                 <div class="admin-section-body">
-                    <h3 style="background:linear-gradient(90deg,#fde68a,#fdba74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MBA Tournament</h3>
+                    <h3 style="background:linear-gradient(90deg,#fde68a,#fdba74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CUP Tournament</h3>
                     <div id="mba-admin-body"><!-- filled by renderMbaAdminSection() --></div>
                 </div>
             </div>
@@ -682,7 +682,7 @@
         <i class="fas fa-arrow-up"></i><span>Back to Top</span>
     </div>
 
-    <!-- ============ MBA — RESULT EDITOR (record / edit a game) ============ -->
+    <!-- ============ CUP — RESULT EDITOR (record / edit a game) ============ -->
     <div id="mba-result-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeMbaResultSheet()">
         <div class="team-picker-panel">
             <div class="team-picker-handle"></div>
@@ -714,11 +714,11 @@
         </div>
     </div>
 
-    <!-- ============ MBA — EDITION PICKER (independent from League seasons) ============ -->
+    <!-- ============ CUP — EDITION PICKER (independent from League seasons) ============ -->
     <div id="mba-picker-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeMbaPicker()">
         <div class="team-picker-panel playlist-panel">
             <div class="team-picker-handle"></div>
-            <div class="team-picker-title">Select MBA Edition</div>
+            <div class="team-picker-title">Select CUP Edition</div>
             <div id="mba-picker-list"></div>
         </div>
     </div>
@@ -753,7 +753,7 @@
                         <div id="team-panel-records"></div>
                     </div>
                     <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> MBA Titles</div>
+                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> CUP Titles</div>
                         <div id="team-panel-mba"></div>
                     </div>
                     <div class="team-panel-section">

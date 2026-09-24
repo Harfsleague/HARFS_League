@@ -418,7 +418,7 @@ function toggleAdminEditMode(){
     showToast(isAdminUnlocked ? 'Edit Mode on' : 'Edit Mode off', 'info', 1600);
     // Refresh anything already on screen that depends on this flag
     if(document.getElementById('weird-screen')?.classList.contains('active')) renderWeirdEvents();
-    if(typeof renderMbaSeasonView==='function') renderMbaSeasonView(); // MBA ✏️ buttons follow Edit Mode
+    if(typeof renderMbaSeasonView==='function') renderMbaSeasonView(); // CUP ✏️ buttons follow Edit Mode
     if(document.getElementById('magazine-screen')?.classList.contains('active') && typeof renderMagazineIssueNav==='function') renderMagazineIssueNav();
 }
 
