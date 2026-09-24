@@ -2094,72 +2094,85 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 .ai-toggle-switch input:checked + .ai-toggle-slider::before{ transform:translateX(18px); }
 
 /* =====================================================
-   SYNC STATUS — a slim gradient bar around the HARFS capsule's edge with
-   only a hint of shine (driven by setSyncStatus() in js/offline.js).
-   States: offline (slate), syncing (blue→violet, gently pulsing),
-   synced (green→teal, fades out by itself in ~2s), error (red→orange,
-   stays until the next sync attempt).
+   SYNC STATUS — a hair-thin (1px) flowing gradient bar around the HARFS
+   capsule's edge plus a soft glow (driven by setSyncStatus() in
+   js/offline.js).
+   States: offline (slate), syncing (blue→violet, breathing), synced
+   (green→teal, fades out by itself after ~2s), error (red→orange, stays
+   until the next sync attempt).
 
-   The bar is the ::before ring (gradient + mask, so only a 2px stroke is
-   painted); the "shine" is a very soft box-shadow in the state's colour.
-   The ring is always present at opacity 0 so it can fade in/out; being a
-   pseudo-element (not a box-shadow) it also still shows when the
-   "no shadows" performance option is on.
-   The glow layers come FIRST in the box-shadow list (first = on top) so
-   the capsule's dark drop shadow doesn't dim them, and the generic
-   .in-header:hover shadow is skipped while a sync-* class is present.
+   Colour = the state's own two colours MIXED with the active theme's
+   --primary / --accent, so the bar always matches the palette while the
+   state colours still read first. The gradient tile is 2x the bar's width
+   and slides continuously (ringFlow) so the colours drift along the edge.
+   Colour changes between states are gradual, not a cut: --ring-c1/c2 are
+   registered <color> properties (@property), so they transition. In
+   browsers without @property support they just switch instantly.
+
+   The bar is the ::before ring (gradient + mask → only a 1px stroke is
+   painted); it still shows when the "no shadows" option is on because it
+   isn't a shadow. The glow is two box-shadow layers (state colour, then
+   theme colour), listed FIRST so the capsule's dark drop shadow doesn't
+   dim them; the generic .in-header:hover shadow is skipped while a
+   sync-* class is present.
    ===================================================== */
+@property --ring-c1 { syntax:'<color>'; inherits:true; initial-value:transparent; }
+@property --ring-c2 { syntax:'<color>'; inherits:true; initial-value:transparent; }
+
 #hero-logo-container.in-header::before{
-    content:''; position:absolute; inset:0; border-radius:inherit; padding:2px;
-    background:linear-gradient(120deg,var(--sync-c1,transparent),var(--sync-c2,transparent));
+    --ring-c1:var(--sync-c1, transparent);
+    --ring-c2:var(--sync-c2, transparent);
+    content:''; position:absolute; inset:0; border-radius:inherit; padding:1px;
+    background:linear-gradient(90deg,
+        var(--ring-c1) 0%, var(--ring-c2) 25%,
+        var(--primary,#60a5fa) 50%, var(--accent,#818cf8) 75%,
+        var(--ring-c1) 100%);
+    background-size:200% 100%; background-repeat:repeat-x;
     -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite:xor; mask-composite:exclude;
-    pointer-events:none; opacity:0; transition:opacity 0.5s ease;
+    pointer-events:none; opacity:0;
+    transition:opacity 0.7s ease, --ring-c1 1.1s ease, --ring-c2 1.1s ease;
+    animation:ringFlow 7s linear infinite;
 }
+@keyframes ringFlow{ from{ background-position:0 0; } to{ background-position:200% 0; } }
+
 #hero-logo-container.in-header.sync-offline { --sync-rgb:148,163,184; --sync-c1:#94a3b8; --sync-c2:#64748b; }
 #hero-logo-container.in-header.sync-syncing { --sync-rgb:96,165,250;  --sync-c1:#60a5fa; --sync-c2:#a78bfa; }
 #hero-logo-container.in-header.sync-synced  { --sync-rgb:34,197,94;   --sync-c1:#4ade80; --sync-c2:#2dd4bf; }
 #hero-logo-container.in-header.sync-error   { --sync-rgb:239,68,68;   --sync-c1:#f87171; --sync-c2:#fb923c; }
 #hero-logo-container.in-header.sync-offline::before,
-#hero-logo-container.in-header.sync-error::before{ opacity:0.85; }
+#hero-logo-container.in-header.sync-synced::before,
+#hero-logo-container.in-header.sync-error::before{ opacity:0.95; }
 
 #hero-logo-container.in-header.sync-offline,
+#hero-logo-container.in-header.sync-synced,
 #hero-logo-container.in-header.sync-error{
     box-shadow:
-        0 0 6px 1px rgba(var(--sync-rgb),0.2),
-        0 0 16px 2px rgba(var(--sync-rgb),0.1),
+        0 0 7px 1px rgba(var(--sync-rgb),0.34),
+        0 0 18px 1px var(--primary-glow, rgba(96,165,250,0.35)),
         0 8px 32px rgba(0,0,0,0.3) !important;
 }
 #hero-logo-container.in-header.sync-error{
     box-shadow:
-        0 0 7px 1px rgba(var(--sync-rgb),0.26),
-        0 0 18px 3px rgba(var(--sync-rgb),0.13),
+        0 0 8px 1px rgba(var(--sync-rgb),0.42),
+        0 0 20px 2px var(--primary-glow, rgba(96,165,250,0.35)),
         0 8px 32px rgba(0,0,0,0.3) !important;
 }
-/* syncing: ring + glow breathe together */
-#hero-logo-container.in-header.sync-syncing{ animation:syncGlowPulse 1.6s ease-in-out infinite; }
-#hero-logo-container.in-header.sync-syncing::before{ animation:syncRingPulse 1.6s ease-in-out infinite; }
+/* syncing: ring and glow breathe together */
+#hero-logo-container.in-header.sync-syncing{ animation:syncGlowPulse 1.8s ease-in-out infinite; }
+#hero-logo-container.in-header.sync-syncing::before{ animation:ringFlow 7s linear infinite, syncRingPulse 1.8s ease-in-out infinite; }
 @keyframes syncGlowPulse{
-    0%,100%{ box-shadow:0 0 4px 0 rgba(96,165,250,0.1), 0 0 12px 1px rgba(96,165,250,0.06), 0 8px 32px rgba(0,0,0,0.3); }
-    50%{     box-shadow:0 0 7px 1px rgba(96,165,250,0.22), 0 0 16px 2px rgba(96,165,250,0.11), 0 8px 32px rgba(0,0,0,0.3); }
+    0%,100%{ box-shadow:0 0 5px 0 rgba(96,165,250,0.2),  0 0 14px 0 rgba(96,165,250,0.12), 0 8px 32px rgba(0,0,0,0.3); }
+    50%{     box-shadow:0 0 8px 1px rgba(96,165,250,0.4), 0 0 20px 2px var(--primary-glow, rgba(96,165,250,0.35)), 0 8px 32px rgba(0,0,0,0.3); }
 }
-@keyframes syncRingPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:0.95; } }
-/* synced: appears, holds, then fades to nothing right as the JS timer
-   (2200ms in setSyncStatus) removes the class */
-#hero-logo-container.in-header.sync-synced{ animation:syncedOut 2.1s ease forwards; }
-#hero-logo-container.in-header.sync-synced::before{ animation:syncedRingOut 2.1s ease forwards; }
-@keyframes syncedOut{
-    0%,65%{ box-shadow:0 0 6px 1px rgba(34,197,94,0.2), 0 0 16px 2px rgba(34,197,94,0.1), 0 8px 32px rgba(0,0,0,0.3); }
-    100%{   box-shadow:0 0 0 0 rgba(34,197,94,0), 0 0 0 0 rgba(34,197,94,0), 0 8px 32px rgba(0,0,0,0.3); }
-}
-@keyframes syncedRingOut{ 0%{ opacity:0; } 10%,65%{ opacity:0.85; } 100%{ opacity:0; } }
-body.perf-no-anim #hero-logo-container.in-header.sync-syncing,
-body.perf-no-anim #hero-logo-container.in-header.sync-synced{
+@keyframes syncRingPulse{ 0%,100%{ opacity:0.7; } 50%{ opacity:1; } }
+
+body.perf-no-anim #hero-logo-container.in-header::before{ animation:none; }
+body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
     animation:none;
-    box-shadow:0 0 6px 1px rgba(var(--sync-rgb),0.2), 0 0 16px 2px rgba(var(--sync-rgb),0.1), 0 8px 32px rgba(0,0,0,0.3);
+    box-shadow:0 0 7px 1px rgba(var(--sync-rgb),0.34), 0 0 18px 1px var(--primary-glow, rgba(96,165,250,0.35)), 0 8px 32px rgba(0,0,0,0.3);
 }
-body.perf-no-anim #hero-logo-container.in-header.sync-syncing::before,
-body.perf-no-anim #hero-logo-container.in-header.sync-synced::before{ animation:none; opacity:0.85; }
+body.perf-no-anim #hero-logo-container.in-header.sync-syncing::before{ animation:none; opacity:0.95; }
 
 /* ============================================================
    Weekly Magazine styles — append to css/styles.css

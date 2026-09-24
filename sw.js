@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v11';
+const CACHE_VERSION = 'harfs-shell-v12';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -60,8 +60,18 @@ self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(cache => cache.addAll(APP_SHELL))
-      .catch(() => {}) // never block install on a single missing/renamed asset
+      // cache:'reload' skips the browser's own HTTP cache (GitHub Pages sends
+      // max-age=600). cache.addAll() didn't, so right after a deploy the new
+      // worker could precache a STALE copy of some files next to fresh ones
+      // (e.g. new index.html + old appearance.js) — a mixed app. Each asset
+      // is fetched fresh and independently, so one missing file can't block
+      // the rest.
+      .then(cache => Promise.all(APP_SHELL.map(url =>
+        fetch(new Request(url, { cache:'reload' }))
+          .then(res => (res && res.ok) ? cache.put(url, res) : null)
+          .catch(() => {})
+      )))
+      .catch(() => {}) // never block install
   );
 });
 
@@ -106,7 +116,10 @@ self.addEventListener('fetch', event => {
 
   event.respondWith(
     caches.match(req).then(cached => {
-      const network = fetch(req).then(res => {
+      // 'no-cache' = always revalidate with the server (a cheap 304 when
+      // nothing changed) instead of trusting the HTTP cache, so the
+      // background refresh really picks up a new deploy.
+      const network = fetch(req, { cache:'no-cache' }).then(res => {
         if (res && res.ok) {
           const copy = res.clone();
           caches.open(CACHE_VERSION).then(cache => cache.put(req, copy));
