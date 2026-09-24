@@ -138,3 +138,5 @@ function updateHeaderForLogin(){
         logoEl.style.display='none';
     }
 }
+
+
