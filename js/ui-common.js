@@ -104,7 +104,13 @@ function toggleMusic(){
 // anymore (this used to open the old Settings modal).
 
 // ============================================================
-// TOAST — pill style matching song notification
+// NOTIFICATIONS — shown inside the HARFS capsule itself (see
+// .hero-capsule-brand / .hero-capsule-notif in css/styles.css): the
+// wordmark fades down and out, the message crossfades in from above
+// in the same spot, then it reverses once the message's time is up.
+// Same showToast(msg, type, dur) signature as the old standalone toast
+// pill it replaces, so none of its ~80 call sites needed to change.
+// Queued (one at a time) since there's now only a single message slot.
 // ============================================================
 const TOAST_META = {
     success: { icon:'fa-check-circle',   label:'Success' },
@@ -112,19 +118,31 @@ const TOAST_META = {
     info:    { icon:'fa-info-circle',    label:'Info' },
     music:   { icon:'fa-music',          label:'Now Playing' },
 };
+const NOTIF_SWAP_MS = 380; // must match .hero-capsule-face's transition duration in css, plus a little slack
+let _notifQueue = [];
+let _notifShowing = false;
 function showToast(msg, type='info', dur=2800){
     haptic(type==='success'?[8,40,8]:[12]);
+    _notifQueue.push({msg, type, dur});
+    _processNotifQueue();
+}
+function _processNotifQueue(){
+    if(_notifShowing || _notifQueue.length===0) return;
+    const capsule = document.getElementById('hero-logo-container');
+    const face = document.getElementById('hero-capsule-notif');
+    if(!capsule || !face){ _notifQueue.length=0; return; } // capsule not in the DOM (shouldn't happen, but don't loop forever)
+    _notifShowing = true;
+    const {msg, type, dur} = _notifQueue.shift();
     const meta = TOAST_META[type] || TOAST_META.info;
-    const el = document.createElement('div');
-    el.className = `toast ${type}`;
-    el.innerHTML = `
-        <div class="toast-icon-bubble"><i class="fas ${meta.icon}"></i></div>
-        <div class="toast-body">
-            <div class="toast-label">${meta.label}</div>
-            <div class="toast-msg">${msg}</div>
-        </div>`;
-    document.getElementById('toast-container').appendChild(el);
-    setTimeout(()=>{ el.classList.add('hide'); setTimeout(()=>el.remove(),350); }, dur);
+    document.getElementById('hero-notif-icon').innerHTML = `<i class="fas ${meta.icon}"></i>`;
+    document.getElementById('hero-notif-label').textContent = meta.label;
+    document.getElementById('hero-notif-msg').textContent = msg;
+    face.className = `hero-capsule-face hero-capsule-notif toast ${type}`;
+    capsule.classList.add('showing-notif');
+    setTimeout(()=>{
+        capsule.classList.remove('showing-notif');
+        setTimeout(()=>{ _notifShowing=false; _processNotifQueue(); }, NOTIF_SWAP_MS);
+    }, dur);
 }
 
 // ============================================================
@@ -234,3 +252,4 @@ function hideAdminButton(){
         navigate('settings');
     }
 }
+
