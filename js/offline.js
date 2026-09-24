@@ -113,17 +113,17 @@ async function ensureTeamLogosCached(){
 }
 
 // ============================================================
-// SYNC STATUS DOT — small indicator pinned to the top-left of the
-// screen. States: offline (grey), syncing (pulsing blue), synced
+// SYNC STATUS DOT — small indicator pinned to a corner of the HARFS
+// capsule. States: offline (grey), syncing (pulsing blue), synced
 // (green, auto-fades), error (red, stays until next sync attempt).
 // ============================================================
 let _syncFadeTimer = null;
 function setSyncStatus(state){
-    const dot = document.getElementById('sync-status-dot');
+    const dot = document.getElementById('hero-sync-dot');
     if(!dot) return;
     clearTimeout(_syncFadeTimer);
-    dot.className = 'sync-status-dot sync-' + state;
-    dot.style.opacity = '1';
+    dot.className = 'hero-sync-dot sync-' + state;
+    dot.style.removeProperty('opacity'); // clear any earlier "faded out after sync" override; CSS handles default visibility
     const titles = { offline:'Offline — showing cached data', syncing:'Syncing…', synced:'Up to date', error:'Sync failed — showing cached data' };
     dot.title = titles[state] || '';
     if(state === 'synced'){
