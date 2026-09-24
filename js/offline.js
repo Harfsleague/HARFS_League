@@ -113,21 +113,22 @@ async function ensureTeamLogosCached(){
 }
 
 // ============================================================
-// SYNC STATUS DOT — small indicator pinned to a corner of the HARFS
-// capsule. States: offline (grey), syncing (pulsing blue), synced
-// (green, auto-fades), error (red, stays until next sync attempt).
+// SYNC STATUS — a faint glow around the HARFS capsule's edge (see
+// css/styles.css). States: offline (grey), syncing (pulsing blue),
+// synced (green, auto-fades back to no glow), error (red, stays until
+// the next sync attempt).
 // ============================================================
 let _syncFadeTimer = null;
 function setSyncStatus(state){
-    const dot = document.getElementById('hero-sync-dot');
-    if(!dot) return;
+    const capsule = document.getElementById('hero-logo-container');
+    if(!capsule) return;
     clearTimeout(_syncFadeTimer);
-    dot.className = 'hero-sync-dot sync-' + state;
-    dot.style.removeProperty('opacity'); // clear any earlier "faded out after sync" override; CSS handles default visibility
+    capsule.classList.remove('sync-offline','sync-syncing','sync-synced','sync-error');
+    capsule.classList.add('sync-' + state);
     const titles = { offline:'Offline — showing cached data', syncing:'Syncing…', synced:'Up to date', error:'Sync failed — showing cached data' };
-    dot.title = titles[state] || '';
+    capsule.title = titles[state] || '';
     if(state === 'synced'){
-        _syncFadeTimer = setTimeout(()=>{ dot.style.opacity = '0'; }, 2200);
+        _syncFadeTimer = setTimeout(()=>{ capsule.classList.remove('sync-synced'); capsule.title=''; }, 2200);
     }
 }
 window.addEventListener('online', ()=>setSyncStatus('syncing'));
