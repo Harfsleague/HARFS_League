@@ -132,14 +132,14 @@ function renderMagazineIssueNav() {
     const atOldest = magazineIssueIdx >= magazineArchive.length - 1;
     const isAdmin = typeof isAdminUnlocked !== 'undefined' && isAdminUnlocked && loggedInTeam === 'Bayern';
     nav.innerHTML = `
-        <button class="magazine-nav-arrow" onclick="magazineGoOlder()" ${atOldest ? 'disabled' : ''} title="شمارهٔ قدیمی‌تر"><i class="fas fa-chevron-left"></i></button>
+        <button class="magazine-nav-arrow" onclick="magazineGoOlder()" ${atOldest ? 'disabled' : ''} title="شمارهٔ قدیمی‌تر"><i class="fas fa-chevron-right"></i></button>
         <div class="magazine-issue-picker-wrap">
             <button class="magazine-issue-pill" onclick="toggleMagazineIssuePicker()">
                 شمارهٔ ${issue.issueNumber ?? (magazineArchive.length - magazineIssueIdx)} <i class="fas fa-caret-down"></i>
             </button>
             <div class="magazine-issue-picker" id="magazine-issue-picker"></div>
         </div>
-        <button class="magazine-nav-arrow" onclick="magazineGoNewer()" ${atNewest ? 'disabled' : ''} title="شمارهٔ جدیدتر"><i class="fas fa-chevron-right"></i></button>
+        <button class="magazine-nav-arrow" onclick="magazineGoNewer()" ${atNewest ? 'disabled' : ''} title="شمارهٔ جدیدتر"><i class="fas fa-chevron-left"></i></button>
         ${isAdmin ? `
         <button class="weird-admin-btn" style="margin-inline-start:auto;" onclick="editMagazineIssue(${magazineIssueIdx})"><i class="fas fa-pen"></i> ادیت</button>
         <button class="weird-admin-btn weird-admin-btn-danger" onclick="deleteMagazineIssue(${magazineIssueIdx})"><i class="fas fa-trash"></i> حذف</button>` : ''}
