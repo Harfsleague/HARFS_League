@@ -90,11 +90,9 @@ let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
 // PERFORMANCE — two presets: Lite (a one-tap "everything off" shortcut)
-// and Custom. Custom itself starts with an Auto-Detect switch: when on,
-// a short real rendering benchmark decides Glass/Background/Motion for
-// you (cached after the first run); when off, those three are yours to
-// set by hand — each one groups a couple of the underlying effects that
-// always make sense to move together, rather than six separate switches:
+// and Custom, where Glass/Background/Motion are set by hand — each one
+// groups a couple of the underlying effects that always make sense to
+// move together, rather than six separate switches:
 //   Glass              -> blur + shadows   (the frosted-panel look & its glow)
 //   Background Effects -> orbs + particles + sheen  (ambient decoration)
 //   Motion             -> anim             (screen transitions)
@@ -112,11 +110,11 @@ let performancePreset = localStorage.getItem('performancePreset')
 if(performancePreset==='full' || performancePreset==='auto'){
     // Migrates anyone who had an earlier preset name saved: 'full' becomes
     // plain Custom with everything on (the existing default below already
-    // matches that); 'auto' becomes Custom with Auto-Detect switched on.
-    if(performancePreset==='auto') localStorage.setItem('perfAutoDetect','on');
+    // matches that); the old 'auto' preset (and the Auto-Detect toggle that
+    // used to live inside Custom) has been removed, so it also just becomes
+    // plain Custom, seeded with everything on.
     performancePreset='custom';
 }
-let perfAutoDetect = localStorage.getItem('perfAutoDetect')==='on';
 let perfCustom = (()=>{
     try{
         const saved = JSON.parse(localStorage.getItem('perfCustom'));
@@ -136,52 +134,8 @@ let perfCustom = (()=>{
     return {...PERF_ALL_ON};
 })();
 
-// ---- Auto-Detect ----
-// A short, real rendering benchmark (not just reading hardwareConcurrency)
-// so the decision reflects how this device actually handles the kind of
-// canvas/blur work the app does. Runs once per install and is cached.
-function benchmarkRenderSpeed(){
-    const start = performance.now();
-    const canvas = document.createElement('canvas');
-    canvas.width = 220; canvas.height = 220;
-    const ctx = canvas.getContext('2d');
-    for(let i=0;i<300;i++){
-        ctx.filter = 'blur(3px)';
-        ctx.beginPath();
-        ctx.arc(Math.random()*220, Math.random()*220, 18, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(${(i*37)%255},120,200,0.35)`;
-        ctx.fill();
-    }
-    let acc = 0; // just to stop the loop below getting optimized away
-    for(let i=0;i<150000;i++){ acc += Math.sin(i)*Math.cos(i*0.5); }
-    return performance.now() - start; // ms — higher means a weaker device
-}
-function detectAutoPerformance(){
-    const cores = navigator.hardwareConcurrency || 4;
-    const mem = navigator.deviceMemory || 4; // Chrome/Edge only; other browsers read as 4 (treated as "fine")
-    const renderMs = benchmarkRenderSpeed();
-    // Any one clear "weak device" signal is enough to drop to Lite-equivalent
-    // effects — on an ambiguous read, erring toward lighter is the safer
-    // default (a wrongly-light phone just looks a bit plainer; a wrongly-
-    // full one actually lags).
-    const weak = cores <= 3 || mem <= 2 || renderMs > 35;
-    return weak ? 'lite' : 'full';
-}
-function getAutoDetectedValues(){
-    let cached = localStorage.getItem('autoDetectedPerf');
-    if(cached !== 'full' && cached !== 'lite'){
-        cached = detectAutoPerformance();
-        localStorage.setItem('autoDetectedPerf', cached);
-    }
-    return cached==='full' ? PERF_ALL_ON : PERF_ALL_OFF;
-}
-function resetAutoDetection(){
-    localStorage.removeItem('autoDetectedPerf');
-    if(performancePreset==='custom' && perfAutoDetect) applyAppearance();
-}
 function currentPerfValues(){
     if(performancePreset==='lite') return PERF_ALL_OFF;
-    if(perfAutoDetect) return getAutoDetectedValues();
     return perfCustom;
 }
 let customPaletteVals = (()=>{ try{ return JSON.parse(localStorage.getItem('customPalette')) || {...DEFAULT_CUSTOM}; }catch(e){ return {...DEFAULT_CUSTOM}; } })();
@@ -238,7 +192,7 @@ function closeAppearanceSheet(){
 // and reveals the panel below.
 function setPerformance(val){
     haptic([6]);
-    if(val==='custom' && performancePreset!=='custom' && !perfAutoDetect){
+    if(val==='custom' && performancePreset!=='custom'){
         perfCustom = {...currentPerfValues()}; // seed custom from whatever was active
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
@@ -246,21 +200,10 @@ function setPerformance(val){
     localStorage.setItem('performancePreset', val);
     applyAppearance();
 }
-// Auto-Detect lives inside Custom — flipping it on hands control to the
-// device benchmark (see getAutoDetectedValues) and greys out the three
-// manual toggles below; flipping it off hands control back to whatever
-// perfCustom already had.
-function toggleAutoDetect(){
-    haptic([6]);
-    perfAutoDetect = !perfAutoDetect;
-    localStorage.setItem('perfAutoDetect', perfAutoDetect ? 'on' : 'off');
-    applyAppearance();
-}
-// Flips one of the three grouped switches while in Custom mode with
-// Auto-Detect off — sets every underlying key in that group together
-// (see PERF_GROUPS above).
+// Flips one of the three grouped switches while in Custom mode — sets
+// every underlying key in that group together (see PERF_GROUPS above).
 function togglePerfGroup(group){
-    if(performancePreset!=='custom' || perfAutoDetect) return;
+    if(performancePreset!=='custom') return;
     haptic([6]);
     const members = PERF_GROUPS[group];
     const newVal = !perfCustom[members[0]];
@@ -296,20 +239,6 @@ function syncAppearanceUI(){
     const customPanel = document.getElementById('perf-custom-options');
     if(customPanel) customPanel.style.display = (performancePreset==='custom') ? 'block' : 'none';
     if(performancePreset==='custom'){
-        const autoToggle = document.getElementById('perf-toggle-auto');
-        if(autoToggle) autoToggle.classList.toggle('on', perfAutoDetect);
-        const autoNote = document.getElementById('perf-auto-note');
-        if(autoNote){
-            autoNote.style.display = perfAutoDetect ? 'block' : 'none';
-            if(perfAutoDetect){
-                const resolved = getAutoDetectedValues();
-                autoNote.textContent = resolved.blur
-                    ? 'Detected a capable device — running everything.'
-                    : 'Detected a slower device — running lighter for smoothness.';
-            }
-        }
-        const groupBlock = document.getElementById('perf-group-toggles');
-        if(groupBlock) groupBlock.classList.toggle('disabled', perfAutoDetect);
         Object.keys(PERF_GROUPS).forEach(group=>{
             const el = document.getElementById('perf-toggle-'+group);
             if(el) el.classList.toggle('on', !!perfCustom[PERF_GROUPS[group][0]]);
