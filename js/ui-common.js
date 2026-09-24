@@ -194,7 +194,7 @@ function startApp(){
             if(!loggedInTeam){
                 showLoginScreen();
             } else {
-                navigate('league');
+                navigate('main-league');
             }
         }, 750);
     }, 1800);
@@ -234,4 +234,3 @@ function hideAdminButton(){
         navigate('settings');
     }
 }
-
