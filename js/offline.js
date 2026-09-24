@@ -113,7 +113,7 @@ async function ensureTeamLogosCached(){
 }
 
 // ============================================================
-// SYNC STATUS — a slim gradient status bar (with a faint glow) around the HARFS capsule's edge (see
+// SYNC STATUS — a soft status glow around the HARFS capsule's edge (see
 // css/styles.css). States: offline (grey), syncing (pulsing blue),
 // synced (green, auto-fades back to no glow), error (red, stays until
 // the next sync attempt).
