@@ -1,0 +1,30 @@
+name: Weekly HARFS Magazine
+
+# No more automatic schedule — issue generation is now admin-triggered only,
+# from the Admin Panel's "Weekly Magazine" section (js/magazine.js calls the
+# GitHub API's workflow_dispatch endpoint for this workflow). The app only
+# enables that button on Fridays, but this workflow itself can still be run
+# manually from the Actions tab (or via the API) any day, same as before.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-magazine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo (for the generator script)
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate this week's magazine
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HARFS_DATA_TOKEN: ${{ secrets.HARFS_DATA_TOKEN }}
+          # Optional. Only used as a text-generation fallback if Gemini
+          # itself fails (e.g. quota exhausted). Safe to leave unset.
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node scripts/generate-magazine.mjs
