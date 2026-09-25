@@ -70,7 +70,7 @@ function renderMagazineEmpty() {
         <div class="magazine-empty">
             <i class="fas fa-newspaper"></i>
             <p>هنوز شمارهٔ این هفته آماده نشده.</p>
-            <p class="magazine-empty-sub">مجله هر جمعه ساعت ۹ صبح به‌صورت خودکار منتشر می‌شود.</p>
+            <p class="magazine-empty-sub">مجله توسط ادمین، روزهای جمعه، از پنل ادمین منتشر می‌شود.</p>
         </div>`;
     renderMagazineIssueNav();
 }
@@ -412,5 +412,279 @@ async function deleteMagazineIssue(idx) {
     } else {
         magazineArchive = prevArchive;
         showToast('خطا در حذف: ' + (lastSaveFileError || 'نامشخص'), 'error', 3000);
+    }
+}
+
+// ============================================================
+// ADMIN — on-demand generation (Admin Panel → Weekly Magazine)
+// ------------------------------------------------------------
+// Replaces the old cron-based auto-publish (see .github/workflows/
+// weekly-magazine.yml, now workflow_dispatch-only): the admin taps a
+// button here, this fires the workflow via GitHub's REST API, then
+// polls the run so the admin can watch it build in real time.
+//
+// IMPORTANT — this needs more than the usual GitHub PAT scope. The
+// same device PAT used everywhere else in this app (localStorage
+// 'github_pat') only ever needs Contents: Read & write on
+// Harfsleague/HARFS_Data. To dispatch and watch a workflow it must
+// ALSO have Actions: Read & write (and Contents: Read) on
+// Harfsleague/HARFS_League — the code repo the workflow file lives in.
+// A fine-grained PAT can cover both repos at once; add HARFS_League to
+// it (or make a new one) if the button reports a 403/404 below.
+// ============================================================
+const MAGAZINE_WORKFLOW_REPO = "Harfsleague/HARFS_League";
+const MAGAZINE_WORKFLOW_FILE = "weekly-magazine.yml";
+const MAGAZINE_WORKFLOW_BRANCH = "main";
+const MAGAZINE_WORKFLOW_API = `https://api.github.com/repos/${MAGAZINE_WORKFLOW_REPO}/actions/workflows/${MAGAZINE_WORKFLOW_FILE}`;
+const MAGAZINE_RUNS_API = `https://api.github.com/repos/${MAGAZINE_WORKFLOW_REPO}/actions/runs`;
+
+let magazineGenPolling = false;
+let magazineCoverEditIssueIdx = 0;
+
+// Iran no longer observes DST (fixed UTC+3:30 year-round since 2022) — see
+// the same note that used to live on the cron in weekly-magazine.yml.
+// date.getTime() is already true UTC epoch ms regardless of the visitor's
+// own timezone, so no local-offset correction is needed here.
+function isFridayInTehran(date = new Date()) {
+    const TEHRAN_OFFSET_MS = (3 * 60 + 30) * 60 * 1000;
+    return new Date(date.getTime() + TEHRAN_OFFSET_MS).getUTCDay() === 5;
+}
+
+function ghHeaders(token) {
+    return { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' };
+}
+
+async function dispatchMagazineWorkflow(token) {
+    const res = await fetch(`${MAGAZINE_WORKFLOW_API}/dispatches`, {
+        method: 'POST',
+        headers: { ...ghHeaders(token), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: MAGAZINE_WORKFLOW_BRANCH }),
+    });
+    if (res.status === 204) return;
+    let detail = '';
+    try { const d = await res.json(); detail = d.message || ''; } catch (e) {}
+    if (res.status === 404) throw new Error('404: workflow not found — PAT needs access to Harfsleague/HARFS_League');
+    if (res.status === 403) throw new Error('403: PAT is missing Actions: Read & write on Harfsleague/HARFS_League');
+    throw new Error(`${res.status}${detail ? ': ' + detail : ''}`);
+}
+
+// Finds the run our own dispatch just created (the dispatch call itself
+// doesn't return a run id) by taking the newest workflow_dispatch run that
+// showed up after we asked for one, with a little slack for clock skew.
+async function findMagazineRun(token, sinceIso) {
+    const res = await fetch(`${MAGAZINE_WORKFLOW_API}/runs?event=workflow_dispatch&per_page=5`, { headers: ghHeaders(token) });
+    if (!res.ok) return null;
+    const d = await res.json();
+    const cutoff = new Date(sinceIso).getTime() - 15000;
+    const runs = (d.workflow_runs || []).filter(r => new Date(r.created_at).getTime() >= cutoff);
+    return runs[0] || null;
+}
+async function fetchMagazineRun(token, runId) {
+    const res = await fetch(`${MAGAZINE_RUNS_API}/${runId}`, { headers: ghHeaders(token) });
+    return res.ok ? res.json() : null;
+}
+async function fetchMagazineRunJobs(token, runId) {
+    const res = await fetch(`${MAGAZINE_RUNS_API}/${runId}/jobs`, { headers: ghHeaders(token) });
+    if (!res.ok) return [];
+    const d = await res.json();
+    return d.jobs || [];
+}
+
+function renderMagazineGenProgress(run, jobs) {
+    const box = document.getElementById('magazine-gen-status');
+    if (!box) return;
+    box.style.display = 'block';
+    const statusLabel = { queued: 'در صف اجرا', in_progress: 'در حال اجرا', completed: 'تمام شد' }[run.status] || run.status;
+    const steps = (jobs[0] && jobs[0].steps) || [];
+    const stepsHtml = steps.map(step => {
+        const icon = step.status === 'completed'
+            ? (step.conclusion === 'success' ? '✅' : (step.conclusion === 'skipped' ? '⏭️' : '❌'))
+            : (step.status === 'in_progress' ? '🔄' : '⏳');
+        return `<div>${icon} ${escapeHtml(step.name)}</div>`;
+    }).join('');
+    box.innerHTML = `
+        <div style="font-weight:800;margin-bottom:4px;">وضعیت: ${statusLabel}${run.status !== 'completed' ? ' <span class="spinner" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></span>' : ''}</div>
+        ${stepsHtml || '<div style="font-size:0.66rem;color:#6b7280;">در انتظار شروع مراحل...</div>'}
+        <a href="${run.html_url}" target="_blank" rel="noopener" style="font-size:0.62rem;color:#93c5fd;display:inline-block;margin-top:6px;">مشاهده لاگ کامل در GitHub ↗</a>
+    `;
+}
+
+async function generateWeeklyMagazineNow() {
+    if (magazineGenPolling) return;
+    if (!isFridayInTehran()) { showToast('این گزینه فقط روزهای جمعه فعال است', 'error', 2600); return; }
+    const token = localStorage.getItem('github_pat');
+    if (!token) { showToast('ابتدا یک GitHub PAT روی این دستگاه تنظیم کن', 'error', 2800); return; }
+    if (!confirm('ساخت شمارهٔ جدید مجله (با هوش‌مصنوعی) شروع شود؟ چند دقیقه طول می‌کشد.')) return;
+
+    const btn = document.getElementById('magazine-generate-btn');
+    const statusBox = document.getElementById('magazine-gen-status');
+    if (btn) btn.disabled = true;
+    if (statusBox) { statusBox.style.display = 'block'; statusBox.innerHTML = '<span class="spinner" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></span> در حال ارسال دستور به GitHub Actions...'; }
+
+    const dispatchedAt = new Date().toISOString();
+    try {
+        await dispatchMagazineWorkflow(token);
+    } catch (err) {
+        if (statusBox) statusBox.innerHTML = `<span style="color:#f87171;">خطا در شروع: ${escapeHtml(err.message || 'نامشخص')}</span>`;
+        if (btn) btn.disabled = !isFridayInTehran();
+        return;
+    }
+
+    magazineGenPolling = true;
+    let run = null;
+    for (let i = 0; i < 12 && !run; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        run = await findMagazineRun(token, dispatchedAt);
+    }
+    if (!run) {
+        if (statusBox) statusBox.innerHTML = `<span style="color:#fbbf24;">درخواست ارسال شد، اما پیدا کردن اجرای آن طول کشید. برای پیگیری به تب Actions مخزن HARFS_League سر بزن.</span>`;
+        magazineGenPolling = false;
+        if (btn) btn.disabled = !isFridayInTehran();
+        return;
+    }
+
+    let finalRun = run;
+    while (finalRun.status !== 'completed') {
+        const jobs = await fetchMagazineRunJobs(token, run.id);
+        renderMagazineGenProgress(finalRun, jobs);
+        await new Promise(r => setTimeout(r, 4000));
+        const updated = await fetchMagazineRun(token, run.id);
+        if (updated) finalRun = updated;
+    }
+    renderMagazineGenProgress(finalRun, await fetchMagazineRunJobs(token, run.id));
+
+    magazineGenPolling = false;
+    if (btn) btn.disabled = !isFridayInTehran();
+
+    if (finalRun.conclusion === 'success') {
+        showToast('مجله جدید ساخته شد ✅', 'success', 2600);
+        magazineLoaded = false; // force a fresh fetch next time the archive is read
+        await loadMagazine();
+        renderMagazineAdminSection();
+        if (document.getElementById('magazine-screen')?.classList.contains('active')) renderCurrentIssue();
+    } else {
+        showToast('ساخت مجله با خطا مواجه شد — لاگ را ببین', 'error', 3200);
+    }
+}
+
+// Populates the "Weekly Magazine" admin section: last-issue info, the
+// Generate button's Friday-only enabled state, and the cover picker below.
+function renderMagazineAdminSection() {
+    const infoEl = document.getElementById('magazine-admin-info');
+    const btn = document.getElementById('magazine-generate-btn');
+    const hint = document.getElementById('magazine-generate-hint');
+    const friday = isFridayInTehran();
+    if (btn) btn.disabled = magazineGenPolling || !friday;
+    if (hint) hint.style.display = friday ? 'none' : 'block';
+    if (infoEl) {
+        infoEl.textContent = magazineArchive.length
+            ? `آخرین شماره: #${magazineArchive[0].issueNumber ?? '؟'} — ${jFormatDate(magazineArchive[0].issueDate)}`
+            : 'هنوز شماره‌ای منتشر نشده.';
+    }
+    renderMagazineCoverPicker();
+}
+
+// ---- Cover image manager: pick any issue, preview its cover, upload a
+// replacement (or a first cover for an issue that fell back to default). ----
+function renderMagazineCoverPicker() {
+    const sel = document.getElementById('magazine-cover-issue-select');
+    if (!sel) return;
+    if (!magazineArchive.length) {
+        sel.innerHTML = '<option value="">— شماره‌ای وجود ندارد —</option>';
+        const preview = document.getElementById('magazine-cover-preview');
+        if (preview) preview.style.display = 'none';
+        return;
+    }
+    if (magazineCoverEditIssueIdx >= magazineArchive.length) magazineCoverEditIssueIdx = 0;
+    sel.innerHTML = magazineArchive.map((iss, idx) =>
+        `<option value="${idx}">شمارهٔ ${iss.issueNumber ?? (magazineArchive.length - idx)} — ${jFormatDate(iss.issueDate)}</option>`
+    ).join('');
+    sel.value = String(magazineCoverEditIssueIdx);
+    updateMagazineCoverPreview();
+}
+function onMagazineCoverIssueChange() {
+    const sel = document.getElementById('magazine-cover-issue-select');
+    magazineCoverEditIssueIdx = parseInt(sel && sel.value, 10) || 0;
+    updateMagazineCoverPreview();
+}
+function updateMagazineCoverPreview() {
+    const preview = document.getElementById('magazine-cover-preview');
+    const issue = magazineArchive[magazineCoverEditIssueIdx];
+    if (!preview || !issue) return;
+    const coverFile = issue.coverImage || DEFAULT_MAGAZINE_COVER;
+    preview.src = `${GITHUB_IMAGE_BASE_URL}${coverFile}?v=${Date.now()}`;
+    preview.style.display = 'block';
+}
+
+// Commits a file's raw base64 content straight to HARFS_Data — same
+// Contents API + PAT as saveFile() above, but for a real binary file
+// (a magazine cover .png) instead of a JSON blob. Looks up the file's
+// current sha first (in case it already exists, e.g. an AI-generated
+// cover being replaced) so the PUT overwrites it instead of failing.
+async function saveBinaryFile(path, base64Content, message) {
+    const token = localStorage.getItem('github_pat');
+    if (!token) { lastSaveFileError = 'No GitHub token configured'; return false; }
+    let existingSha = null;
+    try {
+        const shaRes = await fetch(`${BASE_API}${encodeURIComponent(path)}?ref=${GITHUB_LEAGUE_BRANCH}`, { headers: { Authorization: `token ${token}` } });
+        if (shaRes.ok) { const d = await shaRes.json(); existingSha = d.sha; }
+    } catch (e) {}
+    try {
+        const res = await fetch(`${BASE_API}${encodeURIComponent(path)}`, {
+            method: 'PUT',
+            headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, content: base64Content, branch: GITHUB_LEAGUE_BRANCH, ...(existingSha ? { sha: existingSha } : {}) }),
+        });
+        if (res.ok) return true;
+        let msg = `GitHub error ${res.status}`;
+        try { const d = await res.json(); if (d && d.message) msg = `${res.status}: ${d.message}`; } catch (e) {}
+        lastSaveFileError = msg;
+        return false;
+    } catch (e) {
+        lastSaveFileError = 'Network error — connection dropped mid-upload';
+        return false;
+    }
+}
+
+async function handleMagazineCoverSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const issue = magazineArchive[magazineCoverEditIssueIdx];
+    if (!issue) { showToast('ابتدا یک شماره انتخاب کن', 'error', 2200); return; }
+
+    const statusEl = document.getElementById('magazine-cover-upload-status');
+    if (statusEl) statusEl.textContent = 'در حال آپلود...';
+    try {
+        const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = ev => resolve(ev.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+        // Widescreen, matches the 16:9 cover the generator asks Gemini for.
+        const compressed = await compressImage(dataUrl, 1280, 720, 0.85);
+        const base64Only = compressed.split(',')[1];
+        const coverFile = (issue.coverImage && issue.coverImage !== DEFAULT_MAGAZINE_COVER)
+            ? issue.coverImage
+            : `weekly_magazine_cover_${issue.issueNumber}.png`;
+
+        const uploaded = await saveBinaryFile(coverFile, base64Only, `Admin cover update: issue #${issue.issueNumber}`);
+        if (!uploaded) throw new Error(lastSaveFileError || 'خطای نامشخص');
+
+        if (issue.coverImage !== coverFile) {
+            issue.coverImage = coverFile;
+            await ensureMagazineArchiveSha();
+            const savedArchive = await saveFile(GITHUB_MAGAZINE_ARCHIVE_FILE, magazineArchive, `Set cover for issue #${issue.issueNumber}`, magazineArchiveSha);
+            if (!savedArchive) throw new Error(lastSaveFileError || 'خطا در ذخیرهٔ آرشیو');
+        }
+
+        showToast('عکس مجله بروزرسانی شد ✅', 'success', 2200);
+        updateMagazineCoverPreview();
+        if (document.getElementById('magazine-screen')?.classList.contains('active')) renderCurrentIssue();
+    } catch (err) {
+        showToast('خطا در آپلود: ' + (err.message || 'نامشخص'), 'error', 3200);
+    } finally {
+        if (statusEl) statusEl.textContent = 'تغییر یا آپلود عکس جلد';
     }
 }
