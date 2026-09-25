@@ -42,6 +42,34 @@ const APP_FONTS = [
 let currentAppFont      = localStorage.getItem('appUiFont') || 'system';
 let currentMagazineFont = localStorage.getItem('magazineFont') || localStorage.getItem('appFont') || 'system';
 
+// ------------------------------------------------------------
+// FONT SIZE — two independent scales (percent, 100 = normal), sitting
+// right next to their matching font picker above:
+//   currentAppFontSize      -> whole app, via the root <html> font-size
+//                               percentage (everything else in the CSS
+//                               is written in rem, so this scales it all)
+//   currentMagazineFontSize -> Weekly Magazine screen only, via a CSS
+//                               zoom scoped to #magazine-screen, layered
+//                               on top of the app-wide scale
+// ------------------------------------------------------------
+const FONT_SIZE_MIN = 80, FONT_SIZE_MAX = 150, FONT_SIZE_STEP = 10;
+function clampFontSize(v){ return Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, v)); }
+let currentAppFontSize      = clampFontSize(parseInt(localStorage.getItem('appFontSize'), 10) || 100);
+let currentMagazineFontSize = clampFontSize(parseInt(localStorage.getItem('magazineFontSize'), 10) || 100);
+
+// target: 'app' | 'magazine'
+function adjustFontSize(target, delta){
+    haptic([6]);
+    if(target === 'magazine'){
+        currentMagazineFontSize = clampFontSize(currentMagazineFontSize + delta);
+        localStorage.setItem('magazineFontSize', currentMagazineFontSize);
+    } else {
+        currentAppFontSize = clampFontSize(currentAppFontSize + delta);
+        localStorage.setItem('appFontSize', currentAppFontSize);
+    }
+    applyAppearance();
+}
+
 // Fetches fonts/manifest.json (kept up to date by the fonts-manifest
 // GitHub Action — see fonts/README.md), injects one @font-face rule per
 // entry (multiple files with the same `id`, e.g. a .woff2 + a .ttf
@@ -168,6 +196,13 @@ function applyAppearance(){
     const magFont = APP_FONTS.find(f=>f.id===currentMagazineFont) || APP_FONTS[0];
     document.documentElement.style.setProperty('--app-font-family', appFont.stack);
     document.documentElement.style.setProperty('--magazine-font-family', magFont.stack);
+    // App-wide text size: every other CSS size in this app is written in
+    // rem, so scaling the root font-size percentage scales everything at
+    // once. Magazine gets its own extra scale on top, via zoom, since it
+    // needs to be adjustable independently of the rest of the app.
+    document.documentElement.style.fontSize = currentAppFontSize + '%';
+    const magScreen = document.getElementById('magazine-screen');
+    if(magScreen) magScreen.style.zoom = (currentMagazineFontSize/100);
     syncSettingsUI();
     syncAppearanceUI();
 }
@@ -267,6 +302,16 @@ function syncAppearanceUI(){
     document.querySelectorAll('.font-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === (el.dataset.target==='magazine' ? currentMagazineFont : currentAppFont));
     });
+    const appSizeVal = document.getElementById('app-font-size-value');
+    if(appSizeVal) appSizeVal.textContent = currentAppFontSize + '%';
+    const appMinus = document.getElementById('app-font-size-minus'), appPlus = document.getElementById('app-font-size-plus');
+    if(appMinus) appMinus.disabled = currentAppFontSize <= FONT_SIZE_MIN;
+    if(appPlus) appPlus.disabled = currentAppFontSize >= FONT_SIZE_MAX;
+    const magSizeVal = document.getElementById('magazine-font-size-value');
+    if(magSizeVal) magSizeVal.textContent = currentMagazineFontSize + '%';
+    const magMinus = document.getElementById('magazine-font-size-minus'), magPlus = document.getElementById('magazine-font-size-plus');
+    if(magMinus) magMinus.disabled = currentMagazineFontSize <= FONT_SIZE_MIN;
+    if(magPlus) magPlus.disabled = currentMagazineFontSize >= FONT_SIZE_MAX;
     const editor = document.getElementById('custom-palette-editor');
     if(editor) editor.style.display = (currentPalette === 'custom') ? 'block' : 'none';
     if(currentPalette === 'custom'){
