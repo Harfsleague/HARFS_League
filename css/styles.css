@@ -1838,6 +1838,27 @@ body:not(.lite-mode):not(.perf-no-sheen) .appearance-panel{ overflow-x:hidden; o
 }
 .font-swatch.selected span{ color:#fff; }
 
+/* Font size stepper — sits under each font grid (App Font / Magazine
+   Font). Two independent scales: the App one resizes the whole app via
+   the root <html> font-size percentage (everything else is rem-based),
+   the Magazine one applies a CSS zoom scoped to #magazine-screen only —
+   see adjustFontSize()/applyAppearance() in js/appearance.js. */
+.font-size-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px; padding:8px 14px; margin-top:10px;
+}
+.font-size-btn{
+    width:34px; height:34px; border-radius:10px; border:none; flex-shrink:0;
+    background:rgba(255,255,255,0.06); color:#e5e7eb; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+.font-size-btn:active{ transform:scale(0.88); background:rgba(255,255,255,0.12); }
+.font-size-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+.font-size-btn.small i{ font-size:0.62rem; }
+.font-size-btn.large i{ font-size:0.9rem; }
+.font-size-value{ font-size:0.72rem; font-weight:800; color:#e5e7eb; min-width:42px; text-align:center; }
+
 /* =====================================================
    PLAYLIST SHEET — list of songs, opened from Settings
    ===================================================== */
