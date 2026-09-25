@@ -128,9 +128,19 @@
 
         <div class="appearance-section-label">App Font</div>
         <div class="font-grid" id="font-grid"><!-- filled by JS from APP_FONTS --></div>
+        <div class="font-size-row">
+            <button class="font-size-btn small" onclick="adjustFontSize('app',-10)" id="app-font-size-minus" title="Smaller text"><i class="fas fa-minus"></i></button>
+            <span class="font-size-value" id="app-font-size-value">100%</span>
+            <button class="font-size-btn large" onclick="adjustFontSize('app',10)" id="app-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
+        </div>
 
         <div class="appearance-section-label">Magazine Font</div>
         <div class="font-grid" id="font-grid-magazine"><!-- filled by JS from APP_FONTS --></div>
+        <div class="font-size-row">
+            <button class="font-size-btn small" onclick="adjustFontSize('magazine',-10)" id="magazine-font-size-minus" title="Smaller text"><i class="fas fa-minus"></i></button>
+            <span class="font-size-value" id="magazine-font-size-value">100%</span>
+            <button class="font-size-btn large" onclick="adjustFontSize('magazine',10)" id="magazine-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
+        </div>
     </div>
 </div>
 
@@ -464,6 +474,35 @@
                     <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(96,165,250,0.3);color:#93c5fd;" onclick="loadMusicManagerList()">
                         <i class="fas fa-rotate mr-2"></i>Refresh List
                     </button>
+                </div>
+            </div>
+
+            <!-- Weekly Magazine -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Weekly Magazine</h3>
+                    <p id="magazine-admin-info" style="font-size:0.68rem;color:#9ca3af;text-align:center;margin-bottom:10px;">در حال بارگذاری...</p>
+
+                    <button class="glass-button w-full font-bold text-sm py-3" id="magazine-generate-btn" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.08);color:#fbbf24;" onclick="generateWeeklyMagazineNow()" disabled>
+                        <i class="fas fa-wand-magic-sparkles mr-2"></i> ساخت شمارهٔ این هفته
+                    </button>
+                    <p id="magazine-generate-hint" style="font-size:0.62rem;color:#6b7280;text-align:center;margin-top:6px;">این گزینه فقط روزهای جمعه فعال می‌شود.</p>
+
+                    <div id="magazine-gen-status" style="display:none;margin-top:10px;font-size:0.7rem;color:#e5e7eb;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;line-height:1.9;"></div>
+
+                    <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);">
+                        <h4 style="font-size:0.66rem;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">عکس جلد</h4>
+                        <select id="magazine-cover-issue-select" class="glass-input w-full p-2 rounded-xl text-xs mb-2" onchange="onMagazineCoverIssueChange()" style="font-family:inherit;"></select>
+                        <img id="magazine-cover-preview" src="" alt="cover preview" style="display:none;width:100%;border-radius:12px;margin-bottom:8px;aspect-ratio:16/9;object-fit:cover;">
+                        <div class="weird-upload-box" id="magazine-cover-upload-box">
+                            <input type="file" id="magazine-cover-file-input" accept="image/*" onchange="handleMagazineCoverSelect(event)">
+                            <div>
+                                <i class="fas fa-image" style="font-size:1.2rem;color:#6b7280;margin-bottom:4px;display:block;"></i>
+                                <p style="font-size:0.68rem;color:#6b7280;margin:0;" id="magazine-cover-upload-status">تغییر یا آپلود عکس جلد</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
