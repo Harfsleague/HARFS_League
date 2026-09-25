@@ -461,9 +461,25 @@ function renderSettingsScreen(){
     syncAppearanceUI();
     const badgeLogo=document.getElementById('settings-team-badge-logo');
     const badgeName=document.getElementById('settings-team-badge-name');
+    const subtitle=document.getElementById('settings-account-subtitle');
+    const logoutTile=document.getElementById('settings-logout-tile');
+    const signinTile=document.getElementById('settings-signin-tile');
     if(loggedInTeam){
         if(badgeLogo) badgeLogo.src=`${teamLogoUrl(loggedInTeam)}`;
         if(badgeName) badgeName.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
+        if(subtitle) subtitle.textContent='HARFS League Account';
+        if(logoutTile) logoutTile.style.display='flex';
+        if(signinTile) signinTile.style.display='none';
+    } else {
+        // Guest (or logged out) — no team picture to show, so leave the
+        // avatar's neutral background as a plain placeholder circle and
+        // swap in a "Guest" identity + a way back into the login flow
+        // instead of a Log Out button.
+        if(badgeLogo) badgeLogo.removeAttribute('src');
+        if(badgeName) badgeName.textContent='Guest';
+        if(subtitle) subtitle.textContent='Not signed in';
+        if(logoutTile) logoutTile.style.display='none';
+        if(signinTile) signinTile.style.display='flex';
     }
     const adminSection=document.getElementById('settings-admin-section');
     if(adminSection) adminSection.style.display = (loggedInTeam==='Bayern') ? 'block' : 'none';

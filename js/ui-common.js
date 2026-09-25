@@ -209,7 +209,7 @@ function startApp(){
         logo.classList.add('in-header');
         setTimeout(()=>{
             document.getElementById('bottom-navigation').classList.add('active');
-            if(!loggedInTeam){
+            if(!loggedInTeam && !isGuestMode){
                 showLoginScreen();
             } else {
                 navigate('main-league');

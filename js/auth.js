@@ -24,9 +24,30 @@ function showLoginScreen(){
     document.getElementById('login-step-pick').style.display='block';
     document.getElementById('login-step-password').style.display='none';
     document.getElementById('login-screen').classList.add('open');
+    // Only dismissable when reopened from within the app (e.g. a guest
+    // tapping "Sign In" from Settings) — on first launch, with no team
+    // and no guest session yet, picking a team or Continue as Guest are
+    // the only ways out.
+    document.getElementById('login-screen-close-btn').style.display = isGuestMode ? 'flex' : 'none';
 }
 function hideLoginScreen(){
     document.getElementById('login-screen').classList.remove('open');
+}
+// ============================================================
+// GUEST MODE — "Continue as Guest" on the login screen. No team,
+// no password, nothing stored server-side. Just flips a local flag
+// so startApp() stops sending them back to the login screen, and
+// every write action's existing "log in first" guard keeps working
+// exactly as before since loggedInTeam is still null.
+// ============================================================
+function continueAsGuest(){
+    haptic([8]);
+    isGuestMode = true;
+    localStorage.setItem('harfs_guest','1');
+    hideLoginScreen();
+    updateHeaderForLogin();
+    navigate('main-league');
+    showToast('Browsing as guest — log in anytime from Settings','info',3000);
 }
 function backToTeamPick(){
     loginPickedTeam=null;
@@ -100,8 +121,10 @@ async function submitLoginPassword(){
         }
         loggedInTeam = team;
         harfsSessionToken = data.token;
+        isGuestMode = false;
         localStorage.setItem('harfs_team', team);
         localStorage.setItem('harfs_session', data.token);
+        localStorage.removeItem('harfs_guest');
         haptic([10,40,10]);
         hideLoginScreen();
         updateHeaderForLogin();

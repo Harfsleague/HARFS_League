@@ -44,6 +44,13 @@ let loggedInTeam = localStorage.getItem('harfs_team') || null;
 let harfsSessionToken = localStorage.getItem('harfs_session') || null;
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
 let loginIsNewAccount = false;
+// GUEST MODE — lets someone open the app and look around without ever
+// picking a team/password. Persisted so a guest isn't dropped back on the
+// login screen on every reload; cleared the moment they actually log in
+// (see submitLoginPassword() in auth.js). loggedInTeam stays null for a
+// guest, so every existing "if(!loggedInTeam)" write-action guard already
+// does the right thing — it just prompts them to log in first.
+let isGuestMode = localStorage.getItem('harfs_guest')==='1';
 
 
 let leagueData={},mainLeagueData={};
