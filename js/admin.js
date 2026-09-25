@@ -37,6 +37,10 @@ function showAdminDashboard(){
     // uploads made from another session or device are reflected immediately.
     loadMusicManagerList();
     renderMbaAdminSection();
+    // Weekly Magazine — Friday-gated generate button + cover manager.
+    // Reuses the same archive the magazine viewer itself uses, only
+    // refetching if this is the first time it's needed this session.
+    (magazineLoaded ? Promise.resolve() : loadMagazine()).then(renderMagazineAdminSection);
 }
 
 // Called when admin navigates away or finishes — restore nav
