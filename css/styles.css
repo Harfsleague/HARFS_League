@@ -1398,6 +1398,19 @@ body:not(.lite-mode):not(.perf-no-sheen) .season-history-card{
 body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav{
     overflow:hidden;
 }
+/* The rule above clips EVERY .team-picker-panel with overflow:hidden
+   whenever Background Effects (sheen) is on — but several of these
+   bottom sheets (playlist, team edit, CUP result/edition pickers, team
+   picker, report sheet, appearance sheet, and any future one built on
+   this same base class) are height-capped and need their own content to
+   scroll. The sheen ::before overlay below is already the same size as
+   its box and clipped by its own border-radius, so restoring scroll here
+   doesn't change how the shimmer looks. Same selector/specificity,
+   immediately after, so this wins over the overflow:hidden above. */
+body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel{
+    overflow-y:auto;
+    overflow-x:hidden;
+}
 body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav::before,
 body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel::before,
 body:not(.lite-mode):not(.perf-no-sheen) .settings-panel::before,
@@ -1762,11 +1775,9 @@ body.perf-no-anim .nav-item{ transition:none !important; }
     -ms-overflow-style:none; scrollbar-width:none;
 }
 .appearance-panel::-webkit-scrollbar{ display:none; }
-/* The Liquid-Glass sheen rule (body:not(.lite-mode):not(.perf-no-sheen)
-   .team-picker-panel, "overflow:hidden") also matches this panel and used
-   to kill its scrolling whenever Background Effects was on. Same
-   specificity, later in the file, so this wins and keeps it scrollable. */
-body:not(.lite-mode):not(.perf-no-sheen) .appearance-panel{ overflow-x:hidden; overflow-y:auto; }
+/* Scroll-vs-sheen conflict for this panel is now fixed once, generically,
+   for every .team-picker-panel sheet — see the note right after the
+   Liquid Glass sheen rule above. */
 .appearance-section-label{
     font-size:0.66rem; font-weight:800; color:#6b7280;
     text-transform:uppercase; letter-spacing:1.2px;
@@ -1883,6 +1894,9 @@ body:not(.lite-mode):not(.perf-no-sheen) .appearance-panel{ overflow-x:hidden; o
     -ms-overflow-style:none; scrollbar-width:none;
 }
 .playlist-panel::-webkit-scrollbar{ display:none; }
+/* Scroll-vs-sheen conflict for this panel is now fixed once, generically,
+   for every .team-picker-panel sheet — see the note right after the
+   Liquid Glass sheen rule near the top of the file. */
 .playlist-track-item{
     display:flex; align-items:center; gap:11px;
     background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
