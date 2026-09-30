@@ -52,6 +52,7 @@ function buildSeasonHistoryChips(){
 }
 function filterSeasonHistory(filter,chip){
     haptic([6]);currentFilter=filter;
+    const prevHidden=window.GlassFX?GlassFX.historyFiltering():new Set();
     document.querySelectorAll('#season-history-filter-bar .chip').forEach(c=>c.classList.remove('active'));
     chip.classList.add('active');
     document.querySelectorAll('#season-history-list .match-card-mini').forEach(card=>{
@@ -60,6 +61,9 @@ function filterSeasonHistory(filter,chip){
     });
     updateHistoryLayout(filter);
     updateHistoryDots(filter);
+    // dynamic background: card tint follows the selected team, rows that
+    // just appeared re-enter smoothly (see js/glass-fx.js)
+    if(window.GlassFX)GlassFX.historyFiltered(prevHidden,filter);
 }
 
 // Puts the SELECTED team on the left of every match card (this format has no
@@ -98,6 +102,7 @@ function updateHistoryDots(filter){
         if(!dotEl)return;
         if(filter==='all'){
             dotEl.style.display='none';
+            delete card.dataset.res;
             return;
         }
         const home=card.dataset.home,away=card.dataset.away;
@@ -108,11 +113,14 @@ function updateHistoryDots(filter){
         else{isTeamInMatch=false;}
         if(!isTeamInMatch){
             dotEl.style.display='none';
+            delete card.dataset.res;
             return;
         }
         let color='#818cf8'; // draw
-        if(teamScore>oppScore)color='#22c55e'; // win
-        else if(teamScore<oppScore)color='#ef4444'; // loss
+        let res='draw';
+        if(teamScore>oppScore){color='#22c55e';res='win';} // win
+        else if(teamScore<oppScore){color='#ef4444';res='loss';} // loss
+        card.dataset.res=res; // drives the result stripe/glow in liquid-glass.css
         dotEl.style.display='';
         dotEl.style.background=color;
     });
@@ -133,10 +141,9 @@ function renderSeasonHistoryList(history){
         const dt=formatShamsiDateTime(m.timestamp);
         const parts=m.score.split('-');
         const hs=parseInt(parts[0]),as=parseInt(parts[1]);
-        const delay=Math.min(idx,10)*35;
         // dot starts hidden — it only appears once a specific team filter is
         // active, and then reflects THAT team's result (see updateHistoryDots)
-        return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" data-hs="${hs}" data-as="${as}" style="animation-delay:${delay}ms">
+        return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" data-hs="${hs}" data-as="${as}">
             <div class="mcm-date"><span class="mcm-dot" style="display:none;"></span>${dt.date} · ${dt.time}</div>
             <div class="mcm-row">
                 <div class="mcm-team">
@@ -151,6 +158,7 @@ function renderSeasonHistoryList(history){
             </div>
         </div>`;
     }).join('');
+    if(window.GlassFX)GlassFX.historyRendered();
 }
 
 // ============================================================

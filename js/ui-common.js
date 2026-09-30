@@ -42,6 +42,8 @@
     const paletteObserver=new MutationObserver(refreshColor);
     paletteObserver.observe(document.body,{attributes:true,attributeFilter:['data-palette','style']});
     function draw(){
+        // frozen while scrolling / a sheet is open (body.fx-paused, see glass-fx.js)
+        if(document.body.classList.contains('fx-paused')){rafId=requestAnimationFrame(draw);return;}
         ctx.clearRect(0,0,W,H);
         for(let i=0;i<activeParticleCount;i++){
             const p=particles[i];
