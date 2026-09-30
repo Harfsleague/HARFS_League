@@ -1355,76 +1355,28 @@ body.perf-no-anim .mini-player{ transition:none; }
     transform:translate(-50%,0) scale(0.97);
 }
 /* =====================================================
-   LIQUID GLASS — enhanced capsule look (normal / non-LITE mode)
+   LIQUID GLASS — structural bits only. The old looping "sheen"
+   (background-position + mix-blend-mode over tall cards) lived here;
+   it repainted every frame and drew a hard streak across the Match
+   History card. All glass visuals now live in css/liquid-glass.css.
    ===================================================== */
-#hero-logo-container.in-header {
+#hero-logo-container.in-header{
     position: fixed;
     overflow: hidden;
 }
-#hero-logo-container.in-header::after {
-    content:'';
-    position:absolute; inset:0;
-    background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.10) 40%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.10) 60%, transparent 80%);
-    background-size: 220% 100%;
-    background-position: 130% 0;
-    pointer-events:none;
-    animation: liquidSheen 6s ease-in-out infinite;
-    mix-blend-mode: overlay;
-}
-@keyframes liquidSheen {
-    0%,100% { background-position: 130% 0; }
-    50% { background-position: -30% 0; }
-}
-
-/* =====================================================
-   LIQUID GLASS — generalized version of the capsule sheen
-   above, applied to the app's other main glass surfaces
-   (bottom nav, bottom sheets, settings) in Full performance
-   mode only. Turns off automatically in Lite mode — no JS
-   needed, Lite's own rules below are untouched.
-
-   NOTE: .bottom-nav is already `position:absolute` (that's what
-   pins it to the bottom of the screen) — it must NOT be reset to
-   `position:relative` here, or it collapses back into normal
-   document flow and jumps to the top of the page. Only the panels
-   that are `position:static` by default need it added.
-   ===================================================== */
-body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel,
-body:not(.lite-mode):not(.perf-no-sheen) .settings-panel,
-body:not(.lite-mode):not(.perf-no-sheen) .season-history-card{
+body:not(.lite-mode) .settings-panel,
+body:not(.lite-mode) .season-history-card{
     position:relative;
     overflow:hidden;
 }
-body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav{
+body:not(.lite-mode) .bottom-nav{
     overflow:hidden;
 }
-/* The rule above clips EVERY .team-picker-panel with overflow:hidden
-   whenever Background Effects (sheen) is on — but several of these
-   bottom sheets (playlist, team edit, CUP result/edition pickers, team
-   picker, report sheet, appearance sheet, and any future one built on
-   this same base class) are height-capped and need their own content to
-   scroll. The sheen ::before overlay below is already the same size as
-   its box and clipped by its own border-radius, so restoring scroll here
-   doesn't change how the shimmer looks. Same selector/specificity,
-   immediately after, so this wins over the overflow:hidden above. */
-body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel{
+/* height-capped bottom sheets need their own content to scroll */
+body:not(.lite-mode) .team-picker-panel{
+    position:relative;
     overflow-y:auto;
     overflow-x:hidden;
-}
-body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav::before,
-body:not(.lite-mode):not(.perf-no-sheen) .team-picker-panel::before,
-body:not(.lite-mode):not(.perf-no-sheen) .settings-panel::before,
-body:not(.lite-mode):not(.perf-no-sheen) .season-history-card::before{
-    content:'';
-    position:absolute; inset:0;
-    background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.07) 40%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.07) 60%, transparent 80%);
-    background-size: 220% 100%;
-    background-position: 130% 0;
-    pointer-events:none;
-    animation: liquidSheen 8s ease-in-out infinite;
-    mix-blend-mode: overlay;
-    border-radius: inherit;
-    will-change: background-position;
 }
 
 /* =====================================================

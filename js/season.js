@@ -61,8 +61,7 @@ function filterSeasonHistory(filter,chip){
     });
     updateHistoryLayout(filter);
     updateHistoryDots(filter);
-    // dynamic background: card tint follows the selected team, rows that
-    // just appeared re-enter smoothly (see js/glass-fx.js)
+    // dynamic background: aurora + summary follow the selected team (js/glass-fx.js)
     if(window.GlassFX)GlassFX.historyFiltered(prevHidden,filter);
 }
 

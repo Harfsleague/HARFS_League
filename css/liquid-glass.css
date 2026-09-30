@@ -1,306 +1,298 @@
 /* =====================================================================
-   LIQUID GLASS v2 — loaded AFTER styles.css, overrides only.
+   LIQUID GLASS v3   (loaded after styles.css; pairs with js/glass-fx.js)
    ---------------------------------------------------------------------
-   Why the old glass was heavy:
-   1. ~10 backdrop-filters (blur 12-30px) sat on top of a backdrop that
-      changes EVERY frame (3 animated orbs with filter:blur(64px) + a
-      full-screen particle canvas) -> the GPU re-blurred all of them
-      every frame.
-   2. The sheen animated `background-position` (main-thread repaint) with
-      `mix-blend-mode:overlay` (forces a blend pass), on tall scrolling
-      cards.
-   What this file does instead:
-   - Orbs: no filter:blur at all (the radial gradient is already soft);
-     they only animate `transform` (compositor only).
-   - Real backdrop blur is kept ONLY on floating chrome (capsule, nav,
-     sheets, modals, mini-player). In-flow cards/inputs/buttons get
-     "baked" glass (gradient + specular rim + inner light) — visually the
-     same on this background, zero per-frame cost.
-   - Sheen = a small composited layer moved with transform (no blend
-     mode, no repaint), only on small floating elements.
-   - Specular light follows the finger/pointer via CSS vars (--gx/--gy).
-   - Background pauses while scrolling / when a sheet is open / when the
-     tab is hidden (body.fx-paused, toggled from js/glass-fx.js).
+   Idea: real glass only where it is actually SEEN, cheap glass elsewhere.
+
+   FLOATING glass  (bottom nav, HARFS capsule, mini-player, back-to-top)
+     -> real backdrop-filter. On Chromium devices glass-fx.js upgrades it
+        to true refraction: an SVG displacement map bends whatever is
+        behind the rim, with a hint of chromatic dispersion (--lg-bf-*).
+        Everywhere else it is frosted glass with a specular rim.
+   IN-FLOW glass   (cards, header, table, buttons, inputs, chips)
+     -> "baked" glass: layered gradients + inner light + gradient rim.
+        Zero backdrop-filter, so scrolling never re-blurs anything.
+   BACKGROUND      (orbs)
+     -> no filter:blur (radial-gradients are already soft); they only
+        animate transform. Everything freezes while you scroll or a
+        sheet is open (body.fx-paused).
    ===================================================================== */
 
 :root{
-    --lg-rim-top: rgba(255,255,255,0.42);
-    --lg-rim-side: rgba(255,255,255,0.16);
-    --lg-rim-bottom: rgba(255,255,255,0.06);
-    --lg-fill-a: rgba(255,255,255,0.13);
-    --lg-fill-b: rgba(255,255,255,0.035);
-    --lg-fill-c: rgba(255,255,255,0.075);
-    --lg-shadow: 0 10px 30px rgba(0,0,0,0.32);
-    --lg-blur: 16px;           /* was 20-30px */
-    --lg-sat: 170%;
-    --gx: 50%;                 /* specular light position (set by JS) */
-    --gy: 0%;
-    --lg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --lg-blur:14px;
+    --lg-sat:165%;
+    --lg-rim-hi:rgba(255,255,255,.55);
+    --lg-rim:rgba(255,255,255,.17);
+    --lg-rim-lo:rgba(255,255,255,.06);
+    --lg-ease:cubic-bezier(.22,1,.36,1);
+    --lg-spring:cubic-bezier(.34,1.45,.5,1);
+    --gx:50%; --gy:0%;                       /* specular light, set by JS (tilt / pointer) */
 }
 
 /* ---------------------------------------------------------------------
-   1. BACKGROUND — cheaper orbs
+   1. BACKGROUND
    --------------------------------------------------------------------- */
 .ambient-orb{
-    filter:none;                       /* the big win: no 64px blur pass */
-    animation-duration:20s;            /* slower = less visible stepping */
-    contain:strict;
+    filter:none;                              /* the 64px blur pass was the single most expensive thing on screen */
+    animation-duration:22s;
 }
-.orb-1{ background:radial-gradient(circle closest-side, var(--orb1) 0%, rgba(0,0,0,0) 100%); }
-.orb-2{ background:radial-gradient(circle closest-side, var(--orb2) 0%, rgba(0,0,0,0) 100%); }
-.orb-3{ background:radial-gradient(circle closest-side, var(--orb3) 0%, rgba(0,0,0,0) 100%); }
+.orb-1{ background:radial-gradient(circle closest-side,var(--orb1),rgba(0,0,0,0)); }
+.orb-2{ background:radial-gradient(circle closest-side,var(--orb2),rgba(0,0,0,0)); }
+.orb-3{ background:radial-gradient(circle closest-side,var(--orb3),rgba(0,0,0,0)); }
 @keyframes floatOrb{
     0%,100%{ transform:translate3d(0,0,0) scale(1); }
-    50%    { transform:translate3d(28px,-44px,0) scale(1.08); }
+    50%{ transform:translate3d(30px,-46px,0) scale(1.08); }
 }
-/* Paused while scrolling / sheet open / tab hidden: the backdrop stops
-   changing, so the GPU can cache every blurred surface on top of it. */
-body.fx-paused .ambient-orb{ animation-play-state:paused; }
+body.fx-paused .ambient-orb,
 body.fx-paused .bottom-nav::before,
-body.fx-paused #hero-logo-container::after{ animation-play-state:paused; }
+body.fx-paused #hero-logo-container::before{ animation-play-state:paused; }
 
 /* ---------------------------------------------------------------------
-   2. LIQUID GLASS SURFACES
-   Shared recipe. Two flavours:
-     .lg-surface  -> baked glass, NO backdrop-filter (cards in scroll)
-     floating UI  -> real backdrop-filter, lighter than before
+   2. IN-FLOW (BAKED) GLASS — no backdrop-filter
    --------------------------------------------------------------------- */
 body:not(.lite-mode):not(.perf-no-blur) :is(
-    .league-header, .table-wrap, .season-history-card, .match-card-mini,
-    .weird-card, .admin-section, .ranking-card, .stat-card,
-    .glass-button, .glass-input, .chip, .ai-entry-capsule
+    .league-header,.table-wrap,.season-history-card,.weird-card,.admin-section,
+    .ranking-card,.stat-card,.glass-button,.glass-input,.ai-entry-capsule
 ){
-    -webkit-backdrop-filter:none;
-    backdrop-filter:none;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+    background-color:rgba(12,20,34,.44);
     background-image:
-        linear-gradient(135deg, var(--lg-fill-a) 0%, var(--lg-fill-b) 42%, var(--lg-fill-c) 100%),
-        radial-gradient(120% 90% at var(--gx) var(--gy), rgba(255,255,255,0.10), rgba(255,255,255,0) 60%);
-    background-color:rgba(12,20,34,0.46);
-    border-color:var(--lg-rim-side);
-    border-top-color:var(--lg-rim-top);
-    border-bottom-color:var(--lg-rim-bottom);
+        radial-gradient(130% 80% at var(--gx) -10%,rgba(255,255,255,.13),rgba(255,255,255,0) 60%),
+        linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.025) 45%,rgba(255,255,255,.07));
+    border-color:var(--lg-rim);
+    border-top-color:var(--lg-rim-hi);
+    border-bottom-color:var(--lg-rim-lo);
 }
-body:not(.lite-mode):not(.perf-no-shadow) :is(.league-header,.season-history-card,.glass-button,.ai-entry-capsule){
+body:not(.lite-mode):not(.perf-no-shadow) :is(.league-header,.season-history-card,.glass-button,.ai-entry-capsule,.table-wrap){
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.30),
-        inset 0 -1px 0 rgba(255,255,255,0.05),
-        inset 0 0 22px rgba(255,255,255,0.045),
-        var(--lg-shadow);
+        inset 0 1px 0 rgba(255,255,255,.32),
+        inset 0 -1px 0 rgba(255,255,255,.05),
+        inset 0 0 24px rgba(255,255,255,.04),
+        0 10px 28px rgba(0,0,0,.30);
 }
-.match-card-mini{
-    background-color:rgba(255,255,255,0.03);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.14);
+.chip{
+    background-image:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
 }
 .chip.active{
-    background-image:linear-gradient(135deg,rgba(255,255,255,0.22),rgba(255,255,255,0.05));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.35), 0 0 12px var(--primary-glow);
+    background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 14px var(--primary-glow);
 }
+/* gradient rim (static: costs nothing after first paint) */
+body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.settings-panel,.bottom-nav,#hero-logo-container.in-header,.mini-player)::after{
+    content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none;
+    background:linear-gradient(140deg,rgba(255,255,255,.62),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 66%,rgba(255,255,255,.26));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    opacity:.9;
+}
+.league-header,.ai-entry-capsule,.mini-player{ position:relative; }
+.mini-player{ position:absolute; }                  /* it is absolutely placed by styles.css */
 
-/* Floating chrome keeps REAL glass (this is what makes it liquid), but with a
-   smaller radius + a brightness lift so it reads as refraction, not fog. */
-body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav, .mini-player, .back-to-top-fab, #hero-logo-container.in-header, #hero-logo-container.box-forming){
+/* ---------------------------------------------------------------------
+   3. FLOATING GLASS — real backdrop-filter, upgraded to refraction by JS
+   --------------------------------------------------------------------- */
+body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav,.mini-player,.back-to-top-fab,#hero-logo-container.in-header,#hero-logo-container.box-forming){
+    background-color:rgba(14,22,38,.36);
+    background-image:
+        radial-gradient(90% 150% at var(--gx) var(--gy),rgba(255,255,255,.20),rgba(255,255,255,0) 62%),
+        linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.03) 46%,rgba(255,255,255,.09));
+    box-shadow:
+        inset 0 1.5px 0 rgba(255,255,255,.42),
+        inset 0 -1px 0 rgba(255,255,255,.07),
+        inset 0 0 28px rgba(255,255,255,.055),
+        0 14px 36px rgba(0,0,0,.38);
+}
+body:not(.lite-mode):not(.perf-no-blur) .bottom-nav{
+    -webkit-backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
+    backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
+}
+body:not(.lite-mode):not(.perf-no-blur) #hero-logo-container.in-header{
+    -webkit-backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
+    backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
+}
+body:not(.lite-mode):not(.perf-no-blur) :is(.mini-player,.back-to-top-fab,#hero-logo-container.box-forming){
     -webkit-backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08);
     backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08);
-    background-image:
-        linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.09) 100%),
-        radial-gradient(90% 140% at var(--gx) var(--gy), rgba(255,255,255,0.16), rgba(255,255,255,0) 62%);
-    border-top-color:var(--lg-rim-top);
-    border-left-color:var(--lg-rim-side);
-    box-shadow:
-        inset 0 1.5px 0 rgba(255,255,255,0.38),
-        inset 0 -1px 0 rgba(255,255,255,0.06),
-        inset 0 0 26px rgba(255,255,255,0.05),
-        0 12px 34px rgba(0,0,0,0.38);
 }
-/* Sheets / modals / panels: solid-ish glass. They were 0.99 opaque with a
-   30px blur — the blur was invisible AND expensive. Now: real translucency,
-   smaller blur, only while open (see .open / .active hooks below). */
+/* sheets / modals: real translucency, smaller blur (was 30px at 0.99 alpha = invisible + costly) */
 body:not(.lite-mode):not(.perf-no-blur) :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content,.login-panel,.settings-screen-panel){
-    -webkit-backdrop-filter:blur(22px) saturate(160%);
-    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(155%);
+    backdrop-filter:blur(20px) saturate(155%);
     background-image:
-        linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.05)),
-        linear-gradient(160deg, rgba(10,18,30,0.86), rgba(15,23,42,0.90));
-    border-top-color:var(--lg-rim-top);
+        linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.02) 40%,rgba(255,255,255,.05)),
+        linear-gradient(160deg,rgba(10,18,30,.84),rgba(15,23,42,.90));
+    border-top-color:var(--lg-rim-hi);
 }
-/* Backdrop scrims: a blur(6px) full-screen layer buys nothing visually —
-   a plain dark scrim is identical and free. */
-body:not(.lite-mode) :is(.modal-overlay,.team-picker-sheet){
-    -webkit-backdrop-filter:none; backdrop-filter:none;
-}
+body:not(.lite-mode) :is(.modal-overlay,.team-picker-sheet){ -webkit-backdrop-filter:none; backdrop-filter:none; }
 
-/* Specular rim: thin gradient border painted with a mask. Static — costs
-   nothing after first paint. Lives on ::after so it never fights with the
-   old ::before sheen rules in styles.css. */
-body:not(.lite-mode) :is(.bottom-nav,.season-history-card,.settings-panel,.league-header,.ai-entry-capsule)::after{
-    content:''; position:absolute; inset:0; border-radius:inherit; padding:1px;
-    pointer-events:none;
-    background:linear-gradient(140deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 32%, rgba(255,255,255,0) 68%, rgba(255,255,255,0.22));
-    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite:xor; mask-composite:exclude;
-    opacity:0.85;
-}
-.league-header,.ai-entry-capsule{ position:relative; }
-
-/* ---------------------------------------------------------------------
-   3. SHEEN — composited replacement for the old liquidSheen
-   The old ::before/::after used background-position + mix-blend-mode.
-   Here a narrow diagonal band is translated with transform only.
-   Limited to small floating elements (nav + capsule); big scrolling cards
-   get the scroll/press-reactive light below instead of a constant loop.
-   --------------------------------------------------------------------- */
-body:not(.lite-mode):not(.perf-no-sheen) :is(.team-picker-panel,.settings-panel,.season-history-card)::before{
-    animation:none; background:none; content:none;      /* retire old looping sheen */
-}
+/* one soft highlight glides across the nav / capsule now and then (transform only) */
 body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav::before,
-body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::after{
-    content:''; position:absolute; top:0; bottom:0; left:0; width:45%;
-    pointer-events:none; border-radius:inherit;
-    background:linear-gradient(105deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.20) 50%, rgba(255,255,255,0) 100%);
-    mix-blend-mode:normal; right:auto;
+body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
+    content:''; position:absolute; top:0; bottom:0; left:0; width:42%;
+    pointer-events:none; border-radius:0;
+    background:linear-gradient(105deg,rgba(255,255,255,0),rgba(255,255,255,.22) 50%,rgba(255,255,255,0));
     transform:translate3d(-130%,0,0) skewX(-14deg);
-    animation:lgSweep 7s var(--lg-ease) infinite;
+    animation:lgSweep 8s var(--lg-ease) infinite;
     will-change:transform;
-    background-size:auto; background-position:0 0;
 }
 @keyframes lgSweep{
-    0%,55%{ transform:translate3d(-130%,0,0) skewX(-14deg); opacity:0; }
-    62%   { opacity:1; }
-    100%  { transform:translate3d(330%,0,0) skewX(-14deg); opacity:0; }
+    0%,58%{ transform:translate3d(-130%,0,0) skewX(-14deg); opacity:0; }
+    64%{ opacity:1; }
+    100%{ transform:translate3d(340%,0,0) skewX(-14deg); opacity:0; }
 }
-
-/* Liquid nav pill: the active item's "lens" stretches when it is pressed,
-   then springs back — cheap transform-only feedback. */
-.nav-item{ transition:color .25s ease, background .3s ease, border-color .3s ease, transform .35s cubic-bezier(0.34,1.56,0.64,1), box-shadow .3s ease; }
-.nav-item:active{ transform:scale(1.08,0.94); }
-.nav-item.active{
-    background-image:linear-gradient(180deg,rgba(255,255,255,0.20),rgba(255,255,255,0.03));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 0 14px var(--primary-glow);
-}
-
-/* Press ripple / light: JS sets --px/--py on the pressed element */
-.lg-press{ position:relative; overflow:hidden; }
-.lg-press::selection{ background:transparent; }
-.lg-press > .lg-light{
-    position:absolute; inset:0; pointer-events:none; border-radius:inherit;
-    background:radial-gradient(90px circle at var(--px,50%) var(--py,50%), rgba(255,255,255,0.28), rgba(255,255,255,0) 70%);
-    opacity:0; transition:opacity .35s ease;
-}
-.lg-press.lg-lit > .lg-light{ opacity:1; transition-duration:.08s; }
 
 /* ---------------------------------------------------------------------
-   4. MATCH HISTORY — dynamic, per-team, scroll-aware background
-   Problems before:
-   - Sheen was one giant gradient stretched over the WHOLE (very tall) card,
-     so the highlight looked like a random diagonal streak, never aligned
-     with any row, and repainted every frame.
-   - Changing the team filter only hid/showed rows: card background, row
-     accents and result colours didn't change with it, and every filter tap
-     replayed the cardIn animation on all rows.
-   Now:
-   - The card's ambient light is tinted with the SELECTED team's colour
-     (--hist-accent), cross-faded with a transition on a custom property.
-   - Each row shows a result stripe (win / draw / loss) for that team, with a
-     soft glow, and re-flows smoothly.
-   - Rows fade+rise once when they scroll into view (IntersectionObserver
-     adds .in-view), instead of a timed animation for all rows at load.
-   - content-visibility:auto -> off-screen rows aren't rendered at all,
-     which makes long histories light.
+   4. LIQUID NAV — the active "lens" slides, stretches, and can be dragged
    --------------------------------------------------------------------- */
-@property --hist-accent-a{ syntax:'<color>'; inherits:true; initial-value:rgba(96,165,250,0.16); }
-@property --hist-accent-b{ syntax:'<color>'; inherits:true; initial-value:rgba(129,140,248,0.10); }
-
-.season-history-card{
-    --hist-accent-a: rgba(96,165,250,0.16);
-    --hist-accent-b: rgba(129,140,248,0.10);
-    position:relative;
-    overflow:clip;                         /* clip without creating a scroll container */
-    isolation:isolate;
-    transition:--hist-accent-a .6s ease, --hist-accent-b .6s ease;
+.bottom-nav{ touch-action:none; }
+.nav-item{ z-index:1; color:#94a3b8; }
+.nav-item.active{ color:var(--nav-active-color); }
+.lg-lens{
+    position:absolute; left:0; top:0; pointer-events:none; z-index:0;
+    opacity:0; will-change:transform;
 }
-/* Ambient tinted light, pinned to the top of the card. Fixed size, so it
-   never stretches with the list; drifts a little with scroll (JS: --hist-shift). */
-.season-history-card::before{
-    content:'' !important; position:absolute !important;
-    inset:auto -20% auto -20% !important; top:-30px !important; height:220px !important;
-    background-size:auto !important; background-position:0 0 !important;
-    z-index:-1; pointer-events:none;
+.lg-lens.lg-ready{ opacity:1; transition:transform .6s var(--lg-spring),opacity .3s ease; }
+.lg-lens.lg-drag{ transition:none; }
+.lg-lens i{
+    position:absolute; inset:0; border-radius:9999px; display:block;
     background:
-        radial-gradient(60% 100% at 30% 0%, var(--hist-accent-a), transparent 70%),
-        radial-gradient(50% 90% at 78% 0%, var(--hist-accent-b), transparent 70%) !important;
-    animation:none !important;
-    mix-blend-mode:normal !important;
-    transform:translate3d(var(--hist-shift,0px),0,0);
-    transition:transform .5s var(--lg-ease);
-    border-radius:0 !important;
-    will-change:auto !important;
+        radial-gradient(80% 120% at 50% 0%,var(--nav-active-bg),rgba(0,0,0,0) 70%),
+        linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.07) 55%,rgba(255,255,255,.16));
+    border:1px solid var(--nav-active-border);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.6),
+        inset 0 -1px 0 rgba(255,255,255,.14),
+        inset 0 0 14px rgba(255,255,255,.12),
+        0 0 20px var(--primary-glow),
+        0 5px 14px rgba(0,0,0,.28);
+    transition:transform .3s var(--lg-spring);
 }
+.lg-lens.lg-move i{ animation:lgStretch .6s cubic-bezier(.3,.7,.3,1); }
+.lg-lens.lg-hold i,.lg-lens.lg-drag i{ transform:scale(1.14,1.08); }
+@keyframes lgStretch{
+    0%{ transform:scale(1); } 32%{ transform:scale(1.34,.88); } 66%{ transform:scale(.97,1.05); } 100%{ transform:scale(1); }
+}
+/* with the lens present, the per-item active chrome steps aside */
+.bottom-nav.lg-has-lens .nav-item.active{ background:none; border-color:transparent; box-shadow:none; }
+.bottom-nav.lg-has-lens .nav-item::after{ display:none; }
+.bottom-nav.lg-has-lens .nav-item:active{ transform:none; }
+
+/* press light: highlight follows the finger */
+.lg-light{
+    position:absolute; inset:0; pointer-events:none; border-radius:inherit; opacity:0;
+    background:radial-gradient(90px circle at var(--px,50%) var(--py,50%),rgba(255,255,255,.30),rgba(255,255,255,0) 70%);
+    transition:opacity .4s ease;
+}
+.lg-lit > .lg-light{ opacity:1; transition-duration:.08s; }
+.glass-button,.chip,.ai-entry-capsule{ position:relative; overflow:hidden; }
+
+/* ---------------------------------------------------------------------
+   5. MATCH HISTORY — dynamic background
+   What was wrong: one 220%-wide sheen gradient was stretched over the
+   whole (very tall) card, so it showed as a hard bright band down one
+   side, repainted every frame, and never related to what you were reading.
+   What it does now:
+   - AURORA: a soft team-coloured light pinned (sticky) to the viewport
+     inside the card. Its colours follow the match row at the middle of
+     the screen (both teams; or team + W/D/L colour when filtered), it
+     cross-fades between rows and drifts with scroll.
+   - ROWS: the winning side glows in that team's colour; in a team filter
+     every row carries a win / draw / loss stripe instead.
+   - Filter bar sticks under the header; a summary line shows W-D-L + form.
+   - Rows fade in as they scroll into view; off-screen rows aren't rendered.
+   --------------------------------------------------------------------- */
+body:not(.lite-mode) .season-history-card{
+    overflow:hidden; overflow:clip;        /* clip (not hidden) keeps position:sticky working inside */
+    isolation:isolate;
+}
+.lg-aurora{ position:sticky; top:0; height:0; z-index:-1; pointer-events:none; }
+.lg-aurora b{
+    position:absolute; left:-18%; right:-18%; top:-220px; height:calc(100vh + 220px);
+    opacity:0; transition:opacity .8s ease;
+    /* every gradient fades to 0 well inside the box -> no hard edges anywhere */
+    background:
+        radial-gradient(56% 34% at 18% 30%,rgba(var(--c1,96,165,250),.34),rgba(var(--c1,96,165,250),0) 70%),
+        radial-gradient(50% 32% at 86% 52%,rgba(var(--c2,129,140,248),.28),rgba(var(--c2,129,140,248),0) 70%),
+        radial-gradient(62% 28% at 42% 68%,rgba(var(--c3,96,165,250),.20),rgba(var(--c3,96,165,250),0) 72%);
+    transform:translate3d(var(--ax,0px),var(--ay,0px),0);
+    will-change:opacity;
+}
+.lg-aurora b.on{ opacity:1; }
+body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
+
+#season-history-filter-bar{
+    position:sticky; z-index:5;
+    top:0;                       /* the screen's own top padding already clears the capsule */
+    margin:0 -6px 8px; padding:7px 6px; border-radius:16px;
+    background:linear-gradient(180deg,rgba(12,20,34,.86),rgba(12,20,34,.62));
+    box-shadow:0 8px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.10);
+}
+.lg-hist-summary{
+    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+    font-size:.66rem; font-weight:800; letter-spacing:.4px; color:#cbd5e1;
+    margin:2px 0 10px; min-height:20px;
+}
+.lg-hist-summary .w{ color:#4ade80; } .lg-hist-summary .d{ color:#a5b4fc; } .lg-hist-summary .l{ color:#f87171; }
+.lg-form{ display:inline-flex; gap:4px; align-items:center; }
+.lg-form i{ width:8px; height:8px; border-radius:50%; background:#818cf8; box-shadow:0 0 8px currentColor; color:#818cf8; }
+.lg-form i.w{ background:#22c55e; color:#22c55e; } .lg-form i.l{ background:#ef4444; color:#ef4444; }
 
 .match-card-mini{
-    --res: transparent;                    /* result colour for the selected team */
-    position:relative;
-    animation:none;                        /* replaced by .in-view reveal */
+    --hc:96,165,250; --ac:129,140,248; --res:transparent;
+    position:relative; animation:none;
     opacity:0; transform:translateY(12px);
-    transition:opacity .45s var(--lg-ease), transform .45s var(--lg-ease), background-color .3s ease, box-shadow .3s ease;
-    content-visibility:auto;
-    contain-intrinsic-size:auto 62px;
+    transition:opacity .5s var(--lg-ease),transform .5s var(--lg-ease),box-shadow .3s ease;
+    content-visibility:auto; contain-intrinsic-size:auto 66px;
+    background-color:rgba(255,255,255,.028);
+    background-image:
+        linear-gradient(90deg,rgba(var(--hc),.13),rgba(var(--hc),0) 46%),
+        linear-gradient(270deg,rgba(var(--ac),.13),rgba(var(--ac),0) 46%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.13);
 }
 .match-card-mini.in-view{ opacity:1; transform:none; }
 .match-card-mini.hidden-by-filter{ display:none; }
-/* result stripe + glow (only when a team is selected: JS sets data-res) */
+.match-card-mini[data-w="h"]{ background-image:linear-gradient(90deg,rgba(var(--hc),.30),rgba(var(--hc),0) 66%),linear-gradient(270deg,rgba(var(--ac),.04),rgba(var(--ac),0) 40%); }
+.match-card-mini[data-w="a"]{ background-image:linear-gradient(270deg,rgba(var(--ac),.30),rgba(var(--ac),0) 66%),linear-gradient(90deg,rgba(var(--hc),.04),rgba(var(--hc),0) 40%); }
 .match-card-mini::before{
     content:''; position:absolute; left:0; top:9px; bottom:9px; width:3px; border-radius:3px;
     background:var(--res); opacity:0; transform:scaleY(.3);
-    transition:opacity .35s ease, transform .4s var(--lg-ease), background .3s ease;
+    transition:opacity .35s ease,transform .45s var(--lg-ease);
 }
+/* team filter: result colours take over (selected team is always on the left) */
 .match-card-mini[data-res]::before{ opacity:1; transform:none; box-shadow:0 0 10px var(--res); }
-.match-card-mini[data-res="win"] { --res:#22c55e; background-image:linear-gradient(90deg,rgba(34,197,94,0.10),transparent 55%); }
-.match-card-mini[data-res="loss"]{ --res:#ef4444; background-image:linear-gradient(90deg,rgba(239,68,68,0.10),transparent 55%); }
-.match-card-mini[data-res="draw"]{ --res:#818cf8; background-image:linear-gradient(90deg,rgba(129,140,248,0.10),transparent 55%); }
-/* filter change: rows that just became visible get a short re-entry */
-.match-card-mini.filter-in{ animation:lgRowIn .38s var(--lg-ease) both; }
-@keyframes lgRowIn{ from{ opacity:0; transform:translateY(8px) scale(.985); } to{ opacity:1; transform:none; } }
-.mcm-score{ transition:color .3s ease, background .3s ease; }
-.match-card-mini[data-res="win"]  .mcm-score{ color:#86efac; background:rgba(34,197,94,0.14); }
-.match-card-mini[data-res="loss"] .mcm-score{ color:#fca5a5; background:rgba(239,68,68,0.14); }
-.match-card-mini[data-res="draw"] .mcm-score{ color:#c7d2fe; background:rgba(129,140,248,0.14); }
-
-/* Fallback if no IntersectionObserver / JS: never leave rows invisible */
+.match-card-mini[data-res="win"]{  --res:#22c55e; background-image:linear-gradient(90deg,rgba(34,197,94,.24),rgba(34,197,94,0) 62%); }
+.match-card-mini[data-res="loss"]{ --res:#ef4444; background-image:linear-gradient(90deg,rgba(239,68,68,.22),rgba(239,68,68,0) 62%); }
+.match-card-mini[data-res="draw"]{ --res:#818cf8; background-image:linear-gradient(90deg,rgba(129,140,248,.20),rgba(129,140,248,0) 62%); }
+.match-card-mini[data-res="win"] .mcm-score{ color:#86efac; background:rgba(34,197,94,.16); }
+.match-card-mini[data-res="loss"] .mcm-score{ color:#fca5a5; background:rgba(239,68,68,.16); }
+.match-card-mini[data-res="draw"] .mcm-score{ color:#c7d2fe; background:rgba(129,140,248,.16); }
+.mcm-score{ transition:color .3s ease,background .3s ease; }
+.match-card-mini.filter-in{ animation:lgRowIn .42s var(--lg-ease) both; }
+@keyframes lgRowIn{ from{ opacity:0; transform:translateY(10px) scale(.985); } to{ opacity:1; transform:none; } }
 .no-io .match-card-mini{ opacity:1; transform:none; }
 
 /* ---------------------------------------------------------------------
-   5. PERFORMANCE TIERS (set automatically by js/glass-fx.js)
-   tier-2 (mid device):  smaller blur, particles thinned, sheen off
-   tier-3 (weak device): floating chrome keeps blur(8px), orbs static,
-                         particles off — glass LOOK stays, cost drops ~80%
-   Nothing is removed for the user; Settings toggles still work as before.
+   6. ADAPTIVE TIERS (set by js/glass-fx.js from a real FPS measurement)
+   Nothing is removed — the look stays, the cost drops.
    --------------------------------------------------------------------- */
-body.tier-2{ --lg-blur:11px; --lg-sat:150%; }
-body.tier-2 .bottom-nav::before,
-body.tier-2 #hero-logo-container.in-header::after{ animation:none; display:none; }
-body.tier-3{ --lg-blur:8px; --lg-sat:140%; }
+body.tier-2{ --lg-blur:10px; --lg-sat:150%; }
+body.tier-2 .bottom-nav::before,body.tier-2 #hero-logo-container::before{ display:none; }
+body.tier-3{ --lg-blur:7px; --lg-sat:140%; }
 body.tier-3 .ambient-orb{ animation:none; }
 body.tier-3 #particle-canvas{ display:none; }
-body.tier-3 .bottom-nav::before,
-body.tier-3 #hero-logo-container.in-header::after{ display:none; }
+body.tier-3 .bottom-nav::before,body.tier-3 #hero-logo-container::before{ display:none; }
 body.tier-3 :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content){
-    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
 }
-
-/* Devices that can't do backdrop-filter at all: solid, still glassy. */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-    :is(.bottom-nav,.mini-player,#hero-logo-container.in-header,.settings-panel,.team-picker-panel){
-        background-color:rgba(10,18,30,0.92);
-    }
+    :is(.bottom-nav,.mini-player,#hero-logo-container.in-header,.settings-panel,.team-picker-panel){ background-color:rgba(10,18,30,.92); }
 }
-
-/* Respect the OS reduce-motion setting. */
 @media (prefers-reduced-motion:reduce){
-    .ambient-orb, .bottom-nav::before, #hero-logo-container.in-header::after{ animation:none !important; }
+    .ambient-orb,.bottom-nav::before,#hero-logo-container::before{ animation:none !important; }
+    .lg-lens,.lg-lens i{ transition:none !important; animation:none !important; }
     .match-card-mini{ opacity:1; transform:none; transition:none; }
 }
-
-/* Lite mode wins over everything in this file (unchanged behaviour). */
+/* Lite mode keeps winning over everything here */
 body.lite-mode .match-card-mini{ opacity:1; transform:none; transition:none; content-visibility:visible; }
-body.lite-mode .season-history-card::before,
-body.lite-mode .bottom-nav::before{ display:none !important; }
+body.lite-mode .lg-lens,body.lite-mode .bottom-nav::before,body.lite-mode #hero-logo-container::before{ display:none !important; }
+body.lite-mode .bottom-nav.lg-has-lens .nav-item.active{ background:var(--nav-active-bg); border-color:var(--nav-active-border); }
