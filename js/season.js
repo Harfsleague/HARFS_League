@@ -468,7 +468,7 @@ async function loadMainLeagueDataFromGitHub(){
     if(cached) Object.keys(cached).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...cached[k]};});
     if(!navigator.onLine){
         setSyncStatus('offline');
-        TEAM_NAMES.forEach(ensureWalletFields);
+        PROFILE_TEAMS.forEach(ensureWalletFields);
         syncTeamDisplayNames(); // apply any cached custom team name/logo even offline
         return mainLeagueData;
     }
@@ -483,7 +483,7 @@ async function loadMainLeagueDataFromGitHub(){
         }
         setSyncStatus('synced');
     }catch(e){ setSyncStatus(cached?'offline':'error'); }
-    TEAM_NAMES.forEach(ensureWalletFields); // backfills the wallet shape for any team the file predates
+    PROFILE_TEAMS.forEach(ensureWalletFields); // backfills the wallet shape for any team the file predates
     syncTeamDisplayNames(); // reflect any team's custom name/logo everywhere that reads TEAM_DISPLAY_NAMES/teamLogoUrl
     return mainLeagueData;
 }

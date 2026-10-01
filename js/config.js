@@ -28,7 +28,17 @@ const GITHUB_WEIRD_MANIFEST_FILE="weird_events_manifest.json";
 const WEIRD_SHARD_SIZE_LIMIT=15*1024*1024; // 15MB — real-world reports show GitHub's Contents API can reject PUTs well below its documented 100MB limit (even 50MB payloads have been reported to fail with 422), so we stay well clear of that instead of trusting the higher figure
 const GITHUB_IMAGE_BASE_URL=`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_LEAGUE_BRANCH}/`;
 const TEAM_NAMES=["HOSI","Sezar","Bayern","Yellow"];
-const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sezar":"Sezar","Bayern":"Bayern","Yellow":"Yellow"};
+const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sezar":"Sezar","Bayern":"Bayern","Yellow":"Yellow","Purple":"Purple"};
+// SYMBOLIC TEAMS — present in the app only as a name on the Overall list (always
+// last, purple flower + purple medal) plus their own editable profile. They are
+// deliberately NOT in TEAM_NAMES: everything that reads TEAM_NAMES (Season table,
+// match history, CUP, medals, Mystery Box, magazine, AI chat, verify) therefore
+// never sees them. PROFILE_TEAMS = every team that has a profile / can log in.
+const SYMBOLIC_TEAMS=["Purple"];
+const PROFILE_TEAMS=[...TEAM_NAMES,...SYMBOLIC_TEAMS];
+function isSymbolicTeam(t){return SYMBOLIC_TEAMS.includes(t);}
+// Built-in avatar for a symbolic team until it uploads its own picture.
+const SYMBOLIC_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c084fc"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#g)"/><g fill="#fff" fill-opacity=".92"><circle cx="48" cy="29" r="12"/><circle cx="66.5" cy="42.5" r="12"/><circle cx="59.5" cy="64.5" r="12"/><circle cx="36.5" cy="64.5" r="12"/><circle cx="29.5" cy="42.5" r="12"/></g><circle cx="48" cy="48" r="9" fill="#facc15"/></svg>');
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 
 // ============================================================
@@ -80,7 +90,7 @@ const MOMENT_AUDIO_BITRATE=48000; // ~48kbps audio — explicit, so total size s
 const MOMENT_AUDIO_MAX_MB=8;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
-function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={name:t,pinned:null,
+function initializeMainLeagueData(){PROFILE_TEAMS.forEach(t=>mainLeagueData[t]={name:t,pinned:null,
     // Mystery Box outcomes — kept just to enforce the 2-opens-per-2-weeks
     // limit and show a short history; see shop.js.
     arenaHistory:[],
@@ -100,7 +110,7 @@ function initializeMainLeagueData(){TEAM_NAMES.forEach(t=>mainLeagueData[t]={nam
 // needing to change. Call this any time mainLeagueData is loaded or a
 // team's own profile is edited (see season.js / appearance.js).
 function syncTeamDisplayNames(){
-    TEAM_NAMES.forEach(t=>{
+    PROFILE_TEAMS.forEach(t=>{
         const custom = mainLeagueData[t] && mainLeagueData[t].customName;
         TEAM_DISPLAY_NAMES[t] = (custom && custom.trim()) ? custom.trim() : t;
     });

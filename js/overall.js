@@ -7,6 +7,11 @@
 // ============================================================
 // RENDER — MAIN LEAGUE (unified ranking cards)
 // ============================================================
+// Purple-team artwork (symbolic team): a purple flower in place of the rank
+// number and a purple medal in place of the gold/silver/bronze trio.
+const PURPLE_FLOWER_SVG='<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><g fill="#c084fc"><circle cx="16" cy="9" r="5.2"/><circle cx="23.1" cy="14.2" r="5.2"/><circle cx="20.4" cy="22.6" r="5.2"/><circle cx="11.6" cy="22.6" r="5.2"/><circle cx="8.9" cy="14.2" r="5.2"/></g><circle cx="16" cy="16.5" r="3.6" fill="#fde68a"/></svg>';
+const PURPLE_MEDAL_SVG='<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M10 2h5l3 9h-5z" fill="#7e22ce"/><path d="M22 2h-5l-3 9h5z" fill="#a855f7"/><circle cx="16" cy="20" r="9" fill="#a855f7"/><circle cx="16" cy="20" r="9" fill="none" stroke="#e9d5ff" stroke-width="1.5"/><circle cx="16" cy="20" r="5.6" fill="#7e22ce"/><path d="M16 15.8l1.3 2.7 3 .4-2.2 2.1.5 3-2.6-1.4-2.6 1.4.5-3-2.2-2.1 3-.4z" fill="#f3e8ff"/></svg>';
+
 function renderMainLeagueTable(){
     document.getElementById('main-loading-message').style.display='none';
     const trophies = computeTrophyCounts();
@@ -59,6 +64,18 @@ function renderMainLeagueTable(){
                 </div>
             </div>`;
     }).join('');
+
+    // Symbolic teams (see config.js) are appended AFTER the ranked teams, always
+    // last, outside the ranking: no number, no medals counted, just their name.
+    pod.innerHTML += SYMBOLIC_TEAMS.map((name,j)=>`
+            <div class="ranking-card rank-purple" style="animation-delay:${(table.length+j)*55}ms" onclick="openTeamPanel('${name}')">
+                <div class="ranking-badge">${PURPLE_FLOWER_SVG}</div>
+                <img src="${teamLogoUrl(name)}" class="ranking-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <div class="ranking-info">
+                    <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${escapeHtml(TEAM_DISPLAY_NAMES[name]||name)}</div>
+                </div>
+                <div class="ranking-trophy-block"><div class="ranking-trophy-item ps-medal">${PURPLE_MEDAL_SVG}</div></div>
+            </div>`).join('');
 
     // clear the old separate body — all cards go inside pod now
     document.getElementById('main-league-body').innerHTML='';

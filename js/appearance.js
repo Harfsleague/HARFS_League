@@ -593,7 +593,7 @@ async function handleTeamEditLogoSelect(e){
 function resetTeamEditDefaults(){
     teamEditPendingLogo = 'RESET';
     document.getElementById('team-edit-name-input').value = loggedInTeam;
-    document.getElementById('team-edit-logo-preview').src = `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+    document.getElementById('team-edit-logo-preview').src = isSymbolicTeam(loggedInTeam) ? SYMBOLIC_DEFAULT_LOGO : `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
 }
 async function saveTeamEdit(){
     if(!loggedInTeam) return;

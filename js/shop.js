@@ -121,6 +121,12 @@ function renderMysteryBoxScreen(){
         if(stage) stage.innerHTML = '<div class="team-panel-empty" style="padding:40px 0;">Log in with a team to open a box</div>';
         return;
     }
+    if(isSymbolicTeam(loggedInTeam)){
+        if(nameEl) nameEl.textContent = TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
+        if(logoEl) logoEl.src = teamLogoUrl(loggedInTeam);
+        if(stage) stage.innerHTML = '<div class="team-panel-empty" style="padding:40px 0;">This team doesn\'t take part in Mystery Box</div>';
+        return;
+    }
     ensureWalletFields(loggedInTeam);
     if(logoEl) logoEl.src = teamLogoUrl(loggedInTeam);
     if(nameEl) nameEl.textContent = TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
@@ -155,6 +161,7 @@ function renderMysteryBoxHistory(){
 let mysteryBoxBusy = false;
 async function openMysteryBox(){
     if(!loggedInTeam){ showToast('Log in first','error',2000); return; }
+    if(isSymbolicTeam(loggedInTeam)){ showToast("This team doesn't take part in Mystery Box",'error',2400); return; }
     if(mysteryBoxBusy) return; // ignore double-taps mid-animation
     ensureWalletFields(loggedInTeam);
     const unlockAt = nextMysteryBoxAvailableAt(loggedInTeam);

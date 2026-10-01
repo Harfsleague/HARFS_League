@@ -71,6 +71,7 @@ function teamLogoUrl(team){
     // it's stored inline in mainLeagueData, no separate fetch needed.
     const custom = mainLeagueData[team] && mainLeagueData[team].customLogo;
     if(custom) return custom;
+    if(isSymbolicTeam(team)) return SYMBOLIC_DEFAULT_LOGO; // no <team>.png exists for symbolic teams
     return teamLogoDataUrls[team] || `${GITHUB_IMAGE_BASE_URL}${team}.png`;
 }
 

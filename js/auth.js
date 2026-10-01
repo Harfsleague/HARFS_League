@@ -13,7 +13,7 @@
 function renderLoginTeamGrid(){
     const grid=document.getElementById('login-team-grid');
     if(!grid) return;
-    grid.innerHTML = TEAM_NAMES.map(t=>`
+    grid.innerHTML = PROFILE_TEAMS.map(t=>`
         <div class="login-team-card" onclick="pickLoginTeam('${t}')">
             <img src="${teamLogoUrl(t)}" onerror="this.style.opacity=0.25;">
             <span>${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}</span>

@@ -89,7 +89,9 @@ function openTeamPanel(team){
         pinnedEl.innerHTML = '';
     }
 
-    document.getElementById('team-panel-trophies').innerHTML = `
+    document.getElementById('team-panel-trophies').innerHTML = isSymbolicTeam(team)
+        ? `<div class="trophy-cabinet-item"><span class="trophy-emoji ps-medal-big">${PURPLE_MEDAL_SVG}</span></div>`
+        : `
         <div class="trophy-cabinet-item"><span class="trophy-emoji">🥇</span><div class="trophy-count">${trophies.gold}</div></div>
         <div class="trophy-cabinet-item"><span class="trophy-emoji">🥈</span><div class="trophy-count">${trophies.silver}</div></div>
         <div class="trophy-cabinet-item"><span class="trophy-emoji">🥉</span><div class="trophy-count">${trophies.bronze}</div></div>`;
@@ -111,6 +113,11 @@ function openTeamPanel(team){
         return `<div class="coin-log-row"><span>${escapeHtml(a.name||a.id)}${when?` · ${when}`:''}</span></div>`;
     }).join('') : '<div class="team-panel-empty">No Mystery Box wins yet</div>';
 
+    // A symbolic team plays no league/CUP/Mystery Box, so those sections stay hidden for it.
+    ['team-panel-records','team-panel-mba','team-panel-arena'].forEach(id=>{
+        const sec = document.getElementById(id) && document.getElementById(id).closest('.team-panel-section');
+        if(sec) sec.style.display = isSymbolicTeam(team) ? 'none' : '';
+    });
     document.getElementById('team-panel-overlay').classList.add('open');
 }
 function closeTeamPanel(){
