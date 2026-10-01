@@ -147,7 +147,7 @@
         {id:'lg-nav', sel:'#bottom-navigation', prop:'--lg-bf-nav', bezel:11, scale:12, blur:.5, radius:null},
         {id:'lg-cap', sel:'#hero-logo-container.in-header', prop:'--lg-bf-cap', bezel:11, scale:10, blur:.5, radius:28}
     ];
-    const bfChain = id=>`url(#${id}) saturate(1.25) brightness(1.04)`;
+    const bfChain = id=>`blur(calc(var(--lg-blur) * .8)) url(#${id}) saturate(1.25) brightness(1.04)`;   // frost first, then the lens bends it
     function refractionAllowed(){
         return canRefract && tier===1 && !lite() && !body.classList.contains('perf-no-blur') && !reduceMotion;
     }
