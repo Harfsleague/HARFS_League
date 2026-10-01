@@ -84,6 +84,7 @@ function setupSeasonFabScroll(){
 }
 
 function openAiPanel(){
+    if(typeof aiAssistantEnabled!=='undefined' && !aiAssistantEnabled){ showToast('HARFS Assistant is turned off in Settings','info',2400); return; }
     haptic([8]);
     navigate('ai-chat');
     renderAiMessages();

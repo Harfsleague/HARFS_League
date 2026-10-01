@@ -278,7 +278,7 @@ function renderMagazine(issue) {
         </div>
 
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-table"></i> جدول رده‌بندی</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-table"></i> ${issue.seasonContext?.tableRepresents === 'ended_season_final' && issue.seasonContext.endedSeasonId ? `جدول نهایی فصل ${issue.seasonContext.endedSeasonId}` : 'جدول رده‌بندی'}</h2>
             <table class="magazine-table">
                 <thead><tr><th>#</th><th>تیم</th><th>ب</th><th>برد</th><th>مساوی</th><th>باخت</th><th>امتیاز</th></tr></thead>
                 <tbody>${standingsRows}</tbody>

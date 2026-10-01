@@ -190,7 +190,10 @@ function computeAllTimeStats(seasonsArchive, currentSeasonTable, mainLeagueData)
     if (champion && base[champion]) base[champion].leagueTitles++;
   }
 
-  for (const table of [...(seasonsArchive || []).map((s) => s.table || []), currentSeasonTable]) {
+  // A freshly reset season (every team on 0 games) is not a "season played" yet —
+  // counting it would inflate seasonsPlayed right after End Season.
+  const liveHasGames = (currentSeasonTable || []).some((r) => (r.P || 0) > 0);
+  for (const table of [...(seasonsArchive || []).map((s) => s.table || []), ...(liveHasGames ? [currentSeasonTable] : [])]) {
     for (const row of table || []) {
       const s = base[row.name];
       if (!s) continue;
@@ -206,7 +209,97 @@ function computeAllTimeStats(seasonsArchive, currentSeasonTable, mainLeagueData)
   });
 }
 
-async function gatherData() {
+// ------------------------------------------------------------
+// SEASON CONTEXT
+// "End Season" (js/league-ops.js finishSeason) archives the finished season into
+// seasons_archive.json and, in the same click, RESETS league_data.json and
+// match_history.json to zero. The generator used to read only those two live
+// files, so an issue built right after End Season saw an empty brand-new season
+// and never mentioned the one that had just finished.
+//
+// The fix keys off DATES instead of guessing: if the newest archived season ended
+// AFTER the previous issue was generated, that finale has not been covered yet,
+// so this issue must cover it — whether or not new-season matches exist already.
+// ------------------------------------------------------------
+const FIRST_ISSUE_FINALE_WINDOW_DAYS = 30; // no previous issue to compare against
+
+function lastIssueTimeMs(lastIssue) {
+  if (!lastIssue) return null;
+  const t = Date.parse(lastIssue.generatedAt || (lastIssue.issueDate ? `${lastIssue.issueDate}T23:59:59Z` : ""));
+  return Number.isNaN(t) ? null : t;
+}
+
+// Newest archived season by END DATE (never trust array order or seasonId alone).
+function latestArchivedSeason(seasonsArchive) {
+  const dated = (seasonsArchive || [])
+    .map((s) => ({ s, t: Date.parse(s?.date) }))
+    .filter((x) => !Number.isNaN(x.t) && (x.s.table || []).length);
+  if (!dated.length) return null;
+  dated.sort((a, b) => b.t - a.t || (b.s.seasonId || 0) - (a.s.seasonId || 0));
+  return { season: dated[0].s, endedAtMs: dated[0].t };
+}
+
+function normalizeTable(table) {
+  return [...(table || [])]
+    .filter((r) => TEAM_NAMES.includes(r.name))
+    .sort((a, b) => (b.Pts || 0) - (a.Pts || 0) || ((b.GF || 0) - (b.GA || 0)) - ((a.GF || 0) - (a.GA || 0)));
+}
+
+function buildSeasonContext({ leagueData, matchHistory, seasonsArchive, lastIssue }) {
+  const liveTable = TEAM_NAMES.map((t) => ({ name: t, ...(leagueData[t] || {}) }));
+  const liveMatches = (matchHistory || []).length;
+  const liveHasGames = liveMatches > 0 || liveTable.some((r) => (r.P || 0) > 0);
+
+  const latest = latestArchivedSeason(seasonsArchive);
+  const lastIssueMs = lastIssueTimeMs(lastIssue);
+  const finaleUncovered =
+    !!latest &&
+    (lastIssueMs !== null
+      ? latest.endedAtMs > lastIssueMs
+      : Date.now() - latest.endedAtMs <= FIRST_ISSUE_FINALE_WINDOW_DAYS * 864e5);
+
+  let justEndedSeason = null;
+  if (finaleUncovered) {
+    const s = latest.season;
+    const finalTable = normalizeTable(s.table);
+    const history = Array.isArray(s.history) ? s.history : []; // newest-first, same as match_history.json
+    justEndedSeason = {
+      seasonId: s.seasonId,
+      endedAt: new Date(latest.endedAtMs).toISOString(),
+      champion: finalTable[0]?.name || null,
+      podium: finalTable.slice(0, 3).map((r) => r.name),
+      finalTable,
+      matchesPlayed: history.length || Math.round(finalTable.reduce((n, r) => n + (r.P || 0), 0) / 2),
+      // Whole-season records and the closing run of form, from the archived match list.
+      seasonRecords: computeWeeklyRecords(history),
+      finalForm: computeFormGuide(history),
+      closingMatches: history.slice(0, 8).map(({ home, away, score, timestamp }) => ({ home, away, score, timestamp })),
+      hasMatchHistory: history.length > 0,
+    };
+  }
+
+  // What the weekly sections (table / recent results / form / title race) describe:
+  // the live season if it has games, otherwise the season that just ended.
+  const focusIsEnded = !!justEndedSeason && !liveHasGames;
+  let status;
+  if (justEndedSeason) status = liveHasGames ? "season_ended_new_season_underway" : "season_ended_new_season_not_started";
+  else status = liveHasGames ? "season_in_progress" : "new_season_not_started";
+
+  return {
+    liveTable,
+    liveHasGames,
+    justEndedSeason,
+    focusIsEnded,
+    seasonContext: {
+      status,
+      tableRepresents: focusIsEnded ? "ended_season_final" : "live_season",
+      endedSeasonId: justEndedSeason?.seasonId ?? null,
+      newSeasonMatchesPlayed: liveMatches,
+    },
+  };
+}
+
+async function gatherData(lastIssue) {
   const [leagueData, mainLeagueData, matchHistory, seasonsArchive, weirdEventsRaw] = await Promise.all([
     fetchJson(`${RAW_BASE}league_data.json`, {}),
     fetchJson(`${RAW_BASE}main_league_data.json`, {}),
@@ -215,9 +308,16 @@ async function gatherData() {
     fetchJson(`${RAW_BASE}weird_events.json`, []),
   ]);
 
-  const currentSeasonTable = TEAM_NAMES.map((t) => ({ name: t, ...(leagueData[t] || {}) }));
+  const ctx = buildSeasonContext({ leagueData: leagueData || {}, matchHistory, seasonsArchive, lastIssue });
+  // History that the weekly sections describe: the ended season's archived matches when it is the
+  // focus, otherwise the live match list.
+  const endedHistory = ctx.justEndedSeason
+    ? (seasonsArchive || []).find((s) => s.seasonId === ctx.justEndedSeason.seasonId)?.history || []
+    : [];
+  const focusHistory = ctx.focusIsEnded ? endedHistory : matchHistory;
+  const currentSeasonTable = ctx.focusIsEnded ? ctx.justEndedSeason.finalTable : ctx.liveTable;
 
-  const recentMatches = (matchHistory || [])
+  const recentMatches = (focusHistory || [])
     .slice(0, 12)
     .map(({ home, away, score, timestamp }) => ({ home, away, score, timestamp }));
 
@@ -244,12 +344,15 @@ async function gatherData() {
     customName: mainLeagueData[t]?.customName || null,
   }));
 
-  const formGuide = computeFormGuide(matchHistory);
+  const formGuide = computeFormGuide(focusHistory);
   const weeklyRecords = computeWeeklyRecords(recentMatches);
   const titleRace = computeTitleRace(currentSeasonTable);
-  const allTimeStats = computeAllTimeStats(seasonsArchive, currentSeasonTable, mainLeagueData);
+  // all-time totals always use the LIVE table (an ended season is already inside the archive)
+  const allTimeStats = computeAllTimeStats(seasonsArchive, ctx.liveTable, mainLeagueData);
 
   return {
+    seasonContext: ctx.seasonContext,
+    justEndedSeason: ctx.justEndedSeason,
     currentSeasonTable,
     recentMatches,
     pastChampions,
@@ -374,6 +477,13 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 دربارهٔ previousIssuesSummary: خلاصه‌ای از ۱ تا ۳ شمارهٔ قبلی مجله است (عنوان، بخشی از گزارش، جملهٔ پایانی طنز، و مصاحبهٔ قبلی). این را فقط برای این می‌بینی که: (۱) از تکرار همان تیترها، جوک‌ها، توصیف‌ها و زاویه‌های قبلی خودداری کنی و لحن/محتوای تازه‌ای بسازی، و (۲) در صورت لزوم پیوستگی روایی با هفته‌های قبل را حفظ کنی (مثلاً اگر هفتهٔ قبل به یک روند اشاره شده، می‌توانی ادامه یا تغییرش را ببینی). هرگز محتوای previousIssuesSummary را عیناً یا با کمی تغییر در خروجی این هفته تکرار نکن.
 
 دربارهٔ بخش interview: دیتای ورودی یک مقدار به اسم interviewTeam دارد که همان تیمی است که باید امسال — یعنی همین شماره — با او «مصاحبه» کنی. این مصاحبه کاملاً خیالی و ساختهٔ ذهن توست (چون بازیکن یا مربی واقعی در دیتا نداریم)، می‌تواند تا حدی طنز و اغراق‌آمیز باشد، اما باید مقدار team را دقیقاً برابر interviewTeam بگذاری — تیم را خودت انتخاب نکن. سعی کن با اشاره‌های سطحی به وضعیت واقعی همان تیم (رتبه در جدول، فرم اخیر، فاصله تا صدر) مصاحبه را به دیتای واقعی گره بزنی، بدون این‌که هیچ عدد یا نتیجهٔ ساختگی به‌عنوان واقعیت مطرح کنی.
+
+دربارهٔ seasonContext و justEndedSeason (بسیار مهم — تشخیص «کدام فصل»): لیگ ممکن است همین تازگی تمام شده باشد و فصل جدید هنوز شروع نشده باشد. seasonContext.status یکی از این‌هاست:
+• season_ended_new_season_not_started: فصلی که در justEndedSeason آمده همین تازه تمام شده و فصل جدید هنوز هیچ بازی‌ای ندارد. این شماره باید «ویژه‌نامهٔ پایان فصل» باشد: قهرمان (champion)، سکوی سه‌نفره (podium)، جدول نهایی (justEndedSeason.finalTable که همان currentSeasonTable است)، رکوردهای کل فصل (seasonRecords)، فرم پایانی (finalForm) و بازی‌های پایانی (closingMatches). در titleRaceCommentary بگو قهرمانی قطعی شده (صحبت از «شانس قهرمانی» نکن) و در recommendations به فصل بعد نگاه کن. جدول فصل جدید خالی است؛ هرگز صفرها را به‌عنوان وضعیت لیگ تحلیل نکن و فقط در یک جمله به شروع فصل تازه اشاره کن.
+• season_ended_new_season_underway: فصل justEndedSeason تمام شده ولی فصل جدید هم چند بازی داشته. اول و با تفصیل بیشتر جمع‌بندی فصل تمام‌شده را بنویس (قهرمان، سکو، جدول نهایی از justEndedSeason)، سپس به‌طور جداگانه شروع فصل جدید را با currentSeasonTable و recentMatches روایت کن؛ این دو فصل را با هم قاطی نکن.
+• season_in_progress: فصل در جریان است؛ مثل همیشه بنویس.
+• new_season_not_started: فصل جدید هنوز شروع نشده و فصل تمام‌شدهٔ بی‌روایتی هم نیست؛ صادقانه و کوتاه بگو بازی‌ای ثبت نشده و درباره‌ٔ جدول صفر تحلیل نساز.
+اگر justEndedSeason.hasMatchHistory برابر false بود، یعنی فهرست بازی‌های آن فصل ذخیره نشده؛ فقط از جدول نهایی و آمار استفاده کن و نتیجهٔ بازی خاصی نساز. همیشه شمارهٔ فصل را درست و از seasonId بگو.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
@@ -559,13 +669,13 @@ async function callGeminiImage(promptEn) {
 // main
 // ------------------------------------------------------------
 async function main() {
-  console.log("Gathering league data...");
-  const data = await gatherData();
-
   // ---- load the existing archive first: issue numbering, the "don't
-  // repeat yourself" summary, and the interview rotation all depend on it,
-  // and none of them can wait until after the text call like before. ----
+  // repeat yourself" summary, the interview rotation AND the season-finale
+  // check (was the newest ended season already covered by the last issue?)
+  // all depend on it. ----
   const archive = (await fetchJson(`${RAW_BASE}weekly_magazine_archive.json`, [])) || [];
+  console.log("Gathering league data...");
+  const data = await gatherData(archive[0] || null); // archive is newest-first
   const issueNumber = archive.reduce((max, i) => Math.max(max, i.issueNumber || 0), 0) + 1;
 
   data.previousIssuesSummary = buildPreviousIssuesSummary(archive);
@@ -608,6 +718,10 @@ async function main() {
     generatedAt: now.toISOString(),
     coverImage: coverFile,
     standingsTable: data.currentSeasonTable,
+    seasonContext: data.seasonContext, // lets the app label a final table as "Season N final"
+    justEndedSeason: data.justEndedSeason
+      ? { seasonId: data.justEndedSeason.seasonId, endedAt: data.justEndedSeason.endedAt, champion: data.justEndedSeason.champion, podium: data.justEndedSeason.podium }
+      : null,
     recentMatches: data.recentMatches,
     formGuide: data.formGuide,
     weeklyRecords: data.weeklyRecords,

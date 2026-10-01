@@ -133,11 +133,15 @@ function playTrack(index) {
 // ensureOfflineTrackCached), so music never just goes silent offline.
 async function playTrackWithFallback(src, title){
     if (!bgMusic) return;
-    bgMusic.volume = 0.15;
+    bgMusic.volume = (typeof getMusicVolume === 'function') ? getMusicVolume() : 0.15;
+    window.nowPlayingTitle = title; // read by the Settings music player
+    document.dispatchEvent(new Event('harfs-track'));
     const playOffline = async () => {
         const offline = await idbGet('offlineTrack','v');
         if (offline && offline.blob) {
             bgMusic.src = URL.createObjectURL(offline.blob);
+            window.nowPlayingTitle = offline.title + ' (offline)';
+            document.dispatchEvent(new Event('harfs-track'));
             bgMusic.play().then(() => showSongNotification(offline.title + ' (offline)')).catch(() => {});
             return true;
         }

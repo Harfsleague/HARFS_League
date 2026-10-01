@@ -18,8 +18,8 @@
    ===================================================================== */
 
 :root{
-    --lg-blur:14px;
-    --lg-sat:145%;
+    --lg-blur:20px;
+    --lg-sat:150%;
     --lg-rim-hi:rgba(255,255,255,.40);
     --lg-rim:rgba(255,255,255,.13);
     --lg-rim-lo:rgba(255,255,255,.06);
@@ -54,7 +54,7 @@ body:not(.lite-mode):not(.perf-no-blur) :is(
     .ranking-card,.stat-card,.glass-button,.glass-input,.ai-entry-capsule
 ){
     -webkit-backdrop-filter:none; backdrop-filter:none;
-    background-color:rgba(12,20,34,.44);
+    background-color:rgba(12,20,34,.62);
     background-image:
         radial-gradient(130% 80% at var(--gx) -10%,rgba(255,255,255,.09),rgba(255,255,255,0) 60%),
         linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05));
@@ -92,7 +92,7 @@ body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.
    3. FLOATING GLASS — real backdrop-filter, upgraded to refraction by JS
    --------------------------------------------------------------------- */
 body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav,.mini-player,.back-to-top-fab,#hero-logo-container.in-header,#hero-logo-container.box-forming){
-    background-color:rgba(14,22,38,.36);
+    background-color:rgba(14,22,38,.62);
     background-image:
         radial-gradient(90% 150% at var(--gx) var(--gy),rgba(255,255,255,.11),rgba(255,255,255,0) 62%),
         linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.02) 46%,rgba(255,255,255,.055));
@@ -116,11 +116,11 @@ body:not(.lite-mode):not(.perf-no-blur) :is(.mini-player,.back-to-top-fab,#hero-
 }
 /* sheets / modals: real translucency, smaller blur (was 30px at 0.99 alpha = invisible + costly) */
 body:not(.lite-mode):not(.perf-no-blur) :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content,.login-panel,.settings-screen-panel){
-    -webkit-backdrop-filter:blur(20px) saturate(155%);
-    backdrop-filter:blur(20px) saturate(155%);
+    -webkit-backdrop-filter:blur(26px) saturate(155%);
+    backdrop-filter:blur(26px) saturate(155%);
     background-image:
         linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.02) 40%,rgba(255,255,255,.05)),
-        linear-gradient(160deg,rgba(10,18,30,.84),rgba(15,23,42,.90));
+        linear-gradient(160deg,rgba(10,18,30,.91),rgba(15,23,42,.94));
     border-top-color:var(--lg-rim-hi);
 }
 body:not(.lite-mode) :is(.modal-overlay,.team-picker-sheet){ -webkit-backdrop-filter:none; backdrop-filter:none; }
@@ -222,7 +222,7 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
     position:sticky; z-index:5;
     top:0;                       /* the screen's own top padding already clears the capsule */
     margin:0 -6px 6px; padding:6px 6px; border-radius:16px;
-    background:linear-gradient(180deg,rgba(12,20,34,.62),rgba(12,20,34,.34));
+    background:linear-gradient(180deg,rgba(12,20,34,.74),rgba(12,20,34,.52));
     box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
 }
 .lg-hist-summary{
@@ -275,14 +275,14 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
    6. ADAPTIVE TIERS (set by js/glass-fx.js from a real FPS measurement)
    Nothing is removed — the look stays, the cost drops.
    --------------------------------------------------------------------- */
-body.tier-2{ --lg-blur:10px; --lg-sat:150%; }
+body.tier-2{ --lg-blur:14px; --lg-sat:150%; }
 body.tier-2 .bottom-nav::before,body.tier-2 #hero-logo-container::before{ display:none; }
-body.tier-3{ --lg-blur:7px; --lg-sat:140%; }
+body.tier-3{ --lg-blur:10px; --lg-sat:140%; }
 body.tier-3 .ambient-orb{ animation:none; }
 body.tier-3 #particle-canvas{ display:none; }
 body.tier-3 .bottom-nav::before,body.tier-3 #hero-logo-container::before{ display:none; }
 body.tier-3 :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content){
-    -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
     :is(.bottom-nav,.mini-player,#hero-logo-container.in-header,.settings-panel,.team-picker-panel){ background-color:rgba(10,18,30,.92); }

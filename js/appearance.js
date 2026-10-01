@@ -443,7 +443,28 @@ function syncSettingsUI(){
         modeIcon.className = 'fas '+m.icon;
         modeLabel.textContent = m.label;
     }
+    if(typeof renderMusicPlayerUI==='function') renderMusicPlayerUI();
+    syncAiAssistantUI();
 }
+
+// ============================================================
+// HARFS ASSISTANT on/off — hides the entry card on Overall (and blocks
+// opening the chat) when switched off. Saved on this device.
+// ============================================================
+let aiAssistantEnabled = localStorage.getItem('aiAssistant') !== 'off';
+function syncAiAssistantUI(){
+    document.body.classList.toggle('ai-disabled', !aiAssistantEnabled);
+    const t=document.getElementById('ai-assistant-toggle');
+    if(t) t.classList.toggle('on', aiAssistantEnabled);
+}
+function toggleAiAssistant(){
+    haptic([8]);
+    aiAssistantEnabled = !aiAssistantEnabled;
+    localStorage.setItem('aiAssistant', aiAssistantEnabled ? 'on' : 'off');
+    syncAiAssistantUI();
+    showToast(aiAssistantEnabled ? 'HARFS Assistant on' : 'HARFS Assistant off', 'info', 1600);
+}
+syncAiAssistantUI(); // apply the saved choice on startup
 
 function openSettings(){
     navigate('settings');
@@ -457,6 +478,8 @@ function settingsToggleMusic(){
 // Populates the Settings screen each time it's navigated to: team
 // badge, admin tile visibility (Bayern only), current toggle states.
 function renderSettingsScreen(){
+    initMusicPlayer();
+    if(!PLAYLIST.length && typeof loadPlaylistFromGitHub==='function') loadPlaylistFromGitHub().then(renderMusicPlayerUI);
     syncSettingsUI();
     syncAppearanceUI();
     const badgeLogo=document.getElementById('settings-team-badge-logo');
@@ -543,6 +566,137 @@ function selectPlaylistTrack(index){
     syncSettingsUI();
     renderPlaylistSheet();
 }
+// ============================================================
+// MUSIC PLAYER (Settings) — drives the same <audio id="background-music"> the
+// rest of the app uses. Play/pause == music on/off (same flag as before, so a
+// paused player stays off after a reload, exactly like the old Music tile).
+// ============================================================
+function getMusicVolume(){
+    const v=parseFloat(localStorage.getItem('musicVolume'));
+    return isFinite(v) ? Math.min(1,Math.max(0,v)) : 0.15; // 0.15 = the app's old fixed volume
+}
+function fmtPlayerTime(s){
+    if(!isFinite(s)||s<0) return '0:00';
+    const m=Math.floor(s/60), sec=Math.floor(s%60);
+    return m+':'+String(sec).padStart(2,'0');
+}
+let mpDragging=false, mpInited=false;
+function setRangeFill(el,pct){ el.style.setProperty('--p', pct+'%'); }
+function playerIsPlaying(){
+    const bg=document.getElementById('background-music');
+    return !!(bg && !bg.paused && !bg.ended && !musicMuted);
+}
+function renderMusicPlayerUI(){
+    const root=document.getElementById('music-player');
+    if(!root) return;
+    const bg=document.getElementById('background-music');
+    const playing=playerIsPlaying();
+    const track=PLAYLIST[currentTrackIndex];
+    const title=window.nowPlayingTitle || (track&&track.title) || 'Nothing playing';
+    const titleEl=document.getElementById('mp-title');
+    if(titleEl && titleEl.dataset.t!==title){
+        titleEl.dataset.t=title;
+        titleEl.innerHTML='<span></span>'; titleEl.firstChild.textContent=title;
+        requestAnimationFrame(()=>{
+            const sp=titleEl.firstChild; if(!sp) return;
+            const over=sp.scrollWidth-titleEl.clientWidth;
+            titleEl.classList.toggle('scroll', over>4);
+            titleEl.style.setProperty('--mp-shift', (-over)+'px');
+        });
+    }
+    const mode=PLAYBACK_MODES[playbackMode]||PLAYBACK_MODES.shuffle;
+    document.getElementById('mp-sub').textContent = PLAYLIST.length
+        ? `Track ${currentTrackIndex+1} of ${PLAYLIST.length} · ${mode.label}` : 'HARFS Playlist';
+    document.getElementById('mp-mode-icon').className='fas '+mode.icon;
+    document.getElementById('mp-play-icon').className='fas '+(playing?'fa-pause':'fa-play');
+    document.getElementById('mp-art').classList.toggle('playing', playing);
+    const vol=document.getElementById('mp-vol');
+    if(vol && document.activeElement!==vol){ const v=Math.round(getMusicVolume()*100); vol.value=v; setRangeFill(vol,v); }
+    renderMusicProgress();
+}
+function renderMusicProgress(){
+    const bg=document.getElementById('background-music');
+    const seek=document.getElementById('mp-seek');
+    if(!bg||!seek||mpDragging) return;
+    const dur=bg.duration, ok=isFinite(dur)&&dur>0;
+    seek.disabled=!ok;
+    const frac=ok ? Math.min(1,bg.currentTime/dur) : 0;
+    seek.value=Math.round(frac*1000);
+    setRangeFill(seek, frac*100);
+    document.getElementById('mp-cur').textContent=fmtPlayerTime(ok?bg.currentTime:0);
+    document.getElementById('mp-dur').textContent=fmtPlayerTime(ok?dur:0);
+}
+function initMusicPlayer(){
+    if(mpInited) return;
+    const bg=document.getElementById('background-music'), root=document.getElementById('music-player');
+    if(!bg||!root) return;
+    mpInited=true;
+    const onScreen=()=>document.getElementById('settings-screen')?.classList.contains('active');
+    ['play','pause','ended','loadedmetadata','durationchange','emptied'].forEach(ev=>bg.addEventListener(ev,()=>{ if(onScreen()) renderMusicPlayerUI(); }));
+    bg.addEventListener('timeupdate',()=>{ if(onScreen()) renderMusicProgress(); });
+    document.addEventListener('harfs-track',()=>{ if(onScreen()) renderMusicPlayerUI(); });
+
+    const seek=document.getElementById('mp-seek');
+    seek.addEventListener('pointerdown',()=>{ mpDragging=true; });
+    seek.addEventListener('input',()=>{
+        mpDragging=true;
+        const dur=bg.duration; if(!isFinite(dur)||dur<=0) return;
+        const f=seek.value/1000;
+        setRangeFill(seek,f*100);
+        document.getElementById('mp-cur').textContent=fmtPlayerTime(f*dur);
+    });
+    seek.addEventListener('change',()=>{
+        const dur=bg.duration;
+        if(isFinite(dur)&&dur>0) bg.currentTime=(seek.value/1000)*dur;
+        mpDragging=false; renderMusicProgress();
+    });
+    ['pointerup','pointercancel'].forEach(ev=>seek.addEventListener(ev,()=>{ setTimeout(()=>{ mpDragging=false; },0); }));
+
+    const vol=document.getElementById('mp-vol');
+    vol.addEventListener('input',()=>{
+        const v=vol.value/100;
+        bg.volume=v; localStorage.setItem('musicVolume', String(v));
+        setRangeFill(vol, vol.value);
+    });
+    // the app's page-swipe listens on #app-container — keep slider drags from changing pages
+    ['touchstart','touchend'].forEach(ev=>root.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
+}
+function playerEnsureOn(){
+    if(musicMuted){ musicMuted=false; localStorage.setItem('music','on'); }
+    backgroundMusicStarted=true;
+}
+function playerTogglePlay(){
+    haptic([8]);
+    const bg=document.getElementById('background-music'); if(!bg) return;
+    if(playerIsPlaying()){ toggleMusic(); syncSettingsUI(); return; }       // pause (= music off)
+    if(musicMuted){ toggleMusic(); syncSettingsUI(); return; }              // resume / first start
+    // not muted but not playing (autoplay was blocked, or nothing started yet)
+    backgroundMusicStarted=true;
+    if(bg.src){ bg.play().catch(()=>{}); }
+    else loadPlaylistFromGitHub().then(()=>playTrack(Math.floor(Math.random()*PLAYLIST.length)));
+    syncSettingsUI();
+}
+function playerStep(dir){
+    const go=()=>{
+        if(!PLAYLIST.length) return;
+        playerEnsureOn();
+        let next;
+        if(dir>0 && playbackMode==='shuffle' && PLAYLIST.length>1){
+            do{ next=Math.floor(Math.random()*PLAYLIST.length); }while(next===currentTrackIndex);
+        } else next=currentTrackIndex+dir;
+        playTrack(next);
+        syncSettingsUI();
+    };
+    if(PLAYLIST.length) go(); else loadPlaylistFromGitHub().then(go);
+}
+function playerNext(){ haptic([8]); playerStep(1); }
+function playerPrev(){
+    haptic([8]);
+    const bg=document.getElementById('background-music');
+    if(bg && bg.currentTime>3 && !musicMuted){ bg.currentTime=0; renderMusicProgress(); return; } // restart first, like most players
+    playerStep(-1);
+}
+
 function cyclePlaybackMode(){
     const order=['shuffle','sequential','single'];
     const idx=order.indexOf(playbackMode);
