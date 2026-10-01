@@ -464,7 +464,7 @@ function loadSelectedSeason(val){
 }
 async function loadMainLeagueDataFromGitHub(){
     if(!Object.keys(mainLeagueData).length)initializeMainLeagueData();
-    const cached=await idbGet('mainLeagueData','v');
+    const cached=repairMojibake(await idbGet('mainLeagueData','v'));
     if(cached) Object.keys(cached).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...cached[k]};});
     if(!navigator.onLine){
         setSyncStatus('offline');
@@ -477,7 +477,7 @@ async function loadMainLeagueDataFromGitHub(){
         const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
         if(r.ok){
             const d=await r.json();mainSha=d.sha;
-            const c=await(await fetch(d.download_url)).json();
+            const c=repairMojibake(await(await fetch(d.download_url)).json());
             Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});
             await idbSet('mainLeagueData','v',c);
         }

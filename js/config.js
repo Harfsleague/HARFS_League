@@ -115,4 +115,27 @@ function syncTeamDisplayNames(){
         TEAM_DISPLAY_NAMES[t] = (custom && custom.trim()) ? custom.trim() : t;
     });
 }
+// Self-heal text that an older Worker double-encoded (emoji / Persian turning into
+// "ÃÂ…" and growing a layer per save). Peels layers until it is real text again;
+// only touches strings with the telltale Ã/Â + continuation-byte pattern.
+const MOJIBAKE_RE=/[\u00c2\u00c3][\u0080-\u00bf]/;
+function repairMojibake(v){
+    if(typeof v==='string'){
+        if(v.length<4||!MOJIBAKE_RE.test(v)) return v;
+        let cur=v;
+        const dec=new TextDecoder('utf-8',{fatal:true});
+        for(let i=0;i<40;i++){
+            if(/[^\u0000-\u00ff]/.test(cur)) break;
+            const b=new Uint8Array(cur.length);
+            for(let j=0;j<cur.length;j++) b[j]=cur.charCodeAt(j);
+            let next; try{ next=dec.decode(b); }catch(e){ break; }
+            if(next===cur) break;
+            cur=next;
+        }
+        return cur;
+    }
+    if(Array.isArray(v)) return v.map(repairMojibake);
+    if(v&&typeof v==='object'){ Object.keys(v).forEach(k=>{ v[k]=repairMojibake(v[k]); }); }
+    return v;
+}
 function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
