@@ -19,6 +19,7 @@
     const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
     const lite = ()=>body.classList.contains('lite-mode');
+    const ENABLE_DRAG = true;       // set false to keep the nav lens but drop drag-to-switch
 
     // ---------------------------------------------------------
     // 1. ADAPTIVE TIER
@@ -131,8 +132,8 @@
         const html=`<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
             <feImage href="${url}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/>
             ${f('1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0',1,'r')}
-            ${f('0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0',.94,'g')}
-            ${f('0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0',.88,'b')}
+            ${f('0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0',.975,'g')}
+            ${f('0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0',.95,'b')}
             <feBlend in="r" in2="g" mode="screen" result="rg"/>
             <feBlend in="rg" in2="b" mode="screen" result="rgb"/>
             <feGaussianBlur in="rgb" stdDeviation="${opts.blur}"/>
@@ -143,10 +144,10 @@
         return true;
     }
     const LENSES=[
-        {id:'lg-nav', sel:'#bottom-navigation', prop:'--lg-bf-nav', bezel:16, scale:26, blur:.7, radius:null},
-        {id:'lg-cap', sel:'#hero-logo-container.in-header', prop:'--lg-bf-cap', bezel:16, scale:22, blur:.7, radius:28}
+        {id:'lg-nav', sel:'#bottom-navigation', prop:'--lg-bf-nav', bezel:11, scale:12, blur:.5, radius:null},
+        {id:'lg-cap', sel:'#hero-logo-container.in-header', prop:'--lg-bf-cap', bezel:11, scale:10, blur:.5, radius:28}
     ];
-    const bfChain = id=>`url(#${id}) saturate(1.7) brightness(1.1)`;
+    const bfChain = id=>`url(#${id}) saturate(1.25) brightness(1.04)`;
     function refractionAllowed(){
         return canRefract && tier===1 && !lite() && !body.classList.contains('perf-no-blur') && !reduceMotion;
     }
@@ -211,13 +212,13 @@
         // drag the lens across the bar like Apple's tab bar; release to go there
         let drag=null;
         nav.addEventListener('pointerdown',e=>{
-            if(!e.target.closest('.nav-item')) return;
+            if(!ENABLE_DRAG||!e.target.closest('.nav-item')) return;
             drag={x0:e.clientX,moved:false,id:e.pointerId};
             lens.classList.add('lg-hold');
         });
         nav.addEventListener('pointermove',e=>{
             if(!drag) return;
-            if(!drag.moved && Math.abs(e.clientX-drag.x0)>8){
+            if(!drag.moved && Math.abs(e.clientX-drag.x0)>12){
                 drag.moved=true; try{ nav.setPointerCapture(drag.id); }catch(_){}
                 lens.classList.add('lg-drag');
             }
@@ -406,12 +407,12 @@
             setAurora(w==='a'?ac:hc, w==='a'?hc:ac, w==='d'?'251,191,36':(w==='a'?ac:hc));
         }
     }
-    let io2=null;
+    let io2=null, auroraTimer=0, pendingRow=null;
     function watchCenter(){
         if(!hasIO) return;
         if(io2) io2.disconnect();
         io2=new IntersectionObserver(es=>{
-            es.forEach(en=>{ if(en.isIntersecting) auroraFromRow(en.target); });
+            es.forEach(en=>{ if(en.isIntersecting){ pendingRow=en.target; clearTimeout(auroraTimer); auroraTimer=setTimeout(()=>auroraFromRow(pendingRow),280); } });   // only once scrolling settles
         },{rootMargin:'-44% 0px -44% 0px',threshold:0});
         rows().forEach(r=>{ if(!r.classList.contains('hidden-by-filter')) io2.observe(r); });
     }
@@ -425,7 +426,7 @@
             const r=c.getBoundingClientRect();
             if(r.bottom<0||r.top>innerHeight) return;
             const p=(innerHeight*.5-r.top)/Math.max(r.height,1);
-            const ax=(Math.sin(p*12.5)*38).toFixed(1)+'px', ay=(Math.cos(p*6.3)*22).toFixed(1)+'px';
+            const ax=(Math.sin(p*9)*14).toFixed(1)+'px', ay=(Math.cos(p*5)*8).toFixed(1)+'px';
             [aurA,aurB].forEach(b=>{ b.style.setProperty('--ax',ax); b.style.setProperty('--ay',ay); });
         });
     }
@@ -456,12 +457,7 @@
             if(bar&&bar.parentNode) bar.parentNode.insertBefore(el,bar.nextSibling); else l.parentNode.insertBefore(el,l);
         }
         const rs=[].slice.call(rows());
-        if(!rs.length){ el.textContent=''; return; }
-        if(team==='all'){
-            let goals=0; rs.forEach(r=>{ goals+=(+r.dataset.hs)+(+r.dataset.as); });
-            el.innerHTML=`<span>${rs.length} matches</span><span>${goals} goals</span>`;
-            return;
-        }
+        if(!rs.length||team==='all'){ el.classList.remove('show'); return; }
         let w=0,d=0,lo=0,gf=0,ga=0; const form=[];
         rs.forEach(r=>{
             const h=r.dataset.home===team, a=r.dataset.away===team; if(!h&&!a) return;
@@ -472,6 +468,7 @@
         });
         el.innerHTML=`<span><b class="w">${w}W</b> <b class="d">${d}D</b> <b class="l">${lo}L</b></span>
             <span>${gf}:${ga}</span><span class="lg-form">${form.map(x=>`<i class="${x}"></i>`).join('')}</span>`;
+        el.classList.add('show');
     }
 
     function markFilterIn(prevHidden){

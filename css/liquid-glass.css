@@ -19,12 +19,12 @@
 
 :root{
     --lg-blur:14px;
-    --lg-sat:165%;
-    --lg-rim-hi:rgba(255,255,255,.55);
-    --lg-rim:rgba(255,255,255,.17);
+    --lg-sat:145%;
+    --lg-rim-hi:rgba(255,255,255,.40);
+    --lg-rim:rgba(255,255,255,.13);
     --lg-rim-lo:rgba(255,255,255,.06);
     --lg-ease:cubic-bezier(.22,1,.36,1);
-    --lg-spring:cubic-bezier(.34,1.45,.5,1);
+    --lg-spring:cubic-bezier(.3,1.12,.5,1);
     --gx:50%; --gy:0%;                       /* specular light, set by JS (tilt / pointer) */
 }
 
@@ -56,8 +56,8 @@ body:not(.lite-mode):not(.perf-no-blur) :is(
     -webkit-backdrop-filter:none; backdrop-filter:none;
     background-color:rgba(12,20,34,.44);
     background-image:
-        radial-gradient(130% 80% at var(--gx) -10%,rgba(255,255,255,.13),rgba(255,255,255,0) 60%),
-        linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.025) 45%,rgba(255,255,255,.07));
+        radial-gradient(130% 80% at var(--gx) -10%,rgba(255,255,255,.09),rgba(255,255,255,0) 60%),
+        linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05));
     border-color:var(--lg-rim);
     border-top-color:var(--lg-rim-hi);
     border-bottom-color:var(--lg-rim-lo);
@@ -80,10 +80,10 @@ body:not(.lite-mode):not(.perf-no-shadow) :is(.league-header,.season-history-car
 /* gradient rim (static: costs nothing after first paint) */
 body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.settings-panel,.bottom-nav,#hero-logo-container.in-header,.mini-player)::after{
     content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none;
-    background:linear-gradient(140deg,rgba(255,255,255,.62),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 66%,rgba(255,255,255,.26));
+    background:linear-gradient(140deg,rgba(255,255,255,.40),rgba(255,255,255,0) 28%,rgba(255,255,255,0) 70%,rgba(255,255,255,.14));
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
     -webkit-mask-composite:xor; mask-composite:exclude;
-    opacity:.9;
+    opacity:.75;
 }
 .league-header,.ai-entry-capsule,.mini-player{ position:relative; }
 .mini-player{ position:absolute; }                  /* it is absolutely placed by styles.css */
@@ -94,25 +94,25 @@ body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.
 body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav,.mini-player,.back-to-top-fab,#hero-logo-container.in-header,#hero-logo-container.box-forming){
     background-color:rgba(14,22,38,.36);
     background-image:
-        radial-gradient(90% 150% at var(--gx) var(--gy),rgba(255,255,255,.20),rgba(255,255,255,0) 62%),
-        linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.03) 46%,rgba(255,255,255,.09));
+        radial-gradient(90% 150% at var(--gx) var(--gy),rgba(255,255,255,.11),rgba(255,255,255,0) 62%),
+        linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.02) 46%,rgba(255,255,255,.055));
     box-shadow:
-        inset 0 1.5px 0 rgba(255,255,255,.42),
-        inset 0 -1px 0 rgba(255,255,255,.07),
-        inset 0 0 28px rgba(255,255,255,.055),
-        0 14px 36px rgba(0,0,0,.38);
+        inset 0 1px 0 rgba(255,255,255,.28),
+        inset 0 -1px 0 rgba(255,255,255,.05),
+        inset 0 0 18px rgba(255,255,255,.03),
+        0 12px 30px rgba(0,0,0,.34);
 }
 body:not(.lite-mode):not(.perf-no-blur) .bottom-nav{
-    -webkit-backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
-    backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
+    -webkit-backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
+    backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
 }
 body:not(.lite-mode):not(.perf-no-blur) #hero-logo-container.in-header{
-    -webkit-backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
-    backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08));
+    -webkit-backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
+    backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
 }
 body:not(.lite-mode):not(.perf-no-blur) :is(.mini-player,.back-to-top-fab,#hero-logo-container.box-forming){
-    -webkit-backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08);
-    backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.08);
+    -webkit-backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05);
+    backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05);
 }
 /* sheets / modals: real translucency, smaller blur (was 30px at 0.99 alpha = invisible + costly) */
 body:not(.lite-mode):not(.perf-no-blur) :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content,.login-panel,.settings-screen-panel){
@@ -130,9 +130,9 @@ body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav::before,
 body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
     content:''; position:absolute; top:0; bottom:0; left:0; width:42%;
     pointer-events:none; border-radius:0;
-    background:linear-gradient(105deg,rgba(255,255,255,0),rgba(255,255,255,.22) 50%,rgba(255,255,255,0));
+    background:linear-gradient(105deg,rgba(255,255,255,0),rgba(255,255,255,.09) 50%,rgba(255,255,255,0));
     transform:translate3d(-130%,0,0) skewX(-14deg);
-    animation:lgSweep 8s var(--lg-ease) infinite;
+    animation:lgSweep 14s var(--lg-ease) infinite;
     will-change:transform;
 }
 @keyframes lgSweep{
@@ -151,26 +151,24 @@ body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
     position:absolute; left:0; top:0; pointer-events:none; z-index:0;
     opacity:0; will-change:transform;
 }
-.lg-lens.lg-ready{ opacity:1; transition:transform .6s var(--lg-spring),opacity .3s ease; }
+.lg-lens.lg-ready{ opacity:1; transition:transform .5s var(--lg-spring),opacity .3s ease; }
 .lg-lens.lg-drag{ transition:none; }
 .lg-lens i{
     position:absolute; inset:0; border-radius:9999px; display:block;
     background:
-        radial-gradient(80% 120% at 50% 0%,var(--nav-active-bg),rgba(0,0,0,0) 70%),
-        linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.07) 55%,rgba(255,255,255,.16));
+        radial-gradient(80% 120% at 50% 0%,var(--nav-active-bg),rgba(0,0,0,0) 72%),
+        linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.04) 55%,rgba(255,255,255,.08));
     border:1px solid var(--nav-active-border);
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.6),
-        inset 0 -1px 0 rgba(255,255,255,.14),
-        inset 0 0 14px rgba(255,255,255,.12),
-        0 0 20px var(--primary-glow),
-        0 5px 14px rgba(0,0,0,.28);
+        inset 0 1px 0 rgba(255,255,255,.32),
+        inset 0 0 10px rgba(255,255,255,.05),
+        0 0 10px var(--primary-glow);
     transition:transform .3s var(--lg-spring);
 }
-.lg-lens.lg-move i{ animation:lgStretch .6s cubic-bezier(.3,.7,.3,1); }
-.lg-lens.lg-hold i,.lg-lens.lg-drag i{ transform:scale(1.14,1.08); }
+.lg-lens.lg-move i{ animation:lgStretch .5s cubic-bezier(.3,.7,.3,1); }
+.lg-lens.lg-hold i,.lg-lens.lg-drag i{ transform:scale(1.03); }
 @keyframes lgStretch{
-    0%{ transform:scale(1); } 32%{ transform:scale(1.34,.88); } 66%{ transform:scale(.97,1.05); } 100%{ transform:scale(1); }
+    0%{ transform:scale(1); } 35%{ transform:scale(1.10,.965); } 70%{ transform:scale(.99,1.01); } 100%{ transform:scale(1); }
 }
 /* with the lens present, the per-item active chrome steps aside */
 .bottom-nav.lg-has-lens .nav-item.active{ background:none; border-color:transparent; box-shadow:none; }
@@ -208,12 +206,12 @@ body:not(.lite-mode) .season-history-card{
 .lg-aurora{ position:sticky; top:0; height:0; z-index:-1; pointer-events:none; }
 .lg-aurora b{
     position:absolute; left:-18%; right:-18%; top:-220px; height:calc(100vh + 220px);
-    opacity:0; transition:opacity .8s ease;
+    opacity:0; transition:opacity 1.4s ease;
     /* every gradient fades to 0 well inside the box -> no hard edges anywhere */
     background:
-        radial-gradient(56% 34% at 18% 30%,rgba(var(--c1,96,165,250),.34),rgba(var(--c1,96,165,250),0) 70%),
-        radial-gradient(50% 32% at 86% 52%,rgba(var(--c2,129,140,248),.28),rgba(var(--c2,129,140,248),0) 70%),
-        radial-gradient(62% 28% at 42% 68%,rgba(var(--c3,96,165,250),.20),rgba(var(--c3,96,165,250),0) 72%);
+        radial-gradient(56% 34% at 18% 30%,rgba(var(--c1,96,165,250),.15),rgba(var(--c1,96,165,250),0) 70%),
+        radial-gradient(50% 32% at 86% 52%,rgba(var(--c2,129,140,248),.10),rgba(var(--c2,129,140,248),0) 70%),
+        radial-gradient(62% 28% at 42% 68%,rgba(var(--c3,96,165,250),.06),rgba(var(--c3,96,165,250),0) 72%);
     transform:translate3d(var(--ax,0px),var(--ay,0px),0);
     will-change:opacity;
 }
@@ -223,19 +221,21 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
 #season-history-filter-bar{
     position:sticky; z-index:5;
     top:0;                       /* the screen's own top padding already clears the capsule */
-    margin:0 -6px 8px; padding:7px 6px; border-radius:16px;
-    background:linear-gradient(180deg,rgba(12,20,34,.86),rgba(12,20,34,.62));
-    box-shadow:0 8px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.10);
+    margin:0 -6px 6px; padding:6px 6px; border-radius:16px;
+    background:linear-gradient(180deg,rgba(12,20,34,.62),rgba(12,20,34,.34));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
 }
 .lg-hist-summary{
-    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
-    font-size:.66rem; font-weight:800; letter-spacing:.4px; color:#cbd5e1;
-    margin:2px 0 10px; min-height:20px;
+    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+    font-size:.62rem; font-weight:700; letter-spacing:.3px; color:#94a3b8;
+    margin:0 0 8px; min-height:0; overflow:hidden;
+    max-height:0; opacity:0; transition:max-height .35s var(--lg-ease),opacity .3s ease,margin .3s ease;
 }
+.lg-hist-summary.show{ max-height:24px; opacity:1; margin:2px 0 10px; }
 .lg-hist-summary .w{ color:#4ade80; } .lg-hist-summary .d{ color:#a5b4fc; } .lg-hist-summary .l{ color:#f87171; }
-.lg-form{ display:inline-flex; gap:4px; align-items:center; }
-.lg-form i{ width:8px; height:8px; border-radius:50%; background:#818cf8; box-shadow:0 0 8px currentColor; color:#818cf8; }
-.lg-form i.w{ background:#22c55e; color:#22c55e; } .lg-form i.l{ background:#ef4444; color:#ef4444; }
+.lg-form{ display:inline-flex; gap:3px; align-items:center; }
+.lg-form i{ width:6px; height:6px; border-radius:50%; background:#818cf8; opacity:.85; }
+.lg-form i.w{ background:#22c55e; } .lg-form i.l{ background:#ef4444; }
 
 .match-card-mini{
     --hc:96,165,250; --ac:129,140,248; --res:transparent;
@@ -245,27 +245,27 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
     content-visibility:auto; contain-intrinsic-size:auto 66px;
     background-color:rgba(255,255,255,.028);
     background-image:
-        linear-gradient(90deg,rgba(var(--hc),.13),rgba(var(--hc),0) 46%),
-        linear-gradient(270deg,rgba(var(--ac),.13),rgba(var(--ac),0) 46%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.13);
+        linear-gradient(90deg,rgba(var(--hc),.05),rgba(var(--hc),0) 42%),
+        linear-gradient(270deg,rgba(var(--ac),.05),rgba(var(--ac),0) 42%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
 }
 .match-card-mini.in-view{ opacity:1; transform:none; }
 .match-card-mini.hidden-by-filter{ display:none; }
-.match-card-mini[data-w="h"]{ background-image:linear-gradient(90deg,rgba(var(--hc),.30),rgba(var(--hc),0) 66%),linear-gradient(270deg,rgba(var(--ac),.04),rgba(var(--ac),0) 40%); }
-.match-card-mini[data-w="a"]{ background-image:linear-gradient(270deg,rgba(var(--ac),.30),rgba(var(--ac),0) 66%),linear-gradient(90deg,rgba(var(--hc),.04),rgba(var(--hc),0) 40%); }
+.match-card-mini[data-w="h"]{ background-image:linear-gradient(90deg,rgba(var(--hc),.13),rgba(var(--hc),0) 55%),linear-gradient(270deg,rgba(var(--ac),.02),rgba(var(--ac),0) 36%); }
+.match-card-mini[data-w="a"]{ background-image:linear-gradient(270deg,rgba(var(--ac),.13),rgba(var(--ac),0) 55%),linear-gradient(90deg,rgba(var(--hc),.02),rgba(var(--hc),0) 36%); }
 .match-card-mini::before{
-    content:''; position:absolute; left:0; top:9px; bottom:9px; width:3px; border-radius:3px;
+    content:''; position:absolute; left:0; top:12px; bottom:12px; width:2px; border-radius:2px;
     background:var(--res); opacity:0; transform:scaleY(.3);
     transition:opacity .35s ease,transform .45s var(--lg-ease);
 }
 /* team filter: result colours take over (selected team is always on the left) */
-.match-card-mini[data-res]::before{ opacity:1; transform:none; box-shadow:0 0 10px var(--res); }
-.match-card-mini[data-res="win"]{  --res:#22c55e; background-image:linear-gradient(90deg,rgba(34,197,94,.24),rgba(34,197,94,0) 62%); }
-.match-card-mini[data-res="loss"]{ --res:#ef4444; background-image:linear-gradient(90deg,rgba(239,68,68,.22),rgba(239,68,68,0) 62%); }
-.match-card-mini[data-res="draw"]{ --res:#818cf8; background-image:linear-gradient(90deg,rgba(129,140,248,.20),rgba(129,140,248,0) 62%); }
-.match-card-mini[data-res="win"] .mcm-score{ color:#86efac; background:rgba(34,197,94,.16); }
-.match-card-mini[data-res="loss"] .mcm-score{ color:#fca5a5; background:rgba(239,68,68,.16); }
-.match-card-mini[data-res="draw"] .mcm-score{ color:#c7d2fe; background:rgba(129,140,248,.16); }
+.match-card-mini[data-res]::before{ opacity:.85; transform:none; }
+.match-card-mini[data-res="win"]{  --res:#22c55e; background-image:linear-gradient(90deg,rgba(34,197,94,.09),rgba(34,197,94,0) 50%); }
+.match-card-mini[data-res="loss"]{ --res:#ef4444; background-image:linear-gradient(90deg,rgba(239,68,68,.08),rgba(239,68,68,0) 50%); }
+.match-card-mini[data-res="draw"]{ --res:#818cf8; background-image:linear-gradient(90deg,rgba(129,140,248,.07),rgba(129,140,248,0) 50%); }
+.match-card-mini[data-res="win"] .mcm-score{ color:#86efac; background:rgba(34,197,94,.10); }
+.match-card-mini[data-res="loss"] .mcm-score{ color:#fca5a5; background:rgba(239,68,68,.10); }
+.match-card-mini[data-res="draw"] .mcm-score{ color:#c7d2fe; background:rgba(129,140,248,.10); }
 .mcm-score{ transition:color .3s ease,background .3s ease; }
 .match-card-mini.filter-in{ animation:lgRowIn .42s var(--lg-ease) both; }
 @keyframes lgRowIn{ from{ opacity:0; transform:translateY(10px) scale(.985); } to{ opacity:1; transform:none; } }
