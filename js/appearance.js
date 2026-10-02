@@ -130,7 +130,7 @@ let currentPalette = localStorage.getItem('palette') || 'ocean';
 // move together:
 //   Background Effects -> orbs + particles + sheen  (ambient decoration)
 //   Motion             -> anim             (screen transitions)
-// The Glass look (blur + shadows) is no longer a setting: in Custom it is always
+//   Glass              -> blur + shadows   (frosted glass look)
 // on, and the app tunes its own cost automatically (see js/glass-fx.js). Only the
 // Lite preset turns it off.
 // ------------------------------------------------------------
@@ -140,6 +140,7 @@ const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, s
 const PERF_GROUPS = {
     background: ['orbs','particles','sheen'],
     motion:     ['anim'],
+    glass:      ['blur','shadows'],
 };
 let performancePreset = localStorage.getItem('performancePreset')
     || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag
@@ -164,7 +165,11 @@ let perfCustom = (()=>{
                 const val = merged[members[0]];
                 members.forEach(k=>merged[k]=val);
             });
-            merged.blur = true; merged.shadows = true; // Glass is not switchable any more (a saved "off" must not stay stuck)
+          if(!localStorage.getItem('glassToggleV1')){
+    merged.blur = true; merged.shadows = true;
+    localStorage.setItem('glassToggleV1','1');
+    localStorage.setItem('perfCustom', JSON.stringify(merged));
+}
             return merged;
         }
     }catch(e){}
@@ -247,7 +252,7 @@ function closeAppearanceSheet(){
 function setPerformance(val){
     haptic([6]);
     if(val==='custom' && performancePreset!=='custom'){
-        perfCustom = {...currentPerfValues(), blur:true, shadows:true}; // seed custom from whatever was active (Glass is always on in Custom)
+        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active (Glass is always on in Custom)
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
     performancePreset = val;
