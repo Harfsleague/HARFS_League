@@ -13,11 +13,14 @@
 function renderLoginTeamGrid(){
     const grid=document.getElementById('login-team-grid');
     if(!grid) return;
-    grid.innerHTML = PROFILE_TEAMS.map(t=>`
+    const card = t => `
         <div class="login-team-card" onclick="pickLoginTeam('${t}')">
             <img src="${teamLogoUrl(t)}" onerror="this.style.opacity=0.25;">
             <span>${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}</span>
-        </div>`).join('');
+        </div>`;
+    const others = PROFILE_TEAMS.filter(t=>!TEAM_NAMES.includes(t)); // President, owners, fan
+    grid.innerHTML = TEAM_NAMES.map(card).join('')
+        + (others.length ? '<div class="login-group-label">Federation, owners &amp; fans</div>' + others.map(card).join('') : '');
 }
 function showLoginScreen(){
     renderLoginTeamGrid();

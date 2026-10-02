@@ -13,7 +13,6 @@
 
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/mba.css">
-<link rel="stylesheet" href="css/liquid-glass.css">
 </head>
 <body>
 
@@ -227,6 +226,14 @@
                 </div>
                 <i class="fas fa-chevron-right ai-entry-chevron"></i>
             </button>
+            <button class="people-entry-capsule" onclick="openPeopleSheet()">
+                <div class="people-entry-icon"><i class="fas fa-users"></i></div>
+                <div class="ai-entry-text">
+                    <span class="ai-entry-title">Federation &amp; Owners</span>
+                    <span class="ai-entry-sub">President, team owners &amp; fans</span>
+                </div>
+                <i class="fas fa-chevron-right ai-entry-chevron"></i>
+            </button>
         </div>
     </div>
 
@@ -312,6 +319,7 @@
         <div class="w-full px-3 mt-2" id="season-history-section">
             <div class="season-history-card">
                 <h3 class="season-history-title"><i class="fas fa-history"></i> Match History</h3>
+                <div id="season-history-summary"></div>
                 <div class="chip-bar w-full" id="season-history-filter-bar">
                     <div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>
                 </div>
@@ -852,6 +860,14 @@
         </div>
     </div>
 
+    <!-- ============ PEOPLE PANEL (federation president, owners, fans) ============ -->
+    <div id="people-sheet" class="team-picker-sheet" onclick="if(event.target===this)closePeopleSheet()">
+        <div class="team-picker-panel">
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title">Federation &amp; Owners</div>
+            <div id="people-list" class="team-panel-scroll"></div>
+        </div>
+    </div>
     <!-- ============ magazine-scree  ============ -->
     <div id="magazine-screen" class="page-screen" dir="rtl">
     <div class="magazine-inner">
@@ -967,7 +983,6 @@
 <script src="js/mba.js"></script>
 <script src="js/verify.js"></script>
 <script src="js/admin-music.js"></script>
-<script src="js/glass-fx.js"></script>
 <script src="js/main.js"></script>
 
 <script>

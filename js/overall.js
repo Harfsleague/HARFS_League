@@ -65,19 +65,51 @@ function renderMainLeagueTable(){
             </div>`;
     }).join('');
 
-    // Symbolic teams (see config.js) are appended AFTER the ranked teams, always
-    // last, outside the ranking: no number, no medals counted, just their name.
-    pod.innerHTML += SYMBOLIC_TEAMS.map((name,j)=>`
-            <div class="ranking-card rank-purple" style="animation-delay:${(table.length+j)*55}ms" onclick="openTeamPanel('${name}')">
-                <div class="ranking-badge">${PURPLE_FLOWER_SVG}</div>
-                <img src="${teamLogoUrl(name)}" class="ranking-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
-                <div class="ranking-info">
-                    <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${escapeHtml(TEAM_DISPLAY_NAMES[name]||name)}</div>
-                </div>
-                <div class="ranking-trophy-block"><div class="ranking-trophy-item ps-medal">${PURPLE_MEDAL_SVG}</div></div>
-            </div>`).join('');
 
     // clear the old separate body — all cards go inside pod now
     document.getElementById('main-league-body').innerHTML='';
+}
+
+// ============================================================
+// PEOPLE PANEL - symbolic accounts (outside every table/ranking).
+// Name + picture come from each account's own profile (they log in from the
+// login screen and use Profile -> pencil icon), stored in main_league_data.json
+// like any team profile. Keys must match SYMBOLIC_TEAMS in config.js and the Worker.
+// ============================================================
+const PEOPLE = [
+    { key:'President', role:'Federation President', accent:'#fbbf24' },
+    { key:'Owner1',    role:'Team Owner', teams:['Sezar','Bayern'], accent:'#60a5fa' },
+    { key:'Owner2',    role:'Team Owner', teams:['Yellow','HOSI'],  accent:'#34d399' },
+    { key:'Purple',    role:'Fan', accent:'#a855f7' },
+];
+function personAvatar(p){
+    const nm = TEAM_DISPLAY_NAMES[p.key] || p.key;
+    const initial = escapeHtml([...String(nm)][0] || '?').replace(/'/g,'');
+    const fallback = `this.outerHTML='<div class=&quot;people-avatar people-avatar-ph&quot;>${initial}</div>'`;
+    return `<img class="people-avatar" src="${teamLogoUrl(p.key)}" onerror="${fallback}">`;
+}
+function renderPeopleSheet(){
+    const box = document.getElementById('people-list');
+    if(!box) return;
+    box.innerHTML = PEOPLE.map(p=>{
+        const name = TEAM_DISPLAY_NAMES[p.key] || p.key;
+        const teams = (p.teams||[]).map(t=>`<img class="people-team-logo" src="${teamLogoUrl(t)}" title="${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}">`).join('');
+        return `<div class="people-row" style="--pa:${p.accent}">
+            ${personAvatar(p)}
+            <div class="people-info">
+                <div class="people-name" dir="auto">${escapeHtml(name)}</div>
+                <div class="people-role">${escapeHtml(p.role)}</div>
+            </div>
+            <div class="people-teams">${teams}</div>
+        </div>`;
+    }).join('');
+}
+function openPeopleSheet(){
+    haptic([8]);
+    renderPeopleSheet();
+    document.getElementById('people-sheet').classList.add('open');
+}
+function closePeopleSheet(){
+    document.getElementById('people-sheet').classList.remove('open');
 }
 

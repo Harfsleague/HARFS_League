@@ -2433,3 +2433,53 @@ body.ai-disabled .ai-entry-capsule{ display:none !important; }
 }
 .mp-volume .mp-range::-moz-range-thumb{ width:12px; height:12px; border-radius:4px; background:#fbbf24; box-shadow:0 1px 5px rgba(0,0,0,.45); }
 .mp-volume i{ color:#d4a017; }
+
+/* =====================================================
+   GLASS REMOVED (css/liquid-glass.css + js/glass-fx.js are gone).
+   Flat surfaces everywhere; a few rules that used to live in liquid-glass.css are kept here.
+   ===================================================== */
+.nav-item{ color:#94a3b8; }
+
+/* ---- Match History: summary of every team ---- */
+.hist-sum-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.hist-sum-card{ background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:9px 10px; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.hs-top{ display:flex; align-items:center; gap:6px; min-width:0; }
+.hs-top img{ width:22px; height:22px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.hs-top span{ font-size:0.72rem; font-weight:800; color:#e5e7eb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hs-stats{ display:flex; gap:8px; font-size:0.7rem; font-weight:800; }
+.hs-stats .w{ color:#4ade80; } .hs-stats .d{ color:#a5b4fc; } .hs-stats .l{ color:#f87171; }
+.hs-goals{ font-size:0.66rem; font-weight:700; color:#9ca3af; font-family:monospace; }
+.hs-form{ display:flex; gap:4px; min-height:8px; }
+.hs-form i{ width:8px; height:8px; border-radius:50%; background:#818cf8; }
+.hs-form i.w{ background:#22c55e; } .hs-form i.l{ background:#ef4444; }
+
+/* filter chips centred */
+#season-history-filter-bar{ justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+.mcm-dot{ display:none !important; }
+
+/* the match block itself carries the result colour (beats the flat !important
+   backgrounds of perf-no-blur / lite-mode by specificity) */
+html body .match-card-mini[data-res="win"]{ background-color:rgba(34,197,94,.10) !important; background-image:linear-gradient(90deg,rgba(34,197,94,.20),rgba(34,197,94,.04)) !important; border-color:rgba(34,197,94,.35) !important; }
+html body .match-card-mini[data-res="loss"]{ background-color:rgba(239,68,68,.10) !important; background-image:linear-gradient(90deg,rgba(239,68,68,.18),rgba(239,68,68,.04)) !important; border-color:rgba(239,68,68,.35) !important; }
+html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.10) !important; background-image:linear-gradient(90deg,rgba(129,140,248,.16),rgba(129,140,248,.04)) !important; border-color:rgba(129,140,248,.35) !important; }
+.match-card-mini[data-res="win"] .mcm-score{ color:#86efac; }
+.match-card-mini[data-res="loss"] .mcm-score{ color:#fca5a5; }
+.match-card-mini[data-res="draw"] .mcm-score{ color:#c7d2fe; }
+
+/* ---- People panel (Overall) ---- */
+.people-entry-capsule{ width:100%; display:flex; align-items:center; gap:12px; margin-top:14px; padding:14px 16px; border-radius:20px; background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(251,191,36,0.08)); border:1px solid rgba(255,255,255,0.12); cursor:pointer; color:inherit; text-align:left; transition:transform .15s; }
+.people-entry-capsule:active{ transform:scale(0.97); }
+.people-entry-icon{ width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#a855f7,#fbbf24); color:#0b1220; }
+.people-row{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-inline-start:3px solid var(--pa,#60a5fa); }
+.people-avatar{ width:48px; height:48px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--pa,#60a5fa); background:rgba(255,255,255,0.06); }
+.people-avatar-ph{ display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:900; color:#fff; }
+.people-info{ flex:1; min-width:0; }
+.people-name{ font-size:0.9rem; font-weight:900; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.people-role{ font-size:0.68rem; font-weight:700; color:var(--pa,#9ca3af); margin-top:2px; }
+.people-teams{ display:flex; gap:4px; flex-shrink:0; }
+.people-team-logo{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15); }
+
+/* ---- Login: second group (President / Owners / Fan) + scroll safety ---- */
+.login-panel{ max-height:90vh; overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; }
+.login-panel::-webkit-scrollbar{ display:none; }
+.login-group-label{ grid-column:1 / -1; margin:8px 0 0; text-align:center; font-size:0.6rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; }

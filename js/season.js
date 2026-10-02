@@ -96,33 +96,45 @@ function updateHistoryLayout(filter){
 // (not home/away — this format has no home/away concept). Hidden entirely
 // when no specific team is selected (filter === 'all').
 function updateHistoryDots(filter){
+    // No dots/stripes any more: with a team filter active, the whole match block
+    // takes that team's result colour (data-res, styled in css/styles.css).
     document.querySelectorAll('#season-history-list .match-card-mini').forEach(card=>{
-        const dotEl=card.querySelector('.mcm-dot');
-        if(!dotEl)return;
-        if(filter==='all'){
-            dotEl.style.display='none';
-            delete card.dataset.res;
-            return;
-        }
+        if(filter==='all'){delete card.dataset.res;return;}
         const home=card.dataset.home,away=card.dataset.away;
         const hs=parseInt(card.dataset.hs),as=parseInt(card.dataset.as);
-        let isTeamInMatch=true,teamScore,oppScore;
-        if(home===filter){teamScore=hs;oppScore=as;}
-        else if(away===filter){teamScore=as;oppScore=hs;}
-        else{isTeamInMatch=false;}
-        if(!isTeamInMatch){
-            dotEl.style.display='none';
-            delete card.dataset.res;
-            return;
-        }
-        let color='#818cf8'; // draw
-        let res='draw';
-        if(teamScore>oppScore){color='#22c55e';res='win';} // win
-        else if(teamScore<oppScore){color='#ef4444';res='loss';} // loss
-        card.dataset.res=res; // drives the result stripe/glow in liquid-glass.css
-        dotEl.style.display='';
-        dotEl.style.background=color;
+        let t,o;
+        if(home===filter){t=hs;o=as;}
+        else if(away===filter){t=as;o=hs;}
+        else{delete card.dataset.res;return;}
+        card.dataset.res=t>o?'win':(t<o?'loss':'draw');
     });
+}
+
+// Summary of EVERY team, shown above the filter chips (W/D/L, goals for:against, last 5).
+// Built from the same list that is displayed, so it also works for archived seasons.
+function renderSeasonHistorySummary(history){
+    const el=document.getElementById('season-history-summary');
+    if(!el)return;
+    if(!history||!history.length){el.innerHTML='';return;}
+    el.innerHTML='<div class="hist-sum-grid">'+TEAM_NAMES.map(t=>{
+        let w=0,d=0,l=0,gf=0,ga=0;const form=[];
+        history.forEach(m=>{
+            const p=String(m.score).split('-');
+            const hs=parseInt(p[0])||0,as=parseInt(p[1])||0;
+            let f,a;
+            if(m.home===t){f=hs;a=as;}else if(m.away===t){f=as;a=hs;}else return;
+            gf+=f;ga+=a;
+            const r=f>a?'w':f<a?'l':'d';
+            if(r==='w')w++;else if(r==='l')l++;else d++;
+            if(form.length<5)form.push(r); // history is newest-first
+        });
+        return `<div class="hist-sum-card">
+            <div class="hs-top"><img src="${teamLogoUrl(t)}" onerror="this.style.opacity='0.3'"><span>${escapeHtml(teamShort(t))}</span></div>
+            <div class="hs-stats"><b class="w">${w}W</b><b class="d">${d}D</b><b class="l">${l}L</b></div>
+            <div class="hs-goals">${gf} : ${ga}</div>
+            <div class="hs-form">${form.map(r=>`<i class="${r}"></i>`).join('')}</div>
+        </div>`;
+    }).join('')+'</div>';
 }
 function renderSeasonHistoryList(history){
     history=history||[];
@@ -130,6 +142,7 @@ function renderSeasonHistoryList(history){
     if(loadingEl)loadingEl.style.display='none';
     buildSeasonHistoryChips();
     currentFilter='all';
+    renderSeasonHistorySummary(history);
     const list=document.getElementById('season-history-list');
     if(!list)return;
     if(!history.length){
@@ -140,10 +153,8 @@ function renderSeasonHistoryList(history){
         const dt=formatShamsiDateTime(m.timestamp);
         const parts=m.score.split('-');
         const hs=parseInt(parts[0]),as=parseInt(parts[1]);
-        // dot starts hidden — it only appears once a specific team filter is
-        // active, and then reflects THAT team's result (see updateHistoryDots)
         return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" data-hs="${hs}" data-as="${as}">
-            <div class="mcm-date"><span class="mcm-dot" style="display:none;"></span>${dt.date} · ${dt.time}</div>
+            <div class="mcm-date">${dt.date} · ${dt.time}</div>
             <div class="mcm-row">
                 <div class="mcm-team">
                     <img src="${teamLogoUrl(m.home)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">

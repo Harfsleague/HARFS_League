@@ -190,7 +190,7 @@ function applyAppearance(){
     document.body.classList.toggle('lite-mode', PERF_KEYS.every(k=>!p[k])); // convenience alias when everything's off
     document.body.classList.toggle('perf-no-orbs', !p.orbs);
     document.body.classList.toggle('perf-no-particles', !p.particles);
-    document.body.classList.toggle('perf-no-blur', !p.blur);
+    document.body.classList.add('perf-no-blur'); // Glass look removed for everyone: always flat, no backdrop blur
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
     document.body.classList.toggle('perf-no-anim', !p.anim);
@@ -492,7 +492,7 @@ function renderSettingsScreen(){
     if(loggedInTeam){
         if(badgeLogo) badgeLogo.src=`${teamLogoUrl(loggedInTeam)}`;
         if(badgeName) badgeName.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
-        if(subtitle) subtitle.textContent='HARFS League Account';
+        if(subtitle) subtitle.textContent=SYMBOLIC_ROLES[loggedInTeam]||'HARFS League Account';
         if(logoutTile) logoutTile.style.display='flex';
         if(signinTile) signinTile.style.display='none';
     } else {
@@ -725,10 +725,10 @@ function openTeamEditSheet(){
     ensureWalletFields(loggedInTeam);
     teamEditPendingLogo = null;
     const w = mainLeagueData[loggedInTeam];
-    document.getElementById('team-edit-name-input').value = w.customName || loggedInTeam;
+    document.getElementById('team-edit-name-input').value = TEAM_DISPLAY_NAMES[loggedInTeam] || loggedInTeam;
     const shortInput = document.getElementById('team-edit-short-input');
     shortInput.value = w.customShort || '';
-    shortInput.placeholder = deriveShortName(w.customName || loggedInTeam) || 'Short name';
+    shortInput.placeholder = deriveShortName(TEAM_DISPLAY_NAMES[loggedInTeam] || loggedInTeam) || 'Short name';
     document.getElementById('team-edit-logo-preview').src = teamLogoUrl(loggedInTeam);
     document.getElementById('team-edit-sheet').classList.add('open');
 }
@@ -751,9 +751,9 @@ async function handleTeamEditLogoSelect(e){
 }
 function resetTeamEditDefaults(){
     teamEditPendingLogo = 'RESET';
-    document.getElementById('team-edit-name-input').value = loggedInTeam;
+    document.getElementById('team-edit-name-input').value = SYMBOLIC_DEFAULT_NAMES[loggedInTeam] || loggedInTeam;
     document.getElementById('team-edit-short-input').value = '';
-    document.getElementById('team-edit-logo-preview').src = isSymbolicTeam(loggedInTeam) ? SYMBOLIC_DEFAULT_LOGO : `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+    document.getElementById('team-edit-logo-preview').src = isSymbolicTeam(loggedInTeam) ? symbolicDefaultLogo(loggedInTeam) : `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
 }
 async function saveTeamEdit(){
     if(!loggedInTeam) return;

@@ -34,11 +34,20 @@ const TEAM_DISPLAY_NAMES={"HOSI":"HOSI","Sezar":"Sezar","Bayern":"Bayern","Yello
 // deliberately NOT in TEAM_NAMES: everything that reads TEAM_NAMES (Season table,
 // match history, CUP, medals, Mystery Box, magazine, AI chat, verify) therefore
 // never sees them. PROFILE_TEAMS = every team that has a profile / can log in.
-const SYMBOLIC_TEAMS=["Purple"];
+// People accounts: Federation President, the two team owners and the fan ("Purple").
+// They can log in and edit their own profile (name + picture) but are NOT in TEAM_NAMES,
+// so they never appear in any table, history, CUP, medal or Mystery Box - only in the
+// People panel on the Overall screen (see js/overall.js).
+const SYMBOLIC_TEAMS=["President","Owner1","Owner2","Purple"];
+const SYMBOLIC_DEFAULT_NAMES={"President":"Federation President","Owner1":"Owner (Sezar & Bayern)","Owner2":"Owner (Yellow & HOSI)"};
+const SYMBOLIC_ROLES={"President":"Federation President","Owner1":"Team Owner (Sezar & Bayern)","Owner2":"Team Owner (Yellow & HOSI)","Purple":"Fan"};
 const PROFILE_TEAMS=[...TEAM_NAMES,...SYMBOLIC_TEAMS];
 function isSymbolicTeam(t){return SYMBOLIC_TEAMS.includes(t);}
 // Built-in avatar for a symbolic team until it uploads its own picture.
 const SYMBOLIC_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c084fc"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#g)"/><g fill="#fff" fill-opacity=".92"><circle cx="48" cy="29" r="12"/><circle cx="66.5" cy="42.5" r="12"/><circle cx="59.5" cy="64.5" r="12"/><circle cx="36.5" cy="64.5" r="12"/><circle cx="29.5" cy="42.5" r="12"/></g><circle cx="48" cy="48" r="9" fill="#facc15"/></svg>');
+// Default avatar for the President / Owners accounts ("Purple" keeps the flower above).
+const PERSON_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#4338ca"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#g)"/><g fill="#fff" fill-opacity=".92"><circle cx="48" cy="37" r="15"/><path d="M19 83c3-17 15-26 29-26s26 9 29 26a48 48 0 0 1-58 0z"/></g></svg>');
+function symbolicDefaultLogo(t){return t==='Purple'?SYMBOLIC_DEFAULT_LOGO:PERSON_DEFAULT_LOGO;}
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 
 // ============================================================
@@ -112,7 +121,7 @@ function initializeMainLeagueData(){PROFILE_TEAMS.forEach(t=>mainLeagueData[t]={
 function syncTeamDisplayNames(){
     PROFILE_TEAMS.forEach(t=>{
         const w = mainLeagueData[t] || {};
-        TEAM_DISPLAY_NAMES[t] = (w.customName && w.customName.trim()) ? w.customName.trim() : t;
+        TEAM_DISPLAY_NAMES[t] = (w.customName && w.customName.trim()) ? w.customName.trim() : (SYMBOLIC_DEFAULT_NAMES[t] || t);
         const custShort = (w.customShort && String(w.customShort).trim()) || '';
         TEAM_SHORT_NAMES[t] = custShort ? [...custShort].slice(0,TEAM_SHORT_MAX).join('') : deriveShortName(TEAM_DISPLAY_NAMES[t]);
     });
