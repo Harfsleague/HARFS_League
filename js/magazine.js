@@ -662,7 +662,7 @@ async function handleMagazineCoverSelect(e) {
             reader.onerror = reject;
             reader.readAsDataURL(file);
         });
-        // Widescreen, matches the 16:9 cover the generator asks Gemini for.
+        // Widescreen 16:9, the shape of the default cover.
         const compressed = await compressImage(dataUrl, 1280, 720, 0.85);
         const base64Only = compressed.split(',')[1];
         const coverFile = (issue.coverImage && issue.coverImage !== DEFAULT_MAGAZINE_COVER)

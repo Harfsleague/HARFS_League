@@ -125,18 +125,19 @@ let currentPalette = localStorage.getItem('palette') || 'ocean';
 
 // ------------------------------------------------------------
 // PERFORMANCE — two presets: Lite (a one-tap "everything off" shortcut)
-// and Custom, where Glass/Background/Motion are set by hand — each one
+// and Custom, where Background/Motion are set by hand — each one
 // groups a couple of the underlying effects that always make sense to
-// move together, rather than six separate switches:
-//   Glass              -> blur + shadows   (the frosted-panel look & its glow)
+// move together:
 //   Background Effects -> orbs + particles + sheen  (ambient decoration)
 //   Motion             -> anim             (screen transitions)
+// The Glass look (blur + shadows) is no longer a setting: in Custom it is always
+// on, and the app tunes its own cost automatically (see js/glass-fx.js). Only the
+// Lite preset turns it off.
 // ------------------------------------------------------------
 const PERF_KEYS = ['orbs','particles','blur','shadows','sheen','anim'];
 const PERF_ALL_ON  = { orbs:true,  particles:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
 const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, sheen:false, anim:false };
 const PERF_GROUPS = {
-    glass:      ['blur','shadows'],
     background: ['orbs','particles','sheen'],
     motion:     ['anim'],
 };
@@ -163,6 +164,7 @@ let perfCustom = (()=>{
                 const val = merged[members[0]];
                 members.forEach(k=>merged[k]=val);
             });
+            merged.blur = true; merged.shadows = true; // Glass is not switchable any more (a saved "off" must not stay stuck)
             return merged;
         }
     }catch(e){}
@@ -245,7 +247,7 @@ function closeAppearanceSheet(){
 function setPerformance(val){
     haptic([6]);
     if(val==='custom' && performancePreset!=='custom'){
-        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active
+        perfCustom = {...currentPerfValues(), blur:true, shadows:true}; // seed custom from whatever was active (Glass is always on in Custom)
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
     performancePreset = val;
@@ -724,6 +726,9 @@ function openTeamEditSheet(){
     teamEditPendingLogo = null;
     const w = mainLeagueData[loggedInTeam];
     document.getElementById('team-edit-name-input').value = w.customName || loggedInTeam;
+    const shortInput = document.getElementById('team-edit-short-input');
+    shortInput.value = w.customShort || '';
+    shortInput.placeholder = deriveShortName(w.customName || loggedInTeam) || 'Short name';
     document.getElementById('team-edit-logo-preview').src = teamLogoUrl(loggedInTeam);
     document.getElementById('team-edit-sheet').classList.add('open');
 }
@@ -747,6 +752,7 @@ async function handleTeamEditLogoSelect(e){
 function resetTeamEditDefaults(){
     teamEditPendingLogo = 'RESET';
     document.getElementById('team-edit-name-input').value = loggedInTeam;
+    document.getElementById('team-edit-short-input').value = '';
     document.getElementById('team-edit-logo-preview').src = isSymbolicTeam(loggedInTeam) ? SYMBOLIC_DEFAULT_LOGO : `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
 }
 async function saveTeamEdit(){
@@ -758,7 +764,8 @@ async function saveTeamEdit(){
 
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
     try{
-        const payload = { name: newName };
+        const newShort = [...document.getElementById('team-edit-short-input').value.trim()].slice(0,TEAM_SHORT_MAX).join('');
+        const payload = { name: newName, short: newShort || null };
         if(teamEditPendingLogo === 'RESET') payload.logo = null;
         else if(teamEditPendingLogo) payload.logo = teamEditPendingLogo;
 
@@ -773,6 +780,8 @@ async function saveTeamEdit(){
         ensureWalletFields(loggedInTeam);
         mainLeagueData[loggedInTeam].customName = data.customName;
         mainLeagueData[loggedInTeam].customLogo = data.customLogo;
+        // older Workers don't know about short names and omit the field — keep what was typed
+        mainLeagueData[loggedInTeam].customShort = ('customShort' in data) ? data.customShort : (newShort || null);
         syncTeamDisplayNames();
 
         teamEditPendingLogo = null;

@@ -2,8 +2,9 @@
 // generate-magazine.mjs
 // Builds the "HARFS Weekly Magazine": reads the live league data,
 // asks Gemini 3.5 Flash to write it up (Persian, light comedic tone),
-// asks Gemini 3.1 Flash-Lite Image ("Nano Banana 2 Lite") for a cover
-// image, and commits both to the HARFS_Data repo so the app can display them.
+// and commits the issue to the HARFS_Data repo so the app can display it.
+// There is NO AI image generation: every issue ships with the default cover
+// (mag1.png) and an admin can swap it per issue from Settings > Admin.
 //
 // Runs from GitHub Actions (see .github/workflows/weekly-magazine.yml).
 // Requires two repo secrets:
@@ -17,8 +18,7 @@
 //                         OpenRouter's free google/gemma-4-31b-it:free model.
 //                         Gemini is always tried first. If this secret is
 //                         missing and Gemini fails, the run just fails like
-//                         before — the cover image always stays on Gemini
-//                         either way, since the fallback model can't draw.
+//                         before.
 // ============================================================
 
 const DATA_REPO = "Harfsleague/HARFS_Data";
@@ -28,25 +28,11 @@ const API_BASE = `https://api.github.com/repos/${DATA_REPO}/contents/`;
 
 const TEAM_NAMES = ["HOSI", "Sezar", "Bayern", "Yellow"];
 
-// Shown instead of an AI cover whenever the image call fails (or, on the
-// client side, whenever an issue has no cover at all) — already sits in the
-// HARFS_Data repo alongside the team logos and other static assets, so it's
-// referenced by name only and never uploaded by this script.
+// The cover every issue gets (and what the client shows for any issue without
+// one). It already sits in the HARFS_Data repo alongside the team logos, so it
+// is referenced by name only and never uploaded by this script. An admin can
+// replace a single issue's cover from the app (see js/magazine.js).
 const DEFAULT_COVER_FILE = "mag1.png";
-
-// "Memories" (the Golden Moments / weird_events.json feed) should only ever
-// be referenced if they were actually posted in roughly the last publishing
-// cycle — otherwise the magazine ends up narrating a "this week" moment that
-// actually happened a month ago. The magazine runs weekly (see
-// .github/workflows/weekly-magazine.yml), so one week plus a small buffer
-// for a late/manual run is the right cutoff.
-const MEMORIES_WINDOW_DAYS = 8;
-function isWithinLastWindow(isoTimestamp, days = MEMORIES_WINDOW_DAYS) {
-  if (!isoTimestamp) return false;
-  const t = new Date(isoTimestamp).getTime();
-  if (Number.isNaN(t)) return false;
-  return Date.now() - t <= days * 24 * 60 * 60 * 1000;
-}
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const HARFS_DATA_TOKEN = process.env.HARFS_DATA_TOKEN;
@@ -300,12 +286,11 @@ function buildSeasonContext({ leagueData, matchHistory, seasonsArchive, lastIssu
 }
 
 async function gatherData(lastIssue) {
-  const [leagueData, mainLeagueData, matchHistory, seasonsArchive, weirdEventsRaw] = await Promise.all([
+  const [leagueData, mainLeagueData, matchHistory, seasonsArchive] = await Promise.all([
     fetchJson(`${RAW_BASE}league_data.json`, {}),
     fetchJson(`${RAW_BASE}main_league_data.json`, {}),
     fetchJson(`${RAW_BASE}match_history.json`, []),
     fetchJson(`${RAW_BASE}seasons_archive.json`, []),
-    fetchJson(`${RAW_BASE}weird_events.json`, []),
   ]);
 
   const ctx = buildSeasonContext({ leagueData: leagueData || {}, matchHistory, seasonsArchive, lastIssue });
@@ -327,17 +312,6 @@ async function gatherData(lastIssue) {
     champion: [...(s.table || [])].sort((a, b) => (b.Pts || 0) - (a.Pts || 0))[0]?.name || null,
   }));
 
-  // weird_events.json holds base64 media thumbnails — strip everything but
-  // the short text captions. Only moments actually posted within the recent
-  // publishing window are eligible (see isWithinLastWindow above): without
-  // this filter, the magazine could pick up and narrate a "memory" from a
-  // month ago as if it just happened, which is exactly what we must avoid.
-  const recentMoments = (weirdEventsRaw || [])
-    .filter((e) => isWithinLastWindow(e?.timestamp))
-    .slice(0, 8)
-    .map((e) => e.text)
-    .filter(Boolean);
-
   const arenaHighlights = TEAM_NAMES.map((t) => ({
     team: t,
     mbaChampionships: (mainLeagueData[t]?.mbaChampionLog || []).length,
@@ -356,7 +330,6 @@ async function gatherData(lastIssue) {
     currentSeasonTable,
     recentMatches,
     pastChampions,
-    recentMoments,
     arenaHighlights,
     formGuide,
     weeklyRecords,
@@ -424,7 +397,7 @@ const MAGAZINE_SCHEMA = {
     },
     recordsAndOddities: {
       type: "string",
-      description: "یک یا دو پاراگراف دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords) و اتفاق‌های عجیب/بامزهٔ این هفته (از recentMoments). اگر weeklyRecords یا recentMoments خالی بود، صادقانه بگو این هفته رکورد یا اتفاق خاصی ثبت نشده.",
+      description: "یک یا دو پاراگراف دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords). اگر weeklyRecords خالی بود، صادقانه بگو این هفته رکورد خاصی ثبت نشده. دربارهٔ خاطره‌ها یا «لحظات طلایی» چیزی ننویس.",
     },
     funnyClosing: { type: "string", description: "یک جمله یا پاراگراف کوتاه طنز برای پایان مجله" },
     interview: {
@@ -447,10 +420,6 @@ const MAGAZINE_SCHEMA = {
       },
       required: ["team", "intervieweeRole", "intervieweeName", "headline", "qAndA"],
     },
-    imagePromptEn: {
-      type: "string",
-      description: "An English-language prompt describing a magazine-cover illustration that captures this week's storyline (no text/letters in the image, no real logos/brands).",
-    },
   },
   required: [
     "issueTitle",
@@ -463,7 +432,6 @@ const MAGAZINE_SCHEMA = {
     "recordsAndOddities",
     "funnyClosing",
     "interview",
-    "imagePromptEn",
   ],
 };
 
@@ -472,7 +440,7 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 تمام اعداد، نتایج و آماری که ارائه می‌دهی باید دقیقاً از دیتای JSON داده‌شده باشد — هرگز عددی را حدس نزن یا نسازی. اگر داده‌ای برای بخشی کافی نیست، آن بخش را کوتاه و صادقانه بنویس (مثلاً بگو این هفته اتفاق خاصی ثبت نشده) به‌جای این‌که چیزی بسازی.
 دیتای ورودی شامل چند بخش آمار حساب‌شده هم هست: formGuide (فرم ۵ بازی اخیر و روند برد/باخت هر تیم)، weeklyRecords (پرگل‌ترین بازی و بزرگ‌ترین اختلاف نتیجهٔ این هفته)، titleRace (فاصلهٔ امتیازی تیم‌ها تا صدرنشین)، و allTimeStats (مجموع کل فصل‌ها: تعداد قهرمانی لیگ، تعداد مدال CUP (کلید mbaMedals؛ نام تورنمنت در برنامه CUP است)، و آمار کلی بازی‌ها و گل‌ها). این اعداد از قبل محاسبه شده‌اند و درست هستند؛ کارِ تو فقط روایت و تحلیلِ آن‌ها به فارسی است، نه بازمحاسبه یا حدس زدن درصد شانس.
 
-دربارهٔ recentMoments (خاطرات/لحظات ثبت‌شده توسط کاربران): این‌ها از قبل فیلتر شده‌اند و فقط شامل مواردیست که در همین هفتهٔ اخیر ثبت شده‌اند — هرگز به رویداد یا خاطره‌ای که در دیتای ورودی نیست اشاره نکن و هرگز چیزی را به‌عنوان «این هفته» جا نزن مگر این‌که واقعاً در همین آرایه باشد. اگر recentMoments خالی بود، صادقانه بگو این هفته خاطرهٔ خاصی ثبت نشده.
+خاطره‌ها و «لحظات طلایی» ثبت‌شده توسط کاربران جزو دادهٔ این مجله نیستند؛ هرگز به آن‌ها اشاره نکن و رویدادی از خودت نساز.
 
 دربارهٔ previousIssuesSummary: خلاصه‌ای از ۱ تا ۳ شمارهٔ قبلی مجله است (عنوان، بخشی از گزارش، جملهٔ پایانی طنز، و مصاحبهٔ قبلی). این را فقط برای این می‌بینی که: (۱) از تکرار همان تیترها، جوک‌ها، توصیف‌ها و زاویه‌های قبلی خودداری کنی و لحن/محتوای تازه‌ای بسازی، و (۲) در صورت لزوم پیوستگی روایی با هفته‌های قبل را حفظ کنی (مثلاً اگر هفتهٔ قبل به یک روند اشاره شده، می‌توانی ادامه یا تغییرش را ببینی). هرگز محتوای previousIssuesSummary را عیناً یا با کمی تغییر در خروجی این هفته تکرار نکن.
 
@@ -612,60 +580,6 @@ async function callOpenRouterText(data) {
 }
 
 // ------------------------------------------------------------
-// 3) ask Gemini's image model for a cover image
-// ------------------------------------------------------------
-async function callGeminiImage(promptEn) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent`;
-  const res = await fetchWithRetry(
-    url,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Magazine cover illustration, widescreen, vibrant, stylized sports-magazine art (not a photo, no readable text, no real club logos): ${promptEn}`,
-              },
-            ],
-          },
-        ],
-        // gemini-3.1-flash-lite-image is a dedicated image model, not a chat
-        // model — it only accepts "IMAGE" here. Asking for "TEXT" alongside it
-        // (a workaround that's needed on general-purpose chat models like the
-        // older gemini-2.5-flash-image, to stop them replying with text only)
-        // makes this specific model reject the whole request, which is why
-        // every single cover was failing.
-        generationConfig: {
-          responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: "16:9" }, // matches the "widescreen" cover we ask for in the prompt
-        },
-      }),
-    },
-    { label: "Gemini" }
-  );
-  const json = await res.json();
-  const part = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
-  if (!part) {
-    // Surface *why* there's no image (safety block, wrong modality, prompt
-    // rejected, etc.) instead of a bare "no image data" — the previous
-    // version threw this same generic message no matter the real cause,
-    // which made every failure equally undiagnosable from the Actions log.
-    const blockReason = json.promptFeedback?.blockReason;
-    const finishReason = json.candidates?.[0]?.finishReason;
-    const detail = [blockReason && `blockReason=${blockReason}`, finishReason && `finishReason=${finishReason}`]
-      .filter(Boolean)
-      .join(", ");
-    throw new Error(
-      `Gemini image call returned no image data${detail ? ` (${detail})` : ""}. Full response: ${JSON.stringify(json)}`
-    );
-  }
-  return part.inlineData.data; // already base64
-}
-
-// ------------------------------------------------------------
 // main
 // ------------------------------------------------------------
 async function main() {
@@ -698,20 +612,11 @@ async function main() {
   // team rather than letting the rotation silently drift.
   if (magazine.interview) magazine.interview.team = data.interviewTeam;
 
-  console.log("Asking Gemini 3.1 Flash-Lite Image for the cover...");
-  let coverBase64 = null;
-  try {
-    coverBase64 = await callGeminiImage(magazine.imagePromptEn);
-  } catch (err) {
-    console.error("Cover image generation failed, falling back to the default cover:", err.message);
-  }
-
   const now = new Date();
-  // Each issue's cover gets its own filename (suffixed with the issue
-  // number) so publishing a new issue never overwrites an older one's cover.
-  // When generation failed, fall back to the shared default image (already
-  // committed in the data repo) instead of shipping an issue with no cover.
-  const coverFile = coverBase64 ? `weekly_magazine_cover_${issueNumber}.png` : DEFAULT_COVER_FILE;
+  // Every issue starts on the shared default cover. When an admin uploads a
+  // replacement from the app, js/magazine.js stores it as its own file
+  // (weekly_magazine_cover_<n>.png) and points just that issue at it.
+  const coverFile = DEFAULT_COVER_FILE;
   const issue = {
     issueNumber,
     issueDate: now.toISOString().slice(0, 10),
@@ -729,7 +634,7 @@ async function main() {
     allTimeStats: data.allTimeStats,
     ...magazine,
   };
-  delete issue.imagePromptEn; // internal-only, no need to ship it to the client
+  delete issue.imagePromptEn; // old schema field: never ship it, even if a model still returns one
 
   // Newest issue first — this is the order js/magazine.js expects.
   const updatedArchive = [issue, ...archive];
@@ -739,10 +644,6 @@ async function main() {
     Buffer.from(JSON.stringify(updatedArchive, null, 2)).toString("base64"),
     `Weekly magazine #${issueNumber}: ${issue.issueDate}`
   );
-
-  if (coverBase64) {
-    await githubPutFile(coverFile, coverBase64, `Weekly magazine #${issueNumber} cover: ${issue.issueDate}`);
-  }
 
   console.log(`Done. Published issue #${issueNumber}.`);
 }

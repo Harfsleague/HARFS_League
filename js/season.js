@@ -20,7 +20,7 @@ function renderLeagueTable(dataToRender){
             <td class="td-team">
                 <div class="td-team-inner">
                     <img src="${teamLogoUrl(t.name)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
-                    <span style="${isFirst?'color:#fef3c7;':''}">${TEAM_DISPLAY_NAMES[t.name]}</span>
+                    <span style="${isFirst?'color:#fef3c7;':''}">${teamShort(t.name)}</span>
                 </div>
             </td>
             <td>${t.P}</td>
@@ -46,7 +46,7 @@ function buildSeasonHistoryChips(){
     bar.innerHTML=`<div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>`;
     TEAM_NAMES.forEach(t=>{
         const c=document.createElement('div');
-        c.className='chip';c.textContent=TEAM_DISPLAY_NAMES[t];
+        c.className='chip';c.textContent=teamShort(t);
         c.onclick=function(){filterSeasonHistory(t,this);};bar.appendChild(c);
     });
 }
@@ -82,11 +82,11 @@ function updateHistoryLayout(filter){
         row.innerHTML=`
             <div class="mcm-team">
                 <img src="${teamLogoUrl(leftTeam)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
-                <span>${TEAM_DISPLAY_NAMES[leftTeam]||leftTeam}</span>
+                <span>${teamShort(leftTeam)}</span>
             </div>
             <div class="mcm-score">${leftScore}-${rightScore}</div>
             <div class="mcm-team mcm-team-away">
-                <span>${TEAM_DISPLAY_NAMES[rightTeam]||rightTeam}</span>
+                <span>${teamShort(rightTeam)}</span>
                 <img src="${teamLogoUrl(rightTeam)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
             </div>`;
     });
@@ -147,11 +147,11 @@ function renderSeasonHistoryList(history){
             <div class="mcm-row">
                 <div class="mcm-team">
                     <img src="${teamLogoUrl(m.home)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
-                    <span>${TEAM_DISPLAY_NAMES[m.home]||m.home}</span>
+                    <span>${teamShort(m.home)}</span>
                 </div>
                 <div class="mcm-score">${m.score}</div>
                 <div class="mcm-team mcm-team-away">
-                    <span>${TEAM_DISPLAY_NAMES[m.away]||m.away}</span>
+                    <span>${teamShort(m.away)}</span>
                     <img src="${teamLogoUrl(m.away)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 </div>
             </div>
@@ -177,8 +177,8 @@ function updateMatchPreview(){
     if(!h||!a)return;
     hl.src=`${teamLogoUrl(h)}`;hl.style.opacity='1';
     al.src=`${teamLogoUrl(a)}`;al.style.opacity='1';
-    document.getElementById('preview-home-name').textContent=TEAM_DISPLAY_NAMES[h]||'Home';
-    document.getElementById('preview-away-name').textContent=TEAM_DISPLAY_NAMES[a]||'Away';
+    document.getElementById('preview-home-name').textContent=h?teamShort(h):'Home';
+    document.getElementById('preview-away-name').textContent=a?teamShort(a):'Away';
     document.getElementById('preview-score-text').textContent=`${homeScore} : ${awayScore}`;
 }
 
@@ -195,7 +195,7 @@ function setTeamPickerValue(side,teamKey){
     }
     icon.src=`${teamLogoUrl(teamKey)}`;
     icon.style.display='block';
-    label.textContent=TEAM_DISPLAY_NAMES[teamKey]||teamKey;
+    label.textContent=teamShort(teamKey);
 }
 function openTeamPicker(side){
     haptic([6]);
@@ -212,7 +212,7 @@ function openTeamPicker(side){
         const isDisabled=t===otherSelected;
         return `<div class="team-picker-option ${isSelected?'selected':''} ${isDisabled?'disabled':''}" onclick="selectTeamInPicker('${t}')">
             <img src="${teamLogoUrl(t)}">
-            <span>${TEAM_DISPLAY_NAMES[t]||t}</span>
+            <span>${teamShort(t)}</span>
         </div>`;
     }).join('');
     document.getElementById('team-picker-sheet').classList.add('open');
@@ -281,9 +281,9 @@ function renderAdminHistory(h){
     document.getElementById('admin-history-list').innerHTML=h.length
         ?h.map((m,i)=>`
             <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;border-radius:12px;gap:8px;">
-                <span style="font-size:0.75rem;font-weight:700;color:#d1d5db;">${TEAM_DISPLAY_NAMES[m.home]}
+                <span style="font-size:0.75rem;font-weight:700;color:#d1d5db;">${teamShort(m.home)}
                     <span style="color:#fbbf24;margin:0 6px;padding:2px 6px;background:rgba(0,0,0,0.3);border-radius:6px;">${m.score}</span>
-                ${TEAM_DISPLAY_NAMES[m.away]}</span>
+                ${teamShort(m.away)}</span>
                 <div style="display:flex;gap:6px;flex-shrink:0;">
                     <button style="background:rgba(96,165,250,0.12);color:#93c5fd;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:0.7rem;" onclick="editMatch(${i})">
                         <i class="fas fa-pen"></i>

@@ -699,7 +699,7 @@ body.perf-no-anim .mini-player{ transition:none; }
 /* column widths */
 .season-table col.c-rank { width:28px; }
 .season-table col.c-team { width:auto; }
-.season-table col.c-num  { width:30px; }
+.season-table col.c-num  { width:27px; }
 .season-table col.c-pts  { width:36px; }
 
 .season-table tbody tr {
@@ -2400,3 +2400,36 @@ body.lite-mode .mp-art.playing::after,body.lite-mode .mp-art.playing .mp-eq b{ a
 
 /* HARFS Assistant switched off in Settings */
 body.ai-disabled .ai-entry-capsule{ display:none !important; }
+
+
+/* =====================================================
+   TEAM NAMES NEVER WIDEN THE SCREEN
+   Short names (see teamShort() in config.js) keep tables compact; this is the
+   safety net so even an unusual name can only ever be clipped with an
+   ellipsis — never stretch the table or push the page sideways.
+   ===================================================== */
+.season-table{ table-layout:fixed; width:100%; }
+.season-table td.td-team{ overflow:hidden; }
+.td-team-inner{ min-width:0; }
+.td-team-inner span{ min-width:0; flex:1 1 auto; }
+#league-table-screen, .match-card-mini{ max-width:100%; }
+.chip{ max-width:42vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ranking-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.team-picker-option span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+
+/* ---- Music player: the VOLUME bar must not look like the seek bar ----
+   Seek   = thick, theme colour, round thumb.
+   Volume = slim, amber, square-ish thumb, with its own warm icons. */
+.mp-volume .mp-range{ height:18px; }
+.mp-volume .mp-range::-webkit-slider-runnable-track{
+    height:3px; border-radius:99px;
+    background:linear-gradient(90deg,#fbbf24 var(--p),rgba(251,191,36,0.20) var(--p));
+}
+.mp-volume .mp-range::-moz-range-track{ height:3px; border-radius:99px; background:rgba(251,191,36,0.20); }
+.mp-volume .mp-range::-moz-range-progress{ height:3px; border-radius:99px; background:#fbbf24; }
+.mp-volume .mp-range::-webkit-slider-thumb{
+    width:12px; height:12px; border-radius:4px; margin-top:-4.5px;
+    background:#fbbf24; box-shadow:0 1px 5px rgba(0,0,0,.45),0 0 0 3px rgba(251,191,36,.16);
+}
+.mp-volume .mp-range::-moz-range-thumb{ width:12px; height:12px; border-radius:4px; background:#fbbf24; box-shadow:0 1px 5px rgba(0,0,0,.45); }
+.mp-volume i{ color:#d4a017; }

@@ -111,10 +111,31 @@ function initializeMainLeagueData(){PROFILE_TEAMS.forEach(t=>mainLeagueData[t]={
 // team's own profile is edited (see season.js / appearance.js).
 function syncTeamDisplayNames(){
     PROFILE_TEAMS.forEach(t=>{
-        const custom = mainLeagueData[t] && mainLeagueData[t].customName;
-        TEAM_DISPLAY_NAMES[t] = (custom && custom.trim()) ? custom.trim() : t;
+        const w = mainLeagueData[t] || {};
+        TEAM_DISPLAY_NAMES[t] = (w.customName && w.customName.trim()) ? w.customName.trim() : t;
+        const custShort = (w.customShort && String(w.customShort).trim()) || '';
+        TEAM_SHORT_NAMES[t] = custShort ? [...custShort].slice(0,TEAM_SHORT_MAX).join('') : deriveShortName(TEAM_DISPLAY_NAMES[t]);
     });
 }
+// TWO NAMES PER TEAM
+//   full  -> TEAM_DISPLAY_NAMES[t]  : panels, profiles, dialogs, Overall (room to breathe)
+//   short -> TEAM_SHORT_NAMES[t]    : tables and tight rows (Season table, match history,
+//                                     filter chips, team pickers) so a long name can never
+//                                     push the screen wider than the phone.
+// The short name is whatever the team typed in its profile (max 6 chars), or — when it
+// left that empty — derived: names of 6 chars or less stay as they are, several words
+// become initials ("Violet Dragons United" -> "VDU"), one long word is cut to 6 letters.
+const TEAM_SHORT_MAX = 6;
+const TEAM_SHORT_NAMES = {};
+function deriveShortName(full){
+    const n = String(full||'').trim();
+    const chars = [...n];
+    if(chars.length <= TEAM_SHORT_MAX) return n;
+    const words = n.split(/\s+/).filter(Boolean);
+    if(words.length >= 2) return words.slice(0,4).map(w=>[...w][0]).join('').toUpperCase();
+    return chars.slice(0,TEAM_SHORT_MAX).join('');
+}
+function teamShort(t){ return TEAM_SHORT_NAMES[t] || TEAM_DISPLAY_NAMES[t] || t; }
 // Self-heal text that an older Worker double-encoded (emoji / Persian turning into
 // "ÃÂ…" and growing a layer per save). Peels layers until it is real text again;
 // only touches strings with the telltale Ã/Â + continuation-byte pattern.

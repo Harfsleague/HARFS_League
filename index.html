@@ -93,14 +93,6 @@
         <div id="perf-custom-options" style="display:none;">
             <div id="perf-group-toggles">
                 <div class="perf-option-row">
-                    <div class="perf-option-icon"><i class="fas fa-droplet"></i></div>
-                    <div class="perf-option-textcol">
-                        <span class="perf-option-title">Glass</span>
-                        <span class="perf-option-sub">Frosted-glass panels &amp; their glow</span>
-                    </div>
-                    <div class="perf-toggle" id="perf-toggle-glass" onclick="togglePerfGroup('glass')"></div>
-                </div>
-                <div class="perf-option-row">
                     <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
                     <div class="perf-option-textcol">
                         <span class="perf-option-title">Background Effects</span>
@@ -172,6 +164,8 @@
                 <input type="file" id="team-edit-logo-input" accept="image/*" style="display:none;" onchange="handleTeamEditLogoSelect(event)">
             </div>
             <input type="text" id="team-edit-name-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Team name" maxlength="24">
+            <input type="text" id="team-edit-short-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Short name" maxlength="6" style="letter-spacing:1px;">
+            <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:-4px 4px 2px;line-height:1.5;">The short name (up to 6 characters) appears in tables. Leave it empty to generate it automatically.</p>
             <div style="display:flex;gap:8px;width:100%;">
                 <button class="glass-button flex-1 font-bold text-xs py-2.5" style="color:#9ca3af;" onclick="resetTeamEditDefaults()"><i class="fas fa-rotate-left mr-2"></i>Reset</button>
                 <button class="glass-button flex-1 font-bold text-xs py-2.5" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" id="team-edit-save-btn" onclick="saveTeamEdit()"><i class="fas fa-check mr-2"></i>Save</button>
