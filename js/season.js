@@ -110,39 +110,12 @@ function updateHistoryDots(filter){
     });
 }
 
-// Summary of EVERY team, shown above the filter chips (W/D/L, goals for:against, last 5).
-// Built from the same list that is displayed, so it also works for archived seasons.
-function renderSeasonHistorySummary(history){
-    const el=document.getElementById('season-history-summary');
-    if(!el)return;
-    if(!history||!history.length){el.innerHTML='';return;}
-    el.innerHTML='<div class="hist-sum-grid">'+TEAM_NAMES.map(t=>{
-        let w=0,d=0,l=0,gf=0,ga=0;const form=[];
-        history.forEach(m=>{
-            const p=String(m.score).split('-');
-            const hs=parseInt(p[0])||0,as=parseInt(p[1])||0;
-            let f,a;
-            if(m.home===t){f=hs;a=as;}else if(m.away===t){f=as;a=hs;}else return;
-            gf+=f;ga+=a;
-            const r=f>a?'w':f<a?'l':'d';
-            if(r==='w')w++;else if(r==='l')l++;else d++;
-            if(form.length<5)form.push(r); // history is newest-first
-        });
-        return `<div class="hist-sum-card">
-            <div class="hs-top"><img src="${teamLogoUrl(t)}" onerror="this.style.opacity='0.3'"><span>${escapeHtml(teamShort(t))}</span></div>
-            <div class="hs-stats"><b class="w">${w}W</b><b class="d">${d}D</b><b class="l">${l}L</b></div>
-            <div class="hs-goals">${gf} : ${ga}</div>
-            <div class="hs-form">${form.map(r=>`<i class="${r}"></i>`).join('')}</div>
-        </div>`;
-    }).join('')+'</div>';
-}
 function renderSeasonHistoryList(history){
     history=history||[];
     const loadingEl=document.getElementById('season-history-loading');
     if(loadingEl)loadingEl.style.display='none';
     buildSeasonHistoryChips();
     currentFilter='all';
-    renderSeasonHistorySummary(history);
     const list=document.getElementById('season-history-list');
     if(!list)return;
     if(!history.length){

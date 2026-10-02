@@ -2440,22 +2440,11 @@ body.ai-disabled .ai-entry-capsule{ display:none !important; }
    ===================================================== */
 .nav-item{ color:#94a3b8; }
 
-/* ---- Match History: summary of every team ---- */
-.hist-sum-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
-.hist-sum-card{ background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:9px 10px; display:flex; flex-direction:column; align-items:center; gap:5px; }
-.hs-top{ display:flex; align-items:center; gap:6px; min-width:0; }
-.hs-top img{ width:22px; height:22px; border-radius:50%; object-fit:cover; flex-shrink:0; }
-.hs-top span{ font-size:0.72rem; font-weight:800; color:#e5e7eb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.hs-stats{ display:flex; gap:8px; font-size:0.7rem; font-weight:800; }
-.hs-stats .w{ color:#4ade80; } .hs-stats .d{ color:#a5b4fc; } .hs-stats .l{ color:#f87171; }
-.hs-goals{ font-size:0.66rem; font-weight:700; color:#9ca3af; font-family:monospace; }
-.hs-form{ display:flex; gap:4px; min-height:8px; }
-.hs-form i{ width:8px; height:8px; border-radius:50%; background:#818cf8; }
-.hs-form i.w{ background:#22c55e; } .hs-form i.l{ background:#ef4444; }
 
 /* filter chips centred */
 #season-history-filter-bar{ justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
-.mcm-dot{ display:none !important; }
+/* dot + side stripe of the match blocks are gone; the block colour alone shows the result */
+.mcm-dot,.match-card-mini::before{ display:none !important; }
 
 /* the match block itself carries the result colour (beats the flat !important
    backgrounds of perf-no-blur / lite-mode by specificity) */
@@ -2467,9 +2456,6 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 .match-card-mini[data-res="draw"] .mcm-score{ color:#c7d2fe; }
 
 /* ---- People panel (Overall) ---- */
-.people-entry-capsule{ width:100%; display:flex; align-items:center; gap:12px; margin-top:14px; padding:14px 16px; border-radius:20px; background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(251,191,36,0.08)); border:1px solid rgba(255,255,255,0.12); cursor:pointer; color:inherit; text-align:left; transition:transform .15s; }
-.people-entry-capsule:active{ transform:scale(0.97); }
-.people-entry-icon{ width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#a855f7,#fbbf24); color:#0b1220; }
 .people-row{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-inline-start:3px solid var(--pa,#60a5fa); }
 .people-avatar{ width:48px; height:48px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--pa,#60a5fa); background:rgba(255,255,255,0.06); }
 .people-avatar-ph{ display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:900; color:#fff; }
@@ -2483,3 +2469,35 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 .login-panel{ max-height:90vh; overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; }
 .login-panel::-webkit-scrollbar{ display:none; }
 .login-group-label{ grid-column:1 / -1; margin:8px 0 0; text-align:center; font-size:0.6rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; }
+
+/* background dots removed */
+#particle-canvas{ display:none !important; }
+
+/* ---- People card on Overall (right under the last team) ---- */
+.people-card{ position:relative; display:flex; align-items:center; gap:12px; margin-top:4px; padding:12px 14px; border-radius:20px; cursor:pointer; overflow:hidden;
+    background:linear-gradient(120deg,rgba(168,85,247,.24),rgba(251,191,36,.16) 55%,rgba(168,85,247,.10));
+    border:1px dashed rgba(251,191,36,.55); box-shadow:0 0 22px rgba(168,85,247,.18);
+    animation:rankCardIn .45s cubic-bezier(.34,1.56,.64,1) both; transition:transform .15s; }
+.people-card:active{ transform:scale(0.97); }
+.people-card-stack{ display:flex; flex-shrink:0; padding-inline-start:10px; }
+.people-card-stack img{ width:32px; height:32px; border-radius:50%; object-fit:cover; margin-inline-start:-10px; border:2px solid #1a1740; background:#0f172a; }
+.people-card-text{ flex:1; min-width:0; }
+.people-card-title{ font-size:0.9rem; font-weight:900; letter-spacing:.3px; background:linear-gradient(90deg,#fde68a,#fbbf24,#e9d5ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.people-card-title i{ -webkit-text-fill-color:#fbbf24; font-size:.8rem; margin-inline-end:4px; }
+.people-card-sub{ font-size:0.64rem; color:#c4b5fd; margin-top:2px; }
+.people-card-chevron{ color:#c4b5fd; font-size:.8rem; flex-shrink:0; }
+
+/* ---- People panel (sheet) ---- */
+html body .team-picker-panel.people-panel{ border-top:2px solid rgba(251,191,36,.55);
+    background-image:radial-gradient(120% 55% at 50% 0%,rgba(168,85,247,.28),rgba(0,0,0,0) 70%),linear-gradient(160deg,rgba(10,18,30,.99),rgba(15,23,42,.99)) !important; }
+.people-panel-head{ text-align:center; margin:0 0 14px; flex-shrink:0; }
+.people-panel-crown{ width:42px; height:42px; margin:0 auto 8px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#fbbf24,#a855f7); color:#0b1220; box-shadow:0 0 22px rgba(251,191,36,.45); }
+.people-panel-title{ font-size:1rem; font-weight:900; letter-spacing:1px; background:linear-gradient(90deg,#fde68a,#fbbf24,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.people-panel-sub{ font-size:0.62rem; color:#9ca3af; margin-top:2px; letter-spacing:.5px; }
+.people-row{ animation:rankCardIn .4s ease both; }
+.people-row-hero{ padding:16px; background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(251,191,36,.03)); border-color:rgba(251,191,36,.4); }
+.people-row-hero .people-avatar{ width:60px; height:60px; box-shadow:0 0 16px rgba(251,191,36,.4); }
+.people-row-hero .people-name{ font-size:1.02rem; }
+.people-team-chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.people-team-chip{ display:inline-flex; align-items:center; gap:5px; padding:2px 9px 2px 3px; border-radius:999px; font-size:0.62rem; font-weight:800; color:#e5e7eb; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); }
+.people-team-chip img{ width:16px; height:16px; border-radius:50%; object-fit:cover; }

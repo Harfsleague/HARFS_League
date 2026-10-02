@@ -61,7 +61,7 @@
     // CSS in Lite mode (display:none) and pointless to keep painting while
     // the tab is backgrounded — both previously burned CPU/battery for nothing.
     function shouldRun(){
-        return !document.hidden && !document.body.classList.contains('lite-mode') && !document.body.classList.contains('perf-no-particles');
+        return false; // background particles removed (they slowed phones down)
     }
     function start(){ if(rafId===null && shouldRun()) draw(); }
     function stop(){ if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }

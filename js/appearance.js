@@ -190,7 +190,7 @@ function applyAppearance(){
     document.body.classList.toggle('lite-mode', PERF_KEYS.every(k=>!p[k])); // convenience alias when everything's off
     document.body.classList.toggle('perf-no-orbs', !p.orbs);
     document.body.classList.toggle('perf-no-particles', !p.particles);
-    document.body.classList.add('perf-no-blur'); // Glass look removed for everyone: always flat, no backdrop blur
+    document.body.classList.toggle('perf-no-blur', !p.blur);
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
     document.body.classList.toggle('perf-no-anim', !p.anim);

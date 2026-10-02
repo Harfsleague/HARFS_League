@@ -66,6 +66,17 @@ function renderMainLeagueTable(){
     }).join('');
 
 
+    // People card: always right under the last team, deliberately styled unlike the ranking cards.
+    pod.innerHTML += `
+        <div class="people-card" style="animation-delay:${table.length*55}ms" onclick="openPeopleSheet()">
+            <div class="people-card-stack">${PEOPLE.map(p=>`<img src="${teamLogoUrl(p.key)}" onerror="this.style.opacity='0.3'">`).join('')}</div>
+            <div class="people-card-text">
+                <div class="people-card-title"><i class="fas fa-crown"></i> Federation &amp; Owners</div>
+                <div class="people-card-sub">President, owners &amp; fans</div>
+            </div>
+            <i class="fas fa-chevron-right people-card-chevron"></i>
+        </div>`;
+
     // clear the old separate body — all cards go inside pod now
     document.getElementById('main-league-body').innerHTML='';
 }
@@ -91,16 +102,16 @@ function personAvatar(p){
 function renderPeopleSheet(){
     const box = document.getElementById('people-list');
     if(!box) return;
-    box.innerHTML = PEOPLE.map(p=>{
+    box.innerHTML = PEOPLE.map((p,i)=>{
         const name = TEAM_DISPLAY_NAMES[p.key] || p.key;
-        const teams = (p.teams||[]).map(t=>`<img class="people-team-logo" src="${teamLogoUrl(t)}" title="${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}">`).join('');
-        return `<div class="people-row" style="--pa:${p.accent}">
+        const chips = (p.teams||[]).map(t=>`<span class="people-team-chip"><img src="${teamLogoUrl(t)}" onerror="this.style.opacity='0.3'">${escapeHtml(TEAM_DISPLAY_NAMES[t]||t)}</span>`).join('');
+        return `<div class="people-row${i===0?' people-row-hero':''}" style="--pa:${p.accent};animation-delay:${i*70}ms">
             ${personAvatar(p)}
             <div class="people-info">
                 <div class="people-name" dir="auto">${escapeHtml(name)}</div>
                 <div class="people-role">${escapeHtml(p.role)}</div>
+                ${chips ? `<div class="people-team-chips">${chips}</div>` : ''}
             </div>
-            <div class="people-teams">${teams}</div>
         </div>`;
     }).join('');
 }
