@@ -2501,3 +2501,22 @@ html body .team-picker-panel.people-panel{ border-top:2px solid rgba(251,191,36,
 .people-team-chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
 .people-team-chip{ display:inline-flex; align-items:center; gap:5px; padding:2px 9px 2px 3px; border-radius:999px; font-size:0.62rem; font-weight:800; color:#e5e7eb; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); }
 .people-team-chip img{ width:16px; height:16px; border-radius:50%; object-fit:cover; }
+
+/* ---- Magazine: CUP section ---- */
+.magazine-cup-badge{font-size:0.62rem;font-weight:700;background:rgba(251,191,36,0.15);color:#fbbf24;border-radius:999px;padding:2px 8px;margin-right:6px;vertical-align:middle;}
+.magazine-cup-medals{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.magazine-cup-medals>div{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 12px;font-weight:700;font-size:0.8rem;}
+.magazine-cup-bracket{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.magazine-cup-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;text-align:center;}
+.magazine-cup-card.is-pending{opacity:0.6;border-style:dashed;}
+.magazine-cup-card-title{font-size:0.65rem;color:#9ca3af;margin-bottom:6px;}
+.magazine-cup-series{display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.78rem;flex-wrap:wrap;}
+.magazine-cup-series b{color:#fbbf24;direction:ltr;}
+.magazine-cup-series .is-winner{color:#4ade80;font-weight:800;}
+.magazine-cup-legs{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:8px;}
+.magazine-cup-leg{font-size:0.65rem;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,0.06);color:#cbd5e1;}
+.magazine-cup-leg.is-new{background:rgba(251,191,36,0.18);color:#fbbf24;}
+.magazine-cup-winner{margin-top:6px;font-size:0.72rem;color:#4ade80;font-weight:700;}
+.magazine-cup-pending{font-size:0.72rem;color:#9ca3af;}
+.magazine-cup-note{font-size:0.65rem;color:#9ca3af;margin:8px 0;}
+.magazine-cup-table{margin-top:10px;}

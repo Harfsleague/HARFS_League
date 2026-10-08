@@ -1,7 +1,7 @@
 // ============================================================
 // generate-magazine.mjs
 // Builds the "HARFS Weekly Magazine": reads the live league data,
-// asks Gemini 3.5 Flash to write it up (Persian, light comedic tone),
+// asks Gemini 3.5 Flash to write it up (Persian, light comedic tone) — league AND CUP,
 // and commits the issue to the HARFS_Data repo so the app can display it.
 // There is NO AI image generation: every issue ships with the default cover
 // (mag1.png) and an admin can swap it per issue from Settings > Admin.
@@ -285,13 +285,208 @@ function buildSeasonContext({ leagueData, matchHistory, seasonsArchive, lastIssu
   };
 }
 
+
+// ------------------------------------------------------------
+// CUP CONTEXT
+// The CUP (js/mba.js) lives in its own file, mba_history.json, and never
+// touches league_data.json / match_history.json — so CUP games can never
+// leak into league P/W/D/L/GF/GA/Pts. This section reads that file and
+// describes, for the issue's time window (last issue -> now), what happened
+// in the CUP: games played, bracket state, medals, records. It is kept as a
+// completely separate object (`cup`) so neither the code nor the AI ever
+// blends the two competitions.
+// ------------------------------------------------------------
+const CUP_SEMI_WINS_NEEDED = 3; // mirrors MBA_SEMI_WINS_NEEDED in js/mba.js
+const WEEK_FALLBACK_DAYS = 7;    // window length when there is no previous issue
+
+function issueWindowStartMs(lastIssue) {
+  const t = lastIssueTimeMs(lastIssue);
+  return t !== null ? t : Date.now() - WEEK_FALLBACK_DAYS * 864e5;
+}
+
+// Older saves stored legs as plain team-name strings with no score/ts.
+function normalizeCupGame(g) {
+  if (typeof g === "string") return { winner: g, scores: null, ts: null };
+  return { winner: g?.winner || null, scores: g?.scores || null, ts: g?.ts ?? null };
+}
+
+function cupGameScoreText(teams, g) {
+  if (!g.scores) return null;
+  const [a, b] = teams;
+  return `${g.scores[a] ?? "?"}-${g.scores[b] ?? "?"}`;
+}
+
+function cupMedalsOf(t) {
+  const semiWinners = (t.semis || []).map((s) => s.winner || null);
+  const finalists = semiWinners;
+  const thirdTeams = (t.semis || []).map((s) => (s.winner ? (s.teams || []).find((x) => x !== s.winner) || null : null));
+  const finalValid = !!t.final?.winner && finalists.every(Boolean) && finalists.includes(t.final.winner);
+  const thirdValid = !!t.thirdPlace?.winner && thirdTeams.every(Boolean) && thirdTeams.includes(t.thirdPlace.winner);
+  const gold = finalValid ? t.final.winner : null;
+  const silver = finalValid ? finalists.find((x) => x !== gold) || null : null;
+  const bronze = thirdValid ? t.thirdPlace.winner : null;
+  const fourth = thirdValid ? thirdTeams.find((x) => x !== bronze) || null : null;
+  return { finalists, thirdTeams, finalValid, thirdValid, gold, silver, bronze, fourth };
+}
+
+// Flat, chronological list of every game in one edition, with stage labels.
+function cupEditionGames(ed) {
+  const out = [];
+  (ed.semis || []).forEach((semi, i) => {
+    (semi.legs || []).forEach((leg, j) => {
+      const g = normalizeCupGame(leg);
+      out.push({ stage: `semi${i + 1}`, stageLabel: `نیمه‌نهایی ${i + 1}`, game: j + 1, teams: semi.teams, ...g, score: cupGameScoreText(semi.teams, g) });
+    });
+  });
+  const med = cupMedalsOf(ed);
+  if (ed.final?.winner) {
+    const g = normalizeCupGame(ed.final);
+    const teams = ed.final.teams || med.finalists;
+    out.push({ stage: "final", stageLabel: "فینال", game: 1, teams, ...g, score: cupGameScoreText(teams, g) });
+  }
+  if (ed.thirdPlace?.winner) {
+    const g = normalizeCupGame(ed.thirdPlace);
+    const teams = ed.thirdPlace.teams || med.thirdTeams;
+    out.push({ stage: "third", stageLabel: "رده‌بندی (مقام سوم)", game: 1, teams, ...g, score: cupGameScoreText(teams, g) });
+  }
+  return out.sort((a, b) => (a.ts ?? Infinity) - (b.ts ?? Infinity));
+}
+
+function cupGameInWindow(g, ed, startMs) {
+  if (g.ts) return g.ts >= startMs;
+  // legacy game with no timestamp: fall back to when the edition was made/finished
+  return (ed.finishedAt || ed.createdAt || 0) >= startMs;
+}
+
+function computeCupRecords(games) {
+  const scored = games.filter((g) => g.scores && g.teams?.length === 2);
+  if (!scored.length) return null;
+  let highestScoring = null, biggestMargin = null;
+  for (const g of scored) {
+    const [a, b] = g.teams;
+    const x = Number(g.scores[a]), y = Number(g.scores[b]);
+    if (Number.isNaN(x) || Number.isNaN(y)) continue;
+    const rec = { stage: g.stageLabel, teams: g.teams, score: g.score };
+    if (!highestScoring || x + y > highestScoring.total) highestScoring = { ...rec, total: x + y };
+    if (!biggestMargin || Math.abs(x - y) > biggestMargin.margin) biggestMargin = { ...rec, margin: Math.abs(x - y) };
+  }
+  return { highestScoring, biggestMargin };
+}
+
+// CUP-only team stats for one edition (never added to league numbers).
+function computeCupTeamStats(games) {
+  const base = Object.fromEntries(TEAM_NAMES.map((t) => [t, { team: t, played: 0, W: 0, L: 0, GF: 0, GA: 0 }]));
+  for (const g of games) {
+    if (!g.scores || g.teams?.length !== 2) continue;
+    const [a, b] = g.teams;
+    const x = Number(g.scores[a]), y = Number(g.scores[b]);
+    if (Number.isNaN(x) || Number.isNaN(y) || !base[a] || !base[b]) continue;
+    base[a].played++; base[b].played++;
+    base[a].GF += x; base[a].GA += y; base[b].GF += y; base[b].GA += x;
+    if (x > y) { base[a].W++; base[b].L++; } else if (y > x) { base[b].W++; base[a].L++; }
+  }
+  return Object.values(base).filter((r) => r.played > 0).map((r) => ({ ...r, GD: r.GF - r.GA }));
+}
+
+function buildCupContext(mbaData, startMs) {
+  const completed = (mbaData?.completed || []).map((e) => ({ ...e, _completed: true }));
+  const current = mbaData?.current ? { ...mbaData.current, _completed: false } : null;
+  const editions = [...completed, ...(current ? [current] : [])];
+
+  const pastEditions = completed.map((e) => ({
+    edition: e.edition, gold: e.gold || null, silver: e.silver || null, bronze: e.bronze || null, fourth: e.fourth || null,
+  }));
+
+  // An edition is "in this week's story" if any of its games, its start, or
+  // its official completion fall inside the window.
+  const touched = editions
+    .map((ed) => {
+      const games = cupEditionGames(ed);
+      const weekGames = games.filter((g) => cupGameInWindow(g, ed, startMs));
+      const startedThisWeek = (ed.createdAt || 0) >= startMs;
+      const finishedThisWeek = !!ed.finishedAt && ed.finishedAt >= startMs;
+      return { ed, games, weekGames, startedThisWeek, finishedThisWeek };
+    })
+    .filter((x) => x.weekGames.length || x.startedThisWeek || x.finishedThisWeek);
+
+  if (!touched.length) {
+    const open = current
+      ? { edition: current.edition, note: "یک دورهٔ CUP باز است ولی این هفته بازی تازه‌ای در آن ثبت نشده" }
+      : null;
+    return { hasActivity: false, openEdition: open, pastEditions };
+  }
+
+  // normally exactly one; if several, report the newest
+  const { ed, games, weekGames, startedThisWeek, finishedThisWeek } = touched[touched.length - 1];
+  const med = cupMedalsOf(ed);
+  const bracketSemis = (ed.semis || []).map((semi, i) => {
+    const legs = (semi.legs || []).map((leg, j) => {
+      const g = normalizeCupGame(leg);
+      return { game: j + 1, winner: g.winner, score: cupGameScoreText(semi.teams, g), playedThisWeek: cupGameInWindow(g, ed, startMs) };
+    });
+    const wins = Object.fromEntries((semi.teams || []).map((t) => [t, legs.filter((l) => l.winner === t).length]));
+    return { semi: i + 1, teams: semi.teams, winsNeeded: CUP_SEMI_WINS_NEEDED, wins, winner: semi.winner || null, legs };
+  });
+
+  const stageEntry = (res, teams) => {
+    if (!res?.winner) return { played: false, teams: teams.filter(Boolean) };
+    const g = normalizeCupGame(res);
+    const tt = res.teams || teams;
+    return { played: true, teams: tt, winner: g.winner, score: cupGameScoreText(tt, g), playedThisWeek: cupGameInWindow(g, ed, startMs) };
+  };
+
+  const pending = [];
+  bracketSemis.forEach((s) => { if (!s.winner) pending.push(`نیمه‌نهایی ${s.semi} هنوز تمام نشده`); });
+  if (bracketSemis.every((s) => s.winner)) {
+    if (!med.finalValid) pending.push("فینال هنوز برگزار نشده");
+    if (!med.thirdValid) pending.push("بازی رده‌بندی (مقام سوم) هنوز برگزار نشده");
+  }
+  const officiallyCompleted = !!ed._completed;
+  const status = officiallyCompleted ? "finished" : pending.length ? "in_progress" : "all_games_played_awaiting_admin_finish";
+
+  return {
+    hasActivity: true,
+    edition: ed.edition,
+    status, // finished | in_progress | all_games_played_awaiting_admin_finish
+    startedThisWeek,
+    finishedThisWeek,
+    championCrowned: !!med.gold, // true as soon as the Final is decided, even if 3rd place is pending
+    medals: { gold: med.gold, silver: med.silver, bronze: med.bronze, fourth: med.fourth },
+    bracket: {
+      semis: bracketSemis,
+      final: stageEntry(ed.final, med.finalists),
+      thirdPlace: stageEntry(ed.thirdPlace, med.thirdTeams),
+    },
+    pending,
+    gamesThisWeek: weekGames.map(({ stageLabel, game, teams, score, winner }) => ({ stage: stageLabel, game, teams, score, winner })),
+    recordsThisWeek: computeCupRecords(weekGames),
+    recordsWholeEdition: computeCupRecords(games),
+    teamCupStats: computeCupTeamStats(games), // CUP-only numbers, NOT league numbers
+    pastEditions,
+  };
+}
+
+// What kind of week was it? Computed here — never left to the AI.
+//   both        - league games AND CUP games this week
+//   league_only - only league games
+//   cup_only    - only CUP games (league was idle)
+//   quiet       - neither
+function computeWeekType(leagueActive, cupActive) {
+  if (leagueActive && cupActive) return "both";
+  if (cupActive) return "cup_only";
+  if (leagueActive) return "league_only";
+  return "quiet";
+}
+
 async function gatherData(lastIssue) {
-  const [leagueData, mainLeagueData, matchHistory, seasonsArchive] = await Promise.all([
+  const [leagueData, mainLeagueData, matchHistory, seasonsArchive, mbaData] = await Promise.all([
     fetchJson(`${RAW_BASE}league_data.json`, {}),
     fetchJson(`${RAW_BASE}main_league_data.json`, {}),
     fetchJson(`${RAW_BASE}match_history.json`, []),
     fetchJson(`${RAW_BASE}seasons_archive.json`, []),
+    fetchJson(`${RAW_BASE}mba_history.json`, { current: null, completed: [] }),
   ]);
+  const windowStartMs = issueWindowStartMs(lastIssue);
 
   const ctx = buildSeasonContext({ leagueData: leagueData || {}, matchHistory, seasonsArchive, lastIssue });
   // History that the weekly sections describe: the ended season's archived matches when it is the
@@ -302,9 +497,21 @@ async function gatherData(lastIssue) {
   const focusHistory = ctx.focusIsEnded ? endedHistory : matchHistory;
   const currentSeasonTable = ctx.focusIsEnded ? ctx.justEndedSeason.finalTable : ctx.liveTable;
 
-  const recentMatches = (focusHistory || [])
-    .slice(0, 12)
-    .map(({ home, away, score, timestamp }) => ({ home, away, score, timestamp }));
+  // League games of THIS issue's window (since the previous issue). For an
+  // ended-season finale (or the very first issue) we keep the old "latest 12".
+  const slim = ({ home, away, score, timestamp }) => ({ home, away, score, timestamp });
+  const useWindow = !ctx.focusIsEnded && !!lastIssue;
+  const recentMatches = useWindow
+    ? (focusHistory || []).filter((m) => Date.parse(m.timestamp) >= windowStartMs).slice(0, 20).map(slim)
+    : (focusHistory || []).slice(0, 12).map(slim);
+  // older league results, only as background for weeks when the league was idle
+  const previousLeagueResults = useWindow
+    ? (focusHistory || []).filter((m) => !(Date.parse(m.timestamp) >= windowStartMs)).slice(0, 5).map(slim)
+    : [];
+
+  const cup = buildCupContext(mbaData, windowStartMs);
+  const leagueActive = recentMatches.length > 0 || !!ctx.justEndedSeason;
+  const weekType = computeWeekType(leagueActive, !!cup.hasActivity);
 
   const pastChampions = (seasonsArchive || []).map((s) => ({
     seasonId: s.seasonId,
@@ -325,10 +532,15 @@ async function gatherData(lastIssue) {
   const allTimeStats = computeAllTimeStats(seasonsArchive, ctx.liveTable, mainLeagueData);
 
   return {
+    weekType,
+    window: { from: new Date(windowStartMs).toISOString(), to: new Date().toISOString() },
+    leagueWeek: { matchesThisWeek: recentMatches.length, isActive: leagueActive },
+    cup,
     seasonContext: ctx.seasonContext,
     justEndedSeason: ctx.justEndedSeason,
     currentSeasonTable,
     recentMatches,
+    previousLeagueResults,
     pastChampions,
     arenaHighlights,
     formGuide,
@@ -356,7 +568,9 @@ function buildPreviousIssuesSummary(archive) {
     issueDate: issue.issueDate,
     issueTitle: issue.issueTitle,
     coverSubtitle: issue.coverSubtitle,
+    weekType: issue.weekType || null,
     matchReportGist: (issue.matchReport || "").slice(0, 300),
+    cupReportGist: (issue.cupReport || "").slice(0, 300),
     funnyClosing: issue.funnyClosing,
     interviewTeam: issue.interview?.team || null,
     interviewGist: (issue.interview?.headline || "").slice(0, 200),
@@ -372,7 +586,8 @@ const MAGAZINE_SCHEMA = {
     issueTitle: { type: "string", description: "عنوان جذاب و کمی طنز برای این شماره مجله" },
     coverSubtitle: { type: "string", description: "یک زیرعنوان کوتاه و بامزه برای جلد" },
     standingsCommentary: { type: "string", description: "تحلیل جدول رده‌بندی فعلی، با لحن یک گزارشگر ورزشی که کمی طنازی هم دارد" },
-    matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی از بازی‌های اخیر هفته، رویدادها و اتفاقات جالب" },
+    matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط از بازی‌های «لیگ» این هفته (recentMatches). بازی‌های CUP هرگز اینجا نمی‌آید — برای آن‌ها cupReport هست. اگر این هفته بازی لیگ نبوده، کوتاه و صادقانه بگو لیگ استراحت داشته (۱ تا ۲ جمله)." },
+    cupReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط دربارهٔ بازی‌های «CUP» این هفته (cup.gamesThisWeek، cup.bracket، cup.medals، cup.recordsThisWeek). اگر cup.hasActivity برابر false است، رشتهٔ خالی \"\" برگردان." },
     playerSpotlights: {
       type: "array",
       description: "۲ تا ۴ نکته دربارهٔ تیم‌ها یا عملکردهای برجسته این هفته",
@@ -426,6 +641,7 @@ const MAGAZINE_SCHEMA = {
     "coverSubtitle",
     "standingsCommentary",
     "matchReport",
+    "cupReport",
     "playerSpotlights",
     "recommendations",
     "titleRaceCommentary",
@@ -452,6 +668,13 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 • season_in_progress: فصل در جریان است؛ مثل همیشه بنویس.
 • new_season_not_started: فصل جدید هنوز شروع نشده و فصل تمام‌شدهٔ بی‌روایتی هم نیست؛ صادقانه و کوتاه بگو بازی‌ای ثبت نشده و درباره‌ٔ جدول صفر تحلیل نساز.
 اگر justEndedSeason.hasMatchHistory برابر false بود، یعنی فهرست بازی‌های آن فصل ذخیره نشده؛ فقط از جدول نهایی و آمار استفاده کن و نتیجهٔ بازی خاصی نساز. همیشه شمارهٔ فصل را درست و از seasonId بگو.
+
+دربارهٔ نوع هفته و CUP (بسیار مهم): در دیتا یک مقدار weekType هست که از قبل محاسبه شده و تو آن را عوض نمی‌کنی. «لیگ» و «CUP» دو رقابت کاملاً جدا هستند: بازی‌های CUP هیچ تأثیری روی جدول لیگ، تعداد بازی، گل زده/خورده، امتیاز یا فرم لیگ ندارند و هرگز نباید با اعداد لیگ جمع یا قاطی شوند. اعداد CUP فقط در شیء cup هستند (cup.teamCupStats آمار فقط-CUP است).
+• weekType = league_only: فقط لیگ برگزار شده. cupReport را "" بگذار و دربارهٔ CUP چیزی نساز (حداکثر یک اشاره اگر cup.openEdition وجود دارد).
+• weekType = cup_only: این هفته لیگ بازی نداشته ولی CUP بوده. تیتر و زیرعنوان و بدنهٔ اصلی مجله باید دربارهٔ CUP باشد. matchReport را فقط ۱ تا ۲ جمله بنویس که لیگ این هفته بازی نداشت (می‌توانی از previousLeagueResults برای یادآوری آخرین نتایج لیگ استفاده کنی). standingsCommentary و titleRaceCommentary را کوتاه نگه دار و بگو جدول لیگ تغییری نکرده؛ هیچ «حرکت» یا «اتفاق» لیگی نساز. recordsAndOddities را از cup.recordsThisWeek بنویس.
+• weekType = both: هر دو را کامل گزارش کن: matchReport فقط لیگ، cupReport فقط CUP. تیتر مجله می‌تواند هر دو را پوشش دهد. recordsAndOddities هم رکورد لیگ (weeklyRecords) و هم رکورد CUP را، با برچسب مشخص، پوشش دهد.
+• weekType = quiet: نه لیگ نه CUP؛ مثل قبل صادقانه و کوتاه بگو بازی‌ای نبوده و cupReport = "".
+قواعد گزارش CUP: ساختار CUP این است: دو نیمه‌نهایی که هر کدام یک سری است (اول رسیدن به cup.bracket.semis[].winsNeeded برد)، سپس فینال و بازی رده‌بندی (مقام سوم) که هرکدام یک بازی‌اند. cup.status یکی از این‌هاست: finished (دوره رسماً تمام و مدال‌ها ثبت شده)؛ in_progress (هنوز بازی مانده، cup.pending را بخوان و نگو کسی قهرمان شده مگر championCrowned=true)؛ all_games_played_awaiting_admin_finish (همهٔ بازی‌ها انجام شده ولی ادمین هنوز دوره را نبسته؛ نتیجه قطعی است). اگر cup.startedThisWeek=true به شروع دوره و قرعه‌کشی اشاره کن. اگر cup.championCrowned=true قهرمان (medals.gold) و نایب‌قهرمان را اعلام کن؛ اگر bronze هنوز null است یعنی بازی رده‌بندی مانده. نتایج هر بازی را فقط از cup.gamesThisWeek و cup.bracket بیاور (score به‌صورت «گل تیم اول-گل تیم دوم» به ترتیب cup.teams آن بازی است) و سری نیمه‌نهایی را با wins بگو، نه با حدس. اگر score هر بازی null بود، فقط برنده را بگو. به cup.pastEditions برای مقایسه با دوره‌های قبل می‌توانی اشاره کنی. در playerSpotlights و recommendations هم اگر CUP بوده، حداقل یک مورد را به CUP اختصاص بده.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
@@ -611,6 +834,9 @@ async function main() {
   // ignored interviewTeam for any reason, force it back to the scheduled
   // team rather than letting the rotation silently drift.
   if (magazine.interview) magazine.interview.team = data.interviewTeam;
+  // Same idea for the CUP: the structured data decides whether there IS a CUP
+  // story, not the model. No CUP activity -> no CUP report, whatever it wrote.
+  if (!data.cup.hasActivity) magazine.cupReport = "";
 
   const now = new Date();
   // Every issue starts on the shared default cover. When an admin uploads a
@@ -627,6 +853,9 @@ async function main() {
     justEndedSeason: data.justEndedSeason
       ? { seasonId: data.justEndedSeason.seasonId, endedAt: data.justEndedSeason.endedAt, champion: data.justEndedSeason.champion, podium: data.justEndedSeason.podium }
       : null,
+    weekType: data.weekType, // both | league_only | cup_only | quiet — drives the layout in js/magazine.js
+    leagueWeek: data.leagueWeek,
+    cup: data.cup,
     recentMatches: data.recentMatches,
     formGuide: data.formGuide,
     weeklyRecords: data.weeklyRecords,

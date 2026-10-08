@@ -154,6 +154,100 @@ function renderCurrentIssue() {
     renderMagazineIssueNav();
 }
 
+// ---- CUP section (issue.cup comes from scripts/generate-magazine.mjs) ----
+// CUP numbers are shown ONLY here — they are never merged into the league
+// table, form guide or all-time league stats.
+function cupScoreLine(teams, score) {
+    if (!score || !teams || teams.length !== 2) return '';
+    const [x, y] = String(score).split('-');
+    return `${teamLabel(teams[0])} <b>${escapeHtml(x)}</b> - <b>${escapeHtml(y)}</b> ${teamLabel(teams[1])}`;
+}
+
+function renderCupSection(issue) {
+    const cup = issue.cup;
+    if (!cup || !cup.hasActivity) return '';
+    const statusText = {
+        finished: 'پایان‌یافته',
+        in_progress: 'در جریان',
+        all_games_played_awaiting_admin_finish: 'همهٔ بازی‌ها انجام شد'
+    }[cup.status] || '';
+
+    const semis = (cup.bracket?.semis || []).map(s => {
+        const [a, b] = s.teams || [];
+        const legs = (s.legs || []).map(l => `
+            <span class="magazine-cup-leg ${l.playedThisWeek ? 'is-new' : ''}">${l.score ? `${escapeHtml(l.score)}` : '—'}</span>`).join('');
+        return `
+        <div class="magazine-cup-card">
+            <div class="magazine-cup-card-title">نیمه‌نهایی ${s.semi}</div>
+            <div class="magazine-cup-series">
+                <span class="${s.winner === a ? 'is-winner' : ''}">${teamLabel(a)}</span>
+                <b>${s.wins?.[a] ?? 0} - ${s.wins?.[b] ?? 0}</b>
+                <span class="${s.winner === b ? 'is-winner' : ''}">${teamLabel(b)}</span>
+            </div>
+            <div class="magazine-cup-legs" dir="ltr">${legs || '<span class="magazine-form-streak">—</span>'}</div>
+        </div>`;
+    }).join('');
+
+    const stage = (title, st) => {
+        if (!st || !st.played) {
+            return `<div class="magazine-cup-card is-pending">
+                <div class="magazine-cup-card-title">${title}</div>
+                <div class="magazine-cup-pending">هنوز برگزار نشده</div>
+            </div>`;
+        }
+        return `<div class="magazine-cup-card">
+            <div class="magazine-cup-card-title">${title}</div>
+            <div class="magazine-cup-series">${cupScoreLine(st.teams, st.score) || `${teamLabel(st.winner)} برنده شد`}</div>
+            <div class="magazine-cup-winner">🏆 ${teamLabel(st.winner)}</div>
+        </div>`;
+    };
+
+    const m = cup.medals || {};
+    const medals = (m.gold || m.silver || m.bronze) ? `
+        <div class="magazine-cup-medals">
+            ${m.gold ? `<div>🥇 ${teamLabel(m.gold)}</div>` : ''}
+            ${m.silver ? `<div>🥈 ${teamLabel(m.silver)}</div>` : ''}
+            ${m.bronze ? `<div>🥉 ${teamLabel(m.bronze)}</div>` : ''}
+        </div>` : '';
+
+    const rec = cup.recordsThisWeek || cup.recordsWholeEdition;
+    const recCards = rec ? `
+        <div class="magazine-stat-grid">
+            ${rec.highestScoring ? `<div class="magazine-stat-card">
+                <div class="magazine-stat-card-label">پرگل‌ترین بازی CUP</div>
+                <div class="magazine-stat-card-value">${escapeHtml(rec.highestScoring.score || '')}</div>
+                <div class="magazine-stat-card-sub">${teamLabel(rec.highestScoring.teams?.[0])} - ${teamLabel(rec.highestScoring.teams?.[1])}</div>
+            </div>` : ''}
+            ${rec.biggestMargin ? `<div class="magazine-stat-card">
+                <div class="magazine-stat-card-label">بزرگ‌ترین اختلاف CUP</div>
+                <div class="magazine-stat-card-value">${escapeHtml(rec.biggestMargin.score || '')}</div>
+                <div class="magazine-stat-card-sub">${teamLabel(rec.biggestMargin.teams?.[0])} - ${teamLabel(rec.biggestMargin.teams?.[1])}</div>
+            </div>` : ''}
+        </div>` : '';
+
+    const stats = (cup.teamCupStats || []).slice().sort((a, b) => (b.W - a.W) || (b.GD - a.GD)).map(r => `
+        <tr><td>${teamLabel(r.team)}</td><td>${r.played}</td><td>${r.W}</td><td>${r.L}</td><td>${r.GF}</td><td>${r.GA}</td></tr>`).join('');
+
+    return `
+        <div class="magazine-page magazine-cup">
+            <h2 class="magazine-section-title"><i class="fas fa-trophy"></i> CUP — دورهٔ ${cup.edition ?? ''} <span class="magazine-cup-badge">${statusText}</span></h2>
+            ${medals}
+            <div class="magazine-cup-bracket">
+                ${semis}
+                ${stage('فینال', cup.bracket?.final)}
+                ${stage('رده‌بندی (مقام سوم)', cup.bracket?.thirdPlace)}
+            </div>
+            ${issue.cupReport ? `<p class="magazine-text">${escapeHtml(issue.cupReport).replace(/\n/g, '<br>')}</p>` : ''}
+            ${recCards}
+            ${stats ? `
+            <table class="magazine-table magazine-cup-table">
+                <thead><tr><th>تیم</th><th>بازی</th><th>برد</th><th>باخت</th><th>گل‌زده</th><th>گل‌خورده</th></tr></thead>
+                <tbody>${stats}</tbody>
+            </table>
+            <div class="magazine-cup-note">آمار CUP جدا از آمار لیگ است و در جدول رده‌بندی حساب نمی‌شود.</div>` : ''}
+        </div>`;
+}
+
 function renderMagazine(issue) {
     const body = document.getElementById('magazine-body');
     if (!body) return;
@@ -265,6 +359,13 @@ function renderMagazine(issue) {
             <div class="magazine-interview-disclaimer">این مصاحبه کاملاً خیالی و طنزآمیز است.</div>
         </div>` : '';
 
+    // ---- week type: both | league_only | cup_only | quiet (older issues: undefined = league layout) ----
+    const weekType = issue.weekType || 'league_only';
+    const cupSection = renderCupSection(issue);
+    const leagueIdleNote = (weekType === 'cup_only' || weekType === 'quiet')
+        ? '<div class="magazine-cup-note">این هفته بازی لیگ برگزار نشد؛ جدول زیر وضعیت فعلی لیگ است.</div>' : '';
+    const hasCupLayout = !!issue.weekType;
+
     body.innerHTML = `
         <div class="magazine-hero">
             <img src="${coverUrl}" class="magazine-hero-img" alt="cover" onerror="if(this.src!=='${defaultCoverUrl}'){this.src='${defaultCoverUrl}';}else{this.style.display='none';}">
@@ -277,12 +378,15 @@ function renderMagazine(issue) {
             </div>
         </div>
 
+        ${weekType === 'cup_only' ? cupSection : ''}
+
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-table"></i> ${issue.seasonContext?.tableRepresents === 'ended_season_final' && issue.seasonContext.endedSeasonId ? `جدول نهایی فصل ${issue.seasonContext.endedSeasonId}` : 'جدول رده‌بندی'}</h2>
             <table class="magazine-table">
                 <thead><tr><th>#</th><th>تیم</th><th>ب</th><th>برد</th><th>مساوی</th><th>باخت</th><th>امتیاز</th></tr></thead>
                 <tbody>${standingsRows}</tbody>
             </table>
+            ${leagueIdleNote}
             <p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>
         </div>
 
@@ -295,14 +399,16 @@ function renderMagazine(issue) {
 
         ${formRows ? `
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-chart-line"></i> فرم این هفته</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-chart-line"></i> ${hasCupLayout ? 'فرم لیگ' : 'فرم این هفته'}</h2>
             <div class="magazine-form-grid">${formRows}</div>
         </div>` : ''}
 
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-newspaper"></i> گزارش هفته</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-newspaper"></i> ${hasCupLayout ? 'گزارش لیگ' : 'گزارش هفته'}</h2>
             <p class="magazine-text">${escapeHtml(issue.matchReport).replace(/\n/g, '<br>')}</p>
         </div>
+
+        ${weekType === 'both' ? cupSection : ''}
 
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-fire"></i> رکوردها و اتفاق‌های عجیب</h2>
