@@ -66,8 +66,10 @@ function renderRecordBadgesFor(team){
 // ============================================================
 // TEAM PANEL — tap a team on Overall to see its trophies and records.
 // ============================================================
+let teamPanelCurrent = null; // team whose panel is open — the avatar opens its photo slider
 function openTeamPanel(team){
     if(!mainLeagueData[team]) return;
+    teamPanelCurrent = team;
     haptic([8]);
     ensureWalletFields(team);
     const w = mainLeagueData[team];
@@ -81,6 +83,10 @@ function openTeamPanel(team){
     teamPanelLogo.style.opacity = '1';
     teamPanelLogo.src = teamLogoUrl(team);
     document.getElementById('team-panel-name').textContent = TEAM_DISPLAY_NAMES[team] || team;
+    const photoBadge = document.getElementById('team-panel-photo-badge');
+    const photoN = teamPhotoCount(team);
+    photoBadge.style.display = photoN > 1 ? '' : 'none';
+    photoBadge.innerHTML = `<i class="fas fa-images"></i> ${photoN}`;
 
     const pinnedEl = document.getElementById('team-panel-pinned');
     if(w.pinned && w.pinned.expiresAt && new Date(w.pinned.expiresAt) > new Date()){

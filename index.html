@@ -79,8 +79,9 @@
 </div>
 
 <!-- Appearance Sheet (Performance customization + Color scheme + Palette) -->
-<div class="team-picker-sheet" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
+<div class="team-picker-sheet as-modal" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
     <div class="team-picker-panel appearance-panel">
+            <div class="modal-x-close" onclick="closeAppearanceSheet()"><i class="fas fa-times"></i></div>
         <div class="team-picker-handle"></div>
         <div class="team-picker-title">Appearance</div>
 
@@ -148,35 +149,59 @@
     </div>
 </div>
 
-<!-- Playlist Sheet (list of songs, opened from Settings) -->
-<div class="team-picker-sheet" id="playlist-sheet" onclick="if(event.target===this)closePlaylistSheet()">
-    <div class="team-picker-panel playlist-panel">
-        <div class="team-picker-handle"></div>
-        <div class="team-picker-title">Playlist</div>
-        <div id="playlist-list-container"><!-- filled by JS --></div>
+<!-- Playlist (centered modal, same look as the team panel) -->
+<div class="team-picker-sheet as-modal" id="playlist-sheet" onclick="if(event.target===this)closePlaylistSheet()">
+    <div class="team-picker-panel hero-modal playlist-panel">
+        <div class="modal-x-close" onclick="closePlaylistSheet()"><i class="fas fa-times"></i></div>
+        <div class="profile-header" style="flex-shrink:0;">
+            <div class="profile-header-bg"></div>
+            <div class="profile-icon-badge"><i class="fas fa-music"></i></div>
+        </div>
+        <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Playlist</h4>
+            <div id="playlist-track-count" style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;"></div>
+            <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                <div id="playlist-list-container"><!-- filled by JS --></div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Team Edit Sheet (Profile → My Team) — each team can only ever edit its
-     own record; see openTeamEditSheet()/saveTeamEdit() in appearance.js. -->
-<div class="team-picker-sheet" id="team-edit-sheet" onclick="if(event.target===this)closeTeamEditSheet()">
-    <div class="team-picker-panel">
-        <div class="team-picker-handle"></div>
-        <div class="team-picker-title">Edit Team</div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding-bottom:6px;">
-            <div style="position:relative;">
-                <img id="team-edit-logo-preview" src="" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);">
-                <label for="team-edit-logo-input" style="position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:var(--primary);color:#0b1220;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.4);">
-                    <i class="fas fa-camera" style="font-size:0.75rem;"></i>
-                </label>
-                <input type="file" id="team-edit-logo-input" accept="image/*" style="display:none;" onchange="handleTeamEditLogoSelect(event)">
-            </div>
-            <input type="text" id="team-edit-name-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Team name" maxlength="24">
-            <input type="text" id="team-edit-short-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Short name" maxlength="6" style="letter-spacing:1px;">
-            <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:-4px 4px 2px;line-height:1.5;">The short name (up to 6 characters) appears in tables. Leave it empty to generate it automatically.</p>
-            <div style="display:flex;gap:8px;width:100%;">
-                <button class="glass-button flex-1 font-bold text-xs py-2.5" style="color:#9ca3af;" onclick="resetTeamEditDefaults()"><i class="fas fa-rotate-left mr-2"></i>Reset</button>
-                <button class="glass-button flex-1 font-bold text-xs py-2.5" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" id="team-edit-save-btn" onclick="saveTeamEdit()"><i class="fas fa-check mr-2"></i>Save</button>
+<!-- Team Edit (centered modal) — each team can only ever edit its own record;
+     see openTeamEditSheet()/saveTeamEdit() in appearance.js and js/profile-photos.js. -->
+<div class="team-picker-sheet as-modal" id="team-edit-sheet" onclick="if(event.target===this)closeTeamEditSheet()">
+    <div class="team-picker-panel hero-modal">
+        <div class="modal-x-close" onclick="closeTeamEditSheet()"><i class="fas fa-times"></i></div>
+        <div class="profile-header" style="flex-shrink:0;">
+            <div class="profile-header-bg"></div>
+            <img id="team-edit-logo-preview" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+        </div>
+        <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+            <h4 class="text-xl font-black text-white" style="text-align:center;margin-bottom:10px;">Edit Profile</h4>
+            <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-pen"></i> Name</div>
+                    <input type="text" id="team-edit-name-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Team name" maxlength="24" style="margin-bottom:8px;">
+                    <input type="text" id="team-edit-short-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Short name" maxlength="6" style="letter-spacing:1px;">
+                    <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:8px 4px 0;line-height:1.5;">The short name (up to 6 characters) appears in tables. Leave it empty to generate it automatically.</p>
+                </div>
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-images"></i> Photos <span id="team-edit-photo-count" style="margin-left:auto;color:#9ca3af;"></span></div>
+                    <div class="pe-grid" id="team-edit-photo-grid"></div>
+                    <input type="file" id="team-edit-photos-input" accept="image/*" multiple style="display:none;" onchange="handleTeamEditPhotosSelect(event)">
+                    <div class="pe-tools" id="team-edit-photo-tools" style="display:none;">
+                        <button data-act="left"  onclick="peMove(-1)" aria-label="Move earlier"><i class="fas fa-arrow-left"></i></button>
+                        <button data-act="right" onclick="peMove(1)" aria-label="Move later"><i class="fas fa-arrow-right"></i></button>
+                        <button data-act="main"  onclick="peMakeMain()"><i class="fas fa-star"></i> Main</button>
+                        <button data-act="rotate" onclick="peRotate()" aria-label="Rotate"><i class="fas fa-rotate-right"></i></button>
+                        <button data-act="del" class="danger" onclick="peDelete()" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <p style="font-size:0.6rem;color:#6b7280;margin:8px 2px 0;line-height:1.5;">The first photo is your main picture. Tap a photo to move it, rotate it, make it main or delete it.</p>
+                </div>
+                <div style="display:flex;gap:8px;width:100%;">
+                    <button class="glass-button flex-1 font-bold text-xs py-2.5" style="color:#9ca3af;" onclick="resetTeamEditDefaults()"><i class="fas fa-rotate-left mr-2"></i>Reset</button>
+                    <button class="glass-button flex-1 font-bold text-xs py-2.5" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" id="team-edit-save-btn" onclick="saveTeamEdit()"><i class="fas fa-check mr-2"></i>Save</button>
+                </div>
             </div>
         </div>
     </div>
@@ -762,8 +787,9 @@
     </div>
 
     <!-- ============ CUP — RESULT EDITOR (record / edit a game) ============ -->
-    <div id="mba-result-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeMbaResultSheet()">
+    <div id="mba-result-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeMbaResultSheet()">
         <div class="team-picker-panel">
+            <div class="modal-x-close" onclick="closeMbaResultSheet()"><i class="fas fa-times"></i></div>
             <div class="team-picker-handle"></div>
             <div class="team-picker-title" id="mba-result-title">Match Result</div>
             <div class="mba-sheet-sub" id="mba-result-sub"></div>
@@ -794,8 +820,9 @@
     </div>
 
     <!-- ============ CUP — EDITION PICKER (independent from League seasons) ============ -->
-    <div id="mba-picker-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeMbaPicker()">
+    <div id="mba-picker-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeMbaPicker()">
         <div class="team-picker-panel playlist-panel">
+            <div class="modal-x-close" onclick="closeMbaPicker()"><i class="fas fa-times"></i></div>
             <div class="team-picker-handle"></div>
             <div class="team-picker-title">Select CUP Edition</div>
             <div id="mba-picker-list"></div>
@@ -803,8 +830,9 @@
     </div>
 
     <!-- ============ TEAM PICKER SHEET ============ -->
-    <div id="team-picker-sheet" class="team-picker-sheet" onclick="if(event.target===this)closeTeamPicker()">
+    <div id="team-picker-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeTeamPicker()">
         <div class="team-picker-panel">
+            <div class="modal-x-close" onclick="closeTeamPicker()"><i class="fas fa-times"></i></div>
             <div class="team-picker-handle"></div>
             <div class="team-picker-title" id="team-picker-title">Select Team</div>
             <div class="team-picker-grid" id="team-picker-grid"></div>
@@ -817,7 +845,8 @@
             <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
             <div class="profile-header" style="flex-shrink:0;">
                 <div class="profile-header-bg"></div>
-                <img id="team-panel-logo" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <img id="team-panel-logo" src="" alt="" class="profile-avatar pv-trigger" onclick="openPhotoViewer(teamPanelCurrent)" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <div id="team-panel-photo-badge" class="pv-count-badge" style="display:none;"></div>
             </div>
             <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
                 <h4 id="team-panel-name" class="text-xl font-black text-white mb-0.5" style="text-align:center;">Team</h4>
@@ -845,8 +874,9 @@
     </div>
 
     <!-- ============ GENERIC REPORT SHEET (e.g. table verification) ============ -->
-    <div id="report-sheet-overlay" class="team-picker-sheet" onclick="if(event.target===this)closeReportSheet()">
+    <div id="report-sheet-overlay" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeReportSheet()">
         <div class="team-picker-panel" style="max-height:82vh;">
+            <div class="modal-x-close" onclick="closeReportSheet()"><i class="fas fa-times"></i></div>
             <div class="team-picker-handle"></div>
             <div class="team-panel-header">
                 <div style="flex:1;min-width:0;">
@@ -860,16 +890,19 @@
         </div>
     </div>
 
-    <!-- ============ PEOPLE PANEL (federation president, owners, fans) ============ -->
-    <div id="people-sheet" class="team-picker-sheet" onclick="if(event.target===this)closePeopleSheet()">
-        <div class="team-picker-panel people-panel">
-            <div class="team-picker-handle"></div>
-            <div class="people-panel-head">
-                <div class="people-panel-crown"><i class="fas fa-crown"></i></div>
-                <div class="people-panel-title">Federation &amp; Owners</div>
-                <div class="people-panel-sub">The people behind HARFS</div>
+    <!-- ============ PEOPLE PANEL (federation president, owners, fans) — centered modal ============ -->
+    <div id="people-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closePeopleSheet()">
+        <div class="team-picker-panel hero-modal people-modal">
+            <div class="modal-x-close" onclick="closePeopleSheet()"><i class="fas fa-times"></i></div>
+            <div class="profile-header" style="flex-shrink:0;">
+                <div class="profile-header-bg people-hero-bg"></div>
+                <div class="profile-icon-badge people-crown"><i class="fas fa-crown"></i></div>
             </div>
-            <div id="people-list" class="team-panel-scroll"></div>
+            <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+                <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Federation &amp; Owners</h4>
+                <div style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;">The people behind HARFS · tap a photo to view</div>
+                <div id="people-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+            </div>
         </div>
     </div>
     <!-- ============ magazine-scree  ============ -->
@@ -981,6 +1014,7 @@
 <script src="js/season.js"></script>
 <script src="js/shop.js"></script>
 <script src="js/league-ops.js"></script>
+<script src="js/profile-photos.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/magazine.js"></script>
 <script src="js/ai-chat.js"></script>

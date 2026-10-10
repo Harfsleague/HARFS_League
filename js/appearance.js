@@ -550,6 +550,8 @@ function closePlaylistSheet(){
 function renderPlaylistSheet(){
     const container=document.getElementById('playlist-list-container');
     if(!container)return;
+    const cnt=document.getElementById('playlist-track-count');
+    if(cnt) cnt.textContent = PLAYLIST.length ? `${PLAYLIST.length} track${PLAYLIST.length===1?'':'s'}` : 'Loading…';
     if(!PLAYLIST.length){
         container.innerHTML='<div class="playlist-empty"><span class="spinner"></span></div>';
         return;
@@ -723,42 +725,23 @@ function cyclePlaybackMode(){
 // secret — no GitHub PAT is ever stored in this browser for this flow,
 // and the Worker only ever touches the authenticated team's own record.
 // ============================================================
-let teamEditPendingLogo = null; // null = unchanged, 'RESET' = clear to default, or a data URL
-
 function openTeamEditSheet(){
     if(!loggedInTeam){ showToast('Log in first','error',2000); return; }
     ensureWalletFields(loggedInTeam);
-    teamEditPendingLogo = null;
-    const w = mainLeagueData[loggedInTeam];
     document.getElementById('team-edit-name-input').value = TEAM_DISPLAY_NAMES[loggedInTeam] || loggedInTeam;
     const shortInput = document.getElementById('team-edit-short-input');
-    shortInput.value = w.customShort || '';
+    shortInput.value = mainLeagueData[loggedInTeam].customShort || '';
     shortInput.placeholder = deriveShortName(TEAM_DISPLAY_NAMES[loggedInTeam] || loggedInTeam) || 'Short name';
-    document.getElementById('team-edit-logo-preview').src = teamLogoUrl(loggedInTeam);
+    peLoadFromProfile(loggedInTeam); // photo gallery editor — see js/profile-photos.js
     document.getElementById('team-edit-sheet').classList.add('open');
 }
 function closeTeamEditSheet(){
     document.getElementById('team-edit-sheet').classList.remove('open');
 }
-async function handleTeamEditLogoSelect(e){
-    const file = e.target.files && e.target.files[0];
-    e.target.value = '';
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = async ev=>{
-        // Small, compressed image — like the Golden Moments thumbnails —
-        // since it's stored inline as base64 inside the shared JSON file.
-        const compressed = await compressImage(ev.target.result, 240, 240, 0.75);
-        teamEditPendingLogo = compressed;
-        document.getElementById('team-edit-logo-preview').src = compressed;
-    };
-    reader.readAsDataURL(file);
-}
 function resetTeamEditDefaults(){
-    teamEditPendingLogo = 'RESET';
     document.getElementById('team-edit-name-input').value = SYMBOLIC_DEFAULT_NAMES[loggedInTeam] || loggedInTeam;
     document.getElementById('team-edit-short-input').value = '';
-    document.getElementById('team-edit-logo-preview').src = isSymbolicTeam(loggedInTeam) ? symbolicDefaultLogo(loggedInTeam) : `${GITHUB_IMAGE_BASE_URL}${loggedInTeam}.png`;
+    peClearAll(); // removes every photo -> default picture on save
 }
 async function saveTeamEdit(){
     if(!loggedInTeam) return;
@@ -771,8 +754,8 @@ async function saveTeamEdit(){
     try{
         const newShort = [...document.getElementById('team-edit-short-input').value.trim()].slice(0,TEAM_SHORT_MAX).join('');
         const payload = { name: newName, short: newShort || null };
-        if(teamEditPendingLogo === 'RESET') payload.logo = null;
-        else if(teamEditPendingLogo) payload.logo = teamEditPendingLogo;
+        await peBuildPayload(payload); // adds payload.logo (small main avatar) + payload.photos (gallery) when photos changed
+        const sentPhotos = Array.isArray(payload.photos);
 
         const res = await fetch(`${HARFS_AUTH_API}/team-profile`, {
             method: 'POST',
@@ -787,11 +770,13 @@ async function saveTeamEdit(){
         mainLeagueData[loggedInTeam].customLogo = data.customLogo;
         // older Workers don't know about short names and omit the field — keep what was typed
         mainLeagueData[loggedInTeam].customShort = ('customShort' in data) ? data.customShort : (newShort || null);
+        let photosNote = '';
+        if('customPhotos' in data) mainLeagueData[loggedInTeam].customPhotos = Array.isArray(data.customPhotos) ? data.customPhotos : [];
+        else if(sentPhotos) photosNote = 'main picture saved, but the Worker is not updated for photo galleries yet';
         syncTeamDisplayNames();
 
-        teamEditPendingLogo = null;
         closeTeamEditSheet();
-        showToast('Team profile updated ✅','success',2200);
+        showToast(photosNote ? `Saved — ${photosNote}` : 'Team profile updated ✅', photosNote ? 'info' : 'success', photosNote ? 4200 : 2200);
         renderSettingsScreen();
         updateHeaderForLogin();
         if(document.getElementById('main-league-screen')?.classList.contains('active')) renderMainLeagueTable();

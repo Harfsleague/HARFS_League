@@ -70,6 +70,7 @@ function ensureWalletFields(team){
     if(w.pinned === undefined) w.pinned = null;
     if(w.customName === undefined) w.customName = null; // backfills teams saved before the team-profile feature existed
     if(w.customLogo === undefined) w.customLogo = null;
+    if(!Array.isArray(w.customPhotos)) w.customPhotos = []; // gallery: [{id,ts}] — files live in profile_photos/<team>/ (see js/profile-photos.js)
     if(!Array.isArray(w.mbaChampionLog)) w.mbaChampionLog = []; // backfills teams saved before the CUP mode existed
     // Retired fields from the old coin economy — dropped if an old wallet
     // record still has them, so nothing stale lingers in what gets saved.

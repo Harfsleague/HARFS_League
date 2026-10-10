@@ -53,7 +53,7 @@ function renderMainLeagueTable(){
         return `
             <div class="ranking-card ${rankClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
                 <div class="ranking-badge">${rankBadgeContent}</div>
-                <img src="${teamLogoUrl(t.name)}" class="ranking-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <img src="${teamLogoUrl(t.name)}" class="ranking-avatar pv-trigger" onclick="event.stopPropagation();openPhotoViewer('${t.name}')" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 <div class="ranking-info">
                     <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${TEAM_DISPLAY_NAMES[t.name]}</div>
                 </div>
@@ -97,7 +97,8 @@ function personAvatar(p){
     const nm = TEAM_DISPLAY_NAMES[p.key] || p.key;
     const initial = escapeHtml([...String(nm)][0] || '?').replace(/'/g,'');
     const fallback = `this.outerHTML='<div class=&quot;people-avatar people-avatar-ph&quot;>${initial}</div>'`;
-    return `<img class="people-avatar" src="${teamLogoUrl(p.key)}" onerror="${fallback}">`;
+    const n = teamPhotoCount(p.key);
+    return `<span class="people-avatar-wrap pv-trigger" onclick="openPhotoViewer('${p.key}')"><img class="people-avatar" src="${teamLogoUrl(p.key)}" onerror="${fallback}">${n>1?`<span class="pv-count-badge">${n}</span>`:''}</span>`;
 }
 function renderPeopleSheet(){
     const box = document.getElementById('people-list');

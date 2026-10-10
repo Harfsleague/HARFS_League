@@ -110,7 +110,8 @@ function initializeMainLeagueData(){PROFILE_TEAMS.forEach(t=>mainLeagueData[t]={
     // matches. See completeMbaTournament() in js/mba.js.
     mbaChampionLog:[],
     customName:null,   // per-team custom display name (null = show the internal key, e.g. "Bayern")
-    customLogo:null     // per-team custom logo, a compressed data URL (null = fall back to the repo's <team>.png)
+    customLogo:null,    // per-team custom logo, a compressed data URL (null = fall back to the repo's <team>.png)
+    customPhotos:[]     // profile gallery [{id,ts}] — full-quality files in profile_photos/<team>/; the first one is the main photo (see js/profile-photos.js)
 });}
 // TEAM_DISPLAY_NAMES is referenced by object identity everywhere else in the
 // app (table rows, Overall cards, the AI chat, admin screens, etc.), so
