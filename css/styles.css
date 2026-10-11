@@ -2651,3 +2651,35 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
 }
 .pe-tools button:disabled{ opacity:0.35; cursor:default; }
 .pe-tools button.danger{ color:#f87171; border-color:rgba(239,68,68,0.3); }
+
+/* ---------------- limited admin screen (accounts with granted tools) ---------------- */
+#admin-dashboard-section.limited-access > :not(.perm-ok){ display:none !important; }
+
+/* ---------------- admin: user permissions ---------------- */
+.perm-row{ display:flex; align-items:center; gap:10px; padding:8px 4px; border-top:1px solid rgba(255,255,255,0.06); }
+.perm-row:first-child{ border-top:none; }
+.perm-avatar{ width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.perm-name{ flex:1; min-width:0; font-size:0.78rem; font-weight:700; color:#e5e7eb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.perm-cell{ display:flex; flex-direction:column; align-items:center; gap:4px; font-size:0.58rem; color:#9ca3af; cursor:pointer; }
+
+/* ---------------- moment reactions ---------------- */
+.react-row{ margin-top:10px; }
+.react-chips{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.react-chip{
+    display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:999px; cursor:pointer;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#e5e7eb; font-size:0.78rem;
+    transition:transform .12s, background .15s;
+}
+.react-chip:active{ transform:scale(0.92); }
+.react-emoji{ font-size:0.95rem; line-height:1; }
+.react-count{ font-size:0.7rem; font-weight:800; }
+.react-chip.mine{ background:rgba(251,191,36,0.18); border-color:rgba(251,191,36,0.55); color:#fde68a; }
+.react-add{ padding:0 9px; color:#9ca3af; }
+.react-add.open{ color:#fbbf24; border-color:rgba(251,191,36,0.4); }
+.react-picker{
+    display:flex; flex-wrap:wrap; gap:2px; margin-top:8px; padding:6px;
+    background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.1); border-radius:16px;
+}
+.react-picker button{ width:36px; height:36px; font-size:1.25rem; line-height:1; background:none; border:none; border-radius:10px; cursor:pointer; }
+.react-picker button:active{ transform:scale(0.85); }
+.react-picker button.mine{ background:rgba(251,191,36,0.2); }

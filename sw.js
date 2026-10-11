@@ -51,6 +51,8 @@ const APP_SHELL = [
   './js/shop.js',
   './js/league-ops.js',
   './js/profile-photos.js',
+  './js/access.js',
+  './js/reactions.js',
   './js/audio.js',
   './js/ai-chat.js',
   './js/mba.js',

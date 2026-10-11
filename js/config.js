@@ -61,6 +61,14 @@ const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 const HARFS_AUTH_API = "https://harfs-auth.borobiron12.workers.dev";
 let loggedInTeam = localStorage.getItem('harfs_team') || null;
 let harfsSessionToken = localStorage.getItem('harfs_session') || null;
+// ---- GitHub access goes through the Worker (no GitHub token lives in any browser) ----
+// Every GitHub WRITE is sent to <worker>/gh/... with the normal login session token; the
+// Worker checks what this account may do and repeats the call with its own GITHUB_PAT secret.
+let harfsIsAdmin = false;                              // set by refreshMyPerms() (js/access.js)
+let harfsPerms = { music:false, moments:false };       // what the admin granted this account
+const GH_LOGIN_MSG = 'Please log in to save changes';
+function ghProxyUrl(url){ const root='https://api.github.com/'; return url.startsWith(root) ? `${HARFS_AUTH_API}/gh/${url.slice(root.length)}` : url; }
+function ghAuthHeader(){ return harfsSessionToken ? `Bearer ${harfsSessionToken}` : null; }
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
 let loginIsNewAccount = false;
 // GUEST MODE — lets someone open the app and look around without ever

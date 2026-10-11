@@ -152,6 +152,7 @@ function logoutTeam(){
 // out) and the logged-in team's badge (Telegram-style account
 // indicator) — the top HARFS capsule stays untouched/decorative.
 function updateHeaderForLogin(){
+    refreshMyPerms(); // what may this account do? (music / moments tools granted by the admin)
     const iconEl=document.getElementById('nav-settings-icon');
     const logoEl=document.getElementById('nav-settings-team-logo');
     if(!iconEl||!logoEl) return;

@@ -306,6 +306,7 @@ function renderWeirdEvents(){
                     </div>
                 </div>
                 ${audioList}
+                <div class="react-row" id="react-row-${ev.id}">${reactionRowHtml(ev.id)}</div>
                 ${adminActions}
             </div>
         </div>`;
@@ -735,12 +736,12 @@ function resetWeirdSaveBtn(){
 // ============================================================
 function uploadMomentMediaFile(path,dataUrlString,onProgress){
     return new Promise(resolve=>{
-        const token=localStorage.getItem('github_pat');
-        if(!token){lastSaveFileError='No GitHub token configured';resolve(false);return;}
+        const token=ghAuthHeader();
+        if(!token){lastSaveFileError=GH_LOGIN_MSG;resolve(false);return;}
         const body={message:'Golden Moment media',content:b64Encode(dataUrlString),branch:GITHUB_LEAGUE_BRANCH};
         const xhr=new XMLHttpRequest();
-        xhr.open('PUT',`${BASE_API}${path}`);
-        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.open('PUT',ghProxyUrl(`${BASE_API}${path}`));
+        xhr.setRequestHeader('Authorization',token);
         xhr.setRequestHeader('Content-Type','application/json');
         if(xhr.upload&&typeof onProgress==='function'){
             xhr.upload.onprogress=e=>{ if(e.lengthComputable)onProgress(e.loaded/e.total); };
@@ -776,13 +777,13 @@ function fetchMomentMediaFile(path){
 
 function saveFile(filename,data,msg,curSha,onProgress){
     return new Promise(resolve=>{
-        const token=localStorage.getItem('github_pat');
-        if(!token){lastSaveFileError='No GitHub token configured';resolve(false);return;}
+        const token=ghAuthHeader();
+        if(!token){lastSaveFileError=GH_LOGIN_MSG;resolve(false);return;}
         let body={message:msg,content:b64Encode(JSON.stringify(data,null,2)),branch:GITHUB_LEAGUE_BRANCH};
         if(curSha)body.sha=curSha;
         const xhr=new XMLHttpRequest();
-        xhr.open('PUT',`${BASE_API}${filename}`);
-        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.open('PUT',ghProxyUrl(`${BASE_API}${filename}`));
+        xhr.setRequestHeader('Authorization',token);
         xhr.setRequestHeader('Content-Type','application/json');
         if(xhr.upload&&typeof onProgress==='function'){
             xhr.upload.onprogress=e=>{ if(e.lengthComputable)onProgress(e.loaded/e.total); };

@@ -530,8 +530,8 @@ async function deleteMagazineIssue(idx) {
 // polls the run so the admin can watch it build in real time.
 //
 // IMPORTANT — this needs more than the usual GitHub PAT scope. The
-// same device PAT used everywhere else in this app (localStorage
-// 'github_pat') only ever needs Contents: Read & write on
+// same GitHub token used everywhere else in this app (the Worker's GITHUB_PAT secret;
+// no browser holds a token anymore) only ever needs Contents: Read & write on
 // Harfsleague/HARFS_Data. To dispatch and watch a workflow it must
 // ALSO have Actions: Read & write (and Contents: Read) on
 // Harfsleague/HARFS_League — the code repo the workflow file lives in.
@@ -557,11 +557,11 @@ function isFridayInTehran(date = new Date()) {
 }
 
 function ghHeaders(token) {
-    return { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' };
+    return { Authorization: token, Accept: 'application/vnd.github+json' };
 }
 
 async function dispatchMagazineWorkflow(token) {
-    const res = await fetch(`${MAGAZINE_WORKFLOW_API}/dispatches`, {
+    const res = await fetch(ghProxyUrl(`${MAGAZINE_WORKFLOW_API}/dispatches`), {
         method: 'POST',
         headers: { ...ghHeaders(token), 'Content-Type': 'application/json' },
         body: JSON.stringify({ ref: MAGAZINE_WORKFLOW_BRANCH }),
@@ -569,8 +569,8 @@ async function dispatchMagazineWorkflow(token) {
     if (res.status === 204) return;
     let detail = '';
     try { const d = await res.json(); detail = d.message || ''; } catch (e) {}
-    if (res.status === 404) throw new Error('404: workflow not found — PAT needs access to Harfsleague/HARFS_League');
-    if (res.status === 403) throw new Error('403: PAT is missing Actions: Read & write on Harfsleague/HARFS_League');
+    if (res.status === 404) throw new Error('404: workflow not found — the Worker GITHUB_PAT needs access to Harfsleague/HARFS_League');
+    if (res.status === 403) throw new Error('403: the Worker GITHUB_PAT is missing Actions: Read & write on Harfsleague/HARFS_League');
     throw new Error(`${res.status}${detail ? ': ' + detail : ''}`);
 }
 
@@ -578,7 +578,7 @@ async function dispatchMagazineWorkflow(token) {
 // doesn't return a run id) by taking the newest workflow_dispatch run that
 // showed up after we asked for one, with a little slack for clock skew.
 async function findMagazineRun(token, sinceIso) {
-    const res = await fetch(`${MAGAZINE_WORKFLOW_API}/runs?event=workflow_dispatch&per_page=5`, { headers: ghHeaders(token) });
+    const res = await fetch(ghProxyUrl(`${MAGAZINE_WORKFLOW_API}/runs?event=workflow_dispatch&per_page=5`), { headers: ghHeaders(token) });
     if (!res.ok) return null;
     const d = await res.json();
     const cutoff = new Date(sinceIso).getTime() - 15000;
@@ -586,11 +586,11 @@ async function findMagazineRun(token, sinceIso) {
     return runs[0] || null;
 }
 async function fetchMagazineRun(token, runId) {
-    const res = await fetch(`${MAGAZINE_RUNS_API}/${runId}`, { headers: ghHeaders(token) });
+    const res = await fetch(ghProxyUrl(`${MAGAZINE_RUNS_API}/${runId}`), { headers: ghHeaders(token) });
     return res.ok ? res.json() : null;
 }
 async function fetchMagazineRunJobs(token, runId) {
-    const res = await fetch(`${MAGAZINE_RUNS_API}/${runId}/jobs`, { headers: ghHeaders(token) });
+    const res = await fetch(ghProxyUrl(`${MAGAZINE_RUNS_API}/${runId}/jobs`), { headers: ghHeaders(token) });
     if (!res.ok) return [];
     const d = await res.json();
     return d.jobs || [];
@@ -618,8 +618,8 @@ function renderMagazineGenProgress(run, jobs) {
 async function generateWeeklyMagazineNow() {
     if (magazineGenPolling) return;
     if (!isFridayInTehran()) { showToast('این گزینه فقط روزهای جمعه فعال است', 'error', 2600); return; }
-    const token = localStorage.getItem('github_pat');
-    if (!token) { showToast('ابتدا یک GitHub PAT روی این دستگاه تنظیم کن', 'error', 2800); return; }
+    const token = ghAuthHeader();
+    if (!token) { showToast('ابتدا وارد حساب خودت شو', 'error', 2800); return; }
     if (!confirm('ساخت شمارهٔ جدید مجله (با هوش‌مصنوعی) شروع شود؟ چند دقیقه طول می‌کشد.')) return;
 
     const btn = document.getElementById('magazine-generate-btn');
@@ -728,17 +728,17 @@ function updateMagazineCoverPreview() {
 // current sha first (in case it already exists, e.g. an AI-generated
 // cover being replaced) so the PUT overwrites it instead of failing.
 async function saveBinaryFile(path, base64Content, message) {
-    const token = localStorage.getItem('github_pat');
-    if (!token) { lastSaveFileError = 'No GitHub token configured'; return false; }
+    const token = ghAuthHeader();
+    if (!token) { lastSaveFileError = GH_LOGIN_MSG; return false; }
     let existingSha = null;
     try {
-        const shaRes = await fetch(`${BASE_API}${encodeURIComponent(path)}?ref=${GITHUB_LEAGUE_BRANCH}`, { headers: { Authorization: `token ${token}` } });
+        const shaRes = await fetch(ghProxyUrl(`${BASE_API}${encodeURIComponent(path)}?ref=${GITHUB_LEAGUE_BRANCH}`), { headers: { Authorization: token } });
         if (shaRes.ok) { const d = await shaRes.json(); existingSha = d.sha; }
     } catch (e) {}
     try {
-        const res = await fetch(`${BASE_API}${encodeURIComponent(path)}`, {
+        const res = await fetch(ghProxyUrl(`${BASE_API}${encodeURIComponent(path)}`), {
             method: 'PUT',
-            headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+            headers: { Authorization: token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
             body: JSON.stringify({ message, content: base64Content, branch: GITHUB_LEAGUE_BRANCH, ...(existingSha ? { sha: existingSha } : {}) }),
         });
         if (res.ok) return true;

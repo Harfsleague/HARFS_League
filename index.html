@@ -483,7 +483,7 @@
             </div>
 
             <!-- Music Library Manager -->
-            <div class="admin-section">
+            <div class="admin-section" data-perm="music">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#818cf8);"></div>
                 <div class="admin-section-body">
                     <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Music Library</h3>
@@ -538,7 +538,17 @@
             </div>
 
             <!-- Weird Event Registration -->
-            <div class="weird-admin-section">
+            <!-- User permissions (admin only) -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#34d399,#60a5fa);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#6ee7b7,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">User Permissions</h3>
+                    <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-4px 0 10px;line-height:1.5;">Let an account manage the music library and/or add golden moments. Editing, pinning and deleting moments stay admin-only.</p>
+                    <div id="admin-perms-body"></div>
+                </div>
+            </div>
+
+            <div class="weird-admin-section" data-perm="moments">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
                 <div class="admin-section-body" style="padding:14px;">
                     <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
@@ -679,6 +689,16 @@
                     </div>
                 </div>
                 <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories.</p>
+            </div>
+
+            <div id="settings-tools-section" style="display:none;">
+                <div class="settings-section-label">My Tools</div>
+                <div class="settings-page-grid">
+                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
+                        <i class="fas fa-toolbox" style="margin-right:8px;"></i><span>Music &amp; Moments Tools</span>
+                    </div>
+                </div>
+                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">The admin gave you extra abilities.</p>
             </div>
 
             <div class="settings-section-label">Account</div>
@@ -1015,6 +1035,8 @@
 <script src="js/shop.js"></script>
 <script src="js/league-ops.js"></script>
 <script src="js/profile-photos.js"></script>
+<script src="js/access.js"></script>
+<script src="js/reactions.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/magazine.js"></script>
 <script src="js/ai-chat.js"></script>

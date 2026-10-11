@@ -33,8 +33,8 @@ async function loadMusicManagerList(){
     const listEl=document.getElementById('admin-music-list');
     if(listEl) listEl.innerHTML='<div class="text-center text-gray-600 text-xs">Loading...</div>';
     try{
-        const token=localStorage.getItem('github_pat');
-        const res=await fetch(MUSIC_API_URL+'&_t='+Date.now(), token?{headers:{Authorization:`token ${token}`}}:{});
+        const token=ghAuthHeader();
+        const res=await fetch(ghProxyUrl(MUSIC_API_URL+'&_t='+Date.now()), token?{headers:{Authorization:token}}:{});
         if(!res.ok) throw new Error('HTTP '+res.status);
         const items=await res.json();
         musicManagerList=(Array.isArray(items)?items:[])
@@ -100,8 +100,8 @@ async function confirmRenameMusic(i){
     const newTitle=(inp.value||'').trim();
     if(!newTitle){ showToast('Name cannot be empty','error',2200); return; }
     if(newTitle===item.title){ cancelRenameMusic(i); return; }
-    const token=localStorage.getItem('github_pat');
-    if(!token){ showToast('No GitHub token configured','error',2400); return; }
+    const token=ghAuthHeader();
+    if(!token){ showToast(GH_LOGIN_MSG,'error',2400); return; }
     const btn=document.getElementById(`music-confirm-btn-${i}`);
     if(btn) btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
     const ok=await renameMusicFile(item.name,newTitle,item.sha);
@@ -123,8 +123,8 @@ async function deleteMusicItem(i){
         okLabel:'Delete', okColor:'red'
     });
     if(!confirmed) return;
-    const token=localStorage.getItem('github_pat');
-    if(!token){ showToast('No GitHub token configured','error',2400); return; }
+    const token=ghAuthHeader();
+    if(!token){ showToast(GH_LOGIN_MSG,'error',2400); return; }
     const ok=await deleteMusicFile(item.name,item.sha);
     if(ok){
         showToast('Song deleted','success',2000);
@@ -172,8 +172,8 @@ async function uploadSingleMusicFile(file){
         showToast(file.name+' is not a supported audio file','error',2600);
         return;
     }
-    const token=localStorage.getItem('github_pat');
-    if(!token){ showToast('No GitHub token configured','error',2400); return; }
+    const token=ghAuthHeader();
+    if(!token){ showToast(GH_LOGIN_MSG,'error',2400); return; }
 
     const finalName=uniqueMusicName(file.name);
     const rowId='music-up-'+Math.random().toString(36).slice(2,9);
@@ -220,12 +220,12 @@ async function uploadSingleMusicFile(file){
 // ---- Raw GitHub Contents API calls scoped to the music folder ----
 function uploadMusicFile(name,base64Content,onProgress){
     return new Promise(resolve=>{
-        const token=localStorage.getItem('github_pat');
-        if(!token){ lastSaveFileError='No GitHub token configured'; resolve(false); return; }
+        const token=ghAuthHeader();
+        if(!token){ lastSaveFileError=GH_LOGIN_MSG; resolve(false); return; }
         const body={message:'Upload music track: '+name, content:base64Content, branch:GITHUB_LEAGUE_BRANCH};
         const xhr=new XMLHttpRequest();
-        xhr.open('PUT',`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`);
-        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.open('PUT',ghProxyUrl(`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`));
+        xhr.setRequestHeader('Authorization',token);
         xhr.setRequestHeader('Content-Type','application/json');
         if(xhr.upload&&typeof onProgress==='function'){
             xhr.upload.onprogress=e=>{ if(e.lengthComputable) onProgress(e.loaded/e.total); };
@@ -245,12 +245,12 @@ function uploadMusicFile(name,base64Content,onProgress){
 
 function deleteMusicFile(name,fileSha){
     return new Promise(resolve=>{
-        const token=localStorage.getItem('github_pat');
-        if(!token){ lastSaveFileError='No GitHub token configured'; resolve(false); return; }
+        const token=ghAuthHeader();
+        if(!token){ lastSaveFileError=GH_LOGIN_MSG; resolve(false); return; }
         const body={message:'Delete music track: '+name, sha:fileSha, branch:GITHUB_LEAGUE_BRANCH};
         const xhr=new XMLHttpRequest();
-        xhr.open('DELETE',`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`);
-        xhr.setRequestHeader('Authorization',`token ${token}`);
+        xhr.open('DELETE',ghProxyUrl(`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`));
+        xhr.setRequestHeader('Authorization',token);
         xhr.setRequestHeader('Content-Type','application/json');
         xhr.onload=()=>{
             if(xhr.status>=200&&xhr.status<300){ resolve(true); }
@@ -271,8 +271,8 @@ function deleteMusicFile(name,fileSha){
 // audio files. Blobs API returns full content for files up to 100MB).
 // `sha` is the blob sha GitHub already gave us in the folder listing.
 async function fetchBlobBase64(sha){
-    const token=localStorage.getItem('github_pat');
-    const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/blobs/${sha}`, token?{headers:{Authorization:`token ${token}`}}:{});
+    const token=ghAuthHeader();
+    const res=await fetch(ghProxyUrl(`https://api.github.com/repos/${GITHUB_REPO}/git/blobs/${sha}`), token?{headers:{Authorization:token}}:{});
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data=await res.json();
     if(!data.content) throw new Error('Blob came back empty');

@@ -10,10 +10,16 @@
 // so entering here goes straight to the dashboard.
 // ============================================================
 function showAdminDashboard(){
-    // First time on this device: still need a GitHub PAT to actually save
-    // anything — that's a device credential, separate from the team login.
-    let t=localStorage.getItem('github_pat');
-    if(!t){t=prompt("Enter GitHub PAT (needed once per device to save changes):");if(t){localStorage.setItem('github_pat',t);}sha=null;mainSha=null;matchesSha=null;archiveSha=null;mbaSha=null;}
+    // No GitHub token is needed on this device anymore: every save goes through the
+    // Worker (login session) which holds the token and checks what this account may do.
+    applyAdminScreenAccess();
+    if(!isFullAdmin()){
+        // Account with granted tools (music and/or moments): load only what those need.
+        if(canAddMoment()){ if(!weirdEventsLoaded) loadWeirdEventsFromGitHub(); weirdMedia=[]; renderWeirdPreview(); }
+        if(canManageMusic()) loadMusicManagerList();
+        return;
+    }
+    loadAdminPermsUi();
     // Edit Mode (isAdminUnlocked) is a separate on/off toggle in Profile →
     // Bayern Admin — visiting the dashboard itself doesn't turn it on.
     selectedHomeTeam=TEAM_NAMES[0]||null;
@@ -115,12 +121,13 @@ function navigate(route){
     if(route==='league' && typeof loadMbaDataFromGitHub === 'function') loadMbaDataFromGitHub();
     updateSeasonFabs(route);
     if(route==='shop')loadMainLeagueDataFromGitHub().then(renderMysteryBoxScreen);
-    if(route==='weird')loadWeirdEventsFromGitHub().then(renderWeirdEvents);
+    if(route==='weird'){loadWeirdEventsFromGitHub().then(renderWeirdEvents);loadMomentReactions();}
     if(route==='settings')renderSettingsScreen();
     if(route==='admin'){
-        // Getting into the admin route at all already required a Bayern
-        // login — there's no separate PIN gate anymore.
-        if(!loggedInTeam || loggedInTeam!=='Bayern'){ showToast('Admin panel is Bayern-only','error',2400); navigate('settings'); return; }
+        // There's no separate PIN gate anymore.
+        // Bayern gets everything; any other account only gets in if the admin granted it
+        // a tool (music / moments) — the screen then shows just those sections.
+        if(!loggedInTeam || (loggedInTeam!=='Bayern' && !hasAnyTool())){ showToast('Admin panel is Bayern-only','error',2400); navigate('settings'); return; }
         showAdminDashboard();
     }
 }

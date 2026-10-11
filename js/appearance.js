@@ -513,6 +513,8 @@ function renderSettingsScreen(){
     }
     const adminSection=document.getElementById('settings-admin-section');
     if(adminSection) adminSection.style.display = (loggedInTeam==='Bayern') ? 'block' : 'none';
+    const toolsSection=document.getElementById('settings-tools-section');
+    if(toolsSection) toolsSection.style.display = (loggedInTeam && loggedInTeam!=='Bayern' && hasAnyTool()) ? 'block' : 'none';
     const editToggle=document.getElementById('admin-edit-mode-toggle');
     if(editToggle) editToggle.classList.toggle('on', isAdminUnlocked);
 }
