@@ -13,6 +13,7 @@
 
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/mba.css">
+<link rel="stylesheet" href="css/flow.css">
 <link rel="stylesheet" href="css/liquid-glass.css">
 </head>
 <body>
@@ -300,6 +301,7 @@
             <div class="segmented-control" id="season-view-switch" style="margin-top:10px;">
                 <button class="segmented-btn active" data-value="league" onclick="switchSeasonView('league')"><i class="fas fa-table"></i> League</button>
                 <button class="segmented-btn" data-value="mba" onclick="switchSeasonView('mba')"><i class="fas fa-trophy"></i> CUP</button>
+                <button class="segmented-btn" data-value="schedule" onclick="switchSeasonView('schedule')"><i class="fas fa-calendar-days"></i> Schedule</button>
             </div>
         </div>
 
@@ -359,6 +361,7 @@
         </div><!-- /season-league-body -->
 
         <div id="mba-season-body" style="display:none;padding:0 12px;"><!-- filled by renderMbaSeasonView() --></div>
+        <div id="schedule-season-body" style="display:none;padding:0 12px;"><!-- filled by renderFlowSchedule() (js/flow.js) --></div>
 
     </div><!-- /league-table-screen -->
 
@@ -407,78 +410,13 @@
         </div>
 
         <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:flex;">
-            <!-- Register Match -->
+            <!-- Season Control — the single card that drives League, CUP and Super Cup.
+                 Everything here is rendered by renderFlowAdmin() (js/flow.js) for the current stage. -->
             <div class="admin-section">
-                <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#06b6d4);"></div>
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#fbbf24,#8b5cf6);"></div>
                 <div class="admin-section-body">
-                    <h3 style="background:linear-gradient(90deg,#86efac,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Register Match</h3>
-                    <div class="flex justify-between items-center gap-3 mb-5">
-                        <div id="home-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('home')">
-                            <img id="home-team-select-icon" src="" style="display:none;">
-                            <span id="home-team-select-label">Select team</span>
-                            <i class="fas fa-chevron-down chevron"></i>
-                        </div>
-                        <span style="color:#4b5563;font-weight:800;font-size:0.85rem;">vs</span>
-                        <div id="away-team-select-trigger" class="team-picker-trigger" onclick="openTeamPicker('away')">
-                            <img id="away-team-select-icon" src="" style="display:none;">
-                            <span id="away-team-select-label">Select team</span>
-                            <i class="fas fa-chevron-down chevron"></i>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center gap-4">
-                        <div class="flex-1 flex flex-col items-center gap-2">
-                            <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('home',1)"><i class="fas fa-plus"></i></button>
-                            <div class="score-display" id="home-score-display">0</div>
-                            <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('home',-1)"><i class="fas fa-minus"></i></button>
-                        </div>
-                        <div style="font-size:1.8rem;font-weight:900;color:#374151;">:</div>
-                        <div class="flex-1 flex flex-col items-center gap-2">
-                            <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('away',1)"><i class="fas fa-plus"></i></button>
-                            <div class="score-display" id="away-score-display">0</div>
-                            <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:38px;" onclick="changeScore('away',-1)"><i class="fas fa-minus"></i></button>
-                        </div>
-                    </div>
-                    <div id="match-preview">
-                        <div class="preview-team">
-                            <img id="preview-home-logo" src="" style="opacity:0.6;">
-                            <span id="preview-home-name">Home</span>
-                        </div>
-                        <div class="preview-score" id="preview-score-text">0 : 0</div>
-                        <div class="preview-team">
-                            <img id="preview-away-logo" src="" style="opacity:0.6;">
-                            <span id="preview-away-name">Away</span>
-                        </div>
-                    </div>
-                    <p class="text-xs text-red-400 text-center mt-3 font-semibold" id="admin-match-error" style="display:none;">Teams must be different.</p>
-                    <button class="glass-button w-full mt-4 font-bold text-sm py-3" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="registerMatchResult()">
-                        <i class="fas fa-check-circle mr-2"></i> Save Match
-                    </button>
-                </div>
-            </div>
-
-            <!-- League Management -->
-            <div class="admin-section">
-                <div class="admin-section-bar" style="background:linear-gradient(90deg,#8b5cf6,#ec4899);"></div>
-                <div class="admin-section-body">
-                    <h3 style="background:linear-gradient(90deg,#c4b5fd,#f9a8d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">League Management</h3>
-                    <div class="flex gap-3">
-                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(139,92,246,0.3);color:#c4b5fd;" onclick="finishSeason()">
-                            <i class="fas fa-flag-checkered text-lg"></i><span>End Season</span>
-                        </button>
-                        <button class="glass-button flex-1 text-xs py-3 flex flex-col items-center gap-1" style="border-color:rgba(59,130,246,0.3);color:#93c5fd;" onclick="recalculateLeagueTable()">
-                            <i class="fas fa-shield-halved text-lg"></i><span>Verify Table</span>
-                        </button>
-                    </div>
-                    <p style="font-size:0.6rem;color:#4b5563;text-align:center;margin-top:8px;">Rebuilds the season table from match history, then checks CUP results, medals and champion records and repairs anything that does not add up.</p>
-                </div>
-            </div>
-
-            <!-- CUP Tournament -->
-            <div class="admin-section">
-                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f97316);"></div>
-                <div class="admin-section-body">
-                    <h3 style="background:linear-gradient(90deg,#fde68a,#fdba74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CUP Tournament</h3>
-                    <div id="mba-admin-body"><!-- filled by renderMbaAdminSection() --></div>
+                    <h3 style="background:linear-gradient(90deg,#86efac,#fde68a,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Season Control</h3>
+                    <div id="flow-admin-body"><div class="text-center text-gray-600 text-xs">Loading...</div></div>
                 </div>
             </div>
 
@@ -537,7 +475,6 @@
                 </div>
             </div>
 
-            <!-- Weird Event Registration -->
             <!-- User permissions (admin only) -->
             <div class="admin-section">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#34d399,#60a5fa);"></div>
@@ -578,7 +515,7 @@
             <div class="admin-section">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#374151,#4b5563);"></div>
                 <div class="admin-section-body">
-                    <h3 style="color:#6b7280;">Recent Matches</h3>
+                    <h3 style="color:#6b7280;">League Results &amp; Corrections</h3>
                     <div id="admin-history-list" class="overflow-y-auto space-y-2" style="max-height:200px;">
                         <div class="text-center text-gray-600 text-xs">Loading...</div>
                     </div>
@@ -849,16 +786,6 @@
         </div>
     </div>
 
-    <!-- ============ TEAM PICKER SHEET ============ -->
-    <div id="team-picker-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeTeamPicker()">
-        <div class="team-picker-panel">
-            <div class="modal-x-close" onclick="closeTeamPicker()"><i class="fas fa-times"></i></div>
-            <div class="team-picker-handle"></div>
-            <div class="team-picker-title" id="team-picker-title">Select Team</div>
-            <div class="team-picker-grid" id="team-picker-grid"></div>
-        </div>
-    </div>
-
     <!-- ============ TEAM PANEL (tap a team on Overall) ============ -->
     <div id="team-panel-overlay" class="modal-overlay" onclick="if(event.target===this)closeTeamPanel()">
         <div class="modal-content" style="padding:0;overflow:hidden;max-width:360px;max-height:86vh;display:flex;flex-direction:column;position:relative;">
@@ -881,7 +808,7 @@
                         <div id="team-panel-records"></div>
                     </div>
                     <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> CUP Titles</div>
+                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> CUP &amp; Super Cup Titles</div>
                         <div id="team-panel-mba"></div>
                     </div>
                     <div class="team-panel-section">
@@ -1041,6 +968,7 @@
 <script src="js/magazine.js"></script>
 <script src="js/ai-chat.js"></script>
 <script src="js/mba.js"></script>
+<script src="js/flow.js"></script>
 <script src="js/verify.js"></script>
 <script src="js/admin-music.js"></script>
 <script src="js/glass-fx.js"></script>

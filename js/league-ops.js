@@ -111,6 +111,9 @@ function openTeamPanel(team){
         const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
         return `<div class="coin-log-row"><span>🏆 CUP Champion — Edition #${entry.edition}</span>${when?`<span style="color:#6b7280;font-weight:600;">${when}</span>`:''}</div>`;
     }).join('') : '<div class="team-panel-empty">No CUP titles yet</div>';
+    // Super Cup titles (league champion vs CUP champion) are tallied from the archive
+    const superTitles = (typeof computeSuperCupCounts==='function' && computeSuperCupCounts()[team]) || [];
+    if(superTitles.length) mbaLogEl.innerHTML += superTitles.slice().reverse().map(sid=>`<div class="coin-log-row"><span>⚡ Super Cup Winner — Season ${sid}</span></div>`).join('');
 
     const arenaEl = document.getElementById('team-panel-arena');
     arenaEl.innerHTML = w.arenaHistory.length ? w.arenaHistory.slice(0,10).map(a=>{
@@ -190,30 +193,10 @@ async function saveMatchHistoryToGitHub(d,m){return saveFile(GITHUB_MATCHES_FILE
 function updateTeamStats(t,gf,ga){t.P++;t.GF+=gf;t.GA+=ga;if(gf>ga){t.W++;t.Pts+=3;}else if(gf===ga){t.D++;t.Pts++;}else t.L++;}
 function revertTeamStats(t,gf,ga){t.P--;t.GF-=gf;t.GA-=ga;if(gf>ga){t.W--;t.Pts-=3;}else if(gf===ga){t.D--;t.Pts--;}else t.L--;}
 
-async function registerMatchResult(){
-    const h=selectedHomeTeam;
-    const a=selectedAwayTeam;
-    if(!h||!a||h===a){document.getElementById('admin-match-error').style.display='block';haptic([60]);return;}
-    document.getElementById('admin-match-error').style.display='none';
-    const ok=await showConfirm({icon:'⚽',title:'Save Match?',message:`${TEAM_DISPLAY_NAMES[h]} ${homeScore} – ${awayScore} ${TEAM_DISPLAY_NAMES[a]}`,okLabel:'Save',okColor:'green'});
-    if(!ok)return;
-    updateTeamStats(leagueData[h],homeScore,awayScore);
-    updateTeamStats(leagueData[a],awayScore,homeScore);
-    const m={home:h,away:a,score:`${homeScore}-${awayScore}`,timestamp:new Date().toISOString()};
-    matchHistory.unshift(m);
-    const s1=await saveLeagueDataToGitHub(leagueData,`Match ${m.score}`);
-    const s2=await saveMatchHistoryToGitHub(matchHistory,`History ${m.score}`);
-    homeScore=0;awayScore=0;
-    document.getElementById('home-score-display').textContent='0';
-    document.getElementById('away-score-display').textContent='0';
-    updateMatchPreview();
-    showToast(s1&&s2?`Saved: ${h} ${m.score} ${a}`:'Saved locally — check network',s1&&s2?'success':'info');
-    await refreshAllLeagueViews();
-    showAdminDashboard();
-}
+// Results are entered per scheduled fixture — see flowSaveFixture() in js/flow.js.
 async function deleteMatch(i){
     const m=matchHistory[i];
-    const ok=await showConfirm({icon:'🗑️',title:'Delete Match?',message:`${TEAM_DISPLAY_NAMES[m.home]} ${m.score} ${TEAM_DISPLAY_NAMES[m.away]} — Stats will revert.`,okLabel:'Delete',okColor:'red'});
+    const ok=await showConfirm({icon:'🗑️',title:'Delete Match?',message:`${TEAM_DISPLAY_NAMES[m.home]} ${m.score} ${TEAM_DISPLAY_NAMES[m.away]} — Stats will revert.`+(m.fx?` Matchweek ${m.round||''} will be re-opened in the schedule.`:''),okLabel:'Delete',okColor:'red'});
     if(!ok)return;
     const p=m.score.split('-');const hs=parseInt(p[0]),as=parseInt(p[1]);
     revertTeamStats(leagueData[m.home],hs,as);revertTeamStats(leagueData[m.away],as,hs);
@@ -272,26 +255,7 @@ async function saveEditedMatch(){
     showAdminDashboard();
 }
 
-// ============================================================
-// TABLE VERIFICATION — rebuilds standings straight from match
-// history, so admin can fix any drift with a single tap.
-// ============================================================
-async function recalculateLeagueTable(){
-    const ok=await showConfirm({icon:'🛡️',title:'Verify Table?',message:'The season table will be fully rebuilt from match history to catch and fix any inconsistency.',okLabel:'Verify',okColor:'purple'});
-    if(!ok)return;
-    await loadMatchHistoryFromGitHub();
-    initializeLeagueData();
-    matchHistory.forEach(m=>{
-        const p=m.score.split('-');
-        const hs=parseInt(p[0])||0,as=parseInt(p[1])||0;
-        if(leagueData[m.home])updateTeamStats(leagueData[m.home],hs,as);
-        if(leagueData[m.away])updateTeamStats(leagueData[m.away],as,hs);
-    });
-    const saved=await saveLeagueDataToGitHub(leagueData,'Verified & rebuilt table from match history');
-    showToast(saved?'Table verified & synced ✅':'Verified locally — check network',saved?'success':'info');
-    await refreshAllLeagueViews();
-    showAdminDashboard();
-}
+// Table verification lives in js/verify.js (recalculateLeagueTable — league + schedule + CUP in one pass).
 
 // ============================================================
 // REFRESH — keeps every screen (table, history, admin list,
@@ -303,42 +267,14 @@ async function refreshAllLeagueViews(){
     renderAdminHistory(matchHistory);
     await loadMainLeagueDataFromGitHub();
     renderMainLeagueTable();
+    if(typeof renderFlowViews==='function')renderFlowViews();
 }
-async function archiveCurrentSeason(finalTable,finalHistory){
+async function archiveCurrentSeason(finalTable,finalHistory,extra){
     try{const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();archiveSha=d.sha;archivedSeasons=await(await fetch(d.download_url)).json();}}catch(e){}
     const n=archivedSeasons.length+1;
-    archivedSeasons.push({seasonId:n,date:new Date().toISOString(),table:finalTable,history:finalHistory||[]});
+    archivedSeasons.push({seasonId:n,date:new Date().toISOString(),table:finalTable,history:finalHistory||[],...(extra||{})});
     await saveFile(GITHUB_ARCHIVE_FILE,archivedSeasons,`Archived Season ${n}`,archiveSha);
     loadArchiveDropdown();
 }
-async function finishSeason(){
-    const ok=await showConfirm({icon:'🏆',title:'End the Season?',message:'Top 3 teams earn a trophy, and the season will be archived, including its match history. The Season tab\'s match history will then start fresh for the new season.',okLabel:'End Season',okColor:'purple'});
-    if(!ok)return;
-    const sorted=Object.values(leagueData).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
-    // Trophies (gold/silver/bronze) aren't stored — they're tallied live from
-    // archivedSeasons' saved tables (see computeTrophyCounts()), so archiving
-    // the season below is what actually "awards" the trophy.
-    await archiveCurrentSeason(sorted,matchHistory);
-    // The season table AND the live match list both reset here. The just-played
-    // matches aren't lost — archiveCurrentSeason() just copied them into the
-    // archive above — but the "current" match history needs to start empty so
-    // the Season tab's history only ever shows matches from the season in
-    // progress, instead of accumulating every match ever played across every season.
-    initializeLeagueData();
-    matchHistory=[];
-    await saveLeagueDataToGitHub(leagueData,"Reset Season Table");
-    await saveMatchHistoryToGitHub(matchHistory,"Season archived - match history cleared for new season");
-    showToast('Season ended & archived! 🏆','success',4000);
-    await refreshAllLeagueViews();
-    navigate('main-league');
-}
-async function resetLeagueConfirm(){
-    const ok=await showConfirm({icon:'💀',title:'Full Reset?',message:"All season data will be permanently deleted. Won't be archived.",okLabel:'Reset',okColor:'red'});
-    if(!ok)return;
-    matchHistory=[];initializeLeagueData();
-    await saveMatchHistoryToGitHub(matchHistory,"Reset");await saveLeagueDataToGitHub(leagueData,"Reset");
-    showToast('League has been reset','info');
-    await refreshAllLeagueViews();
-    navigate('league');
-}
-
+// "End Season" / "Start New Season" and "Full Reset" now live in js/flow.js
+// (flowEndSeason, flowFullReset) because what they do depends on the schedule stage.

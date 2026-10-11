@@ -1,0 +1,92 @@
+/* ============================================================
+   flow.css — Season Control (admin) + Season → Schedule view
+   Rendered by js/flow.js. Mirrors the look of css/mba.css.
+   ============================================================ */
+
+.flow-head{ text-align:center; margin-bottom:10px; }
+.flow-head-title{ font-size:0.9rem; font-weight:900; color:#f3f4f6; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+.flow-head-sub{ font-size:0.64rem; color:#6b7280; margin-top:3px; }
+.flow-chip{
+    font-size:0.55rem; font-weight:800; letter-spacing:0.4px; text-transform:uppercase;
+    padding:2px 8px; border-radius:99px; color:var(--primary);
+    background:rgba(96,165,250,0.12); border:1px solid rgba(96,165,250,0.3);
+}
+
+/* ---- stage stepper ---- */
+.flow-stepper{ display:flex; gap:4px; margin:6px 0 10px; }
+.flow-step{ flex:1; min-width:0; text-align:center; opacity:0.5; position:relative; }
+.flow-step:not(:last-child)::after{
+    content:''; position:absolute; top:13px; left:calc(50% + 15px); right:calc(-50% + 15px);
+    height:2px; background:rgba(255,255,255,0.1);
+}
+.flow-step.done:not(:last-child)::after{ background:#22c55e; }
+.flow-step-dot{
+    width:26px; height:26px; margin:0 auto 4px; border-radius:50%; font-size:0.6rem;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#9ca3af;
+}
+.flow-step-label{ font-size:0.54rem; font-weight:800; color:#d1d5db; line-height:1.2; }
+.flow-step-sub{ font-size:0.48rem; color:#6b7280; margin-top:1px; line-height:1.2; }
+.flow-step.done{ opacity:0.9; }
+.flow-step.done .flow-step-dot{ background:rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80; }
+.flow-step.active{ opacity:1; }
+.flow-step.active .flow-step-dot{ background:rgba(251,191,36,0.15); border-color:#fbbf24; color:#fbbf24; box-shadow:0 0 10px rgba(251,191,36,0.35); }
+
+.flow-next{ font-size:0.66rem; color:#9ca3af; text-align:center; line-height:1.55; margin:2px 4px 12px; }
+.flow-next i{ margin-right:4px; color:#6b7280; }
+.flow-note{ font-size:0.62rem; color:#6b7280; line-height:1.5; margin:4px 2px 8px; text-align:center; }
+.flow-section-title{ font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; margin:10px 0 6px; }
+
+/* ---- team chip + fixture rows ---- */
+.flow-team{ display:flex; align-items:center; gap:6px; min-width:0; flex:1; font-size:0.72rem; font-weight:800; color:#e5e7eb; }
+.flow-team img{ width:22px; height:22px; border-radius:50%; object-fit:contain; background:#f8fafc; flex-shrink:0; }
+.flow-team span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.flow-team.away{ flex-direction:row-reverse; text-align:right; }
+.flow-fixture{
+    display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:6px;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px;
+}
+.flow-fixture.played{ background:rgba(255,255,255,0.05); }
+.flow-vs{ font-size:0.62rem; font-weight:800; color:#4b5563; flex-shrink:0; }
+.flow-score{ font-size:0.82rem; font-weight:900; color:#e5e7eb; display:flex; align-items:center; gap:3px; flex-shrink:0; min-width:44px; justify-content:center; }
+.flow-score i{ color:#4b5563; font-style:normal; }
+.flow-score.hw{ color:#fbbf24; }
+.flow-score.aw{ color:#fbbf24; }
+
+/* ---- admin: score entry card ---- */
+.flow-scorer{
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px; padding:12px; margin-bottom:10px;
+}
+.flow-scorer-teams{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.flow-scorer-row{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; }
+.flow-scorer-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; max-width:120px; }
+.flow-scorer-col .score-btn{ width:100%; height:34px; border-radius:12px; }
+.flow-scorer-num{ font-size:1.7rem; font-weight:900; color:#f3f4f6; line-height:1.1; }
+.flow-colon{ font-size:1.6rem; font-weight:900; color:#374151; }
+
+/* ---- admin: coming-up, summary, tools ---- */
+.flow-upnext{ display:flex; align-items:center; gap:10px; font-size:0.62rem; color:#9ca3af; padding:5px 8px; background:rgba(255,255,255,0.025); border-radius:10px; margin-bottom:4px; }
+.flow-mw{ font-weight:900; color:#6b7280; width:34px; flex-shrink:0; }
+.flow-summary{ background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:6px 12px; margin-bottom:10px; }
+.flow-summary-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; font-size:0.7rem; color:#cbd5e1; }
+.flow-summary-row + .flow-summary-row{ border-top:1px solid rgba(255,255,255,0.05); }
+.flow-summary-row .flow-team{ flex:0 1 auto; }
+.flow-link-btn{ display:block; margin:2px auto 0; background:none; border:none; color:#93c5fd; font-size:0.66rem; font-weight:700; cursor:pointer; padding:6px; }
+.flow-tools{ display:flex; gap:10px; margin-top:16px; }
+.flow-danger{ margin-top:12px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; }
+.flow-danger summary{ font-size:0.62rem; font-weight:800; color:#f87171; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
+.flow-danger .mba-cancel-btn{ margin-bottom:6px; }
+
+/* ---- Season → Schedule view ---- */
+.flow-empty{ text-align:center; color:#6b7280; font-size:0.74rem; padding:36px 12px; line-height:1.7; }
+.flow-empty i{ font-size:1.8rem; display:block; margin-bottom:10px; opacity:0.4; }
+.flow-block{ margin:0 0 12px; padding:10px 12px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); }
+.flow-block.active{ border-color:rgba(251,191,36,0.45); box-shadow:0 0 18px rgba(251,191,36,0.08); }
+.flow-block.done{ opacity:0.92; }
+.flow-block-title{ font-size:0.72rem; font-weight:900; color:#f3f4f6; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.flow-block.todo .flow-block-title{ color:#9ca3af; }
+.flow-week{ margin-bottom:8px; }
+.flow-week-head{ font-size:0.58rem; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#6b7280; margin:2px 2px 5px; display:flex; align-items:center; gap:6px; }
+.flow-week.current .flow-week-head{ color:#fbbf24; }
+.flow-week.current .flow-fixture{ border-color:rgba(251,191,36,0.3); }

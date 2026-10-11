@@ -17,6 +17,8 @@ const GITHUB_MAIN_LEAGUE_FILE="main_league_data.json";
 const GITHUB_MATCHES_FILE="match_history.json";
 const GITHUB_ARCHIVE_FILE="seasons_archive.json";
 const GITHUB_MBA_FILE="mba_history.json";
+// Season schedule (js/flow.js): the 24-fixture timetable + which CUP edition / Super Cup belong to the current season.
+const GITHUB_FLOW_FILE="season_flow.json";
 const GITHUB_WEIRD_FILE="weird_events.json";
 const GITHUB_MAGAZINE_ARCHIVE_FILE="weekly_magazine_archive.json";
 // Golden Moments are split across multiple "shard" files once the current
@@ -96,8 +98,7 @@ let weirdShardFiles=[GITHUB_WEIRD_FILE],weirdShardShas={},weirdShardData={},weir
 let weirdEventsLoaded=false; // guards against saving before shard shas are known (see saveWeirdEvent)
 let lastSaveFileError=''; // holds the real error message from the last failed saveFile() call, for user-facing diagnostics
 let isAdminUnlocked=false,isViewingArchive=false;
-let homeScore=0,awayScore=0,currentFilter='all';
-let selectedHomeTeam=null,selectedAwayTeam=null,activeTeamPickerSide=null;
+let currentFilter='all';
 let weirdMedia=[]; // {type:'image'|'video'|'audio', src, name?, duration?} for new event
 const MAX_MOMENT_MEDIA=4;
 const MAX_MOMENT_VIDEO_SECONDS=120;

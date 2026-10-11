@@ -8,6 +8,7 @@
 //
 // One tap now:
 //   1) rebuilds the season table from match history (as before),
+//   1b) checks the season schedule (js/flow.js auditFlow): fixtures, links, stage order, Super Cup,
 //   2) re-derives every CUP series from its saved games, repairs
 //      winners / medals / champion logs, and reports what it can't fix,
 //   3) sanity-checks archived league seasons' podium (report only),
@@ -82,7 +83,7 @@ function buildMedalReport(){
 async function recalculateLeagueTable(){
     const ok = await showConfirm({
         icon:'🛡️', title:'Verify & Repair?',
-        message:'The season table is rebuilt from match history. CUP results, medals and champion records are checked too, and repaired where possible.',
+        message:'The season table is rebuilt from match history. The schedule, CUP, Super Cup, medals and champion records are checked too, and repaired where possible.',
         okLabel:'Verify', okColor:'purple'
     });
     if(!ok) return;
@@ -117,13 +118,21 @@ async function recalculateLeagueTable(){
     if(mba.changedMain) mainSaved = await saveMainLeagueDataToGitHub(mainLeagueData, 'Verified CUP champion records');
     if(!mbaSaved || !mainSaved) mba.items.push({ level:'warn', text:'Repairs were applied locally but could not be saved to GitHub — run Verify again once you’re online.' });
     renderMbaSeasonView();
-    renderMbaAdminSection();
+
+    // ---- 2b) Season schedule (timetable, fixture links, stage order, Super Cup) ----
+    await loadFlowFromGitHub();
+    const flowAudit = auditFlow();
+    if(flowAudit.changedFlow){
+        const flowSaved = await saveFlowToGitHub('Verified & repaired season schedule');
+        if(!flowSaved) flowAudit.items.push({ level:'warn', text:'Schedule repairs were applied locally but could not be saved to GitHub — run Verify again once you’re online.' });
+    }
+    renderFlowViews();
 
     // ---- 3) Archived seasons + medal tally ----
     const archiveItems = auditArchivedSeasons();
     const medals = buildMedalReport();
 
-    const all = [...leagueItems, ...mba.items, ...archiveItems];
+    const all = [...leagueItems, ...flowAudit.items, ...mba.items, ...archiveItems];
     const nFixed = all.filter(i=>i.level==='fixed').length;
     const nErr   = all.filter(i=>i.level==='error').length;
     const nWarn  = all.filter(i=>i.level==='warn').length;
@@ -134,6 +143,7 @@ async function recalculateLeagueTable(){
     const html =
         `<div style="text-align:center;font-size:0.8rem;font-weight:800;color:${nErr?'#f87171':'#4ade80'};margin-bottom:2px;">${escapeHtml(summary)}</div>`
         + verifyReportSection('League table', leagueItems)
+        + verifyReportSection('Season schedule', flowAudit.items)
         + verifyReportSection('CUP tournaments', mba.items)
         + verifyReportSection('Archived league seasons', archiveItems)
         + verifyReportSection('Medal totals (League + CUP)', [])

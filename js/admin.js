@@ -22,27 +22,19 @@ function showAdminDashboard(){
     loadAdminPermsUi();
     // Edit Mode (isAdminUnlocked) is a separate on/off toggle in Profile →
     // Bayern Admin — visiting the dashboard itself doesn't turn it on.
-    selectedHomeTeam=TEAM_NAMES[0]||null;
-    selectedAwayTeam=TEAM_NAMES.length>1?TEAM_NAMES[1]:(TEAM_NAMES[0]||null);
-    setTeamPickerValue('home',selectedHomeTeam);
-    setTeamPickerValue('away',selectedAwayTeam);
-    homeScore=0;awayScore=0;
-    document.getElementById('home-score-display').textContent='0';
-    document.getElementById('away-score-display').textContent='0';
-    updateMatchPreview();
     // keep leagueData in sync with GitHub before any admin edit/delete/verify happens.
     // Golden-Moment shard shas are loaded here too (once per session) — admin
     // can now enter the panel without ever visiting the Moments tab first,
     // so this can no longer be assumed to have happened already. Skipped on
     // repeat dashboard visits (e.g. right after a save) since we already
     // keep the shard shas in sync locally after every successful save.
-    Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub(),weirdEventsLoaded?Promise.resolve():loadWeirdEventsFromGitHub()]).then(([,h])=>renderAdminHistory(h));
+    Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub(),weirdEventsLoaded?Promise.resolve():loadWeirdEventsFromGitHub()]).then(([,h])=>{renderAdminHistory(h);renderFlowViews();});
     // reset weird media upload
     weirdMedia=[];renderWeirdPreview();
     // Music library manager — always refetched on open so deletes/renames/
     // uploads made from another session or device are reflected immediately.
     loadMusicManagerList();
-    renderMbaAdminSection();
+    renderFlowViews(); // Season Control card (schedule stage, results, CUP, Super Cup)
     // Weekly Magazine — Friday-gated generate button + cover manager.
     // Reuses the same archive the magazine viewer itself uses, only
     // refetching if this is the first time it's needed this session.
@@ -118,7 +110,7 @@ function navigate(route){
         isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
         renderSeasonHistoryList(h);
     });
-    if(route==='league' && typeof loadMbaDataFromGitHub === 'function') loadMbaDataFromGitHub();
+    if(route==='league' && typeof loadMbaDataFromGitHub === 'function') loadMbaDataFromGitHub().then(()=>{ if(typeof loadFlowFromGitHub==='function') loadFlowFromGitHub(); });
     updateSeasonFabs(route);
     if(route==='shop')loadMainLeagueDataFromGitHub().then(renderMysteryBoxScreen);
     if(route==='weird'){loadWeirdEventsFromGitHub().then(renderWeirdEvents);loadMomentReactions();}
@@ -129,6 +121,8 @@ function navigate(route){
         // a tool (music / moments) — the screen then shows just those sections.
         if(!loggedInTeam || (loggedInTeam!=='Bayern' && !hasAnyTool())){ showToast('Admin panel is Bayern-only','error',2400); navigate('settings'); return; }
         showAdminDashboard();
+        // schedule + CUP are re-read once when the panel is OPENED (not after every save, so a just-written file is never overwritten by a stale read)
+        if(typeof loadMbaDataFromGitHub==='function') loadMbaDataFromGitHub().then(()=>{ if(typeof loadFlowFromGitHub==='function') loadFlowFromGitHub(); });
     }
 }
 

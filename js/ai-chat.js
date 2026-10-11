@@ -49,6 +49,7 @@ Every user message is preceded by a "[League Data Context]" JSON blob built fres
 - Full mode (summaryMode: false): currentSeasonTable (per-team live stats), overallStandings (trophies per team), matchHistory (every match this season, newest first, each with home/away/score/timestamp), and archivedSeasons (past seasons' final tables + their match history).
 - Summary mode (summaryMode: true): the same picture pre-aggregated — currentSeasonTable, overallStandings, recentFormLast5 (last 5 results per team as W/L/D, newest first), totalMatchesPlayed, archivedSeasonsCount, and pastChampions.
 Field meanings: P=played, W/D/L=win/draw/loss, GF/GA=goals for/against, GD=goal difference, Pts=season points (this season's table only). overallStandings entries carry goldTrophies/silverTrophies/bronzeTrophies (one gold per season a team has won outright, one silver per runner-up finish, one bronze per third place — ranked by gold count first, then silver, then bronze). There is no in-app currency or shop in this app — never reference coins, wallets, or purchases.
+seasonSchedule describes where the season is on its fixed timetable: League matchweeks 1–6, then the CUP semifinals, then League matchweeks 7–12, then the CUP final and third-place match, then the Super Cup (league champion vs CUP champion; if one team wins both, the opponent is the league runner-up). Every team plays 12 league games. When leagueIdleByDesign is true the league has no games because a CUP stage or the Super Cup is next — that is planned, not a break or a slump. Only name fixtures that appear in nextFixtures, and don't call anyone league champion until all 12 matchweeks are played.
 IMPORTANT: this data may not be attached to the CURRENT message if nothing changed since it was last sent earlier in this same conversation — in that case, keep using the numbers from the most recent "[League Data Context]" block you can see earlier in the chat. It is still accurate; it just wasn't worth resending.
 
 ## Grounding rules — non-negotiable, apply to prose AND tables
@@ -366,6 +367,7 @@ function buildSummaryContext(){
         recentFormLast5,
         archivedSeasonsCount: archivedSeasons.length,
         pastChampions,
+        seasonSchedule: (typeof buildScheduleSnapshot==='function') ? buildScheduleSnapshot() : null,
     };
 }
 function buildFullContext(){
@@ -383,6 +385,7 @@ function buildFullContext(){
         overallStandings,
         matchHistory: matchHistory,
         archivedSeasons: archivedSeasons,
+        seasonSchedule: (typeof buildScheduleSnapshot==='function') ? buildScheduleSnapshot() : null,
     };
 }
 
@@ -409,7 +412,8 @@ function computeAiDataFingerprint(){
         }).join(',');
         const mbaCur = (mbaData && mbaData.current) ? ('cur'+mbaData.current.edition) : 'none';
         const mbaDone = (mbaData && mbaData.completed) ? mbaData.completed.length : 0;
-        return [table, matchHistory.length, archivedSeasons.length, mbaDone, mbaCur, aiFullData?'full':'sum'].join('|');
+        const sched = (typeof flowPhase==='function') ? flowPhase() : 'none';
+        return [table, matchHistory.length, archivedSeasons.length, mbaDone, mbaCur, sched, aiFullData?'full':'sum'].join('|');
     }catch(e){ return 'unknown'; }
 }
 

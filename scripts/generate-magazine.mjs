@@ -1,7 +1,9 @@
 // ============================================================
 // generate-magazine.mjs
 // Builds the "HARFS Weekly Magazine": reads the live league data,
-// asks Gemini 3.5 Flash to write it up (Persian, light comedic tone) — league AND CUP,
+// asks Gemini 3.5 Flash to write it up (Persian, light comedic tone) — league, CUP AND Super Cup,
+// and it understands the season TIMETABLE (season_flow.json: League MW1-6 -> CUP semis -> League MW7-12
+// -> CUP final/3rd -> Super Cup) so it never mistakes a planned league break for a slump,
 // and commits the issue to the HARFS_Data repo so the app can display it.
 // There is NO AI image generation: every issue ships with the default cover
 // (mag1.png) and an admin can swap it per issue from Settings > Admin.
@@ -257,6 +259,7 @@ function buildSeasonContext({ leagueData, matchHistory, seasonsArchive, lastIssu
       finalTable,
       matchesPlayed: history.length || Math.round(finalTable.reduce((n, r) => n + (r.P || 0), 0) / 2),
       // Whole-season records and the closing run of form, from the archived match list.
+      superCup: s.superCup && s.superCup.winner ? { winner: s.superCup.winner, teams: s.superCup.teams, score: s.superCup.scores ? `${s.superCup.scores[s.superCup.teams[0]]}-${s.superCup.scores[s.superCup.teams[1]]}` : null } : null,
       seasonRecords: computeWeeklyRecords(history),
       finalForm: computeFormGuide(history),
       closingMatches: history.slice(0, 8).map(({ home, away, score, timestamp }) => ({ home, away, score, timestamp })),
@@ -466,6 +469,139 @@ function buildCupContext(mbaData, startMs) {
   };
 }
 
+// ------------------------------------------------------------
+// SEASON SCHEDULE CONTEXT
+// The season is a fixed timetable (js/flow.js, stored in season_flow.json):
+//   League MW1-6 -> CUP semifinals -> League MW7-12 -> CUP final & 3rd place -> Super Cup.
+// The phase below is derived exactly like flowPhase() in js/flow.js — from the real
+// match history / CUP edition / Super Cup result — never from a stored flag and never
+// by the AI. It tells the writer WHY the league is (not) playing: during the CUP
+// stages and the Super Cup the league is idle BY DESIGN, not because of a "rest" or a slump.
+// ------------------------------------------------------------
+const FLOW_LEAGUE_ROUNDS = 12;
+const FLOW_FIRST_HALF = 6;
+const FLOW_STAGE_DEFS = [
+  { id: "league_a", label: "لیگ — هفته‌های ۱ تا ۶" },
+  { id: "cup_semis", label: "نیمه‌نهایی CUP" },
+  { id: "league_b", label: "لیگ — هفته‌های ۷ تا ۱۲" },
+  { id: "cup_finals", label: "فینال و رده‌بندی CUP" },
+  { id: "supercup", label: "سوپرکاپ" },
+];
+const FLOW_PHASE_STAGE = { idle: -1, league_a: 0, cup_draw: 1, cup_semis: 1, league_b: 2, cup_finals: 3, supercup: 4, complete: 5 };
+const FLOW_PHASE_FA = {
+  idle: "فصل جدید هنوز شروع نشده",
+  league_a: "نیم‌فصل اول لیگ",
+  cup_draw: "قرعه‌کشی نیمه‌نهایی CUP",
+  cup_semis: "مرحلهٔ نیمه‌نهایی CUP (لیگ به‌طور برنامه‌ریزی‌شده متوقف است)",
+  league_b: "نیم‌فصل دوم لیگ",
+  cup_finals: "فینال و رده‌بندی CUP (لیگ تمام شده)",
+  supercup: "سوپرکاپ (لیگ و CUP تمام شده‌اند)",
+  complete: "همهٔ بازی‌های فصل برگزار شده؛ منتظر پایان رسمی فصل توسط ادمین",
+};
+
+function sortedLeagueTable(leagueData) {
+  return TEAM_NAMES.map((t) => ({ name: t, ...(leagueData[t] || {}) })).sort(
+    (a, b) => (b.Pts || 0) - (a.Pts || 0) || ((b.GF || 0) - (b.GA || 0)) - ((a.GF || 0) - (a.GA || 0))
+  );
+}
+
+function buildScheduleContext({ flowFile, leagueData, matchHistory, mbaData, seasonsArchive, startMs }) {
+  const past = (seasonsArchive || [])
+    .filter((s) => s.superCup && s.superCup.winner)
+    .map((s) => ({ seasonId: s.seasonId, winner: s.superCup.winner, teams: s.superCup.teams, score: s.superCup.scores ? `${s.superCup.scores[s.superCup.teams[0]]}-${s.superCup.scores[s.superCup.teams[1]]}` : null }));
+  const f = flowFile?.current;
+  if (!f || !Array.isArray(f.fixtures)) {
+    return {
+      schedule: { status: "no_schedule", phase: "idle", phaseLabelFa: FLOW_PHASE_FA.idle, note: "برنامهٔ زمان‌بندی‌شده‌ای فعال نیست؛ چیزی دربارهٔ هفته‌ها یا مرحله‌های آینده نساز." },
+      superCup: { hasActivity: false, status: "no_schedule", past },
+    };
+  }
+
+  const byFx = new Map((matchHistory || []).filter((m) => m.fx).map((m) => [m.fx, m]));
+  const matchOf = (x) => byFx.get(x.id) || null;
+  const roundFx = (r) => f.fixtures.filter((x) => x.round === r);
+  const roundDone = (r) => roundFx(r).length > 0 && roundFx(r).every((x) => matchOf(x));
+  const rangeDone = (a, b) => { for (let r = a; r <= b; r++) if (!roundDone(r)) return false; return true; };
+  let currentRound = null;
+  for (let r = 1; r <= FLOW_LEAGUE_ROUNDS; r++) if (!roundDone(r)) { currentRound = r; break; }
+
+  const completed = mbaData?.completed || [];
+  const cupCur = f.cupEdition != null && mbaData?.current?.edition === f.cupEdition ? mbaData.current : null;
+  const cupDone = f.cupEdition != null ? completed.find((e) => e.edition === f.cupEdition) || null : null;
+  const cup = cupCur || cupDone;
+  const semisDone = !!cup && (cup.semis || []).length === 2 && cup.semis.every((s) => s.winner);
+
+  const table = sortedLeagueTable(leagueData);
+  let scTeams = null;
+  if (rangeDone(1, FLOW_LEAGUE_ROUNDS) && cupDone?.gold && table[0]) {
+    const leagueChamp = table[0].name, cupChamp = cupDone.gold;
+    const opp = leagueChamp === cupChamp ? table[1]?.name : cupChamp;
+    if (opp) scTeams = { teams: [leagueChamp, opp], leagueChamp, cupChamp, double: leagueChamp === cupChamp };
+  }
+  const sc = f.superCup;
+  const scValid = !!(sc?.winner && scTeams && Array.isArray(sc.teams) && scTeams.teams.every((t) => sc.teams.includes(t)) && sc.teams.includes(sc.winner));
+
+  let phase;
+  if (!rangeDone(1, FLOW_FIRST_HALF)) phase = "league_a";
+  else if (!cup) phase = "cup_draw";
+  else if (!semisDone) phase = "cup_semis";
+  else if (!rangeDone(FLOW_FIRST_HALF + 1, FLOW_LEAGUE_ROUNDS)) phase = "league_b";
+  else if (!cupDone) phase = "cup_finals";
+  else if (!scValid) phase = "supercup";
+  else phase = "complete";
+
+  const idx = FLOW_PHASE_STAGE[phase];
+  const stages = FLOW_STAGE_DEFS.map((s, i) => ({ id: s.id, label: s.label, status: idx > i ? "done" : idx === i ? "active" : "upcoming" }));
+  const slimFx = (x) => { const m = matchOf(x); return { round: x.round, home: x.home, away: x.away, score: m ? m.score : null }; };
+  const inWindow = (m) => Date.parse(m.timestamp) >= startMs;
+  const playedThisWeek = f.fixtures.filter((x) => { const m = matchOf(x); return m && inWindow(m); }).map(slimFx);
+  const nextFixtures = currentRound && (phase === "league_a" || phase === "league_b") ? roundFx(currentRound).filter((x) => !matchOf(x)).map(slimFx) : [];
+  const afterThat = currentRound && currentRound < FLOW_LEAGUE_ROUNDS && (phase === "league_a" || phase === "league_b") ? roundFx(currentRound + 1).map(slimFx) : [];
+
+  const nextStepFa = {
+    league_a: `هفتهٔ ${currentRound} از ۱۲ لیگ؛ بعد از هفتهٔ ۶ نیمه‌نهایی CUP شروع می‌شود`,
+    cup_draw: "هفتهٔ ۶ تمام شده؛ قرعه‌کشی نیمه‌نهایی CUP انجام می‌شود",
+    cup_semis: "نیمه‌نهایی‌های CUP برگزار می‌شود؛ بعد از مشخص شدن فینالیست‌ها لیگ از هفتهٔ ۷ ادامه پیدا می‌کند",
+    league_b: `برگشت به لیگ: هفتهٔ ${currentRound} از ۱۲؛ فینال و رده‌بندی CUP بعد از پایان هفتهٔ ۱۲ است`,
+    cup_finals: "لیگ تمام شده؛ فینال و بازی رده‌بندی CUP برگزار می‌شود",
+    supercup: "سوپرکاپ بین قهرمان لیگ و قهرمان CUP برگزار می‌شود",
+    complete: "همهٔ بازی‌ها انجام شده؛ فصل با تصمیم ادمین بسته و آرشیو می‌شود",
+  }[phase];
+
+  const scPlayedThisWeek = scValid && (sc.ts || 0) >= startMs;
+  const superCup = {
+    hasActivity: scPlayedThisWeek,
+    status: scValid ? "played" : scTeams ? "scheduled_not_played" : "not_yet_known",
+    teams: scTeams ? scTeams.teams : null,
+    leagueChampion: scTeams ? scTeams.leagueChamp : null,
+    cupChampion: scTeams ? scTeams.cupChamp : null,
+    sameTeamWonBoth: scTeams ? scTeams.double : null,
+    doubleRuleNote: "اگر یک تیم هم قهرمان لیگ و هم قهرمان CUP شود، حریفش در سوپرکاپ نایب‌قهرمان لیگ است",
+    result: scValid ? { score: `${sc.scores[sc.teams[0]]}-${sc.scores[sc.teams[1]]}`, teams: sc.teams, winner: sc.winner } : null,
+    playedThisWeek: scPlayedThisWeek,
+    past,
+  };
+
+  return {
+    schedule: {
+      status: "active",
+      seasonId: f.seasonId,
+      phase,
+      phaseLabelFa: FLOW_PHASE_FA[phase],
+      leagueIdleByDesign: ["cup_draw", "cup_semis", "cup_finals", "supercup", "complete"].includes(phase),
+      leagueMatchweek: { current: currentRound, total: FLOW_LEAGUE_ROUNDS, fixturesPlayed: f.fixtures.filter((x) => matchOf(x)).length, fixturesTotal: f.fixtures.length },
+      gamesPerTeam: 12,
+      stages,
+      nextStepFa,
+      leagueFixturesPlayedThisWeek: playedThisWeek,
+      nextLeagueFixtures: nextFixtures,
+      leagueFixturesAfterThat: afterThat,
+      fullTimetable: f.fixtures.map(slimFx),
+    },
+    superCup,
+  };
+}
+
 // What kind of week was it? Computed here — never left to the AI.
 //   both        - league games AND CUP games this week
 //   league_only - only league games
@@ -479,12 +615,13 @@ function computeWeekType(leagueActive, cupActive) {
 }
 
 async function gatherData(lastIssue) {
-  const [leagueData, mainLeagueData, matchHistory, seasonsArchive, mbaData] = await Promise.all([
+  const [leagueData, mainLeagueData, matchHistory, seasonsArchive, mbaData, flowFile] = await Promise.all([
     fetchJson(`${RAW_BASE}league_data.json`, {}),
     fetchJson(`${RAW_BASE}main_league_data.json`, {}),
     fetchJson(`${RAW_BASE}match_history.json`, []),
     fetchJson(`${RAW_BASE}seasons_archive.json`, []),
     fetchJson(`${RAW_BASE}mba_history.json`, { current: null, completed: [] }),
+    fetchJson(`${RAW_BASE}season_flow.json`, { current: null }),
   ]);
   const windowStartMs = issueWindowStartMs(lastIssue);
 
@@ -510,8 +647,10 @@ async function gatherData(lastIssue) {
     : [];
 
   const cup = buildCupContext(mbaData, windowStartMs);
+  const { schedule, superCup } = buildScheduleContext({ flowFile, leagueData: leagueData || {}, matchHistory, mbaData, seasonsArchive, startMs: windowStartMs });
   const leagueActive = recentMatches.length > 0 || !!ctx.justEndedSeason;
-  const weekType = computeWeekType(leagueActive, !!cup.hasActivity);
+  // A Super Cup played this week counts as "cup side" activity (it has its own report field).
+  const weekType = computeWeekType(leagueActive, !!cup.hasActivity || !!superCup.hasActivity);
 
   const pastChampions = (seasonsArchive || []).map((s) => ({
     seasonId: s.seasonId,
@@ -535,6 +674,8 @@ async function gatherData(lastIssue) {
     weekType,
     window: { from: new Date(windowStartMs).toISOString(), to: new Date().toISOString() },
     leagueWeek: { matchesThisWeek: recentMatches.length, isActive: leagueActive },
+    schedule,
+    superCup,
     cup,
     seasonContext: ctx.seasonContext,
     justEndedSeason: ctx.justEndedSeason,
@@ -571,6 +712,8 @@ function buildPreviousIssuesSummary(archive) {
     weekType: issue.weekType || null,
     matchReportGist: (issue.matchReport || "").slice(0, 300),
     cupReportGist: (issue.cupReport || "").slice(0, 300),
+    superCupReportGist: (issue.superCupReport || "").slice(0, 200),
+    schedulePhase: issue.schedule?.phase || null,
     funnyClosing: issue.funnyClosing,
     interviewTeam: issue.interview?.team || null,
     interviewGist: (issue.interview?.headline || "").slice(0, 200),
@@ -588,6 +731,8 @@ const MAGAZINE_SCHEMA = {
     standingsCommentary: { type: "string", description: "تحلیل جدول رده‌بندی فعلی، با لحن یک گزارشگر ورزشی که کمی طنازی هم دارد" },
     matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط از بازی‌های «لیگ» این هفته (recentMatches). بازی‌های CUP هرگز اینجا نمی‌آید — برای آن‌ها cupReport هست. اگر این هفته بازی لیگ نبوده، کوتاه و صادقانه بگو لیگ استراحت داشته (۱ تا ۲ جمله)." },
     cupReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط دربارهٔ بازی‌های «CUP» این هفته (cup.gamesThisWeek، cup.bracket، cup.medals، cup.recordsThisWeek). اگر cup.hasActivity برابر false است، رشتهٔ خالی \"\" برگردان." },
+    superCupReport: { type: "string", description: "گزارش کوتاه دربارهٔ سوپرکاپ (فقط وقتی superCup.hasActivity برابر true است: تیم‌ها، نتیجه و برنده از superCup.result). در غیر این صورت رشتهٔ خالی \"\" برگردان." },
+    scheduleOutlook: { type: "string", description: "۲ تا ۴ جمله دربارهٔ جایگاه فعلی در برنامهٔ فصل و مرحلهٔ بعدی، فقط بر اساس schedule (phaseLabelFa، nextStepFa، nextLeagueFixtures، stages). هیچ بازی، تاریخ یا مرحله‌ای که در schedule نیست نساز. اگر schedule.status برابر no_schedule بود فقط یک جملهٔ کوتاه بنویس." },
     playerSpotlights: {
       type: "array",
       description: "۲ تا ۴ نکته دربارهٔ تیم‌ها یا عملکردهای برجسته این هفته",
@@ -642,6 +787,8 @@ const MAGAZINE_SCHEMA = {
     "standingsCommentary",
     "matchReport",
     "cupReport",
+    "superCupReport",
+    "scheduleOutlook",
     "playerSpotlights",
     "recommendations",
     "titleRaceCommentary",
@@ -675,6 +822,16 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 • weekType = both: هر دو را کامل گزارش کن: matchReport فقط لیگ، cupReport فقط CUP. تیتر مجله می‌تواند هر دو را پوشش دهد. recordsAndOddities هم رکورد لیگ (weeklyRecords) و هم رکورد CUP را، با برچسب مشخص، پوشش دهد.
 • weekType = quiet: نه لیگ نه CUP؛ مثل قبل صادقانه و کوتاه بگو بازی‌ای نبوده و cupReport = "".
 قواعد گزارش CUP: ساختار CUP این است: دو نیمه‌نهایی که هر کدام یک سری است (اول رسیدن به cup.bracket.semis[].winsNeeded برد)، سپس فینال و بازی رده‌بندی (مقام سوم) که هرکدام یک بازی‌اند. cup.status یکی از این‌هاست: finished (دوره رسماً تمام و مدال‌ها ثبت شده)؛ in_progress (هنوز بازی مانده، cup.pending را بخوان و نگو کسی قهرمان شده مگر championCrowned=true)؛ all_games_played_awaiting_admin_finish (همهٔ بازی‌ها انجام شده ولی ادمین هنوز دوره را نبسته؛ نتیجه قطعی است). اگر cup.startedThisWeek=true به شروع دوره و قرعه‌کشی اشاره کن. اگر cup.championCrowned=true قهرمان (medals.gold) و نایب‌قهرمان را اعلام کن؛ اگر bronze هنوز null است یعنی بازی رده‌بندی مانده. نتایج هر بازی را فقط از cup.gamesThisWeek و cup.bracket بیاور (score به‌صورت «گل تیم اول-گل تیم دوم» به ترتیب cup.teams آن بازی است) و سری نیمه‌نهایی را با wins بگو، نه با حدس. اگر score هر بازی null بود، فقط برنده را بگو. به cup.pastEditions برای مقایسه با دوره‌های قبل می‌توانی اشاره کنی. در playerSpotlights و recommendations هم اگر CUP بوده، حداقل یک مورد را به CUP اختصاص بده.
+
+دربارهٔ برنامهٔ زمان‌بندی فصل و سوپرکاپ (بسیار مهم — فهمیدن «الان در کدام مرحله‌ایم»): هر فصل یک جدول زمانی ثابت دارد که دقیقاً به این ترتیب پیش می‌رود: (۱) لیگ هفته‌های ۱ تا ۶ ← (۲) نیمه‌نهایی‌های CUP ← (۳) بازگشت به لیگ، هفته‌های ۷ تا ۱۲ ← (۴) فینال و بازی رده‌بندی CUP ← (۵) سوپرکاپ بین قهرمان لیگ و قهرمان CUP. هر تیم در لیگ دقیقاً ۱۲ بازی دارد و هر هفتهٔ لیگ دو بازی است. این برنامه از قبل حساب شده در schedule آمده و تو آن را عوض نمی‌کنی:
+• schedule.phase و schedule.phaseLabelFa مرحلهٔ فعلی را می‌گویند؛ schedule.stages وضعیت هر پنج مرحله را (done / active / upcoming) و schedule.nextStepFa قدم بعدی را. schedule.leagueMatchweek شمارهٔ هفتهٔ لیگ را می‌دهد؛ nextLeagueFixtures بازی‌های هفتهٔ بعدی لیگ است.
+• اگر schedule.leagueIdleByDesign برابر true است، یعنی لیگ عمداً متوقف است چون نوبت CUP یا سوپرکاپ است. این «استراحت»، «افت» یا «بحران» لیگ نیست؛ در matchReport بگو لیگ طبق برنامه منتظر پایان مرحلهٔ CUP است و بازی لیگ از آن‌جا ادامه پیدا می‌کند که schedule می‌گوید. هرگز دلیل دیگری برای نبودن بازی لیگ نساز.
+• هیچ تاریخ، ساعت، رقیب یا هفته‌ای را که در schedule نیست ننویس. فقط بازی‌های nextLeagueFixtures و leagueFixturesAfterThat را به‌عنوان بازی‌های آینده لیگ نام ببر. نتایج آینده را پیش‌بینی نکن؛ فقط می‌توانی با زبان احتیاط دربارهٔ حساس بودن بازی‌ها حرف بزنی.
+• قهرمانی لیگ تا وقتی schedule.leagueMatchweek.current برابر null نشده (هر ۱۲ هفته بازی نشده) قطعی نیست. تا قبل از آن فقط از «صدرنشین فعلی» حرف بزن، نه «قهرمان».
+• در scheduleOutlook جایگاه فعلی و قدم بعدی برنامه را کوتاه و دقیق (۲ تا ۴ جمله) بنویس.
+• سوپرکاپ: وقتی superCup.status برابر not_yet_known است، تیم‌های سوپرکاپ هنوز مشخص نیستند (باید لیگ و CUP تمام شوند). وقتی scheduled_not_played است، superCup.teams بازیکنان سوپرکاپ‌اند و بازی هنوز انجام نشده. وقتی played است نتیجه فقط از superCup.result بیاید. اگر superCup.sameTeamWonBoth برابر true بود، همین را به‌عنوان یک دوگانهٔ تاریخی (لیگ و CUP) بگو و توضیح بده حریف نایب‌قهرمان لیگ است. superCupReport فقط وقتی superCup.hasActivity=true است پر شود؛ وگرنه "". سوپرکاپ هیچ تأثیری روی جدول لیگ یا مدال‌های CUP ندارد.
+• superCup.past قهرمان‌های سوپرکاپ فصل‌های قبل است؛ می‌توانی برای مقایسه از آن استفاده کنی.
+• اگر schedule.status برابر no_schedule است، دربارهٔ برنامه یا مرحله‌ها چیزی نساز.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
@@ -837,6 +994,10 @@ async function main() {
   // Same idea for the CUP: the structured data decides whether there IS a CUP
   // story, not the model. No CUP activity -> no CUP report, whatever it wrote.
   if (!data.cup.hasActivity) magazine.cupReport = "";
+  // ...and the same for the Super Cup: only a Super Cup actually played this week gets a report.
+  if (!data.superCup.hasActivity) magazine.superCupReport = "";
+  // The league champion is only certain once all 12 matchweeks are done — never let a model-written
+  // headline stand in for that; the facts live in `schedule`, the model only narrates them.
 
   const now = new Date();
   // Every issue starts on the shared default cover. When an admin uploads a
@@ -855,6 +1016,8 @@ async function main() {
       : null,
     weekType: data.weekType, // both | league_only | cup_only | quiet — drives the layout in js/magazine.js
     leagueWeek: data.leagueWeek,
+    schedule: data.schedule,
+    superCup: data.superCup,
     cup: data.cup,
     recentMatches: data.recentMatches,
     formGuide: data.formGuide,

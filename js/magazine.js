@@ -248,6 +248,47 @@ function renderCupSection(issue) {
         </div>`;
 }
 
+// ---- Season schedule + Super Cup (issue.schedule / issue.superCup come from scripts/generate-magazine.mjs) ----
+// The stage list is the same five-stage timetable the app runs (js/flow.js); the phase in
+// the issue was derived from real data at generation time, so nothing here is guessed.
+function renderScheduleSection(issue) {
+    const s = issue.schedule;
+    if (!s || s.status !== 'active') return '';
+    const steps = (s.stages || []).map(st => `
+        <div class="magazine-cup-card ${st.status === 'upcoming' ? 'is-pending' : ''}" style="${st.status === 'active' ? 'border-color:rgba(251,191,36,0.5);' : ''}">
+            <div class="magazine-cup-card-title">${escapeHtml(st.label)}</div>
+            <div class="${st.status === 'done' ? 'magazine-cup-winner' : 'magazine-cup-pending'}">${st.status === 'done' ? '✅ انجام شد' : st.status === 'active' ? '▶️ مرحلهٔ فعلی' : 'در انتظار'}</div>
+        </div>`).join('');
+    const mw = s.leagueMatchweek || {};
+    const next = (s.nextLeagueFixtures || []).map(x => `<div class="magazine-cup-series">${teamLabel(x.home)} <b>vs</b> ${teamLabel(x.away)}</div>`).join('');
+    return `
+        <div class="magazine-page magazine-cup">
+            <h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> برنامهٔ فصل ${s.seasonId ?? ''} <span class="magazine-cup-badge">${escapeHtml(s.phaseLabelFa || '')}</span></h2>
+            <div class="magazine-cup-note">بازی‌های لیگ: ${mw.fixturesPlayed ?? 0} از ${mw.fixturesTotal ?? 24}${mw.current ? ` · هفتهٔ ${mw.current} از ${mw.total}` : ' · لیگ تمام شده'}</div>
+            <div class="magazine-cup-bracket">${steps}</div>
+            ${next ? `<div class="magazine-cup-card"><div class="magazine-cup-card-title">بازی‌های بعدی لیگ (هفتهٔ ${mw.current})</div>${next}</div>` : ''}
+            ${issue.scheduleOutlook ? `<p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p>` : ''}
+        </div>`;
+}
+
+function renderSuperCupSection(issue) {
+    const sc = issue.superCup;
+    if (!sc || !sc.hasActivity || !sc.result) return '';
+    const [a, b] = sc.result.teams || [];
+    const [x, y] = String(sc.result.score || '').split('-');
+    return `
+        <div class="magazine-page magazine-cup">
+            <h2 class="magazine-section-title"><i class="fas fa-bolt"></i> سوپرکاپ <span class="magazine-cup-badge">پایان‌یافته</span></h2>
+            <div class="magazine-cup-card">
+                <div class="magazine-cup-card-title">قهرمان لیگ و قهرمان CUP</div>
+                <div class="magazine-cup-series">${teamLabel(a)} <b>${escapeHtml(x)}</b> - <b>${escapeHtml(y)}</b> ${teamLabel(b)}</div>
+                <div class="magazine-cup-winner">🏆 ${teamLabel(sc.result.winner)}</div>
+            </div>
+            ${issue.superCupReport ? `<p class="magazine-text">${escapeHtml(issue.superCupReport).replace(/\n/g, '<br>')}</p>` : ''}
+            <div class="magazine-cup-note">سوپرکاپ در جدول لیگ و مدال‌های CUP حساب نمی‌شود.</div>
+        </div>`;
+}
+
 function renderMagazine(issue) {
     const body = document.getElementById('magazine-body');
     if (!body) return;
@@ -361,9 +402,13 @@ function renderMagazine(issue) {
 
     // ---- week type: both | league_only | cup_only | quiet (older issues: undefined = league layout) ----
     const weekType = issue.weekType || 'league_only';
-    const cupSection = renderCupSection(issue);
+    const cupSection = renderCupSection(issue) + renderSuperCupSection(issue);
+    const scheduleSection = renderScheduleSection(issue);
+    const idleByDesign = !!issue.schedule?.leagueIdleByDesign;
     const leagueIdleNote = (weekType === 'cup_only' || weekType === 'quiet')
-        ? '<div class="magazine-cup-note">این هفته بازی لیگ برگزار نشد؛ جدول زیر وضعیت فعلی لیگ است.</div>' : '';
+        ? (idleByDesign
+            ? `<div class="magazine-cup-note">لیگ طبق برنامهٔ فصل (${escapeHtml(issue.schedule.phaseLabelFa || '')}) فعلاً متوقف است؛ جدول زیر وضعیت فعلی لیگ است.</div>`
+            : '<div class="magazine-cup-note">این هفته بازی لیگ برگزار نشد؛ جدول زیر وضعیت فعلی لیگ است.</div>') : '';
     const hasCupLayout = !!issue.weekType;
 
     body.innerHTML = `
@@ -389,6 +434,8 @@ function renderMagazine(issue) {
             ${leagueIdleNote}
             <p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>
         </div>
+
+        ${scheduleSection}
 
         ${gaps.length ? `
         <div class="magazine-page">

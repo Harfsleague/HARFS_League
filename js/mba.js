@@ -28,6 +28,12 @@
 // normalizeMbaData() upgrades them in memory (a leg without a score just
 // shows "—" until an admin edits it).
 //
+// SCHEDULE: since the season-flow system (js/flow.js) a CUP edition is no longer
+// started by hand — it is drawn automatically at the right point of the season
+// (after league matchweek 6), the semifinals can only be played in that stage,
+// and the Final + Third-Place match only after the league has finished.
+// An edition drawn by the schedule carries `seasonId`.
+//
 // Medals plug into computeTrophyCounts() in shop.js, which reads
 // mbaData.completed. The champion of each tournament also gets one entry
 // in mainLeagueData[team].mbaChampionLog (Edition #N badge in the team panel).
@@ -167,9 +173,12 @@ function mbaReconcile(t){
 // ------------------------------------------------------------
 // Start / cancel / complete / reopen
 // ------------------------------------------------------------
-async function startNewMbaTournament(){
-    if(mbaBusy) return;
-    if(mbaData.current){ showToast('A tournament is already in progress','info',2200); return; }
+// Called by the season schedule (flowStartCup in js/flow.js) — there is no
+// stand-alone "Start Tournament" button any more. Returns the new edition number.
+async function startNewMbaTournament(opts){
+    opts = opts || {};
+    if(mbaBusy) return null;
+    if(mbaData.current){ showToast('A tournament is already in progress','info',2200); return null; }
     const shuffled = [...TEAM_NAMES];
     for(let i=shuffled.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
@@ -180,6 +189,7 @@ async function startNewMbaTournament(){
     mbaData.current = {
         edition,
         createdAt: Date.now(),
+        seasonId: opts.seasonId ?? null,
         semis: [
             { teams:[shuffled[0],shuffled[1]], wins:{[shuffled[0]]:0,[shuffled[1]]:0}, legs:[], winner:null },
             { teams:[shuffled[2],shuffled[3]], wins:{[shuffled[2]]:0,[shuffled[3]]:0}, legs:[], winner:null },
@@ -192,7 +202,8 @@ async function startNewMbaTournament(){
     renderMbaAdminSection(); renderMbaSeasonView();
     await mbaPersist(`Started CUP Edition ${edition}`);
     mbaBusy = false;
-    showToast(`CUP Edition ${edition} started 🏆`,'success',2400);
+    showToast(`CUP Edition ${edition} drawn 🏆`,'success',2400);
+    return edition;
 }
 async function cancelMbaTournament(){
     if(!mbaData.current || mbaBusy) return;
@@ -266,6 +277,11 @@ function openMbaResultSheet(scope, edition, kind, semiIndex, legIndex){
     if(!mbaCanEdit()) return;
     const t = scope==='current' ? mbaData.current : mbaData.completed.find(r=>r.edition===edition);
     if(!t) return;
+    // new results (not corrections) only when the schedule has reached that stage
+    if(scope==='current' && legIndex==null && typeof flowAllowsCup==='function' && !flowAllowsCup(kind==='semi'?'semi':'final')){
+        showToast(kind==='semi' ? 'CUP semifinals are played after league matchweek 6' : 'The final and third-place match come after league matchweek 12','info',3000);
+        return;
+    }
     let teams, existing = null, title;
     if(kind==='semi'){
         const semi = t.semis[semiIndex];
@@ -421,7 +437,9 @@ function mbaMiniLogo(team){
 }
 function mbaMakeCtx(mode, scope, edition){
     const canEdit = (mode==='admin') || !!isAdminUnlocked;
-    return { scope, edition, canEdit, canRecord: canEdit && scope==='current' };
+    // The schedule decides WHEN games may be recorded (semis → after league MW6, final/third → after MW12)
+    const allow = k => (typeof flowAllowsCup==='function') ? flowAllowsCup(k) : true;
+    return { scope, edition, canEdit, canRecord: canEdit && scope==='current', allowSemi: allow('semi'), allowFinal: allow('final') };
 }
 function mbaEditBtn(ctx, kind, semiIdx, legIdx){
     if(!ctx.canEdit) return '';
@@ -449,7 +467,7 @@ function mbaSemiBlock(t, i, ctx){
     const hist = semi.legs.length
         ? semi.legs.map((leg,li)=>`<div class="mba-hist-row"><span class="mba-hist-tag">G${li+1}</span>${mbaScoreHtml(semi.teams, leg)}${mbaEditBtn(ctx,'semi',i,li)}</div>`).join('')
         : `<div class="mba-hist-empty">No games played yet</div>`;
-    const add = (ctx.canRecord && !done)
+    const add = (ctx.canRecord && ctx.allowSemi && !done)
         ? `<button class="mba-add-btn" onclick="openMbaResultSheet('current',${ctx.edition},'semi',${i},null)"><i class="fas fa-plus"></i> Add game result</button>` : '';
     return `<div class="mba-block mba-semi${done?' decided':''}">
         <div class="mba-block-head"><span>Semifinal ${i+1}</span><span class="mba-block-tag">${done?'Decided':`First to ${MBA_SEMI_WINS_NEEDED}`}</span></div>
@@ -473,6 +491,8 @@ function mbaSingleBlock(t, kind, ctx){
         </div>`;
     }
     const decided = !!res.winner;
+    const lockedNote = (!decided && ctx.scope==='current' && ctx.allowFinal===false)
+        ? '<div class="mba-pending-note">Played after league matchweek 12</div>' : '';
     const rows = teams.map(team=>{
         const isW = res.winner===team;
         const sc = res.scores ? res.scores[team] : null;
@@ -485,13 +505,13 @@ function mbaSingleBlock(t, kind, ctx){
     const hist = decided
         ? `<div class="mba-hist-row"><span class="mba-hist-tag">FT</span>${mbaScoreHtml(teams,res)}${mbaEditBtn(ctx,kind,null,null)}</div>`
         : `<div class="mba-hist-empty">Not played yet</div>`;
-    const add = (ctx.canRecord && !decided)
+    const add = (ctx.canRecord && ctx.allowFinal && !decided)
         ? `<button class="mba-add-btn" onclick="openMbaResultSheet('current',${ctx.edition},'${kind}',null,null)"><i class="fas fa-plus"></i> Add result</button>` : '';
     return `<div class="mba-block ${cls}${decided?' decided':''}">
         <div class="mba-block-head"><span>${label}</span><span class="mba-block-tag">${decided?'Played':'To play'}</span></div>
         ${rows}
         <div class="mba-hist"><div class="mba-hist-title">Match history</div>${hist}</div>
-        ${add}
+        ${add}${lockedNote}
     </div>`;
 }
 // Semifinals on the left, Final on the right, joined by connector lines;
@@ -526,25 +546,11 @@ function mbaCompletedSummaryHtml(rec){
 // ------------------------------------------------------------
 // Admin Panel: start / cancel / finish + interactive bracket
 // ------------------------------------------------------------
+// The CUP no longer has its own admin card: the single "Season Control" card
+// (js/flow.js) shows the bracket in the right stage. Kept as a thin alias so every
+// existing caller (saves, verify, load) keeps working.
 function renderMbaAdminSection(){
-    const el = document.getElementById('mba-admin-body');
-    if(!el) return;
-    if(!mbaData.current){
-        el.innerHTML = `<p style="font-size:0.68rem;color:#6b7280;text-align:center;margin-bottom:12px;">No tournament in progress. Starting one randomly draws all 4 teams into two semifinal pairs.</p>
-        <button class="glass-button w-full text-sm py-3 font-bold" style="border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.08);color:#fbbf24;" onclick="startNewMbaTournament()">
-            <i class="fas fa-shuffle mr-2"></i>Start New Tournament
-        </button>`;
-        return;
-    }
-    const t = mbaData.current;
-    const ctx = mbaMakeCtx('admin','current',t.edition);
-    let html = `<div class="mba-edition-label">CUP — Edition ${t.edition} · In progress</div>` + mbaTreeHtml(t, ctx);
-    html += `<p class="mba-admin-hint">Add each game’s score under its block. Tap ✏️ on any game to correct it.</p>`;
-    if(mbaIsFullyDecided(t)){
-        html += `<button class="mba-finish-btn" onclick="completeMbaTournament()"><i class="fas fa-flag-checkered mr-2"></i>Finish tournament &amp; award medals</button>`;
-    }
-    html += `<button class="mba-cancel-btn" onclick="cancelMbaTournament()"><i class="fas fa-xmark mr-1"></i>Cancel Tournament</button>`;
-    el.innerHTML = html;
+    if(typeof renderFlowViews==='function') renderFlowViews();
 }
 
 // ------------------------------------------------------------
@@ -624,24 +630,27 @@ function renderMbaSeasonView(){
     el.innerHTML = html;
 }
 
-// ---- Season tab: League ⇄ CUP switch (each has its own picker) ----
+// ---- Season tab: League ⇄ CUP ⇄ Schedule switch (League and CUP each have their own picker) ----
 function switchSeasonView(view){
     haptic([6]);
-    const isMba = view==='mba';
-    document.getElementById('season-league-body').style.display = isMba ? 'none' : 'block';
+    const isMba = view==='mba', isSched = view==='schedule';
+    document.getElementById('season-league-body').style.display = (isMba||isSched) ? 'none' : 'block';
     document.getElementById('mba-season-body').style.display = isMba ? 'block' : 'none';
+    const sb = document.getElementById('schedule-season-body');
+    if(sb) sb.style.display = isSched ? 'block' : 'none';
     const leagueNav = document.getElementById('season-nav-wrapper');
     const mbaNav = document.getElementById('mba-nav-wrapper');
-    if(leagueNav) leagueNav.style.display = isMba ? 'none' : 'flex';
+    if(leagueNav) leagueNav.style.display = (isMba||isSched) ? 'none' : 'flex';
     if(mbaNav) mbaNav.style.display = isMba ? 'flex' : 'none';
     const title = document.getElementById('season-screen-title');
-    if(title) title.textContent = isMba ? 'CUP Tournament' : 'Season Table';
+    if(title) title.textContent = isMba ? 'CUP Tournament' : (isSched ? 'Season Schedule' : 'Season Table');
     const dt = document.getElementById('current-datetime');
-    if(dt) dt.style.display = isMba ? 'none' : '';
+    if(dt) dt.style.display = (isMba||isSched) ? 'none' : '';
     document.querySelectorAll('#season-view-switch .segmented-btn').forEach(b=>{
         b.classList.toggle('active', b.dataset.value===view);
     });
     if(isMba) renderMbaSeasonView();
+    if(isSched && typeof renderFlowSchedule==='function') renderFlowSchedule();
 }
 
 // ------------------------------------------------------------

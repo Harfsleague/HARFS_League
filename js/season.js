@@ -127,7 +127,7 @@ function renderSeasonHistoryList(history){
         const parts=m.score.split('-');
         const hs=parseInt(parts[0]),as=parseInt(parts[1]);
         return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" data-hs="${hs}" data-as="${as}">
-            <div class="mcm-date">${dt.date} · ${dt.time}</div>
+            <div class="mcm-date">${dt.date} · ${dt.time}${m.round?` · MW${m.round}`:''}</div>
             <div class="mcm-row">
                 <div class="mcm-team">
                     <img src="${teamLogoUrl(m.home)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
@@ -142,87 +142,6 @@ function renderSeasonHistoryList(history){
         </div>`;
     }).join('');
     if(window.GlassFX)GlassFX.historyRendered();
-}
-
-// ============================================================
-// SCORE CONTROLS
-// ============================================================
-function changeScore(side,delta){
-    haptic([6]);
-    if(side==='home'){homeScore=Math.max(0,homeScore+delta);document.getElementById('home-score-display').textContent=homeScore;}
-    else{awayScore=Math.max(0,awayScore+delta);document.getElementById('away-score-display').textContent=awayScore;}
-    updateMatchPreview();
-}
-function updateMatchPreview(){
-    const h=selectedHomeTeam;
-    const a=selectedAwayTeam;
-    const hl=document.getElementById('preview-home-logo');
-    const al=document.getElementById('preview-away-logo');
-    if(!h||!a)return;
-    hl.src=`${teamLogoUrl(h)}`;hl.style.opacity='1';
-    al.src=`${teamLogoUrl(a)}`;al.style.opacity='1';
-    document.getElementById('preview-home-name').textContent=h?teamShort(h):'Home';
-    document.getElementById('preview-away-name').textContent=a?teamShort(a):'Away';
-    document.getElementById('preview-score-text').textContent=`${homeScore} : ${awayScore}`;
-}
-
-// ============================================================
-// TEAM PICKER — custom bottom-sheet replacing native <select>
-// ============================================================
-function setTeamPickerValue(side,teamKey){
-    const icon=document.getElementById(`${side}-team-select-icon`);
-    const label=document.getElementById(`${side}-team-select-label`);
-    if(!teamKey){
-        icon.style.display='none';
-        label.textContent='Select team';
-        return;
-    }
-    icon.src=`${teamLogoUrl(teamKey)}`;
-    icon.style.display='block';
-    label.textContent=teamShort(teamKey);
-}
-function openTeamPicker(side){
-    haptic([6]);
-    activeTeamPickerSide=side;
-    document.getElementById('home-team-select-trigger')?.classList.toggle('open',side==='home');
-    document.getElementById('away-team-select-trigger')?.classList.toggle('open',side==='away');
-    const titleMap={ home:'Select Home Team', away:'Select Away Team' };
-    document.getElementById('team-picker-title').textContent=titleMap[side]||'Select Team';
-    const otherSelected = side==='home' ? selectedAwayTeam : side==='away' ? selectedHomeTeam : null;
-    const currentSelected = side==='home' ? selectedHomeTeam : selectedAwayTeam;
-    const grid=document.getElementById('team-picker-grid');
-    grid.innerHTML=TEAM_NAMES.map(t=>{
-        const isSelected=t===currentSelected;
-        const isDisabled=t===otherSelected;
-        return `<div class="team-picker-option ${isSelected?'selected':''} ${isDisabled?'disabled':''}" onclick="selectTeamInPicker('${t}')">
-            <img src="${teamLogoUrl(t)}">
-            <span>${teamShort(t)}</span>
-        </div>`;
-    }).join('');
-    document.getElementById('team-picker-sheet').classList.add('open');
-}
-function closeTeamPicker(){
-    haptic([6]);
-    document.getElementById('team-picker-sheet').classList.remove('open');
-    document.getElementById('home-team-select-trigger')?.classList.remove('open');
-    document.getElementById('away-team-select-trigger')?.classList.remove('open');
-    activeTeamPickerSide=null;
-}
-function selectTeamInPicker(teamKey){
-    if(!activeTeamPickerSide)return;
-    haptic([8,30,8]);
-    if(activeTeamPickerSide==='home'){
-        selectedHomeTeam=teamKey;
-        setTeamPickerValue('home',teamKey);
-        updateMatchPreview();
-        document.getElementById('admin-match-error').style.display='none';
-    } else if(activeTeamPickerSide==='away'){
-        selectedAwayTeam=teamKey;
-        setTeamPickerValue('away',teamKey);
-        updateMatchPreview();
-        document.getElementById('admin-match-error').style.display='none';
-    }
-    closeTeamPicker();
 }
 
 // ============================================================
@@ -265,7 +184,7 @@ function renderAdminHistory(h){
     document.getElementById('admin-history-list').innerHTML=h.length
         ?h.map((m,i)=>`
             <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;border-radius:12px;gap:8px;">
-                <span style="font-size:0.75rem;font-weight:700;color:#d1d5db;">${teamShort(m.home)}
+                <span style="font-size:0.75rem;font-weight:700;color:#d1d5db;">${m.round?`<span style="font-size:0.6rem;color:#6b7280;margin-right:6px;">MW${m.round}</span>`:''}${teamShort(m.home)}
                     <span style="color:#fbbf24;margin:0 6px;padding:2px 6px;background:rgba(0,0,0,0.3);border-radius:6px;">${m.score}</span>
                 ${teamShort(m.away)}</span>
                 <div style="display:flex;gap:6px;flex-shrink:0;">

@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     updateCurrentDateTime();
     setInterval(updateCurrentDateTime,60000);
     loadArchiveDropdown();
-    loadMbaDataFromGitHub();
+    // CUP first, then the schedule: the schedule's phase is derived from the CUP edition + match history
+    loadMbaDataFromGitHub().then(()=>loadFlowFromGitHub());
     setupOverallHold();
     setupSeasonFabScroll();
     startApp();
