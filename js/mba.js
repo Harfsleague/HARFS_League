@@ -279,7 +279,7 @@ function openMbaResultSheet(scope, edition, kind, semiIndex, legIndex){
     if(!t) return;
     // new results (not corrections) only when the schedule has reached that stage
     if(scope==='current' && legIndex==null && typeof flowAllowsCup==='function' && !flowAllowsCup(kind==='semi'?'semi':'final')){
-        showToast(kind==='semi' ? 'CUP semifinals are played after league matchweek 6' : 'The final and third-place match come after league matchweek 12','info',3000);
+        showToast(kind==='semi' ? `CUP semifinals are played after league matchweek ${flowHalf()}` : `The final and third-place match come after league matchweek ${flowRounds()}`,'info',3000);
         return;
     }
     let teams, existing = null, title;
@@ -492,7 +492,7 @@ function mbaSingleBlock(t, kind, ctx){
     }
     const decided = !!res.winner;
     const lockedNote = (!decided && ctx.scope==='current' && ctx.allowFinal===false)
-        ? '<div class="mba-pending-note">Played after league matchweek 12</div>' : '';
+        ? `<div class="mba-pending-note">Played after league matchweek ${typeof flowRounds==='function'?flowRounds():8}</div>` : '';
     const rows = teams.map(team=>{
         const isW = res.winner===team;
         const sc = res.scores ? res.scores[team] : null;

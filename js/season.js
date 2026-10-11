@@ -231,47 +231,17 @@ function navigateSeason(dir){
 function openSeasonPicker(){
     haptic([6]);
     if(seasonOptions.length<=1){showToast('No archived seasons yet','info');return;}
-    // Build a quick picker overlay
-    const existing=document.getElementById('season-picker-overlay');
-    if(existing){existing.remove();return;}
-    const overlay=document.createElement('div');
-    overlay.id='season-picker-overlay';
-    overlay.style.cssText=`
-        position:fixed;inset:0;z-index:450;
-        display:flex;align-items:flex-end;justify-content:center;
-        background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);
-    `;
-    const sheet=document.createElement('div');
-    sheet.style.cssText=`
-        width:100%;max-width:420px;background:rgba(10,18,30,0.98);
-        border-radius:28px 28px 0 0;padding:20px;
-        border-top:1px solid rgba(255,255,255,0.1);
-        max-height:60vh;overflow-y:auto;
-        animation:sheetUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    `;
-    sheet.innerHTML=`
-        <div style="text-align:center;margin-bottom:16px;">
-            <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 12px;"></div>
-            <div style="font-size:0.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;">Select Season</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            ${seasonOptions.map((opt,idx)=>`
-                <div onclick="selectSeasonFromPicker(${idx})" style="
-                    padding:14px 16px;border-radius:16px;cursor:pointer;
-                    background:${idx===currentSeasonIdx?'rgba(96,165,250,0.14)':'rgba(255,255,255,0.04)'};
-                    border:1px solid ${idx===currentSeasonIdx?'var(--primary)':'rgba(255,255,255,0.07)'};
-                    display:flex;justify-content:space-between;align-items:center;
-                    transition:all 0.2s;
-                ">
-                    <span style="font-size:0.82rem;font-weight:700;color:${idx===currentSeasonIdx?'var(--primary)':'#d1d5db'};">${opt.label}</span>
-                    ${idx===currentSeasonIdx?'<i class="fas fa-check" style="color:var(--primary);font-size:0.75rem;"></i>':''}
-                </div>
-            `).join('')}
-        </div>
-    `;
-    overlay.appendChild(sheet);
-    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
-    document.body.appendChild(overlay);
+    // Same list style as the CUP edition picker (js/mba.js): a centered modal with playlist-style rows.
+    document.getElementById('season-picker-list').innerHTML=seasonOptions.map((opt,idx)=>`
+        <div class="playlist-track-item ${idx===currentSeasonIdx?'playing':''}" onclick="selectSeasonFromPicker(${idx})">
+            <div class="playlist-track-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="playlist-track-title">${escapeHtml(opt.label)}</div>
+        </div>`).join('');
+    document.getElementById('season-picker-sheet').classList.add('open');
+}
+function closeSeasonPicker(){
+    const sh=document.getElementById('season-picker-sheet');
+    if(sh)sh.classList.remove('open');
 }
 
 function selectSeasonFromPicker(idx){
@@ -282,8 +252,7 @@ function selectSeasonFromPicker(idx){
     const sel=document.getElementById('season-selector');
     if(sel)sel.value=opt.value;
     loadSelectedSeason(opt.value);
-    const ov=document.getElementById('season-picker-overlay');
-    if(ov)ov.remove();
+    closeSeasonPicker();
 }
 
 // ============================================================

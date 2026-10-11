@@ -3,15 +3,19 @@
 // ------------------------------------------------------------
 // A season is a fixed timetable of five stages, played strictly in order:
 //
-//   1. LEAGUE    matchweeks 1–6      (12 league games)
+//   1. LEAGUE    first half         (matchweeks 1–4, 12 league games)
 //   2. CUP       semifinals          (draw + two series — js/mba.js)
-//   3. LEAGUE    matchweeks 7–12     (12 league games)
+//   3. LEAGUE    second half        (matchweeks 5–8, 12 league games)
 //   4. CUP       final + third-place (js/mba.js)
 //   5. SUPER CUP league champion vs CUP champion (single match)
 //
 // Every team plays exactly 12 league games: 4 meetings with each of the
-// other 3 teams. With 4 teams a matchweek is 2 games, so 12 matchweeks =
-// 24 games. All 24 fixtures are generated up-front when the season starts.
+// other 3 teams. A matchweek has 3 games, so 8 matchweeks = 24 games. Weeks
+// alternate: one week the three other teams play each other (triangle), the
+// next week Yellow plays all three of them. (Seasons created before this
+// change keep their old 12 x 2-game timetable — the number of matchweeks is
+// always read from the stored fixtures, see flowRounds().)
+// All 24 fixtures are generated up-front when the season starts.
 //
 // NOTHING about "which stage are we in" is stored. The phase is DERIVED on
 // every render from the real data (match history, CUP edition, Super Cup
@@ -31,14 +35,16 @@
 // ============================================================
 
 const FLOW_FILE_VERSION   = 1;
-const FLOW_LEAGUE_ROUNDS  = 12;  // matchweeks per season (12 games per team)
-const FLOW_FIRST_HALF     = 6;   // CUP semifinals start after this many matchweeks
+const FLOW_GAMES_PER_TEAM = 12;  // league games per team per season (4 meetings with each rival)
+const FLOW_LEAGUE_ROUNDS  = 8;   // DEFAULT matchweeks for a NEW season (3 games each) — use flowRounds(f) for a stored one
+const FLOW_FIRST_HALF     = 4;   // DEFAULT: CUP semifinals start after this many matchweeks — use flowHalf(f)
+const FLOW_SOLO_TEAM      = 'Yellow'; // plays only every other matchweek, all its games compressed into one week
 // If one team wins BOTH league and CUP, the Super Cup is played against the league runner-up.
 
 const FLOW_STAGES = [
-    { id:'league_a',   icon:'fa-futbol',      title:'League',            sub:'Matchweeks 1–6'  },
+    { id:'league_a',   icon:'fa-futbol',      title:'League',            sub:'First half'  },
     { id:'cup_semis',  icon:'fa-trophy',      title:'CUP Semifinals',    sub:'Draw + 2 series' },
-    { id:'league_b',   icon:'fa-futbol',      title:'League',            sub:'Matchweeks 7–12' },
+    { id:'league_b',   icon:'fa-futbol',      title:'League',            sub:'Second half' },
     { id:'cup_finals', icon:'fa-trophy',      title:'CUP Final & 3rd',   sub:'Medal matches'   },
     { id:'supercup',   icon:'fa-bolt',        title:'Super Cup',         sub:'League vs CUP champion' },
 ];
@@ -104,31 +110,30 @@ async function saveFlowToGitHub(message){
 }
 
 // ------------------------------------------------------------
-// Fixture generation — 4 round-robin cycles (4 meetings per pair)
+// Fixture generation — 4 round-robin cycles, 2 matchweeks each (3 games per week)
 // ------------------------------------------------------------
-// Each cycle is 3 matchweeks (every team meets every other team once). Weeks
-// inside a cycle are shuffled, home/away flips every cycle, and the same
-// pairing never repeats in back-to-back matchweeks. After matchweek 6 every
-// pair has met exactly twice, so the CUP draw happens on a level playing field.
+// Cycle = 2 matchweeks: (1) the three teams other than Yellow play each other
+// (triangle: 3 games), (2) Yellow plays each of those three (3 games). Over a
+// season every pair meets 4 times, Yellow plays only every other week, and
+// every pair gets 2 home + 2 away games. After matchweek 4 every pair has met
+// exactly twice, so the CUP draw happens on a level playing field.
 function flowGenerateFixtures(){
-    if(TEAM_NAMES.length!==4) throw new Error('The schedule is built for exactly 4 teams');
-    const [a,b,c,d] = flowShuffle(TEAM_NAMES);
-    const tpl = [ [[a,b],[c,d]], [[a,c],[b,d]], [[a,d],[b,c]] ];
-    const weeks = [];
-    let prevLast = -1;
-    for(let cycle=0; cycle<4; cycle++){
-        let order;
-        do{ order = flowShuffle([0,1,2]); }while(order[0]===prevLast);
-        order.forEach(k=>weeks.push({ k, flip:cycle%2===1 }));
-        prevLast = order[2];
-    }
+    if(TEAM_NAMES.length!==4 || !TEAM_NAMES.includes(FLOW_SOLO_TEAM)) throw new Error('The schedule is built for exactly 4 teams including '+FLOW_SOLO_TEAM);
+    const [a,b,c] = flowShuffle(TEAM_NAMES.filter(t=>t!==FLOW_SOLO_TEAM));
+    const Y = FLOW_SOLO_TEAM;
     const fixtures = [];
-    weeks.forEach((w,i)=>{
-        tpl[w.k].forEach((pair,j)=>{
-            const [home,away] = w.flip ? [pair[1],pair[0]] : pair;
-            fixtures.push({ id:`r${i+1}m${j+1}`, round:i+1, home, away });
-        });
-    });
+    let round = 0;
+    for(let cycle=0; cycle<4; cycle++){
+        const flip = cycle%2===1;
+        // week A — the other three teams (home/away flips every cycle)
+        const tri = flowShuffle([[a,b],[a,c],[b,c]]).map(([h,w])=> flip?[w,h]:[h,w]);
+        round++;
+        tri.forEach((pair,j)=>fixtures.push({ id:`r${round}m${j+1}`, round, home:pair[0], away:pair[1] }));
+        // week B — Yellow vs each of them (each pairing alternates home/away between cycles)
+        const yw = flowShuffle([a,b,c].map((t,idx)=> ((cycle+idx)%2===0) ? [Y,t] : [t,Y]));
+        round++;
+        yw.forEach((pair,j)=>fixtures.push({ id:`r${round}m${j+1}`, round, home:pair[0], away:pair[1] }));
+    }
     return fixtures;
 }
 
@@ -136,12 +141,19 @@ function flowGenerateFixtures(){
 // Derived state (pure — no DOM, no writes)
 // ------------------------------------------------------------
 function flowMatchOf(fx){ return (matchHistory||[]).find(m=>m.fx===fx.id) || null; }
+// Number of matchweeks of THIS stored season (8 for new seasons, 12 for old ones) and where the CUP semifinals go.
+function flowRounds(f){
+    f = f || flowCur();
+    const rs = (f && f.fixtures || []).map(x=>x.round);
+    return rs.length ? Math.max(...rs) : FLOW_LEAGUE_ROUNDS;
+}
+function flowHalf(f){ return Math.floor(flowRounds(f)/2); }
 function flowRoundFixtures(f, r){ return f.fixtures.filter(x=>x.round===r); }
 function flowRoundDone(f, r){ const fs=flowRoundFixtures(f,r); return fs.length>0 && fs.every(x=>!!flowMatchOf(x)); }
 function flowRangeDone(f, from, to){ for(let r=from;r<=to;r++){ if(!flowRoundDone(f,r)) return false; } return true; }
-// first matchweek that still has an unplayed fixture (null = all 12 played)
+// first matchweek that still has an unplayed fixture (null = all matchweeks played)
 function flowCurrentRound(f){
-    for(let r=1;r<=FLOW_LEAGUE_ROUNDS;r++){ if(!flowRoundDone(f,r)) return r; }
+    for(let r=1;r<=flowRounds(f);r++){ if(!flowRoundDone(f,r)) return r; }
     return null;
 }
 function flowPlayedCount(f){ return f.fixtures.filter(x=>!!flowMatchOf(x)).length; }
@@ -154,10 +166,10 @@ function flowCupOf(f){
 }
 function flowSemisDone(cup){ return !!cup && cup.t.semis.length===2 && cup.t.semis.every(s=>!!s.winner); }
 
-// Who plays the Super Cup. null until the league (12 matchweeks) AND the CUP are both decided.
+// Who plays the Super Cup. null until the league (all matchweeks) AND the CUP are both decided.
 function flowSuperCupTeams(f){
     f = f || flowCur();
-    if(!f || !flowRangeDone(f,1,FLOW_LEAGUE_ROUNDS)) return null;
+    if(!f || !flowRangeDone(f,1,flowRounds(f))) return null;
     const cup = flowCupOf(f);
     if(!cup || !cup.done || !cup.t.gold) return null;
     const table = flowSortedTable();
@@ -180,11 +192,11 @@ function flowSuperCupValid(f){
 function flowPhase(){
     const f = flowCur();
     if(!f) return 'idle';
-    if(!flowRangeDone(f,1,FLOW_FIRST_HALF)) return 'league_a';
+    if(!flowRangeDone(f,1,flowHalf(f))) return 'league_a';
     const cup = flowCupOf(f);
     if(!cup) return 'cup_draw';
     if(!flowSemisDone(cup)) return 'cup_semis';
-    if(!flowRangeDone(f,FLOW_FIRST_HALF+1,FLOW_LEAGUE_ROUNDS)) return 'league_b';
+    if(!flowRangeDone(f,flowHalf(f)+1,flowRounds(f))) return 'league_b';
     if(!cup.done) return 'cup_finals';
     if(!flowSuperCupValid(f)) return 'supercup';
     return 'complete';
@@ -202,13 +214,13 @@ function flowAllowsCup(kind){
 // Plain-English description of what has to happen next (admin panel + magazine).
 function flowNextStepText(){
     const f = flowCur(); const p = flowPhase();
-    if(!f) return 'Start the season to generate the full 12-matchweek schedule.';
-    const r = flowCurrentRound(f);
+    if(!f) return 'Start the season to generate the full schedule (8 matchweeks × 3 games).';
+    const r = flowCurrentRound(f), N = flowRounds(f), H = flowHalf(f);
     switch(p){
-        case 'league_a': return `Play matchweek ${r} of 12. After matchweek ${FLOW_FIRST_HALF} the CUP semifinals begin.`;
-        case 'cup_draw': return 'Matchweek 6 is done — draw the CUP semifinals.';
+        case 'league_a': return `Play matchweek ${r} of ${N}. After matchweek ${H} the CUP semifinals begin.`;
+        case 'cup_draw': return `Matchweek ${H} is done — draw the CUP semifinals.`;
         case 'cup_semis': return 'Play the CUP semifinal series. When both finalists are known the league resumes.';
-        case 'league_b': return `Back to the league: play matchweek ${r} of 12. The CUP final and third-place match come after matchweek 12.`;
+        case 'league_b': return `Back to the league: play matchweek ${r} of ${N}. The CUP final and third-place match come after matchweek ${N}.`;
         case 'cup_finals': return 'League finished — play the CUP final and the third-place match.';
         case 'supercup': return 'Play the Super Cup: league champion vs CUP champion.';
         default: return 'Everything is played. End the season to archive it and start the next one.';
@@ -231,7 +243,7 @@ async function flowStartSeason(opts){
     if(!opts.silent){
         const ok = await showConfirm({
             icon:'📅', title:`Start Season ${sid}?`,
-            message: `Generates the full timetable: 12 matchweeks × 2 games (every team plays 12 league games), CUP semifinals after matchweek 6, the CUP final after the league, then the Super Cup.`
+            message: `Generates the full timetable: 8 matchweeks × 3 games (every team plays 12 league games). Weeks alternate — ${flowName(FLOW_SOLO_TEAM)} plays all its games in one week, the other three teams play each other the week after. CUP semifinals after matchweek ${FLOW_FIRST_HALF}, the CUP final after the league, then the Super Cup.`
                 + (legacyCount ? ` The ${legacyCount} match${legacyCount===1?'':'es'} already in this season will be matched to the new schedule.` : ''),
             okLabel:'Start Season', okColor:'green'
         });
@@ -500,7 +512,7 @@ function renderFlowAdmin(){
     const played = f ? flowPlayedCount(f) : 0;
     html += `<div class="flow-head">
         <div class="flow-head-title">Season ${sid} <span class="flow-chip">${escapeHtml(FLOW_PHASE_LABEL[p])}</span></div>
-        ${f?`<div class="flow-head-sub">League games ${played}/${f.fixtures.length}${rnd?` · matchweek ${rnd}/${FLOW_LEAGUE_ROUNDS}`:' · league finished'}</div>`:''}
+        ${f?`<div class="flow-head-sub">League games ${played}/${f.fixtures.length}${rnd?` · matchweek ${rnd}/${flowRounds(f)}`:' · league finished'}</div>`:''}
     </div>`;
     html += flowStepperHtml();
     html += `<p class="flow-next"><i class="fas fa-circle-info"></i> ${escapeHtml(flowNextStepText())}</p>`;
@@ -542,7 +554,7 @@ function renderFlowAdmin(){
     // ---- upcoming timetable (compact) ----
     if(f && (p==='league_a'||p==='league_b'||p==='cup_draw'||p==='cup_semis')){
         const next = [];
-        for(let r=(rnd||FLOW_LEAGUE_ROUNDS+1)+((p==='league_a'||p==='league_b')?1:0); r<=FLOW_LEAGUE_ROUNDS && next.length<2; r++) next.push(r);
+        for(let r=(rnd||flowRounds(f)+1)+((p==='league_a'||p==='league_b')?1:0); r<=flowRounds(f) && next.length<2; r++) next.push(r);
         if(next.length){
             html += `<div class="flow-section-title" style="margin-top:14px;">Coming up</div>` + next.map(r=>`<div class="flow-upnext"><span class="flow-mw">MW${r}</span>${flowRoundFixtures(f,r).map(x=>`<span>${escapeHtml(teamShort(x.home))}–${escapeHtml(teamShort(x.away))}</span>`).join('')}</div>`).join('');
         }
@@ -576,7 +588,7 @@ function renderFlowSchedule(){
     }
     const rnd = flowCurrentRound(f);
     let html = `<div class="flow-head"><div class="flow-head-title">Season ${f.seasonId} <span class="flow-chip">${escapeHtml(FLOW_PHASE_LABEL[p])}</span></div>
-        <div class="flow-head-sub">League games ${flowPlayedCount(f)}/${f.fixtures.length}${rnd?` · matchweek ${rnd}/${FLOW_LEAGUE_ROUNDS}`:' · league finished'}</div></div>`;
+        <div class="flow-head-sub">League games ${flowPlayedCount(f)}/${f.fixtures.length}${rnd?` · matchweek ${rnd}/${flowRounds(f)}`:' · league finished'}</div></div>`;
     html += flowStepperHtml();
     html += `<p class="flow-next"><i class="fas fa-circle-info"></i> ${escapeHtml(flowNextStepText())}</p>`;
 
@@ -588,10 +600,10 @@ function renderFlowSchedule(){
             h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x)).join('')}</div>`;
         } return h;
     };
-    html += stageBlock('1 · League — Matchweeks 1–6', weeks(1,FLOW_FIRST_HALF), stageState(0));
+    html += stageBlock(`1 · League — Matchweeks 1–${flowHalf(f)}`, weeks(1,flowHalf(f)), stageState(0));
 
     const cup = flowCupOf(f);
-    let cupInner = `<p class="flow-note">Starts after matchweek ${FLOW_FIRST_HALF}. Two semifinal series decide the finalists; the league then resumes.</p>`;
+    let cupInner = `<p class="flow-note">Starts after matchweek ${flowHalf(f)}. Two semifinal series decide the finalists; the league then resumes.</p>`;
     if(cup){
         cupInner = cup.t.semis.map((s,i)=>{
             const [a,b] = s.teams; const w = s.wins||{};
@@ -599,9 +611,9 @@ function renderFlowSchedule(){
         }).join('') + `<p class="flow-note">See the CUP tab for the full bracket.</p>`;
     }
     html += stageBlock('2 · CUP Semifinals', cupInner, stageState(1));
-    html += stageBlock('3 · League — Matchweeks 7–12', weeks(FLOW_FIRST_HALF+1,FLOW_LEAGUE_ROUNDS), stageState(2));
+    html += stageBlock(`3 · League — Matchweeks ${flowHalf(f)+1}–${flowRounds(f)}`, weeks(flowHalf(f)+1,flowRounds(f)), stageState(2));
 
-    let finalsInner = `<p class="flow-note">After matchweek ${FLOW_LEAGUE_ROUNDS}: the CUP final and the third-place match.</p>`;
+    let finalsInner = `<p class="flow-note">After matchweek ${flowRounds(f)}: the CUP final and the third-place match.</p>`;
     if(cup && cup.t.final && cup.t.final.winner) finalsInner = `<div class="flow-summary-row"><span>🏆 CUP champion</span>${flowTeamChip(cup.t.final.winner)}</div>`;
     html += stageBlock('4 · CUP Final & Third Place', finalsInner, stageState(3));
 
@@ -640,14 +652,19 @@ function auditFlow(){
 
     // 1) the timetable itself
     const fx = f.fixtures || [];
-    if(fx.length!==TEAM_NAMES.length/2*FLOW_LEAGUE_ROUNDS) push('error',`${tag}: the schedule has ${fx.length} fixtures instead of ${TEAM_NAMES.length/2*FLOW_LEAGUE_ROUNDS}.`);
+    if(fx.length!==TEAM_NAMES.length/2*FLOW_GAMES_PER_TEAM) push('error',`${tag}: the schedule has ${fx.length} fixtures instead of ${TEAM_NAMES.length/2*FLOW_GAMES_PER_TEAM}.`);
     TEAM_NAMES.forEach(t=>{
         const n = fx.filter(x=>x.home===t||x.away===t).length;
-        if(n!==FLOW_LEAGUE_ROUNDS) push('error',`${tag}: ${flowName(t)} has ${n} scheduled games instead of ${FLOW_LEAGUE_ROUNDS}.`);
+        if(n!==FLOW_GAMES_PER_TEAM) push('error',`${tag}: ${flowName(t)} has ${n} scheduled games instead of ${FLOW_GAMES_PER_TEAM}.`);
     });
-    for(let r=1;r<=FLOW_LEAGUE_ROUNDS;r++){
-        const teams = flowRoundFixtures(f,r).flatMap(x=>[x.home,x.away]);
-        if(new Set(teams).size!==TEAM_NAMES.length || teams.length!==TEAM_NAMES.length) push('error',`${tag}: matchweek ${r} does not have every team exactly once.`);
+    for(let r=1;r<=flowRounds(f);r++){
+        const rf = flowRoundFixtures(f,r), teams = rf.flatMap(x=>[x.home,x.away]);
+        if(rf.length===2){ // old format: 2 games, every team once
+            if(new Set(teams).size!==TEAM_NAMES.length || teams.length!==TEAM_NAMES.length) push('error',`${tag}: matchweek ${r} does not have every team exactly once.`);
+        } else { // new format: 3 games — either Yellow vs the other three, or the other three among themselves
+            const withY = rf.filter(x=>x.home===FLOW_SOLO_TEAM||x.away===FLOW_SOLO_TEAM).length;
+            if(rf.length!==3 || (withY!==0 && withY!==3)) push('error',`${tag}: matchweek ${r} should have 3 games — all with ${flowName(FLOW_SOLO_TEAM)} or none.`);
+        }
     }
 
     // 2) fixtures <-> saved matches
@@ -666,10 +683,10 @@ function auditFlow(){
 
     // 3) stage ordering
     const cup = flowCupOf(f);
-    const secondHalfPlayed = fx.some(x=>x.round>FLOW_FIRST_HALF && flowMatchOf(x));
-    if(secondHalfPlayed && !flowRangeDone(f,1,FLOW_FIRST_HALF)) push('warn',`${tag}: second-half games exist while matchweeks 1–${FLOW_FIRST_HALF} are not all played.`);
+    const secondHalfPlayed = fx.some(x=>x.round>flowHalf(f) && flowMatchOf(x));
+    if(secondHalfPlayed && !flowRangeDone(f,1,flowHalf(f))) push('warn',`${tag}: second-half games exist while matchweeks 1–${flowHalf(f)} are not all played.`);
     if(secondHalfPlayed && !flowSemisDone(cup)) push('warn',`${tag}: second-half games were recorded before the CUP semifinals were decided.`);
-    if(cup && cup.t.final && cup.t.final.winner && !flowRangeDone(f,1,FLOW_LEAGUE_ROUNDS)) push('warn',`${tag}: the CUP final was recorded before the league finished.`);
+    if(cup && cup.t.final && cup.t.final.winner && !flowRangeDone(f,1,flowRounds(f))) push('warn',`${tag}: the CUP final was recorded before the league finished.`);
 
     // 4) CUP + Super Cup attachments
     if(f.cupEdition!=null && !cup){
@@ -700,8 +717,8 @@ function buildScheduleSnapshot(){
     const cup = flowCupOf(f), want = flowSuperCupTeams(f);
     return {
         status:'running', season:f.seasonId, stage:FLOW_PHASE_LABEL[p], stageId:p,
-        order:'League MW1-6 → CUP semifinals → League MW7-12 → CUP final & 3rd place → Super Cup (league champion vs CUP champion)',
-        gamesPerTeam:12, leagueGamesPlayed:flowPlayedCount(f), leagueGamesTotal:f.fixtures.length,
+        order:`League MW1-${flowHalf(f)} → CUP semifinals → League MW${flowHalf(f)+1}-${flowRounds(f)} → CUP final & 3rd place → Super Cup (league champion vs CUP champion)`,
+        gamesPerTeam:FLOW_GAMES_PER_TEAM, matchweeks:flowRounds(f), gamesPerMatchweek:3, scheduleRule:'Matchweeks alternate: one week Bayern, HOSI and Sezar play each other; the next week Yellow plays all three of them.', leagueGamesPlayed:flowPlayedCount(f), leagueGamesTotal:f.fixtures.length,
         currentMatchweek: rnd,
         leagueIdleByDesign: ['cup_draw','cup_semis','cup_finals','supercup','complete'].includes(p),
         nextFixtures: (rnd && (p==='league_a'||p==='league_b')) ? flowRoundFixtures(f,rnd).filter(x=>!flowMatchOf(x)).map(x=>({home:x.home,away:x.away})) : [],

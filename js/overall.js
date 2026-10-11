@@ -74,7 +74,6 @@ function renderMainLeagueTable(){
                 <div class="people-card-title"><i class="fas fa-crown"></i> Federation &amp; Owners</div>
                 <div class="people-card-sub">President, owners &amp; fans</div>
             </div>
-            <i class="fas fa-chevron-right people-card-chevron"></i>
         </div>`;
 
     // clear the old separate body — all cards go inside pod now

@@ -178,4 +178,4 @@
 .mba-sheet-actions{ display:flex; gap:8px; }
 .mba-sheet-actions .glass-button{ flex:1; padding:11px 8px; font-size:0.78rem; }
 /* same layer as the other bottom sheets */
-#mba-result-sheet, #mba-picker-sheet{ z-index:600; }
+#mba-result-sheet, #mba-picker-sheet, #season-picker-sheet{ z-index:600; }

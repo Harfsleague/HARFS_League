@@ -246,7 +246,6 @@
                     <span class="magazine-entry-title">HARFS Weekly Magazine</span>
                         <span class="magazine-entry-sub">تحلیل، جدول و اخبار هر جمعه صبح</span>
                 </div>
-                <i class="fas fa-chevron-right magazine-entry-chevron"></i>
             </button>
             <button class="ai-entry-capsule" onclick="openAiPanel()">
                 <div class="ai-entry-icon">
@@ -259,7 +258,6 @@
                     <span class="ai-entry-title">HARFS Assistant</span>
                     <span class="ai-entry-sub">Ask about the table, results &amp; trends</span>
                 </div>
-                <i class="fas fa-chevron-right ai-entry-chevron"></i>
             </button>
         </div>
     </div>
@@ -783,6 +781,16 @@
             <div class="team-picker-handle"></div>
             <div class="team-picker-title">Select CUP Edition</div>
             <div id="mba-picker-list"></div>
+        </div>
+    </div>
+
+    <!-- ============ LEAGUE — SEASON PICKER (same look as the CUP edition picker) ============ -->
+    <div id="season-picker-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeSeasonPicker()">
+        <div class="team-picker-panel playlist-panel">
+            <div class="modal-x-close" onclick="closeSeasonPicker()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title">Select Season</div>
+            <div id="season-picker-list"></div>
         </div>
     </div>
 

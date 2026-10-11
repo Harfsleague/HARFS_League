@@ -1924,11 +1924,11 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
 
 /* AI entry capsule — sits below the last row of the Overall table */
 .ai-entry-capsule{
-    width:100%; display:flex; align-items:center; gap:12px;
+    width:100%; display:flex; align-items:center; justify-content:center; gap:12px;
     margin-top:14px; padding:14px 16px; border-radius:20px;
     background:linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.12));
     border:1px solid rgba(255,255,255,0.12);
-    cursor:pointer; transition:transform 0.15s ease; text-align:left;
+    cursor:pointer; transition:transform 0.15s ease; text-align:center;
 }
 .ai-entry-capsule:active{ transform:scale(0.97); }
 .ai-entry-icon{
@@ -1937,10 +1937,10 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; backdrop-filter:none; -we
     background:linear-gradient(135deg, var(--primary), var(--accent));
     color:#0b1220; box-shadow:0 4px 14px var(--primary-glow);
 }
-.ai-entry-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.ai-entry-text{ flex:0 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; text-align:center; align-items:center; }
 .ai-entry-title{ font-size:0.8rem; font-weight:800; color:#fff; }
 .ai-entry-sub{ font-size:0.64rem; color:#6b7280; }
-.ai-entry-chevron{ color:#4b5563; font-size:0.8rem; flex-shrink:0; }
+.ai-entry-chevron{ display:none; }
 
 
 /* =====================================================
@@ -2144,12 +2144,12 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 /* ============================================================
    Weekly Magazine styles — append to css/styles.css
    ============================================================ */
-.magazine-entry-capsule{display:flex;align-items:center;gap:12px;width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(96,165,250,0.08));border:1px solid rgba(251,191,36,0.25);border-radius:16px;padding:14px 16px;margin-top:14px;cursor:pointer;color:inherit;}
+.magazine-entry-capsule{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(96,165,250,0.08));border:1px solid rgba(251,191,36,0.25);border-radius:16px;padding:14px 16px;margin-top:14px;cursor:pointer;color:inherit;}
 .magazine-entry-icon{font-size:1.3rem;color:#fbbf24;}
-.magazine-entry-text{display:flex;flex-direction:column;text-align:right;flex:1;}
+.magazine-entry-text{display:flex;flex-direction:column;text-align:center;align-items:center;flex:0 1 auto;}
 .magazine-entry-title{font-weight:800;font-size:0.85rem;}
 .magazine-entry-sub{font-size:0.68rem;color:#9ca3af;margin-top:2px;}
-.magazine-entry-chevron{color:#9ca3af;}
+.magazine-entry-chevron{display:none;}
 
 /* Persian text mixed with Latin team names needs an explicit RTL base
    direction, or the bidi algorithm scrambles word/number order. */
@@ -2474,18 +2474,18 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 #particle-canvas{ display:none !important; }
 
 /* ---- People card on Overall (right under the last team) ---- */
-.people-card{ position:relative; display:flex; align-items:center; gap:12px; margin-top:4px; padding:12px 14px; border-radius:20px; cursor:pointer; overflow:hidden;
+.people-card{ position:relative; display:flex; align-items:center; justify-content:center; gap:12px; margin-top:4px; padding:12px 14px; border-radius:20px; cursor:pointer; overflow:hidden;
     background:linear-gradient(120deg,rgba(168,85,247,.24),rgba(251,191,36,.16) 55%,rgba(168,85,247,.10));
     border:1px dashed rgba(251,191,36,.55); box-shadow:0 0 22px rgba(168,85,247,.18);
     animation:rankCardIn .45s cubic-bezier(.34,1.56,.64,1) both; transition:transform .15s; }
 .people-card:active{ transform:scale(0.97); }
 .people-card-stack{ display:flex; flex-shrink:0; padding-inline-start:10px; }
 .people-card-stack img{ width:32px; height:32px; border-radius:50%; object-fit:cover; margin-inline-start:-10px; border:2px solid #1a1740; background:#0f172a; }
-.people-card-text{ flex:1; min-width:0; }
+.people-card-text{ flex:0 1 auto; min-width:0; text-align:center; }
 .people-card-title{ font-size:0.9rem; font-weight:900; letter-spacing:.3px; background:linear-gradient(90deg,#fde68a,#fbbf24,#e9d5ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 .people-card-title i{ -webkit-text-fill-color:#fbbf24; font-size:.8rem; margin-inline-end:4px; }
 .people-card-sub{ font-size:0.64rem; color:#c4b5fd; margin-top:2px; }
-.people-card-chevron{ color:#c4b5fd; font-size:.8rem; flex-shrink:0; }
+.people-card-chevron{ display:none; }
 
 /* ---- People panel (sheet) ---- */
 html body .team-picker-panel.people-panel{ border-top:2px solid rgba(251,191,36,.55);
