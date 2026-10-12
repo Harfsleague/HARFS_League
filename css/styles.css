@@ -676,7 +676,7 @@ body.perf-no-anim .mini-player{ transition:none; }
 }
 .season-table {
     width:100%;
-    min-width:320px;
+    min-width:334px;
     border-collapse:collapse;
     table-layout:fixed;
 }
@@ -700,16 +700,14 @@ body.perf-no-anim .mini-player{ transition:none; }
 .season-table col.c-rank { width:28px; }
 .season-table col.c-team { width:auto; }
 .season-table col.c-num  { width:27px; }
+.season-table col.c-form { width:14px; }
 .season-table col.c-pts  { width:36px; }
 
 .season-table tbody tr {
     border-bottom:1px solid rgba(255,255,255,0.05);
-    cursor:pointer;
-    transition:background 0.15s;
     animation:rowIn 0.3s ease both;
 }
 .season-table tbody tr:last-child{border-bottom:none;}
-.season-table tbody tr:active{background:rgba(255,255,255,0.07)!important;}
 .season-table tbody tr.rank-1-row{background:var(--table-rank1-bg);}
 
 @keyframes rowIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
@@ -869,7 +867,6 @@ body.perf-no-anim .mini-player{ transition:none; }
 .confirm-btn-ok:active{transform:scale(0.96);}
 
 /* team profile */
-#team-profile-modal .modal-content{padding:0;overflow:hidden;max-width:320px;}
 .profile-header{height:100px;position:relative;overflow:visible;}
 .profile-header-bg{
     position:absolute;inset:0;height:100px;
@@ -2673,6 +2670,16 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
 .react-chip:active{ transform:scale(0.92); }
 .react-emoji{ font-size:0.95rem; line-height:1; }
 .react-count{ font-size:0.7rem; font-weight:800; }
+.react-chip{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.react-avs{ display:inline-flex; align-items:center; }
+.react-av{ width:15px; height:15px; border-radius:50%; object-fit:cover; border:1.5px solid #0f172a; background:#1f2937; }
+.react-av + .react-av{ margin-left:-5px; }
+.react-more{ font-size:0.6rem; font-weight:800; color:#9ca3af; margin-left:3px; }
+.react-chip.who-open{ border-color:rgba(96,165,250,0.5); }
+.react-who{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; padding:6px 8px; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.1); border-radius:14px; }
+.react-who-emoji{ font-size:1rem; }
+.react-who-item{ display:inline-flex; align-items:center; gap:5px; font-size:0.68rem; font-weight:700; color:#e5e7eb; }
+.react-who-item .react-av{ width:18px; height:18px; margin:0; }
 .react-chip.mine{ background:rgba(251,191,36,0.18); border-color:rgba(251,191,36,0.55); color:#fde68a; }
 .react-add{ padding:0 9px; color:#9ca3af; }
 .react-add.open{ color:#fbbf24; border-color:rgba(251,191,36,0.4); }
@@ -2683,3 +2690,13 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
 .react-picker button{ width:36px; height:36px; font-size:1.25rem; line-height:1; background:none; border:none; border-radius:10px; cursor:pointer; }
 .react-picker button:active{ transform:scale(0.85); }
 .react-picker button.mine{ background:rgba(251,191,36,0.2); }
+
+
+/* ---- league table: last 5 results, tiny + vertical, between the team name and P ---- */
+.season-table td.td-form{ padding:0 !important; text-align:center; vertical-align:middle; }
+.season-table th.th-form{ padding:0 !important; }
+.form-strip{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+.form-strip .fd{ display:block; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.form-strip .fd-w{ background:#22c55e; box-shadow:0 0 3px rgba(34,197,94,0.6); }
+.form-strip .fd-l{ background:#ef4444; box-shadow:0 0 3px rgba(239,68,68,0.6); }
+.form-strip .fd-d{ background:#9ca3af; }

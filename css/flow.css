@@ -94,33 +94,39 @@
 /* =====================================================
    SEASON PANEL LAYOUT  (js/season-layout.js)
    Classic "tabs" mode: the wrappers vanish (display:contents), so the
-   screen looks exactly as before. "One page" mode: sections stack, in the
-   order set in Settings (style.order on each <section>).
+   screen looks exactly as before. "Two pages" mode: League + CUP on one page,
+   Schedule + match history on the other (switch at the top of the screen).
    ===================================================== */
 #season-sections, #season-sections > section{ display:contents; }
 .season-sec-title{ display:none; }
-body.season-single #season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
-body.season-single #season-sections > section{ display:block; width:100%; }
-body.season-single #season-view-switch{ display:none; }
-body.season-single .season-sec-title{
+body.season-pages #season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
+body.season-pages #season-sections > section{ display:block; width:100%; }
+body.season-pages #season-view-switch{ display:none; }
+/* two-page mode: the page switch + only the sections of the active page */
+#season-page-switch{ display:none; }
+body.season-pages #season-page-switch{ display:flex; }
+body.season-pages[data-season-page="standings"] #ssec-schedule{ display:none; }
+body.season-pages[data-season-page="matches"] #ssec-league,
+body.season-pages[data-season-page="matches"] #ssec-mba{ display:none; }
+body.season-pages .season-sec-title{
     display:flex; align-items:center; justify-content:center; gap:8px;
     font-size:0.68rem; font-weight:900; letter-spacing:1.4px; text-transform:uppercase;
     color:#9ca3af; margin:0 12px 10px;
 }
-body.season-single .season-sec-title i{ color:var(--primary); opacity:0.85; }
-body.season-single .season-sec-title::before,
-body.season-single .season-sec-title::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); }
+body.season-pages .season-sec-title i{ color:var(--primary); opacity:0.85; }
+body.season-pages .season-sec-title::before,
+body.season-pages .season-sec-title::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); }
 .ssec-slot{ padding:0 12px; }
-body.season-single #ssec-league-nav #season-nav-wrapper,
-body.season-single #ssec-mba-nav #mba-nav-wrapper{ margin-top:0 !important; margin-bottom:10px; }
-body.season-single #ssec-schedule-filter{ padding-bottom:10px; }
-body.season-single #ssec-schedule-filter .chip-bar{ justify-content:center; }
-body.season-single #ssec-history-slot .season-history-card{ margin-bottom:0; }
+body.season-pages #ssec-league-nav #season-nav-wrapper,
+body.season-pages #ssec-mba-nav #mba-nav-wrapper{ margin-top:0 !important; margin-bottom:10px; }
+body.season-pages #ssec-schedule-filter{ padding-bottom:10px; }
+body.season-pages #ssec-schedule-filter .chip-bar{ justify-content:center; }
+body.season-pages #ssec-history-slot .season-history-card{ margin-bottom:0; }
 
-/* smaller title box in one-page mode */
-body.season-single .league-header{ padding:8px 14px; margin-bottom:12px; border-radius:18px; }
-body.season-single #season-screen-title{ font-size:0.78rem; margin-bottom:0; letter-spacing:2px; }
-body.season-single #current-datetime{ font-size:9px; margin-bottom:0 !important; }
+/* smaller title box in two-page mode */
+body.season-pages .league-header{ padding:8px 14px; margin-bottom:12px; border-radius:18px; }
+body.season-pages #season-screen-title{ font-size:0.78rem; margin-bottom:0; letter-spacing:2px; }
+body.season-pages #current-datetime{ font-size:9px; margin-bottom:0 !important; }
 
 /* merged match history: date under a played fixture + team-filter dimming */
 .flow-fixture-wrap{ margin-bottom:6px; }

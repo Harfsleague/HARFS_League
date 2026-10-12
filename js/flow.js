@@ -263,6 +263,7 @@ async function flowStartSeason(opts){
             fixtures.forEach(x=>{ delete x.taken; });
         }
         flowData = { v:FLOW_FILE_VERSION, current:{ seasonId:sid, createdAt:Date.now(), fixtures, cupEdition:null, superCup:null } };
+        if(typeof resetMbaView==='function') resetMbaView();   // CUP page: jump to the new season's (not yet drawn) edition
         if(adopted) await saveMatchHistoryToGitHub(matchHistory, `Season ${sid}: ${adopted} existing match(es) linked to the schedule`);
         await saveFlowToGitHub(`Season ${sid} schedule created`);
         showToast(`Season ${sid} schedule is ready 📅` + (orphan?` (${orphan} old match${orphan===1?'':'es'} could not be linked)`:''),'success',3200);
@@ -397,6 +398,7 @@ async function flowEndSeason(early){
         await saveLeagueDataToGitHub(leagueData, 'Reset Season Table');
         await saveMatchHistoryToGitHub(matchHistory, 'Season archived - match history cleared for new season');
         flowData = { v:FLOW_FILE_VERSION, current:null };
+        if(typeof resetMbaView==='function') resetMbaView();
         Object.keys(flowDraft).forEach(k=>delete flowDraft[k]);
         flowSuperEditing = false;
     } finally { flowBusy = false; }
@@ -603,7 +605,7 @@ function renderFlowSchedule(){
     const weeks = (from,to)=>{
         let h=''; for(let r=from;r<=to;r++){
             const done = flowRoundDone(f,r), cur = r===rnd && (p==='league_a'||p==='league_b');
-            h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x,{date:document.body.classList.contains('season-single')})).join('')}</div>`;
+            h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x,{date:document.body.classList.contains('season-pages')})).join('')}</div>`;
         } return h;
     };
     html += stageBlock(`1 · League — Matchweeks 1–${flowHalf(f)}`, weeks(1,flowHalf(f)), stageState(0));
@@ -636,6 +638,7 @@ function renderFlowSchedule(){
 function renderFlowViews(){
     renderFlowAdmin();
     renderFlowSchedule();
+    if(typeof renderMbaSeasonView==='function') renderMbaSeasonView();   // the CUP page follows the season (new season → new, undrawn edition)
 }
 
 // ------------------------------------------------------------

@@ -121,10 +121,33 @@ function showSongNotification(title) {
     showToast(title, 'music', 3000);
 }
 
+// ---- music memory --------------------------------------------------------
+// The last track that started playing is remembered on this device (by its URL, so
+// adding/removing songs never points at the wrong one). Combined with the saved
+// playback mode ('playbackMode' in appearance.js):
+//   shuffle    → every visit starts on a random track
+//   single     → (Repeat One) the same song as last time keeps playing
+//   sequential → continues with the song you left on
+const LAST_TRACK_KEY = 'lastTrackSrc';
+function saveLastTrack(track){
+    try{ if(track && track.src) localStorage.setItem(LAST_TRACK_KEY, track.src); }catch(e){}
+}
+function pickStartTrackIndex(){
+    const random = () => Math.floor(Math.random() * PLAYLIST.length);
+    let mode = 'shuffle';
+    try{ mode = localStorage.getItem('playbackMode') || ((typeof playbackMode!=='undefined') ? playbackMode : 'shuffle'); }catch(e){}
+    if (mode === 'shuffle') return random();
+    let saved = null;
+    try{ saved = localStorage.getItem(LAST_TRACK_KEY); }catch(e){}
+    const idx = saved ? PLAYLIST.findIndex(t => t.src === saved) : -1;
+    return idx >= 0 ? idx : random();
+}
+
 function playTrack(index) {
     if (!bgMusic || PLAYLIST.length === 0) return;
     currentTrackIndex = ((index % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length;
     const track = PLAYLIST[currentTrackIndex];
+    saveLastTrack(track);
     playTrackWithFallback(track.src, track.title);
 }
 // Plays the requested track's normal (raw GitHub) URL when online; when
@@ -197,9 +220,8 @@ async function initAudio() {
         // back to later even after unmuting.
         await loadPlaylistFromGitHub();
         if (!musicMuted) {
-            // Pick a random starting track
-            const startIndex = Math.floor(Math.random() * PLAYLIST.length);
-            playTrack(startIndex);
+            // Starting track follows the saved playback mode (random for Shuffle, the remembered song otherwise)
+            playTrack(pickStartTrackIndex());
         }
     }
 }

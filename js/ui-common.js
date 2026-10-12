@@ -92,8 +92,7 @@ function toggleMusic(){
             bg.play().catch(()=>{});
         } else {
             loadPlaylistFromGitHub().then(()=>{
-                const startIndex = Math.floor(Math.random()*PLAYLIST.length);
-                playTrack(startIndex);
+                playTrack(pickStartTrackIndex());
             });
         }
         backgroundMusicStarted = true;

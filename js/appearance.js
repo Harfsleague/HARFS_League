@@ -684,7 +684,7 @@ function playerTogglePlay(){
     // not muted but not playing (autoplay was blocked, or nothing started yet)
     backgroundMusicStarted=true;
     if(bg.src){ bg.play().catch(()=>{}); }
-    else loadPlaylistFromGitHub().then(()=>playTrack(Math.floor(Math.random()*PLAYLIST.length)));
+    else loadPlaylistFromGitHub().then(()=>playTrack(pickStartTrackIndex()));
     syncSettingsUI();
 }
 function playerStep(dir){

@@ -262,7 +262,7 @@ async function saveEditedMatch(){
 // main leaderboard) in sync right after any admin change.
 // ============================================================
 async function refreshAllLeagueViews(){
-    renderLeagueTable(leagueData);
+    renderLeagueTable(leagueData,matchHistory);
     if(!isViewingArchive)renderSeasonHistoryList(matchHistory);
     renderAdminHistory(matchHistory);
     await loadMainLeagueDataFromGitHub();

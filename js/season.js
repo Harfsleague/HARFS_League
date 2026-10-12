@@ -7,15 +7,17 @@
 // ============================================================
 // RENDER — SEASON TABLE  (uses <table> now — no grid bug)
 // ============================================================
-function renderLeagueTable(dataToRender){
+function renderLeagueTable(dataToRender, historyForForm){
     const loadingEl=document.getElementById('loading-message');
     if(loadingEl)loadingEl.style.display='none';
+    // last-5 form comes from the history of the season being shown (current by default, the archived one when browsing the archive)
+    const formSource=historyForForm||matchHistory||[];
     const table=Object.values(dataToRender).sort((a,b)=>(b.Pts-a.Pts)||((b.GF-b.GA)-(a.GF-a.GA)));
     const tbody=document.getElementById('league-table-body');
     tbody.innerHTML=table.map((t,i)=>{
         const isFirst=i===0;
         const delay=i*55;
-        return`<tr class="${isFirst?'rank-1-row':''}" style="animation-delay:${delay}ms" onclick="showTeamProfile('${t.name}')">
+        return`<tr class="${isFirst?'rank-1-row':''}" style="animation-delay:${delay}ms">
             <td class="td-rank" style="${isFirst?'color:#fbbf24;':''}">${i+1}</td>
             <td class="td-team">
                 <div class="td-team-inner">
@@ -23,6 +25,7 @@ function renderLeagueTable(dataToRender){
                     <span style="${isFirst?'color:#fef3c7;':''}">${teamShort(t.name)}</span>
                 </div>
             </td>
+            <td class="td-form">${formStripHtml(t.name,formSource)}</td>
             <td>${t.P}</td>
             <td class="td-w">${t.W}</td>
             <td>${t.D}</td>
@@ -33,6 +36,21 @@ function renderLeagueTable(dataToRender){
             <td class="td-pts">${t.Pts}</td>
         </tr>`;
     }).join('');
+}
+
+// Last 5 results of a team as tiny dots stacked vertically (newest on top).
+// Sits between the team name and P in the league table. history is newest-first.
+function formStripHtml(teamKey,history){
+    const games=(history||[]).filter(m=>m.home===teamKey||m.away===teamKey).slice(0,5);
+    if(!games.length)return'';
+    return`<div class="form-strip">${games.map(m=>{
+        const isHome=m.home===teamKey;
+        const p=String(m.score).split('-');
+        const myS=isHome?parseInt(p[0]):parseInt(p[1]);
+        const opS=isHome?parseInt(p[1]):parseInt(p[0]);
+        const res=myS>opS?'w':(myS<opS?'l':'d');
+        return`<i class="fd fd-${res}" title="${res==='w'?'Win':(res==='l'?'Loss':'Draw')}"></i>`;
+    }).join('')}</div>`;
 }
 
 // ============================================================
@@ -147,39 +165,6 @@ function renderSeasonHistoryList(history){
 }
 
 // ============================================================
-// TEAM PROFILE
-// ============================================================
-function showTeamProfile(key){
-    haptic([8]);
-    const t=leagueData[key];if(!t)return;
-    document.getElementById('profile-team-logo').src=`${teamLogoUrl(key)}`;
-    document.getElementById('profile-team-name').textContent=TEAM_DISPLAY_NAMES[key];
-    document.getElementById('profile-stat-pts').textContent=t.Pts;
-    document.getElementById('profile-stat-p').textContent=t.P;
-    document.getElementById('profile-stat-w').textContent=t.W;
-    document.getElementById('profile-stat-d').textContent=t.D;
-    document.getElementById('profile-stat-l').textContent=t.L;
-    const gd=t.GF-t.GA;
-    document.getElementById('profile-stat-gf').textContent=gd>0?`+${gd}`:gd;
-    const last=matchHistory.find(m=>m.home===key||m.away===key);
-    const badge=document.getElementById('last-match-result-badge');
-    const detail=document.getElementById('last-match-detail');
-    badge.className='match-badge';
-    if(last){
-        const isH=last.home===key;const opp=isH?last.away:last.home;
-        const p=last.score.split('-');const myS=isH?parseInt(p[0]):parseInt(p[1]);const opS=isH?parseInt(p[1]):parseInt(p[0]);
-        detail.textContent=`vs ${TEAM_DISPLAY_NAMES[opp]} (${myS}-${opS})`;
-        if(myS>opS){badge.textContent='WON';badge.classList.add('badge-win');}
-        else if(myS<opS){badge.textContent='LOST';badge.classList.add('badge-loss');}
-        else{badge.textContent='DRAW';badge.classList.add('badge-draw');}
-    } else {badge.textContent='N/A';badge.classList.add('badge-draw');detail.textContent='No matches yet';}
-    // Render last 5 matches form dots
-    renderFormDots(key);
-    document.getElementById('team-profile-modal').classList.add('open');
-}
-function hideTeamProfile(){haptic([6]);document.getElementById('team-profile-modal').classList.remove('open');}
-
-// ============================================================
 // ADMIN HISTORY
 // ============================================================
 function renderAdminHistory(h){
@@ -258,37 +243,6 @@ function selectSeasonFromPicker(idx){
 }
 
 // ============================================================
-// TEAM FORM DOTS (last 5 matches)
-// ============================================================
-function renderFormDots(teamKey){
-    const games=matchHistory.filter(m=>m.home===teamKey||m.away===teamKey).slice(0,5);
-    const container=document.getElementById('team-form-dots');
-    if(!container)return;
-    if(!games.length){
-        container.innerHTML='<span style="font-size:0.7rem;color:#4b5563;">No matches yet</span>';
-        return;
-    }
-    container.innerHTML=games.map(m=>{
-        const isHome=m.home===teamKey;
-        const p=m.score.split('-');
-        const myS=isHome?parseInt(p[0]):parseInt(p[1]);
-        const opS=isHome?parseInt(p[1]):parseInt(p[0]);
-        let color,letter,title;
-        if(myS>opS){ color='#22c55e'; letter='W'; title='Win'; }
-        else if(myS<opS){ color='#ef4444'; letter='L'; title='Loss'; }
-        else{ color='#9ca3af'; letter='D'; title='Draw'; }
-        return `<div title="${title}" style="
-            width:30px;height:30px;border-radius:50%;
-            background:${color}22;border:2px solid ${color};
-            display:flex;align-items:center;justify-content:center;
-            font-size:0.62rem;font-weight:900;color:${color};
-            box-shadow:0 0 8px ${color}44;
-            flex-shrink:0;
-        ">${letter}</div>`;
-    }).join('');
-}
-
-// ============================================================
 // GITHUB LOADERS
 // ============================================================
 async function loadArchiveDropdown(){
@@ -317,8 +271,9 @@ function loadSelectedSeason(val){
     if(val==='current'){
         isViewingArchive=false;
         updateCurrentDateTime();
-        renderLeagueTable(leagueData);
+        renderLeagueTable(leagueData,matchHistory);
         renderSeasonHistoryList(matchHistory);
+        if(typeof mbaFollowSeason==='function')mbaFollowSeason('current');
         if(typeof seasonLayoutSync==='function')seasonLayoutSync();
     } else {
         isViewingArchive=true;
@@ -330,7 +285,8 @@ function loadSelectedSeason(val){
             const el=document.getElementById('current-datetime');
             if(el)el.innerHTML=`<i class="far fa-calendar-check mr-1"></i>Ended: ${parts[2]} ${J_MONTHS_EN[parseInt(parts[1],10)-1]} ${parts[0]}`;
             const ld={};s.table.forEach(t=>ld[t.name]=t);
-            renderLeagueTable(ld);
+            renderLeagueTable(ld,s.history||[]);
+            if(typeof mbaFollowSeason==='function')mbaFollowSeason(s);
             // Archived seasons get the exact same minimal, filterable
             // match-history list as the current season.
             renderSeasonHistoryList(s.history||[]);

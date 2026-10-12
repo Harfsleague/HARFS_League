@@ -301,9 +301,14 @@
                 <button class="segmented-btn" data-value="mba" onclick="switchSeasonView('mba')"><i class="fas fa-trophy"></i> CUP</button>
                 <button class="segmented-btn" data-value="schedule" onclick="switchSeasonView('schedule')"><i class="fas fa-calendar-days"></i> Schedule</button>
             </div>
+            <!-- Two-page mode (default): League + CUP | Schedule + match history (see js/season-layout.js) -->
+            <div class="segmented-control" id="season-page-switch" style="margin-top:10px;">
+                <button class="segmented-btn active" data-page="standings" onclick="switchSeasonPage('standings')"><i class="fas fa-table"></i> League &amp; CUP</button>
+                <button class="segmented-btn" data-page="matches" onclick="switchSeasonPage('matches')"><i class="fas fa-calendar-days"></i> Schedule &amp; Results</button>
+            </div>
         </div>
 
-        <!-- Season panel: 3 sections. "One page" mode shows all of them stacked (order set in Settings, see js/season-layout.js);
+        <!-- Season panel: 3 sections. "Two pages" mode puts League + CUP on one page and Schedule + history on the other (see js/season-layout.js);
              "Separate tabs" mode is the classic League / CUP / Schedule switch. -->
         <div id="season-sections">
         <section id="ssec-league" data-sec="league">
@@ -316,6 +321,7 @@
                     <colgroup>
                         <col class="c-rank">
                         <col class="c-team">
+                        <col class="c-form"><!-- last 5 results -->
                         <col class="c-num"><!-- P -->
                         <col class="c-num"><!-- W -->
                         <col class="c-num"><!-- D -->
@@ -329,6 +335,7 @@
                         <tr>
                             <th>#</th>
                             <th class="th-team">Team</th>
+                            <th class="th-form"></th>
                             <th>P</th>
                             <th>W</th>
                             <th>D</th>
@@ -680,42 +687,6 @@
         <img id="weird-lightbox-img" src="" alt="">
         <video id="weird-lightbox-video" src="" controls playsinline onclick="event.stopPropagation()" style="display:none;"></video>
     </div>
-    <div id="team-profile-modal" class="modal-overlay">
-        <div class="modal-content text-center" style="padding:0;overflow:hidden;max-width:320px;position:relative;">
-            <div class="modal-x-close" onclick="hideTeamProfile()"><i class="fas fa-times"></i></div>
-            <div class="profile-header">
-                <div class="profile-header-bg"></div>
-                <img id="profile-team-logo" src="" class="profile-avatar">
-            </div>
-            <div class="profile-body">
-                <h4 id="profile-team-name" class="text-xl font-black text-white mb-0.5">Team</h4>
-                <div class="text-[10px] uppercase tracking-widest mb-4" style="color:var(--primary);">Season Stats</div>
-                <div class="grid grid-cols-3 gap-2 mb-3">
-                    <div class="stat-card"><div class="stat-val text-yellow-400" id="profile-stat-pts">0</div><div class="stat-lbl">Points</div></div>
-                    <div class="stat-card"><div class="stat-val text-white" id="profile-stat-p">0</div><div class="stat-lbl">Played</div></div>
-                    <div class="stat-card"><div class="stat-val text-green-400" id="profile-stat-gf">0</div><div class="stat-lbl">Goal Diff</div></div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <div class="stat-card" style="background:rgba(34,197,94,0.07);border-color:rgba(34,197,94,0.14);"><div class="stat-val text-green-400" id="profile-stat-w">0</div><div class="stat-lbl" style="color:#4ade80;">Wins</div></div>
-                    <div class="stat-card"><div class="stat-val text-gray-300" id="profile-stat-d">0</div><div class="stat-lbl">Draws</div></div>
-                    <div class="stat-card" style="background:rgba(239,68,68,0.07);border-color:rgba(239,68,68,0.14);"><div class="stat-val text-red-400" id="profile-stat-l">0</div><div class="stat-lbl" style="color:#f87171;">Losses</div></div>
-                </div>
-                <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
-                    <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Last Match</div>
-                    <div class="flex items-center justify-between">
-                        <div id="last-match-result-badge" class="match-badge badge-draw">N/A</div>
-                        <div id="last-match-detail" class="text-xs font-semibold text-gray-200">No matches yet</div>
-                    </div>
-                </div>
-                <!-- Last 5 matches form -->
-                <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
-                    <div class="text-left ml-1 mb-2" style="font-size:0.58rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Form (Last 5)</div>
-                    <div id="team-form-dots" style="display:flex;gap:7px;justify-content:center;align-items:center;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- ============ CUSTOM CONFIRM ============ -->
     <div id="custom-confirm-modal" class="modal-overlay">
         <div class="modal-content confirm-modal text-center" style="max-width:300px;">

@@ -558,8 +558,19 @@ function renderMbaAdminSection(){
 // sheet) that never touches the League season picker, and vice versa.
 // Index 0 = newest (the running tournament if any, else the latest finished).
 // ------------------------------------------------------------
+// The edition number the NEXT draw will get (same rule as startNewMbaTournament).
+function mbaNextEdition(){ return mbaData.completed.reduce((m,r)=>Math.max(m,r.edition||0),0) + 1; }
+// A season is running but its CUP has not been drawn yet → the CUP page already shows
+// the new (empty) edition instead of last season's finished one.
+function mbaPendingInfo(){
+    const f = (typeof flowCur==='function') ? flowCur() : null;
+    if(!f || f.cupEdition!=null || mbaData.current) return null;
+    return { edition: mbaNextEdition(), seasonId: f.seasonId, afterRound: (typeof flowHalf==='function') ? flowHalf(f) : 4 };
+}
 function mbaBuildOptions(){
     const opts = [];
+    const pend = mbaPendingInfo();
+    if(pend) opts.push({ value:'pending', label:`Edition ${pend.edition} — Draw pending`, scope:'pending', edition:pend.edition, pend });
     if(mbaData.current) opts.push({ value:'current', label:`Edition ${mbaData.current.edition} — In progress`, scope:'current', edition:mbaData.current.edition });
     [...mbaData.completed].reverse().forEach(r=>opts.push({ value:'ed:'+r.edition, label:`Edition ${r.edition}`, scope:'completed', edition:r.edition }));
     return opts;
@@ -606,6 +617,37 @@ function selectMbaEdition(value){
 }
 function resetMbaView(){ mbaViewValue = null; }
 
+// Empty bracket for the new season's CUP: every slot says "To be drawn" until the draw happens.
+function mbaPendingHtml(pend){
+    const tbd = `<div class="mba-team-row tbd"><span class="mba-team-label"><span class="mba-logo mba-logo-tbd">?</span><span class="nm">To be drawn</span></span><span class="mba-wins">–</span></div>`;
+    const block = (cls, head, tag, note)=>`<div class="mba-block ${cls} mba-pending">
+        <div class="mba-block-head"><span>${head}</span><span class="mba-block-tag">${tag}</span></div>
+        ${tbd}${tbd}
+        <div class="mba-pending-note">${note}</div>
+    </div>`;
+    const semiNote = `Draw after league matchweek ${pend.afterRound}`;
+    return `<div class="mba-edition-label">CUP — Edition ${pend.edition} · Season ${pend.seasonId} · Draw pending</div>
+    <div class="mba-tree-scroll">
+        <div class="mba-tree">
+            <div class="mba-cell mba-c-semi1">${block('mba-semi','Semifinal 1',`First to ${MBA_SEMI_WINS_NEEDED}`,semiNote)}</div>
+            <div class="mba-c-link mba-c-link1"><div class="mba-link-out"></div></div>
+            <div class="mba-cell mba-c-semi2">${block('mba-semi','Semifinal 2',`First to ${MBA_SEMI_WINS_NEEDED}`,semiNote)}</div>
+            <div class="mba-c-link mba-c-link2"></div>
+            <div class="mba-cell mba-c-final">${block('mba-final','🏆 Final','Upcoming','Waiting for the semifinals')}</div>
+        </div>
+        <div class="mba-third-wrap">${block('mba-third','🥉 Third place','Upcoming','Waiting for the semifinals')}</div>
+    </div>
+    <p class="flow-note" style="text-align:center;margin-top:10px;">The semifinal pairs are drawn after matchweek ${pend.afterRound} of the league.</p>`;
+}
+
+// Season picker → CUP follows: an archived season shows its own CUP edition, the running season shows its newest one.
+function mbaFollowSeason(val){
+    if(val==='current') mbaViewValue = null;
+    else if(val && val.cupEdition!=null && (mbaData.completed||[]).some(r=>r.edition===val.cupEdition)) mbaViewValue = 'ed:'+val.cupEdition;
+    else return;
+    renderMbaSeasonView();
+}
+
 function renderMbaSeasonView(){
     syncMbaPill();
     const el = document.getElementById('mba-season-body');
@@ -613,6 +655,10 @@ function renderMbaSeasonView(){
     const { opt } = mbaSelected();
     if(!opt){
         el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No CUP tournaments yet.</p>';
+        return;
+    }
+    if(opt.scope==='pending'){
+        el.innerHTML = mbaPendingHtml(opt.pend);
         return;
     }
     const isCur = opt.scope==='current';
@@ -633,7 +679,7 @@ function renderMbaSeasonView(){
 // ---- Season tab: League ⇄ CUP ⇄ Schedule switch (League and CUP each have their own picker) ----
 function switchSeasonView(view){
     haptic([6]);
-    if(document.body.classList.contains('season-single')) return; // one-page mode shows every section (js/season-layout.js)
+    if(document.body.classList.contains('season-pages')) return; // two-page mode has its own switch (js/season-layout.js)
     const isMba = view==='mba', isSched = view==='schedule';
     document.getElementById('season-league-body').style.display = (isMba||isSched) ? 'none' : 'block';
     document.getElementById('mba-season-body').style.display = isMba ? 'block' : 'none';
