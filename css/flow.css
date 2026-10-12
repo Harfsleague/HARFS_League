@@ -90,3 +90,52 @@
 .flow-week-head{ font-size:0.58rem; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#6b7280; margin:2px 2px 5px; display:flex; align-items:center; gap:6px; }
 .flow-week.current .flow-week-head{ color:#fbbf24; }
 .flow-week.current .flow-fixture{ border-color:rgba(251,191,36,0.3); }
+
+/* =====================================================
+   SEASON PANEL LAYOUT  (js/season-layout.js)
+   Classic "tabs" mode: the wrappers vanish (display:contents), so the
+   screen looks exactly as before. "One page" mode: sections stack, in the
+   order set in Settings (style.order on each <section>).
+   ===================================================== */
+#season-sections, #season-sections > section{ display:contents; }
+.season-sec-title{ display:none; }
+body.season-single #season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
+body.season-single #season-sections > section{ display:block; width:100%; }
+body.season-single #season-view-switch{ display:none; }
+body.season-single .season-sec-title{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-size:0.68rem; font-weight:900; letter-spacing:1.4px; text-transform:uppercase;
+    color:#9ca3af; margin:0 12px 10px;
+}
+body.season-single .season-sec-title i{ color:var(--primary); opacity:0.85; }
+body.season-single .season-sec-title::before,
+body.season-single .season-sec-title::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); }
+.ssec-slot{ padding:0 12px; }
+body.season-single #ssec-league-nav #season-nav-wrapper,
+body.season-single #ssec-mba-nav #mba-nav-wrapper{ margin-top:0 !important; margin-bottom:10px; }
+body.season-single #ssec-schedule-filter{ padding-bottom:10px; }
+body.season-single #ssec-schedule-filter .chip-bar{ justify-content:center; }
+body.season-single #ssec-history-slot .season-history-card{ margin-bottom:0; }
+
+/* smaller title box in one-page mode */
+body.season-single .league-header{ padding:8px 14px; margin-bottom:12px; border-radius:18px; }
+body.season-single #season-screen-title{ font-size:0.78rem; margin-bottom:0; letter-spacing:2px; }
+body.season-single #current-datetime{ font-size:9px; margin-bottom:0 !important; }
+
+/* merged match history: date under a played fixture + team-filter dimming */
+.flow-fixture-wrap{ margin-bottom:6px; }
+.flow-fixture-wrap .flow-fixture{ margin-bottom:0; }
+.flow-fx-date{ font-size:0.55rem; color:#6b7280; text-align:center; margin-top:3px; font-family:monospace; letter-spacing:0.3px; }
+.flow-fixture.fx-dim, .flow-fixture-wrap.fx-dim{ opacity:0.2; transition:opacity .2s; }
+
+/* settings sheet */
+#season-layout-sheet{ z-index:600; }
+.sl-label{ font-size:0.6rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; margin:12px 2px 6px; }
+.sl-hint{ font-size:0.62rem; color:#6b7280; line-height:1.6; margin:8px 4px 0; text-align:center; }
+.sl-list{ display:flex; flex-direction:column; gap:6px; }
+.sl-row{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); }
+.sl-row-icon{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(96,165,250,0.12); color:var(--primary); font-size:0.75rem; flex-shrink:0; }
+.sl-row-name{ flex:1; font-size:0.8rem; font-weight:700; color:#e5e7eb; }
+.sl-move{ width:32px; height:32px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#d1d5db; cursor:pointer; font-size:0.7rem; }
+.sl-move:active{ transform:scale(0.9); }
+.sl-move:disabled, #season-layout-body .glass-button:disabled{ opacity:0.3; cursor:not-allowed; }

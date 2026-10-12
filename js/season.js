@@ -61,6 +61,7 @@ function filterSeasonHistory(filter,chip){
     });
     updateHistoryLayout(filter);
     updateHistoryDots(filter);
+    if(typeof seasonApplyScheduleFilter==='function')seasonApplyScheduleFilter(filter);
     // dynamic background: aurora + summary follow the selected team (js/glass-fx.js)
     if(window.GlassFX)GlassFX.historyFiltered(prevHidden,filter);
 }
@@ -111,11 +112,12 @@ function updateHistoryDots(filter){
 }
 
 function renderSeasonHistoryList(history){
-    history=history||[];
+    history=(typeof seasonPrepareHistory==='function')?seasonPrepareHistory(history):(history||[]);
     const loadingEl=document.getElementById('season-history-loading');
     if(loadingEl)loadingEl.style.display='none';
     buildSeasonHistoryChips();
     currentFilter='all';
+    if(typeof seasonApplyScheduleFilter==='function')seasonApplyScheduleFilter('all');
     const list=document.getElementById('season-history-list');
     if(!list)return;
     if(!history.length){
@@ -317,6 +319,7 @@ function loadSelectedSeason(val){
         updateCurrentDateTime();
         renderLeagueTable(leagueData);
         renderSeasonHistoryList(matchHistory);
+        if(typeof seasonLayoutSync==='function')seasonLayoutSync();
     } else {
         isViewingArchive=true;
         const s=archivedSeasons.find(s=>s.seasonId==val);
@@ -331,6 +334,7 @@ function loadSelectedSeason(val){
             // Archived seasons get the exact same minimal, filterable
             // match-history list as the current season.
             renderSeasonHistoryList(s.history||[]);
+            if(typeof seasonLayoutSync==='function')seasonLayoutSync();
         }
     }
 }

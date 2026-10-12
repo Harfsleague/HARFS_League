@@ -456,7 +456,13 @@ function flowFixtureRow(fx, opts){
         const [h,a] = flowParseScore(m.score);
         mid = `<span class="flow-score${h>a?' hw':(a>h?' aw':'')}">${h}<i>:</i>${a}</span>`;
     } else mid = `<span class="flow-vs">vs</span>`;
-    return `<div class="flow-fixture${m?' played':''}">${flowTeamChip(fx.home)}${mid}${flowTeamChip(fx.away,'away')}</div>`;
+    const row = `<div class="flow-fixture${m?' played':''}" data-home="${escapeHtml(fx.home)}" data-away="${escapeHtml(fx.away)}">${flowTeamChip(fx.home)}${mid}${flowTeamChip(fx.away,'away')}</div>`;
+    // One-page Season layout: the played date lives under the result (match history merged into the schedule)
+    if(opts.date && m && m.timestamp && typeof formatShamsiDateTime==='function'){
+        const dt = formatShamsiDateTime(m.timestamp);
+        return `<div class="flow-fixture-wrap" data-home="${escapeHtml(fx.home)}" data-away="${escapeHtml(fx.away)}">${row}<div class="flow-fx-date">${dt.date} · ${dt.time}</div></div>`;
+    }
+    return row;
 }
 
 // ------------------------------------------------------------
@@ -597,7 +603,7 @@ function renderFlowSchedule(){
     const weeks = (from,to)=>{
         let h=''; for(let r=from;r<=to;r++){
             const done = flowRoundDone(f,r), cur = r===rnd && (p==='league_a'||p==='league_b');
-            h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x)).join('')}</div>`;
+            h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x,{date:document.body.classList.contains('season-single')})).join('')}</div>`;
         } return h;
     };
     html += stageBlock(`1 · League — Matchweeks 1–${flowHalf(f)}`, weeks(1,flowHalf(f)), stageState(0));
@@ -624,6 +630,7 @@ function renderFlowSchedule(){
     html += stageBlock('5 · Super Cup', superInner, stageState(4));
 
     el.innerHTML = html;
+    if(typeof seasonLayoutSync==='function') seasonLayoutSync(true); // re-merge match history, re-apply team filter
 }
 
 function renderFlowViews(){

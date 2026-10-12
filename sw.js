@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v32';
+const CACHE_VERSION = 'harfs-shell-v33';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -58,6 +58,7 @@ const APP_SHELL = [
   './js/ai-chat.js',
   './js/mba.js',
   './js/flow.js',
+  './js/season-layout.js',
   './js/verify.js',
   './js/admin-music.js',
   './js/main.js',

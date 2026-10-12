@@ -633,6 +633,7 @@ function renderMbaSeasonView(){
 // ---- Season tab: League ⇄ CUP ⇄ Schedule switch (League and CUP each have their own picker) ----
 function switchSeasonView(view){
     haptic([6]);
+    if(document.body.classList.contains('season-single')) return; // one-page mode shows every section (js/season-layout.js)
     const isMba = view==='mba', isSched = view==='schedule';
     document.getElementById('season-league-body').style.display = (isMba||isSched) ? 'none' : 'block';
     document.getElementById('mba-season-body').style.display = isMba ? 'block' : 'none';
