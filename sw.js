@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v35';
+const CACHE_VERSION = 'harfs-shell-v36';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -102,6 +102,10 @@ self.addEventListener('fetch', event => {
   // badges) from the known image hosts: cache-first, with a background
   // refetch to pick up rare changes (e.g. a team's logo file being
   // replaced) — never left to fail purely because we're offline.
+  // moment_reactions.json lives on the same host but is LIVE data (reactions change all the time):
+  // never cache-first, always straight from the network (js/reactions.js keeps its own offline copy).
+  if (url.hostname === 'raw.githubusercontent.com' && url.pathname.endsWith('/moment_reactions.json')) return;
+
   if (IMAGE_CACHE_HOSTS.includes(url.hostname)) {
     event.respondWith(
       caches.open(IMAGE_CACHE_VERSION).then(cache =>

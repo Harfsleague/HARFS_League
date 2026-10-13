@@ -2675,8 +2675,24 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
 .react-av{ width:15px; height:15px; border-radius:50%; object-fit:cover; border:1.5px solid #0f172a; background:#1f2937; }
 .react-av + .react-av{ margin-left:-5px; }
 .react-more{ font-size:0.6rem; font-weight:800; color:#9ca3af; margin-left:3px; }
-.react-chip.who-open{ border-color:rgba(96,165,250,0.5); }
-.react-who{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; padding:6px 8px; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.1); border-radius:14px; }
+.react-chip.who-open{ border-color:rgba(96,165,250,0.6); background:rgba(96,165,250,0.16); }
+.react-chip{ touch-action:manipulation; }
+/* floating "who reacted" card — shown ABOVE the pressed chip for exactly as long as it is held */
+.react-who-pop{
+    position:fixed; z-index:99999; left:0; top:0; max-width:calc(100vw - 16px);
+    display:none; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:8px 10px;
+    background:rgba(15,23,42,0.97); border:1px solid rgba(255,255,255,0.14); border-radius:14px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.55); pointer-events:none;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+}
+.react-who-pop.show{ display:flex; animation:reactWhoIn .12s ease-out; }
+.react-who-pop::after{
+    content:''; position:absolute; left:var(--arrow-x,50%); bottom:-6px; width:10px; height:10px; margin-left:-5px;
+    background:inherit; border-right:1px solid rgba(255,255,255,0.14); border-bottom:1px solid rgba(255,255,255,0.14);
+    transform:rotate(45deg);
+}
+.react-who-pop.below::after{ bottom:auto; top:-6px; transform:rotate(225deg); }
+@keyframes reactWhoIn{ from{ opacity:0; transform:translateY(4px) scale(.96); } to{ opacity:1; transform:none; } }
 .react-who-emoji{ font-size:1rem; }
 .react-who-item{ display:inline-flex; align-items:center; gap:5px; font-size:0.68rem; font-weight:700; color:#e5e7eb; }
 .react-who-item .react-av{ width:18px; height:18px; margin:0; }
