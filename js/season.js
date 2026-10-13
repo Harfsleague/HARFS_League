@@ -54,9 +54,9 @@ function formStripHtml(teamKey,history){
 }
 
 // ============================================================
-// RENDER — MATCH HISTORY  (merged into the Season screen; the
-// same minimal cards + team-filter chips work for both the live
-// current-season feed and any archived season's history)
+// RENDER — MATCH HISTORY  (Season → Results; the same minimal cards +
+// team-filter chips work for both the live current-season feed and any
+// archived season's history)
 // ============================================================
 function buildSeasonHistoryChips(){
     const bar=document.getElementById('season-history-filter-bar');
@@ -79,7 +79,6 @@ function filterSeasonHistory(filter,chip){
     });
     updateHistoryLayout(filter);
     updateHistoryDots(filter);
-    if(typeof seasonApplyScheduleFilter==='function')seasonApplyScheduleFilter(filter);
     // dynamic background: aurora + summary follow the selected team (js/glass-fx.js)
     if(window.GlassFX)GlassFX.historyFiltered(prevHidden,filter);
 }
@@ -130,12 +129,11 @@ function updateHistoryDots(filter){
 }
 
 function renderSeasonHistoryList(history){
-    history=(typeof seasonPrepareHistory==='function')?seasonPrepareHistory(history):(history||[]);
+    history=history||[];
     const loadingEl=document.getElementById('season-history-loading');
     if(loadingEl)loadingEl.style.display='none';
     buildSeasonHistoryChips();
     currentFilter='all';
-    if(typeof seasonApplyScheduleFilter==='function')seasonApplyScheduleFilter('all');
     const list=document.getElementById('season-history-list');
     if(!list)return;
     if(!history.length){
@@ -274,7 +272,6 @@ function loadSelectedSeason(val){
         renderLeagueTable(leagueData,matchHistory);
         renderSeasonHistoryList(matchHistory);
         if(typeof mbaFollowSeason==='function')mbaFollowSeason('current');
-        if(typeof seasonLayoutSync==='function')seasonLayoutSync();
     } else {
         isViewingArchive=true;
         const s=archivedSeasons.find(s=>s.seasonId==val);
@@ -290,8 +287,7 @@ function loadSelectedSeason(val){
             // Archived seasons get the exact same minimal, filterable
             // match-history list as the current season.
             renderSeasonHistoryList(s.history||[]);
-            if(typeof seasonLayoutSync==='function')seasonLayoutSync();
-        }
+            }
     }
 }
 async function loadMainLeagueDataFromGitHub(){

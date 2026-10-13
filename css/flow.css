@@ -92,41 +92,35 @@
 .flow-week.current .flow-fixture{ border-color:rgba(251,191,36,0.3); }
 
 /* =====================================================
-   SEASON PANEL LAYOUT  (js/season-layout.js)
-   Classic "tabs" mode: the wrappers vanish (display:contents), so the
-   screen looks exactly as before. "Two pages" mode: League + CUP on one page,
-   Schedule + match history on the other (switch at the top of the screen).
+   SEASON SCREEN VIEWS  (js/season-layout.js → body[data-season-view])
+   main     = league table + CUP of the current season
+   schedule = timetable of the current season
+   results  = league table + CUP + match history of any season (pickers visible)
    ===================================================== */
-#season-sections, #season-sections > section{ display:contents; }
-.season-sec-title{ display:none; }
-body.season-pages #season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
-body.season-pages #season-sections > section{ display:block; width:100%; }
-body.season-pages #season-view-switch{ display:none; }
-/* two-page mode: the page switch + only the sections of the active page */
-#season-page-switch{ display:none; }
-body.season-pages #season-page-switch{ display:flex; }
-body.season-pages[data-season-page="standings"] #ssec-schedule{ display:none; }
-body.season-pages[data-season-page="matches"] #ssec-league,
-body.season-pages[data-season-page="matches"] #ssec-mba{ display:none; }
-body.season-pages .season-sec-title{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    font-size:0.68rem; font-weight:900; letter-spacing:1.4px; text-transform:uppercase;
-    color:#9ca3af; margin:0 12px 10px;
-}
-body.season-pages .season-sec-title i{ color:var(--primary); opacity:0.85; }
-body.season-pages .season-sec-title::before,
-body.season-pages .season-sec-title::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); }
+#season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
+#season-sections > section{ display:block; width:100%; }
 .ssec-slot{ padding:0 12px; }
-body.season-pages #ssec-league-nav #season-nav-wrapper,
-body.season-pages #ssec-mba-nav #mba-nav-wrapper{ margin-top:0 !important; margin-bottom:10px; }
-body.season-pages #ssec-schedule-filter{ padding-bottom:10px; }
-body.season-pages #ssec-schedule-filter .chip-bar{ justify-content:center; }
-body.season-pages #ssec-history-slot .season-history-card{ margin-bottom:0; }
+#ssec-league-nav #season-nav-wrapper,
+#ssec-mba-nav #mba-nav-wrapper{ display:flex; align-items:center; gap:8px; margin:0 0 10px; }
+/* main: no pickers, no history, no schedule */
+body[data-season-view="main"] .ssec-slot,
+body[data-season-view="main"] #ssec-history,
+body[data-season-view="main"] #ssec-schedule{ display:none; }
+/* schedule: only the timetable */
+body[data-season-view="schedule"] #ssec-league,
+body[data-season-view="schedule"] #ssec-mba,
+body[data-season-view="schedule"] #ssec-history{ display:none; }
+/* results: everything except the timetable */
+body[data-season-view="results"] #ssec-schedule{ display:none; }
+#ssec-history .season-history-card{ margin-bottom:0; }
 
-/* smaller title box in two-page mode */
-body.season-pages .league-header{ padding:8px 14px; margin-bottom:12px; border-radius:18px; }
-body.season-pages #season-screen-title{ font-size:0.78rem; margin-bottom:0; letter-spacing:2px; }
-body.season-pages #current-datetime{ font-size:9px; margin-bottom:0 !important; }
+/* header: bigger title + date, icon buttons bottom-right */
+.season-title{ font-size:1.5rem; font-weight:900; letter-spacing:3px; text-transform:uppercase; color:var(--header-text); margin:0 0 2px; line-height:1.2; }
+.season-date{ font-size:0.82rem; color:#9ca3af; font-family:monospace; margin-bottom:2px; }
+.season-header-actions{ align-self:flex-end; display:flex; gap:10px; margin-top:8px; }
+.season-icon-btn{ width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.05); color:#d1d5db; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; font-size:0.8rem; transition:transform .12s, background .15s, color .15s; }
+.season-icon-btn:active{ transform:scale(0.9); background:rgba(255,255,255,0.12); color:var(--primary); }
+.season-back-btn{ position:absolute; left:12px; top:12px; }
 
 /* merged match history: date under a played fixture + team-filter dimming */
 .flow-fixture-wrap{ margin-bottom:6px; }
@@ -134,14 +128,4 @@ body.season-pages #current-datetime{ font-size:9px; margin-bottom:0 !important; 
 .flow-fx-date{ font-size:0.55rem; color:#6b7280; text-align:center; margin-top:3px; font-family:monospace; letter-spacing:0.3px; }
 .flow-fixture.fx-dim, .flow-fixture-wrap.fx-dim{ opacity:0.2; transition:opacity .2s; }
 
-/* settings sheet */
-#season-layout-sheet{ z-index:600; }
-.sl-label{ font-size:0.6rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; margin:12px 2px 6px; }
-.sl-hint{ font-size:0.62rem; color:#6b7280; line-height:1.6; margin:8px 4px 0; text-align:center; }
-.sl-list{ display:flex; flex-direction:column; gap:6px; }
-.sl-row{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); }
-.sl-row-icon{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(96,165,250,0.12); color:var(--primary); font-size:0.75rem; flex-shrink:0; }
-.sl-row-name{ flex:1; font-size:0.8rem; font-weight:700; color:#e5e7eb; }
-.sl-move{ width:32px; height:32px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#d1d5db; cursor:pointer; font-size:0.7rem; }
-.sl-move:active{ transform:scale(0.9); }
-.sl-move:disabled, #season-layout-body .glass-button:disabled{ opacity:0.3; cursor:not-allowed; }
+

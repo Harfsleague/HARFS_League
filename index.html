@@ -266,8 +266,27 @@
     <div id="league-table-screen" class="page-screen">
 
         <div class="league-header" style="position:relative;">
-            <h2 id="season-screen-title" class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Season Table</h2>
-            <div class="text-[10px] text-gray-500 font-mono mb-2" id="current-datetime">...</div>
+            <button id="season-back-btn" class="season-icon-btn season-back-btn" onclick="seasonShowView('main')" aria-label="Back" style="display:none;"><i class="fas fa-chevron-left"></i></button>
+            <h2 id="season-screen-title" class="season-title">Season</h2>
+            <div class="season-date" id="current-datetime">...</div>
+            <!-- Hidden original select (for compatibility) -->
+            <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
+                <option value="current">Current Season</option>
+            </select>
+            <!-- Main Season page → Schedule (calendar) / Results (bar chart). Icons only. -->
+            <div class="season-header-actions" id="season-header-actions">
+                <button class="season-icon-btn" onclick="seasonShowView('schedule')" aria-label="Schedule"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
+                <button class="season-icon-btn" onclick="seasonShowView('results')" aria-label="Results"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="11" width="3.4" height="9" rx="1"/><rect x="10.3" y="4" width="3.4" height="16" rx="1"/><rect x="16.1" y="8" width="3.4" height="12" rx="1"/></svg></button>
+            </div>
+        </div>
+
+        <!-- Season screen = three views (js/season-layout.js, body[data-season-view]):
+             main     → League table + CUP of the CURRENT season only
+             schedule → timetable of the current season only
+             results  → League table + CUP + match history of ANY season (season pickers live here) -->
+        <div id="season-sections">
+        <section id="ssec-league" data-sec="league">
+        <div id="ssec-league-nav" class="ssec-slot">
             <!-- Season Navigation Pills -->
             <div id="season-nav-wrapper" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
                 <button id="season-prev-btn" onclick="navigateSeason(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
@@ -280,40 +299,7 @@
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
-            <!-- CUP edition navigation — independent from the League season pills above -->
-            <div id="mba-nav-wrapper" style="display:none;align-items:center;gap:8px;margin-top:8px;">
-                <button id="mba-prev-btn" onclick="navigateMbaEdition(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="mba-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;min-width:130px;" onclick="openMbaPicker()">
-                    <i class="fas fa-trophy" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="mba-pill-label">—</span>
-                </div>
-                <button id="mba-next-btn" onclick="navigateMbaEdition(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-            <!-- Hidden original select (for compatibility) -->
-            <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
-                <option value="current">Current Season</option>
-            </select>
-            <div class="segmented-control" id="season-view-switch" style="margin-top:10px;">
-                <button class="segmented-btn active" data-value="league" onclick="switchSeasonView('league')"><i class="fas fa-table"></i> League</button>
-                <button class="segmented-btn" data-value="mba" onclick="switchSeasonView('mba')"><i class="fas fa-trophy"></i> CUP</button>
-                <button class="segmented-btn" data-value="schedule" onclick="switchSeasonView('schedule')"><i class="fas fa-calendar-days"></i> Schedule</button>
-            </div>
-            <!-- Two-page mode (default): League + CUP | Schedule + match history (see js/season-layout.js) -->
-            <div class="segmented-control" id="season-page-switch" style="margin-top:10px;">
-                <button class="segmented-btn active" data-page="standings" onclick="switchSeasonPage('standings')"><i class="fas fa-table"></i> League &amp; CUP</button>
-                <button class="segmented-btn" data-page="matches" onclick="switchSeasonPage('matches')"><i class="fas fa-calendar-days"></i> Schedule &amp; Results</button>
-            </div>
         </div>
-
-        <!-- Season panel: 3 sections. "Two pages" mode puts League + CUP on one page and Schedule + history on the other (see js/season-layout.js);
-             "Separate tabs" mode is the classic League / CUP / Schedule switch. -->
-        <div id="season-sections">
-        <section id="ssec-league" data-sec="league">
-        <div class="season-sec-title"><i class="fas fa-table"></i><span>League table</span></div>
-        <div id="ssec-league-nav" class="ssec-slot"></div>
         <div id="season-league-body">
         <div class="w-full px-3">
             <div class="table-wrap">
@@ -349,13 +335,34 @@
                     <tbody id="league-table-body"></tbody>
                 </table>
             </div>
-            <div id="loading-message" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                        <div id="loading-message" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
                 <span class="spinner"></span> Loading...
             </div>
         </div>
+        </div><!-- /season-league-body -->
+        </section>
 
+        <section id="ssec-mba" data-sec="mba">
+        <div id="ssec-mba-nav" class="ssec-slot">
+            <!-- CUP edition navigation — independent from the League season pills above -->
+            <div id="mba-nav-wrapper" style="align-items:center;gap:8px;margin-top:8px;">
+                <button id="mba-prev-btn" onclick="navigateMbaEdition(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="mba-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;min-width:130px;" onclick="openMbaPicker()">
+                    <i class="fas fa-trophy" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="mba-pill-label">—</span>
+                </div>
+                <button id="mba-next-btn" onclick="navigateMbaEdition(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mba-season-body" style="padding:0 12px;"><!-- filled by renderMbaSeasonView() --></div>
+        </section>
+
+        <section id="ssec-history" data-sec="history">
         <!-- Match history — merged into Season, works for current + archived seasons alike -->
-        <div class="w-full px-3 mt-2" id="season-history-section">
+        <div class="w-full px-3" id="season-history-section">
             <div class="season-history-card">
                 <h3 class="season-history-title" id="season-history-title"><i class="fas fa-history"></i> Match History</h3>
                 <div class="chip-bar w-full" id="season-history-filter-bar">
@@ -369,20 +376,10 @@
             </div>
         </div>
 
-        </div><!-- /season-league-body -->
-        </section>
-
-        <section id="ssec-mba" data-sec="mba">
-        <div class="season-sec-title"><i class="fas fa-trophy"></i><span>CUP</span></div>
-        <div id="ssec-mba-nav" class="ssec-slot"></div>
-        <div id="mba-season-body" style="display:none;padding:0 12px;"><!-- filled by renderMbaSeasonView() --></div>
         </section>
 
         <section id="ssec-schedule" data-sec="schedule">
-        <div class="season-sec-title"><i class="fas fa-calendar-days"></i><span>Schedule &amp; results</span></div>
-        <div id="ssec-schedule-filter" class="ssec-slot"></div>
-        <div id="schedule-season-body" style="display:none;padding:0 12px;"><!-- filled by renderFlowSchedule() (js/flow.js) --></div>
-        <div id="ssec-history-slot"></div>
+        <div id="schedule-season-body" style="padding:0 12px;"><!-- filled by renderFlowSchedule() (js/flow.js) --></div>
         </section>
         </div><!-- /season-sections -->
 
@@ -596,10 +593,6 @@
                     <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
                     <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
                 </div>
-                <div class="settings-page-tile wide" onclick="openSeasonLayoutSheet()">
-                    <i class="fas fa-table-columns"></i><span>Season Panel Layout</span>
-                    <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
-                </div>
             </div>
 
             <div class="music-player" id="music-player">
@@ -784,16 +777,6 @@
             <div class="team-picker-handle"></div>
             <div class="team-picker-title">Select Season</div>
             <div id="season-picker-list"></div>
-        </div>
-    </div>
-
-    <!-- ============ SEASON PANEL LAYOUT (Settings) ============ -->
-    <div id="season-layout-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeSeasonLayoutSheet()">
-        <div class="team-picker-panel">
-            <div class="modal-x-close" onclick="closeSeasonLayoutSheet()"><i class="fas fa-times"></i></div>
-            <div class="team-picker-handle"></div>
-            <div class="team-picker-title">Season Panel Layout</div>
-            <div id="season-layout-body"></div>
         </div>
     </div>
 

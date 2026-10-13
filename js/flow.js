@@ -605,7 +605,7 @@ function renderFlowSchedule(){
     const weeks = (from,to)=>{
         let h=''; for(let r=from;r<=to;r++){
             const done = flowRoundDone(f,r), cur = r===rnd && (p==='league_a'||p==='league_b');
-            h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x,{date:document.body.classList.contains('season-pages')})).join('')}</div>`;
+            h += `<div class="flow-week${done?' done':''}${cur?' current':''}"><div class="flow-week-head">Matchweek ${r}${cur?' <span class="flow-chip">now</span>':''}</div>${flowRoundFixtures(f,r).map(x=>flowFixtureRow(x)).join('')}</div>`;
         } return h;
     };
     html += stageBlock(`1 · League — Matchweeks 1–${flowHalf(f)}`, weeks(1,flowHalf(f)), stageState(0));
@@ -632,7 +632,6 @@ function renderFlowSchedule(){
     html += stageBlock('5 · Super Cup', superInner, stageState(4));
 
     el.innerHTML = html;
-    if(typeof seasonLayoutSync==='function') seasonLayoutSync(true); // re-merge match history, re-apply team filter
 }
 
 function renderFlowViews(){

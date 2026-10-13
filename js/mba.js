@@ -676,30 +676,6 @@ function renderMbaSeasonView(){
     el.innerHTML = html;
 }
 
-// ---- Season tab: League ⇄ CUP ⇄ Schedule switch (League and CUP each have their own picker) ----
-function switchSeasonView(view){
-    haptic([6]);
-    if(document.body.classList.contains('season-pages')) return; // two-page mode has its own switch (js/season-layout.js)
-    const isMba = view==='mba', isSched = view==='schedule';
-    document.getElementById('season-league-body').style.display = (isMba||isSched) ? 'none' : 'block';
-    document.getElementById('mba-season-body').style.display = isMba ? 'block' : 'none';
-    const sb = document.getElementById('schedule-season-body');
-    if(sb) sb.style.display = isSched ? 'block' : 'none';
-    const leagueNav = document.getElementById('season-nav-wrapper');
-    const mbaNav = document.getElementById('mba-nav-wrapper');
-    if(leagueNav) leagueNav.style.display = (isMba||isSched) ? 'none' : 'flex';
-    if(mbaNav) mbaNav.style.display = isMba ? 'flex' : 'none';
-    const title = document.getElementById('season-screen-title');
-    if(title) title.textContent = isMba ? 'CUP Tournament' : (isSched ? 'Season Schedule' : 'Season Table');
-    const dt = document.getElementById('current-datetime');
-    if(dt) dt.style.display = (isMba||isSched) ? 'none' : '';
-    document.querySelectorAll('#season-view-switch .segmented-btn').forEach(b=>{
-        b.classList.toggle('active', b.dataset.value===view);
-    });
-    if(isMba) renderMbaSeasonView();
-    if(isSched && typeof renderFlowSchedule==='function') renderFlowSchedule();
-}
-
 // ------------------------------------------------------------
 // Audit / repair — called by "Verify Table" (js/verify.js).
 // Re-derives every series from its stored games, repairs what it safely

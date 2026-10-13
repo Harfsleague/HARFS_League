@@ -60,6 +60,9 @@ function navigate(route){
         updateCurrentDateTime();
     }
 
+    // Season screen: always reopen on the main page (current season)
+    if(prevRoute === 'league' && route !== 'league' && typeof seasonShowView === 'function') seasonShowView('main', { silent:true });
+
     // CUP edition picker is independent — reset it to "newest" when leaving Season
     if(prevRoute === 'league' && route !== 'league' && typeof resetMbaView === 'function') resetMbaView();
 

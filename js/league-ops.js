@@ -98,7 +98,7 @@ function openTeamPanel(team){
     document.getElementById('team-panel-trophies').innerHTML = isSymbolicTeam(team)
         ? `<div class="trophy-cabinet-item"><span class="trophy-emoji ps-medal-big">${PURPLE_MEDAL_SVG}</span></div>`
         : `
-        <div class="trophy-cabinet-item"><span class="trophy-emoji">🥇</span><div class="trophy-count">${trophies.gold}</div></div>
+        <div class="trophy-cabinet-item"><span class="trophy-emoji">🏆</span><div class="trophy-count">${trophies.gold}</div></div>
         <div class="trophy-cabinet-item"><span class="trophy-emoji">🥈</span><div class="trophy-count">${trophies.silver}</div></div>
         <div class="trophy-cabinet-item"><span class="trophy-emoji">🥉</span><div class="trophy-count">${trophies.bronze}</div></div>`;
 

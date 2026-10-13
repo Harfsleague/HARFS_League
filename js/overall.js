@@ -58,7 +58,7 @@ function renderMainLeagueTable(){
                     <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${TEAM_DISPLAY_NAMES[t.name]}</div>
                 </div>
                 <div class="ranking-trophy-block">
-                    <div class="ranking-trophy-item"><span class="trophy-emoji">🥇</span><b>${t.gold}</b></div>
+                    <div class="ranking-trophy-item"><span class="trophy-emoji">🏆</span><b>${t.gold}</b></div>
                     <div class="ranking-trophy-item"><span class="trophy-emoji">🥈</span><b>${t.silver}</b></div>
                     <div class="ranking-trophy-item"><span class="trophy-emoji">🥉</span><b>${t.bronze}</b></div>
                 </div>
