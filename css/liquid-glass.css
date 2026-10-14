@@ -177,9 +177,9 @@ body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
     0%{ transform:scale(1); } 35%{ transform:scale(1.10,.965); } 70%{ transform:scale(.99,1.01); } 100%{ transform:scale(1); }
 }
 /* with the lens present, the per-item active chrome steps aside */
-:is(.bottom-nav,.season-subnav).lg-has-lens .nav-item.active{ background:none; border-color:transparent; box-shadow:none; }
-:is(.bottom-nav,.season-subnav).lg-has-lens .nav-item::after{ display:none; }
-:is(.bottom-nav,.season-subnav).lg-has-lens .nav-item:active{ transform:none; }
+:is(.bottom-nav,.season-subnav).lg-lens-on .nav-item.active{ background:none; border-color:transparent; box-shadow:none; }
+:is(.bottom-nav,.season-subnav).lg-lens-on .nav-item::after{ display:none; }
+:is(.bottom-nav,.season-subnav).lg-lens-on .nav-item:active{ transform:none; }
 
 /* press light: highlight follows the finger */
 .lg-light{

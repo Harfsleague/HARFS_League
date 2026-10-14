@@ -66,15 +66,7 @@ function renderMainLeagueTable(){
     }).join('');
 
 
-    // People card: always right under the last team, deliberately styled unlike the ranking cards.
-    pod.innerHTML += `
-        <div class="people-card" style="animation-delay:${table.length*55}ms" onclick="openPeopleSheet()">
-            <div class="people-card-stack">${PEOPLE.map(p=>`<img src="${teamLogoUrl(p.key)}" onerror="this.style.opacity='0.3'">`).join('')}</div>
-            <div class="people-card-text">
-                <div class="people-card-title"><i class="fas fa-crown"></i> Federation &amp; Owners</div>
-                <div class="people-card-sub">President, owners &amp; fans</div>
-            </div>
-        </div>`;
+    // (Federation & Owners, Magazine, Assistant and Cards are the icon tiles under the ranking — see index.html)
 
     // clear the old separate body — all cards go inside pod now
     document.getElementById('main-league-body').innerHTML='';

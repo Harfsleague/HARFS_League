@@ -187,11 +187,16 @@
         nav.insertBefore(lens,nav.firstChild);
         nav.classList.add('lg-has-lens');
         let lensW=0, lensIdx=-1, moveTimer=0;
+        // While the lens is not really placed (bar not laid out yet / hidden) the item keeps its own
+        // "active" highlight (CSS: .lg-lens-on switches that off) — so a bar is never shown with nothing selected.
+        const lensOn=v=>{ if(nav.classList.contains('lg-lens-on')!==v) nav.classList.toggle('lg-lens-on',v); };
         function placeLens(animate){
             const it=nav.querySelector('.nav-item.active');
-            if(!it){ if(lens.classList.contains('lg-ready')) lens.classList.remove('lg-ready'); return; }
+            if(!it){ if(lens.classList.contains('lg-ready')) lens.classList.remove('lg-ready'); lensOn(false); return; }
             const items=[].slice.call(nav.querySelectorAll('.nav-item'));
             const idx=items.indexOf(it);
+            if(!it.offsetWidth){ if(lens.classList.contains('lg-ready')) lens.classList.remove('lg-ready'); lensOn(false); return; }
+            lensOn(true);
             lensW=it.offsetWidth;
             lens.style.top=it.offsetTop+'px'; lens.style.width=lensW+'px'; lens.style.height=it.offsetHeight+'px';
             lens.style.transform=`translate3d(${it.offsetLeft}px,0,0)`;
@@ -204,6 +209,7 @@
             }
             lensIdx=idx;
         }
+        nav.__lgPlace=placeLens;                                  // lets season-layout.js re-measure when the bar slides in
         new MutationObserver(()=>placeLens(true)).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
         if('ResizeObserver' in window) new ResizeObserver(()=>placeLens(false)).observe(nav);
         placeLens(false);

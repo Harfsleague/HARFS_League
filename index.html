@@ -246,25 +246,24 @@
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
             </div>
-           <button class="magazine-entry-capsule" onclick="openMagazinePanel()">
-                <div class="magazine-entry-icon"><i class="fas fa-newspaper"></i></div>
-                <div class="magazine-entry-text">
-                    <span class="magazine-entry-title">HARFS Weekly Magazine</span>
-                        <span class="magazine-entry-sub">تحلیل، جدول و اخبار هر جمعه صبح</span>
-                </div>
-            </button>
-            <button class="ai-entry-capsule" onclick="openAiPanel()">
-                <div class="ai-entry-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
+            <!-- Overall shortcuts: rounded-square icons in one row -->
+            <div class="ov-tiles">
+                <button class="ov-tile" onclick="openMagazinePanel()" aria-label="HARFS Weekly Magazine">
+                    <i class="fas fa-newspaper"></i><span>Magazine</span>
+                </button>
+                <button class="ov-tile ov-tile-ai" onclick="openAiPanel()" aria-label="HARFS Assistant">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                         <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
                         <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
-                    </svg>
-                </div>
-                <div class="ai-entry-text">
-                    <span class="ai-entry-title">HARFS Assistant</span>
-                    <span class="ai-entry-sub">Ask about the table, results &amp; trends</span>
-                </div>
-            </button>
+                    </svg><span>Assistant</span>
+                </button>
+                <button class="ov-tile" onclick="openPeopleSheet()" aria-label="Federation and Owners">
+                    <i class="fas fa-crown"></i><span>Federation</span>
+                </button>
+                <button class="ov-tile" onclick="openCardsSheet()" aria-label="Cards">
+                    <i class="fas fa-clone"></i><span>Cards</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -408,6 +407,15 @@
                 <div class="admin-section-body">
                     <h3 style="background:linear-gradient(90deg,#86efac,#fde68a,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Season Control</h3>
                     <div id="flow-admin-body"><div class="text-center text-gray-600 text-xs">Loading...</div></div>
+                </div>
+            </div>
+
+            <!-- Cards — hands, weekly deal, deck (js/cards.js) -->
+            <div class="admin-section">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#f87171,#a78bfa,#60a5fa);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fca5a5,#c4b5fd,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cards</h3>
+                    <div id="cards-admin-body"><div class="text-center text-gray-600 text-xs">Loading...</div></div>
                 </div>
             </div>
 
@@ -694,6 +702,7 @@
             <div class="team-picker-handle"></div>
             <div class="team-picker-title" id="mba-result-title">Match Result</div>
             <div class="mba-sheet-sub" id="mba-result-sub"></div>
+            <div id="mba-result-cards"></div>
             <div class="mba-sheet-scores">
                 <div class="mba-sheet-side">
                     <img id="mba-result-logo-a" src="" alt="">
@@ -799,6 +808,46 @@
                 <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Federation &amp; Owners</h4>
                 <div style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;">The people behind HARFS · tap a photo to view</div>
                 <div id="people-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- ============ CARDS (Overall → Cards): a team sees only its own hand ============ -->
+    <div id="cards-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardsSheet()">
+        <div class="team-picker-panel hero-modal cards-modal">
+            <div class="modal-x-close" onclick="closeCardsSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Cards</h4>
+            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Your hand · tap a card to enlarge it</div>
+            <div id="cards-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+    <div id="cards-zoom" class="cards-zoom" onclick="cardsZoomClose()">
+        <img src="" alt="">
+        <div class="cz-name"></div>
+        <div class="cz-desc" dir="auto"></div>
+    </div>
+    <!-- Admin: add / edit a card -->
+    <div id="card-edit-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardEditor()">
+        <div class="team-picker-panel">
+            <div class="modal-x-close" onclick="closeCardEditor()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title" id="card-edit-title">New card</div>
+            <div class="card-edit-grid">
+                <label class="card-edit-pic">
+                    <img id="card-edit-preview" src="" alt="">
+                    <span><i class="fas fa-image"></i> Change picture</span>
+                    <input type="file" accept="image/*" style="display:none" onchange="cardsPickImage(event)">
+                </label>
+                <div class="card-edit-fields">
+                    <input id="card-edit-name" class="glass-input" type="text" maxlength="30" placeholder="Card name" dir="auto">
+                    <textarea id="card-edit-desc" class="glass-input" rows="3" maxlength="160" placeholder="What does it do? (optional)" dir="auto"></textarea>
+                    <label class="card-edit-check"><input type="checkbox" id="card-edit-draw"> Can be drawn in the weekly deal</label>
+                </div>
+            </div>
+            <div class="login-error" id="card-edit-status" style="display:block;color:#9ca3af;min-height:16px;"></div>
+            <div class="mba-sheet-actions">
+                <button class="glass-button" id="card-edit-delete" style="display:none;color:#f87171;border-color:rgba(239,68,68,0.3);" onclick="deleteCardFromEditor()"><i class="fas fa-trash mr-2"></i>Delete</button>
+                <button class="glass-button" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="saveCardEditor()"><i class="fas fa-check mr-2"></i>Save</button>
             </div>
         </div>
     </div>
@@ -919,6 +968,7 @@
 <script src="js/ai-chat.js"></script>
 <script src="js/mba.js"></script>
 <script src="js/flow.js"></script>
+<script src="js/cards.js"></script>
 <script src="js/season-layout.js"></script>
 <script src="js/verify.js"></script>
 <script src="js/admin-music.js"></script>

@@ -324,6 +324,9 @@ function openMbaResultSheet(scope, edition, kind, semiIndex, legIndex){
         document.getElementById('mba-result-score-'+k).textContent = k==='a' ? a : b;
     });
     document.getElementById('mba-result-error').style.display = 'none';
+    // admin: each team's active card above the score (js/cards.js) — only while recording a NEW game
+    const cardsBox = document.getElementById('mba-result-cards');
+    if(cardsBox){ cardsBox.innerHTML=''; delete cardsBox.dataset.teams; if(!existing && scope==='current' && typeof cardsPrepMatch==='function') cardsPrepMatch(teams); }
     const delBtn = document.getElementById('mba-result-delete-btn');
     delBtn.style.display = (existing && scope==='current') ? 'flex' : 'none';
     document.getElementById('mba-result-note').textContent = scope==='completed'
@@ -333,6 +336,7 @@ function openMbaResultSheet(scope, edition, kind, semiIndex, legIndex){
 }
 function closeMbaResultSheet(clear=true){
     document.getElementById('mba-result-sheet').classList.remove('open');
+    const cb = document.getElementById('mba-result-cards'); if(cb){ cb.innerHTML=''; delete cb.dataset.teams; }
     if(clear) mbaEditCtx = null;
 }
 function changeMbaScore(side, delta){
@@ -403,6 +407,7 @@ async function saveMbaResult(){
         showToast(existed ? 'Result updated ✏️' : 'Result saved ✅','success',1800);
     }
     mbaBusy = false;
+    if(!existed && typeof cardsConsume==='function'){ try{ await cardsConsume(c.teams, c.kind==='semi' ? `CUP semifinal ${c.semiIndex+1}` : (c.kind==='final'?'CUP final':'CUP third place')); }catch(e){} }
     renderMbaAdminSection(); renderMbaSeasonView();
 }
 async function deleteMbaResult(){

@@ -35,6 +35,7 @@ function showAdminDashboard(){
     // uploads made from another session or device are reflected immediately.
     loadMusicManagerList();
     renderFlowViews(); // Season Control card (schedule stage, results, CUP, Super Cup)
+    if(typeof cardsAdminInit==='function') cardsAdminInit();   // Cards section (hands, deck, weekly deal)
     // Weekly Magazine — Friday-gated generate button + cover manager.
     // Reuses the same archive the magazine viewer itself uses, only
     // refetching if this is the first time it's needed this session.
