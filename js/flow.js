@@ -266,7 +266,7 @@ async function flowStartSeason(opts){
         if(typeof resetMbaView==='function') resetMbaView();   // CUP page: jump to the new season's (not yet drawn) edition
         if(adopted) await saveMatchHistoryToGitHub(matchHistory, `Season ${sid}: ${adopted} existing match(es) linked to the schedule`);
         await saveFlowToGitHub(`Season ${sid} schedule created`);
-        if(typeof cardsSeasonStart==='function'){ try{ await cardsSeasonStart(sid); }catch(e){} }   // every team: 2 "No" cards
+        if(typeof cardsSync==='function'){ try{ await cardsSync(); }catch(e){} }   // the Worker deals the season's starting cards (2 "No" + 2 random) by itself
         showToast(`Season ${sid} schedule is ready 📅` + (orphan?` (${orphan} old match${orphan===1?'':'es'} could not be linked)`:''),'success',3200);
     } finally { flowBusy = false; }
     await refreshAllLeagueViews();
@@ -299,20 +299,29 @@ async function flowSaveFixture(id){
     if(fx.round!==flowCurrentRound(f)){ showToast(`Finish matchweek ${flowCurrentRound(f)} first`,'error',2400); return; }
     if(flowMatchOf(fx)){ showToast('This fixture already has a result','info',2000); return; }
     const d = flowDraft[id] || {h:0,a:0};
-    const ok = await showConfirm({icon:'⚽',title:`Matchweek ${fx.round} — save result?`,message:`${flowName(fx.home)} ${d.h} – ${d.a} ${flowName(fx.away)}`,okLabel:'Save',okColor:'green'});
+    const cardsLine = (typeof cardsSummaryText==='function') ? await cardsSummaryText([fx.home, fx.away]) : '';
+    const ok = await showConfirm({icon:'⚽',title:`Matchweek ${fx.round} — save result?`,message:`${flowName(fx.home)} ${d.h} – ${d.a} ${flowName(fx.away)}${cardsLine}`,okLabel:'Save',okColor:'green'});
     if(!ok) return;
     flowBusy = true;
+    let cardsUsed = null;
     try{
+        // the teams' active cards are used up (by the Worker) and recorded on the game — the admin cannot change them
+        if(typeof cardsRecordGame==='function'){
+            const rec = await cardsRecordGame('league', [fx.home, fx.away], 'L:'+fx.id);
+            if(!rec.ok){ showToast(rec.error || 'Could not record the cards — result not saved','error',4200); return; }
+            cardsUsed = rec.cards;
+        }
         updateTeamStats(leagueData[fx.home], d.h, d.a);
         updateTeamStats(leagueData[fx.away], d.a, d.h);
         const m = { home:fx.home, away:fx.away, score:`${d.h}-${d.a}`, timestamp:new Date().toISOString(), fx:fx.id, round:fx.round };
+        if(cardsUsed) m.cards = cardsUsed;
         matchHistory.unshift(m);
         const s1 = await saveLeagueDataToGitHub(leagueData, `MW${fx.round}: ${m.score}`);
         const s2 = await saveMatchHistoryToGitHub(matchHistory, `MW${fx.round} history ${m.score}`);
         delete flowDraft[id];
         showToast(s1&&s2 ? `Saved: ${fx.home} ${m.score} ${fx.away}` : 'Saved locally — check network', s1&&s2?'success':'info');
     } finally { flowBusy = false; }
-    if(typeof cardsAfterLeagueResult==='function'){ try{ await cardsAfterLeagueResult(fx, f); }catch(e){} }
+    if(typeof cardsSync==='function'){ try{ if(await cardsSync()) renderCardsAll(); }catch(e){} }   // when the matchweek cycle is complete the Worker deals the next cards by itself
     await refreshAllLeagueViews();
     const phaseAfter = flowPhase();
     if(phaseAfter!==phaseBefore) showToast(`Next: ${FLOW_PHASE_LABEL[phaseAfter]} ✅`,'success',3400);
@@ -353,7 +362,6 @@ async function flowSaveSuperCup(){
         if(prev && prev.winner) f.superCup.editedAt = Date.now();
         flowSuperEditing = false;
         await saveFlowToGitHub(`Season ${f.seasonId}: Super Cup — ${winner} wins ${a}-${b}`);
-        if(!(prev && prev.winner) && typeof cardsConsume==='function'){ try{ await cardsConsume([t0,t1],'Super Cup'); }catch(e){} }
         showToast(`⚡ ${flowName(winner)} wins the Super Cup!`,'success',3800);
     } finally { flowBusy = false; }
     renderFlowViews();
@@ -497,7 +505,7 @@ function flowSuperScorerHtml(teams){
             <button class="score-btn score-btn-minus" onclick="flowChangeSuper('${side}',-1)"><i class="fas fa-minus"></i></button>
         </div>`;
     return `<div class="flow-scorer">
-        ${typeof cardsMatchPanelHtml==='function' ? cardsMatchPanelHtml(t0, t1) : ''}
+        ${(typeof cardsFreeNoteHtml==='function' && isFullAdmin()) ? cardsFreeNoteHtml('the Super Cup') : ''}
         <div class="flow-scorer-teams">${flowTeamChip(t0)}<span class="flow-vs">vs</span>${flowTeamChip(t1,'away')}</div>
         <div class="flow-scorer-row">${col('a',flowSuperDraft.a)}<div class="flow-colon">:</div>${col('b',flowSuperDraft.b)}</div>
         <p class="text-xs text-red-400 text-center font-semibold" id="flow-super-error" style="display:none;margin:0 0 8px;">One team must score more — no draws.</p>

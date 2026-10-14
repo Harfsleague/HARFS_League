@@ -400,9 +400,19 @@
         </div>
 
         <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:flex;">
+            <!-- Admin menu: one tab per area, only the chosen area is shown (adminShowCat in js/admin.js).
+                 Accounts that only got music / moments tools never see this bar (see css: .limited-access). -->
+            <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Admin sections">
+                <button class="admin-tab active" data-tab="season" role="tab" onclick="adminShowCat('season')"><i class="fas fa-calendar-days"></i><span>Season</span></button>
+                <button class="admin-tab" data-tab="cards" role="tab" onclick="adminShowCat('cards')"><i class="fas fa-clone"></i><span>Cards</span></button>
+                <button class="admin-tab" data-tab="music" role="tab" onclick="adminShowCat('music')"><i class="fas fa-music"></i><span>Music</span></button>
+                <button class="admin-tab" data-tab="moments" role="tab" onclick="adminShowCat('moments')"><i class="fas fa-star"></i><span>Moments</span></button>
+                <button class="admin-tab" data-tab="magazine" role="tab" onclick="adminShowCat('magazine')"><i class="fas fa-newspaper"></i><span>Magazine</span></button>
+                <button class="admin-tab" data-tab="users" role="tab" onclick="adminShowCat('users')"><i class="fas fa-user-lock"></i><span>Users</span></button>
+            </div>
             <!-- Season Control — the single card that drives League, CUP and Super Cup.
                  Everything here is rendered by renderFlowAdmin() (js/flow.js) for the current stage. -->
-            <div class="admin-section">
+            <div class="admin-section" data-cat="season">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#fbbf24,#8b5cf6);"></div>
                 <div class="admin-section-body">
                     <h3 style="background:linear-gradient(90deg,#86efac,#fde68a,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Season Control</h3>
@@ -410,17 +420,17 @@
                 </div>
             </div>
 
-            <!-- Cards — hands, weekly deal, deck (js/cards.js) -->
-            <div class="admin-section">
+            <!-- Cards — deck editor only; dealing / using cards is automatic (js/cards.js + Worker) -->
+            <div class="admin-section" data-cat="cards">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#f87171,#a78bfa,#60a5fa);"></div>
                 <div class="admin-section-body">
-                    <h3 style="background:linear-gradient(90deg,#fca5a5,#c4b5fd,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cards</h3>
+                    <h3 style="background:linear-gradient(90deg,#fca5a5,#c4b5fd,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cards — create &amp; edit</h3>
                     <div id="cards-admin-body"><div class="text-center text-gray-600 text-xs">Loading...</div></div>
                 </div>
             </div>
 
             <!-- Music Library Manager -->
-            <div class="admin-section" data-perm="music">
+            <div class="admin-section" data-perm="music" data-cat="music">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#818cf8);"></div>
                 <div class="admin-section-body">
                     <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Music Library</h3>
@@ -446,7 +456,7 @@
             </div>
 
             <!-- Weekly Magazine -->
-            <div class="admin-section">
+            <div class="admin-section" data-cat="magazine">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
                 <div class="admin-section-body">
                     <h3 style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Weekly Magazine</h3>
@@ -475,7 +485,7 @@
             </div>
 
             <!-- User permissions (admin only) -->
-            <div class="admin-section">
+            <div class="admin-section" data-cat="users">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#34d399,#60a5fa);"></div>
                 <div class="admin-section-body">
                     <h3 style="background:linear-gradient(90deg,#6ee7b7,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">User Permissions</h3>
@@ -484,7 +494,7 @@
                 </div>
             </div>
 
-            <div class="weird-admin-section" data-perm="moments">
+            <div class="weird-admin-section" data-perm="moments" data-cat="moments">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
                 <div class="admin-section-body" style="padding:14px;">
                     <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
@@ -511,7 +521,7 @@
             </div>
 
             <!-- Recent Matches -->
-            <div class="admin-section">
+            <div class="admin-section" data-cat="season">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#374151,#4b5563);"></div>
                 <div class="admin-section-body">
                     <h3 style="color:#6b7280;">League Results &amp; Corrections</h3>
@@ -841,7 +851,7 @@
                 <div class="card-edit-fields">
                     <input id="card-edit-name" class="glass-input" type="text" maxlength="30" placeholder="Card name" dir="auto">
                     <textarea id="card-edit-desc" class="glass-input" rows="3" maxlength="160" placeholder="What does it do? (optional)" dir="auto"></textarea>
-                    <label class="card-edit-check"><input type="checkbox" id="card-edit-draw"> Can be drawn in the weekly deal</label>
+                    <label class="card-edit-check"><input type="checkbox" id="card-edit-draw"> Can be drawn in the automatic random deal</label>
                 </div>
             </div>
             <div class="login-error" id="card-edit-status" style="display:block;color:#9ca3af;min-height:16px;"></div>

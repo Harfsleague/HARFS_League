@@ -157,8 +157,11 @@ function renderSeasonHistoryList(history){
                     <img src="${teamLogoUrl(m.away)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 </div>
             </div>
+            ${typeof cardsGameHtml==='function' ? cardsGameHtml(m.cards) : ''}
         </div>`;
     }).join('');
+    // card pictures need the deck: load it once, then draw the list again
+    if(history.some(m=>m && m.cards) && typeof cardsEnsureLoaded==='function') cardsEnsureLoaded(()=>renderSeasonHistoryList(history));
     if(window.GlassFX)GlassFX.historyRendered();
 }
 

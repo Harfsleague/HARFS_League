@@ -1,69 +1,67 @@
-# Worker change needed for team-side card actions (optional)
+# Cards — Worker (required)
 
-The Cards system (`js/cards.js`) works fully WITHOUT any Worker change for the **admin**
-(Bayern): everything the admin does goes through the normal `/gh/...` proxy and writes
-`cards_data.json` and `cards/<id>.jpg` into the data repo, exactly like `league_data.json`
-and the magazine covers.
+Cards are now **fully automatic and handled by the Worker** (`worker.js`, section “CARDS”).
+Deploy the new `worker.js` *before* / together with this app update.
 
-> If your Worker only allows `/gh/` writes to a fixed list of file names, add
-> `cards_data.json` and the folder `cards/` to that list for the admin account.
+## What the admin can and cannot do
 
-A **team** (non-admin) can look at its own hand without any change (the data file is read
-like every other json file). To let a team **activate / deactivate / discard its own card**
-itself, the Worker needs one new endpoint. Until it exists the app shows
-“Cards are not enabled on the server yet — ask the admin”, and the admin can do the same
-thing from Admin → Cards.
+| | Admin (Bayern) |
+|---|---|
+| Create / edit / delete a card, change its picture | ✅ (`POST /cards` `deck_save` / `deck_delete`) |
+| Deal, give, take, activate, deactivate, discard anybody's card | ❌ never |
+| See the card a team chose while entering a result | ✅ view only |
+| Use his **own** cards | ✅ as the *team* Bayern, exactly like the other teams (Overall → Cards) |
 
-## `POST /cards`
+The `/gh/` proxy also refuses every admin write to `cards_data.json`, so the file can only be
+changed by the Worker's own card rules.
 
-Headers: `Authorization: Bearer <session>` (same session as `/team-profile`).
-Body:
+## Rules implemented by the Worker
+
+* **New season** → every team gets 2 “No” cards **+ 2 random cards**.
+* **After every 2nd matchweek** (each team has played each other team once) → 2 random cards for
+  every team: after MW 2, 4, 6. Nothing after the last matchweek (only the CUP final + Super Cup
+  are left and they allow no cards). Dealing is idempotent — it can never be dealt twice.
+* **Keep limit: 3 cards. “No” cards do not count** (checked on `activate`).
+* One active card per team. “No” cancels the opponent's card.
+* Cards can be used in **league games, CUP semifinals and the third-place match**.
+  **CUP final and Super Cup: no cards** (`consume` returns `free:true`, active cards stay in the hand).
+* When the admin saves a result, the app calls `consume` first; the Worker removes the active cards
+  of the two teams and returns what was used. The app writes it on the game:
+  `match.cards` / CUP `leg.cards` / `thirdPlace.cards` = `{ "<Team>": { card, name, cancelled } }`,
+  shown in the Season history and in the CUP bracket.
+
+## Endpoints
+
+`GET /cards` → `{ ok, data }` (public read, no writes)
+
+`POST /cards` (Bearer session) `{ action, … }`
+
+| action | who | body | notes |
+|---|---|---|---|
+| `sync` | any logged-in account | – | deals whatever is due (new season / every 2nd matchweek) |
+| `activate` / `deactivate` / `discard` | the 4 teams (acting on **their own** hand only) | `uid` | `activate` refused while > 3 non-“No” cards |
+| `consume` | admin only (called by the app while saving a result) | `stage` (`league`\|`semi`\|`third`\|`final`\|`super`), `home`, `away`, `gameKey` | validated against `season_flow.json` / `match_history.json` / `mba_history.json`; idempotent per game |
+| `deck_save` | admin only | `card:{ id?, name, desc, draw, img? }` | picture itself is uploaded through `/gh/…/contents/cards/<id>.jpg` |
+| `deck_delete` | admin only | `id` | also removes the card from every hand |
+
+All of them answer `{ ok:true, data:<fresh cards_data.json>, result }`.
+
+## `cards_data.json` (data repo) — v2
 
 ```json
-{ "action": "activate" | "deactivate" | "discard", "uid": "k3f9a2x1" }
+{ "v": 2,
+  "deck":  [{ "id":"no", "name":"No", "desc":"…", "img":null, "draw":false, "system":true }],
+  "hands": { "Bayern": [{ "uid":"k3f9a2x1", "card":"no", "active":false }] },
+  "deals": { "3:1760000000000": ["start","w0","w2"] },
+  "used":  { "L:3:1760000000000:r2m1": { "stage":"league", "home":{…}, "away":{…} } },
+  "log":   [] }
 ```
 
-The team is the logged-in team (never taken from the body). Only the 4 real teams
-(`HOSI`, `Sezar`, `Bayern`, `Yellow`) may call it.
+A season that is already running when this update is deployed (file still `v:1`) is **migrated
+without touching anybody's hand**; the automatic schedule continues from the matchweeks already played.
 
-### What the Worker must do
+## Optional — Cron Trigger
 
-1. Read `cards_data.json` from the data repo (GitHub Contents API, same token as for
-   `main_league_data.json`). If it does not exist → `404 { ok:false, error:"No cards yet" }`.
-2. `hand = data.hands[team]`; find the item with `uid` → else `{ ok:false, error:"That card is not in your hand" }`.
-3. Apply the action:
-   - `discard`: remove the item.
-   - `deactivate`: `item.active = false`.
-   - `activate`: refuse if `hand.length > 3`
-     (`error: "Discard N card(s) first — a team can keep at most 3."`), otherwise set
-     `active = false` on every item of the hand and `active = true` on this one
-     (only ONE active card per game).
-4. Commit the file back (use the sha you read; on a 409/422 conflict re-read and retry once).
-5. Return `{ "ok": true, "hand": [ …the team's new hand… ] }`.
-
-Do not touch anything except `hands[team]`.
-
-## Sketch
-
-```js
-async function handleCards(req, env, team) {
-  const { action, uid } = await req.json();
-  if (!['activate', 'deactivate', 'discard'].includes(action) || !/^[a-z0-9]{4,16}$/.test(uid || ''))
-    return json({ ok: false, error: 'Bad request' }, 400);
-  const file = await githubGetJson(env, 'cards_data.json');          // { data, sha } or null
-  if (!file) return json({ ok: false, error: 'No cards yet' }, 404);
-  const hand = (file.data.hands && file.data.hands[team]) || [];
-  const i = hand.findIndex(h => h.uid === uid);
-  if (i < 0) return json({ ok: false, error: 'That card is not in your hand' }, 400);
-  if (action === 'discard') hand.splice(i, 1);
-  else if (action === 'deactivate') hand[i].active = false;
-  else {
-    if (hand.length > 3) return json({ ok: false, error: `Discard ${hand.length - 3} card(s) first — a team can keep at most 3.` }, 400);
-    hand.forEach(h => { h.active = false; });
-    hand[i].active = true;
-  }
-  file.data.hands[team] = hand;
-  await githubPutJson(env, 'cards_data.json', file.data, file.sha, `Cards: ${team} ${action}`);
-  return json({ ok: true, hand });
-}
-```
+Dealing already happens whenever someone opens Cards or a result is saved. If you also want it to
+happen with nobody online, add a cron trigger to the Worker (Dashboard → Worker → Triggers → Cron,
+e.g. `*/15 * * * *`). `worker.js` already has the `scheduled()` handler.

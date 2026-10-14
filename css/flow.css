@@ -273,3 +273,33 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .card-edit-fields{ flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 .card-edit-fields .glass-input{ width:100%; font-size:.8rem; padding:9px 10px; }
 .card-edit-check{ font-size:.68rem; color:#cbd5e1; display:flex; gap:6px; align-items:center; }
+
+
+/* =====================================================
+   ADMIN MENU — one tab per area (adminShowCat in js/admin.js)
+   ===================================================== */
+.admin-tabs{ position:sticky; top:0; z-index:6; display:flex; gap:6px; overflow-x:auto; padding:8px 2px 10px; margin:0 0 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.admin-tabs::-webkit-scrollbar{ display:none; }
+.admin-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; font-size:.7rem; font-weight:800; color:#cbd5e1; background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.12); cursor:pointer; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+.admin-tab i{ font-size:.78rem; opacity:.85; }
+.admin-tab.active{ color:#fff; background:linear-gradient(90deg,rgba(139,92,246,.55),rgba(59,130,246,.5)); border-color:rgba(196,181,253,.6); box-shadow:0 4px 14px rgba(99,102,241,.3); }
+/* the full admin sees ONE area at a time; accounts with only granted tools are handled by .limited-access */
+#admin-dashboard-section:not(.limited-access) > .admin-cat-off{ display:none !important; }
+
+/* =====================================================
+   CARDS — view-only badges, history chips, misc
+   ===================================================== */
+.cd-lock{ display:flex; align-items:center; justify-content:center; gap:6px; font-size:.58rem; font-weight:700; color:#94a3b8; margin:0 0 10px; }
+.cd-lock button{ background:none; border:none; color:#93c5fd; font-size:.7rem; padding:2px 6px; cursor:pointer; }
+.cd-lock.cd-nocards{ color:#fbbf24; background:rgba(251,191,36,.08); border:1px dashed rgba(251,191,36,.35); border-radius:10px; padding:7px 10px; margin:6px 0 10px; }
+.cd-free{ display:inline-block; margin-inline-start:5px; font-size:.48rem; font-weight:900; letter-spacing:.4px; text-transform:uppercase; color:#86efac; background:rgba(34,197,94,.14); border-radius:999px; padding:1px 5px; vertical-align:middle; }
+.cards-team .cards-no-count{ color:#86efac; }
+.game-cards{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-top:6px; }
+.gc-chip{ display:inline-flex; align-items:center; gap:4px; font-size:.56rem; color:#e9d5ff; background:rgba(167,139,250,.12); border:1px solid rgba(167,139,250,.35); border-radius:999px; padding:2px 8px 2px 3px; max-width:100%; }
+.gc-chip img{ width:13px; aspect-ratio:5/7; object-fit:cover; border-radius:3px; }
+.gc-chip b{ color:#c4b5fd; font-weight:800; }
+.gc-chip > span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gc-chip i{ color:#f87171; font-size:.55rem; }
+.gc-chip.cancelled{ border-color:rgba(248,113,113,.45); background:rgba(248,113,113,.1); }
+.gc-chip.cancelled > span{ text-decoration:line-through; color:#fca5a5; }
+.mba-hist .game-cards{ justify-content:flex-start; margin:2px 0 6px 28px; }

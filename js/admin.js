@@ -9,10 +9,22 @@
 // already required logging in as the Bayern team (see navigate()),
 // so entering here goes straight to the dashboard.
 // ============================================================
+// ---- Admin menu: the dashboard is split into areas (tabs); only the chosen area is visible ----
+// Sections carry data-cat="season|cards|music|moments|magazine|users" (index.html).
+let adminCat = 'season';
+function adminShowCat(cat){
+    adminCat = cat;
+    const dash = document.getElementById('admin-dashboard-section'); if(!dash) return;
+    dash.querySelectorAll(':scope > [data-cat]').forEach(el=>el.classList.toggle('admin-cat-off', el.dataset.cat!==cat));
+    dash.querySelectorAll('.admin-tab').forEach(b=>{ const on = b.dataset.tab===cat; b.classList.toggle('active', on); b.setAttribute('aria-selected', on?'true':'false'); });
+    const act = dash.querySelector('.admin-tab.active'); if(act && act.scrollIntoView) act.scrollIntoView({ block:'nearest', inline:'center' });
+    haptic([6]);
+}
 function showAdminDashboard(){
     // No GitHub token is needed on this device anymore: every save goes through the
     // Worker (login session) which holds the token and checks what this account may do.
     applyAdminScreenAccess();
+    if(isFullAdmin()) adminShowCat(adminCat);
     if(!isFullAdmin()){
         // Account with granted tools (music and/or moments): load only what those need.
         if(canAddMoment()){ if(!weirdEventsLoaded) loadWeirdEventsFromGitHub(); weirdMedia=[]; renderWeirdPreview(); }

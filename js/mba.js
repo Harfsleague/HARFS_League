@@ -326,7 +326,13 @@ function openMbaResultSheet(scope, edition, kind, semiIndex, legIndex){
     document.getElementById('mba-result-error').style.display = 'none';
     // admin: each team's active card above the score (js/cards.js) — only while recording a NEW game
     const cardsBox = document.getElementById('mba-result-cards');
-    if(cardsBox){ cardsBox.innerHTML=''; delete cardsBox.dataset.teams; if(!existing && scope==='current' && typeof cardsPrepMatch==='function') cardsPrepMatch(teams); }
+    if(cardsBox){
+        cardsBox.innerHTML=''; delete cardsBox.dataset.teams;
+        if(!existing && scope==='current' && isFullAdmin()){
+            if(kind==='final'){ if(typeof cardsFreeNoteHtml==='function') cardsBox.innerHTML = cardsFreeNoteHtml('the CUP final'); }   // no cards in the final
+            else if(typeof cardsPrepMatch==='function') cardsPrepMatch(teams);                                                     // view-only: the cards the teams chose
+        }
+    }
     const delBtn = document.getElementById('mba-result-delete-btn');
     delBtn.style.display = (existing && scope==='current') ? 'flex' : 'none';
     document.getElementById('mba-result-note').textContent = scope==='completed'
@@ -396,6 +402,17 @@ async function saveMbaResult(){
         const ok = await showConfirm({icon:'⚠️',title:'This edit affects other results',message:notes.join(' '),okLabel:'Apply',okColor:'purple'});
         if(!ok){ mbaReopenSheetUi(); return; }
     }
+    // NEW semifinal game / third-place match: the teams' active cards are used up by the Worker and written on the game.
+    // (The final never uses cards.) The admin cannot influence which cards were played.
+    if(!c.existing && c.kind!=='final' && typeof cardsRecordGame==='function'){
+        const li = c.kind==='semi' ? cur.semis[c.semiIndex].legs.length : null;
+        const rec = await cardsRecordGame(c.kind==='semi' ? 'semi' : 'third', c.teams, c.kind==='semi' ? `C:${cur.edition}:s${c.semiIndex}:l${li}` : `C:${cur.edition}:third`);
+        if(!rec.ok){ mbaReopenSheetUi(); fail(rec.error || 'Could not record the cards — result not saved'); return; }
+        if(rec.cards){
+            const tgt = c.kind==='semi' ? draft.semis[c.semiIndex].legs[li] : draft.thirdPlace;
+            if(tgt) tgt.cards = rec.cards;
+        }
+    }
     mbaBusy = true;
     mbaData.current = draft;
     closeMbaResultSheet();
@@ -407,7 +424,6 @@ async function saveMbaResult(){
         showToast(existed ? 'Result updated ✏️' : 'Result saved ✅','success',1800);
     }
     mbaBusy = false;
-    if(!existed && typeof cardsConsume==='function'){ try{ await cardsConsume(c.teams, c.kind==='semi' ? `CUP semifinal ${c.semiIndex+1}` : (c.kind==='final'?'CUP final':'CUP third place')); }catch(e){} }
     renderMbaAdminSection(); renderMbaSeasonView();
 }
 async function deleteMbaResult(){
@@ -470,7 +486,7 @@ function mbaSemiBlock(t, i, ctx){
         </div>`;
     }).join('');
     const hist = semi.legs.length
-        ? semi.legs.map((leg,li)=>`<div class="mba-hist-row"><span class="mba-hist-tag">G${li+1}</span>${mbaScoreHtml(semi.teams, leg)}${mbaEditBtn(ctx,'semi',i,li)}</div>`).join('')
+        ? semi.legs.map((leg,li)=>`<div class="mba-hist-row"><span class="mba-hist-tag">G${li+1}</span>${mbaScoreHtml(semi.teams, leg)}${mbaEditBtn(ctx,'semi',i,li)}</div>${typeof cardsGameHtml==='function'?cardsGameHtml(leg.cards):''}`).join('')
         : `<div class="mba-hist-empty">No games played yet</div>`;
     const add = (ctx.canRecord && ctx.allowSemi && !done)
         ? `<button class="mba-add-btn" onclick="openMbaResultSheet('current',${ctx.edition},'semi',${i},null)"><i class="fas fa-plus"></i> Add game result</button>` : '';
@@ -508,7 +524,7 @@ function mbaSingleBlock(t, kind, ctx){
         </div>`;
     }).join('');
     const hist = decided
-        ? `<div class="mba-hist-row"><span class="mba-hist-tag">FT</span>${mbaScoreHtml(teams,res)}${mbaEditBtn(ctx,kind,null,null)}</div>`
+        ? `<div class="mba-hist-row"><span class="mba-hist-tag">FT</span>${mbaScoreHtml(teams,res)}${mbaEditBtn(ctx,kind,null,null)}</div>${typeof cardsGameHtml==='function'?cardsGameHtml(res.cards):''}`
         : `<div class="mba-hist-empty">Not played yet</div>`;
     const add = (ctx.canRecord && ctx.allowFinal && !decided)
         ? `<button class="mba-add-btn" onclick="openMbaResultSheet('current',${ctx.edition},'${kind}',null,null)"><i class="fas fa-plus"></i> Add result</button>` : '';
