@@ -189,7 +189,7 @@
         let lensW=0, lensIdx=-1, moveTimer=0;
         function placeLens(animate){
             const it=nav.querySelector('.nav-item.active');
-            if(!it){ lens.classList.remove('lg-ready'); return; }
+            if(!it){ if(lens.classList.contains('lg-ready')) lens.classList.remove('lg-ready'); return; }
             const items=[].slice.call(nav.querySelectorAll('.nav-item'));
             const idx=items.indexOf(it);
             lensW=it.offsetWidth;
