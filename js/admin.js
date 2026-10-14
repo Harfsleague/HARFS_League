@@ -85,7 +85,7 @@ function navigate(route){
     currentRouteIndex=ROUTES.indexOf(route);
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-admin',
-        'shop':'nav-settings','settings':'nav-settings','admin':'nav-settings',
+        'settings':'nav-settings','admin':'nav-settings',
         'magazine':'nav-main','ai-chat':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
@@ -93,7 +93,7 @@ function navigate(route){
 
     const idMap={
         'main-league':'main-league-screen','league':'league-table-screen',
-        'shop':'shop-screen','weird':'weird-screen','admin':'admin-screen',
+        'weird':'weird-screen','admin':'admin-screen',
         'settings':'settings-screen','magazine':'magazine-screen',
         'ai-chat':'ai-chat-screen'
     };
@@ -115,7 +115,7 @@ function navigate(route){
     });
     if(route==='league' && typeof loadMbaDataFromGitHub === 'function') loadMbaDataFromGitHub().then(()=>{ if(typeof loadFlowFromGitHub==='function') loadFlowFromGitHub(); });
     updateSeasonFabs(route);
-    if(route==='shop')loadMainLeagueDataFromGitHub().then(renderMysteryBoxScreen);
+    if(typeof seasonSyncSubnav==='function') seasonSyncSubnav(route);
     if(route==='weird'){loadWeirdEventsFromGitHub().then(renderWeirdEvents);loadMomentReactions();}
     if(route==='settings')renderSettingsScreen();
     if(route==='admin'){

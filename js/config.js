@@ -109,9 +109,6 @@ const MOMENT_AUDIO_MAX_MB=8;
 
 function initializeLeagueData(){TEAM_NAMES.forEach(t=>leagueData[t]={name:t,P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0});}
 function initializeMainLeagueData(){PROFILE_TEAMS.forEach(t=>mainLeagueData[t]={name:t,pinned:null,
-    // Mystery Box outcomes — kept just to enforce the 2-opens-per-2-weeks
-    // limit and show a short history; see shop.js.
-    arenaHistory:[],
     // CUP tournament wins only (never regular league titles — those already
     // just add to the gold count with no log) — one entry per tournament
     // this team has WON outright, so its own profile can show "CUP Champion

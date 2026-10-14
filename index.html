@@ -227,11 +227,17 @@
         </div>
     </nav>
 
+    <!-- Season sub-nav: League | Cup. Slides out from behind the bottom nav while the Season screen is open (js/season-layout.js) -->
+    <div class="season-subnav" id="season-subnav">
+        <div class="nav-item active" data-tab="league" onclick="seasonSetTab('league')"><i class="fas fa-table"></i><span>League</span></div>
+        <div class="nav-item" data-tab="cup" onclick="seasonSetTab('cup')"><i class="fas fa-trophy"></i><span>Cup</span></div>
+    </div>
+
     <!-- ============ MAIN LEAGUE ============ -->
     <div id="main-league-screen" class="page-screen">
 
         <div class="league-header">
-            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 Championship</h2>
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 Hall Of Fame</h2>
         </div>
 
         <div class="w-full px-4">
@@ -385,41 +391,6 @@
 
     </div><!-- /league-table-screen -->
 
-    <!-- ============ MYSTERY BOX (reached from Settings) ============ -->
-    <div id="shop-screen" class="page-screen">
-        <div class="league-header">
-            <button onclick="navigate('settings')" style="align-self:flex-start;margin-bottom:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
-                <i class="fas fa-arrow-left mr-1"></i>Back to Settings
-            </button>
-            <h2 class="text-base font-black uppercase tracking-widest mb-2" style="color:var(--header-text);">Mystery Box</h2>
-            <div class="account-card" style="margin-top:0;margin-bottom:10px;">
-                <img id="shop-my-team-logo" src="" class="account-avatar" style="width:44px;height:44px;">
-                <div class="account-textcol">
-                    <span id="shop-my-team-name" class="account-name">—</span>
-                </div>
-            </div>
-            <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:0;">Free to open — up to 2 per team every 2 weeks. Could win an Arena perk, or nothing at all.</p>
-        </div>
-
-        <div class="mbx-stage">
-            <canvas id="mbx-confetti-canvas" class="mbx-confetti-canvas"></canvas>
-            <div class="mbx-box" id="mbx-box" onclick="openMysteryBox()">
-                <div class="mbx-box-glow"></div>
-                <div class="mbx-box-icon">🎁</div>
-            </div>
-            <div class="mbx-reveal" id="mbx-reveal"></div>
-            <div class="mbx-open-label" id="mbx-open-label">Tap to Open — 25 🪙</div>
-        </div>
-
-        <div class="w-full px-4 mt-2">
-            <div class="season-history-card">
-                <h3 class="season-history-title"><i class="fas fa-clock"></i> Recent Openings</h3>
-                <div id="mbx-history-list"></div>
-            </div>
-        </div>
-    </div>
-
-    
     <!-- ============ ADMIN ============ -->
     <div id="admin-screen" class="page-screen">
         <div class="league-header">
@@ -576,17 +547,6 @@
         </div>
 
         <div class="w-full px-4">
-            <div class="settings-page-grid">
-                <button class="settings-page-tile wide shop-tile-big" onclick="navigate('shop')">
-                    <div class="shop-tile-icon"><i class="fas fa-gift"></i></div>
-                    <div class="shop-tile-textcol">
-                        <span class="shop-tile-title">Mystery Box</span>
-                        <span class="shop-tile-sub">Free — 2 per team every 2 weeks</span>
-                    </div>
-                    <i class="fas fa-chevron-right shop-tile-chevron"></i>
-                </button>
-            </div>
-
             <div class="settings-section-label">Appearance &amp; Sound</div>
             <div class="settings-page-grid">
                 <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
@@ -804,10 +764,6 @@
                     <div class="team-panel-section">
                         <div class="team-panel-section-title"><i class="fas fa-medal"></i> CUP &amp; Super Cup Titles</div>
                         <div id="team-panel-mba"></div>
-                    </div>
-                    <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-gift"></i> Mystery Box Wins</div>
-                        <div id="team-panel-arena"></div>
                     </div>
                 </div>
             </div>

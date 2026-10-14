@@ -115,15 +115,8 @@ function openTeamPanel(team){
     const superTitles = (typeof computeSuperCupCounts==='function' && computeSuperCupCounts()[team]) || [];
     if(superTitles.length) mbaLogEl.innerHTML += superTitles.slice().reverse().map(sid=>`<div class="coin-log-row"><span>⚡ Super Cup Winner — Season ${sid}</span></div>`).join('');
 
-    const arenaEl = document.getElementById('team-panel-arena');
-    arenaEl.innerHTML = w.arenaHistory.length ? w.arenaHistory.slice(0,10).map(a=>{
-        const d = new Date(a.ts);
-        const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-        return `<div class="coin-log-row"><span>${escapeHtml(a.name||a.id)}${when?` · ${when}`:''}</span></div>`;
-    }).join('') : '<div class="team-panel-empty">No Mystery Box wins yet</div>';
-
-    // A symbolic team plays no league/CUP/Mystery Box, so those sections stay hidden for it.
-    ['team-panel-records','team-panel-mba','team-panel-arena'].forEach(id=>{
+    // A symbolic team plays no league/CUP, so those sections stay hidden for it.
+    ['team-panel-records','team-panel-mba'].forEach(id=>{
         const sec = document.getElementById(id) && document.getElementById(id).closest('.team-panel-section');
         if(sec) sec.style.display = isSymbolicTeam(team) ? 'none' : '';
     });

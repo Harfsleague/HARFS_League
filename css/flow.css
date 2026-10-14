@@ -92,10 +92,9 @@
 .flow-week.current .flow-fixture{ border-color:rgba(251,191,36,0.3); }
 
 /* =====================================================
-   SEASON SCREEN VIEWS  (js/season-layout.js → body[data-season-view])
-   main     = league table + CUP of the current season
-   schedule = timetable of the current season
-   results  = league table + CUP + match history of any season (pickers visible)
+   SEASON SCREEN VIEWS  (js/season-layout.js → body[data-season-view] + body[data-season-tab])
+   views: main = current season · schedule = timetable · results = any season (pickers visible)
+   tabs (main + results): league = league table (+ history in results) · cup = the CUP
    ===================================================== */
 #season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
 #season-sections > section{ display:block; width:100%; }
@@ -106,13 +105,52 @@
 body[data-season-view="main"] .ssec-slot,
 body[data-season-view="main"] #ssec-history,
 body[data-season-view="main"] #ssec-schedule{ display:none; }
-/* schedule: only the timetable */
+/* results: everything except the timetable */
+body[data-season-view="results"] #ssec-schedule{ display:none; }
+/* League / Cup tab */
+body[data-season-tab="league"] #ssec-mba{ display:none; }
+body[data-season-tab="cup"] #ssec-league,
+body[data-season-tab="cup"] #ssec-history{ display:none; }
+/* schedule: only the timetable (wins over the tab rules) */
 body[data-season-view="schedule"] #ssec-league,
 body[data-season-view="schedule"] #ssec-mba,
 body[data-season-view="schedule"] #ssec-history{ display:none; }
-/* results: everything except the timetable */
-body[data-season-view="results"] #ssec-schedule{ display:none; }
 #ssec-history .season-history-card{ margin-bottom:0; }
+
+/* page-to-page motion (schedule / results in and out, League ⇄ Cup) */
+#season-sections.sv-out{ animation:svOut .16s ease-in forwards; }
+#season-sections.sv-in{ animation:svIn .34s cubic-bezier(.2,.8,.2,1) both; }
+#season-sections.sv-tab{ animation:svTab .28s ease-out both; }
+@keyframes svOut{ to{ opacity:0; transform:translateX(calc(var(--sx,28px) * -1)) scale(.985); } }
+@keyframes svIn{ from{ opacity:0; transform:translateX(var(--sx,28px)) scale(.985); } to{ opacity:1; transform:none; } }
+@keyframes svTab{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.sv-fade{ animation:svFade .3s ease-out both; }
+@keyframes svFade{ from{ opacity:0; transform:scale(.85); } to{ opacity:1; transform:none; } }
+
+/* League | Cup bar — same glass pill as the bottom nav, docked right above it.
+   It starts tucked BEHIND the bottom nav (z-index 99 < 100) and slides up out of it. */
+.season-subnav{
+    position:absolute; bottom:70px; left:50%;
+    width:58%; max-width:220px;
+    display:flex; justify-content:space-between; align-items:center; padding:4px 6px;
+    background:rgba(10,18,30,0.75);
+    backdrop-filter:blur(28px) saturate(200%); -webkit-backdrop-filter:blur(28px) saturate(200%);
+    border-radius:9999px; z-index:99;
+    border:1px solid rgba(255,255,255,0.09);
+    box-shadow:0 8px 30px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.07);
+    opacity:0; pointer-events:none;
+    transform:translateX(-50%) translateY(58px) scale(.8);
+    transition:transform .5s cubic-bezier(.22,1.25,.36,1), opacity .28s ease;
+}
+.bottom-nav.active + .season-subnav.show{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0) scale(1); transition-delay:.1s, .1s; }
+.season-subnav .nav-item{ padding:6px 0; }
+.season-subnav .nav-item i{ font-size:0.95rem; margin-bottom:2px; }
+/* keep the floating extras clear of the bar while it is out */
+body.season-subnav-on .season-fab{ bottom:128px; }
+body.season-subnav-on .mini-player{ bottom:126px; }
+body.season-subnav-on #league-table-screen{ padding-bottom:150px; }
+body.perf-no-anim .season-subnav,
+body.perf-no-anim #season-sections{ transition:none !important; animation:none !important; }
 
 /* header: bigger title + date, icon buttons bottom-right */
 .season-title{ font-size:1.5rem; font-weight:900; letter-spacing:3px; text-transform:uppercase; color:var(--header-text); margin:0 0 2px; line-height:1.2; }
