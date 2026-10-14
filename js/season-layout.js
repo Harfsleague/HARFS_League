@@ -58,10 +58,10 @@ function seasonSetTab(tab, opts){
 }
 
 // ---------------- views ----------------
-function seasonApplyView(view, prev){
+function seasonApplyView(view, prev, keepTitle){
     const $ = id => document.getElementById(id);
     document.body.dataset.seasonView = view;
-    const title = $('season-screen-title'); if(title) title.textContent = SEASON_VIEW_TITLES[view];
+    if(!keepTitle){ const title = $('season-screen-title'); if(title) title.textContent = SEASON_VIEW_TITLES[view]; }
     const back = $('season-back-btn');
     if(back){ back.style.display = view==='main' ? 'none' : 'flex'; if(view!=='main' && seasonMotionOk()) seasonPlay(back,'sv-fade',320); }
     const actions = $('season-header-actions');
@@ -88,6 +88,36 @@ function seasonApplyView(view, prev){
     try{ window.scrollTo({ top:0 }); const sc=$('league-table-screen'); if(sc) sc.scrollTop = 0; }catch(e){}
 }
 
+// Title swap: the old word lifts away, the new one rises in (text changes mid-way).
+function seasonAnimateTitle(text, delay){
+    const t = document.getElementById('season-screen-title');
+    if(!t) return;
+    t.classList.remove('t-in'); void t.offsetWidth;
+    t.classList.add('t-out');
+    setTimeout(()=>{
+        t.textContent = text;
+        t.classList.remove('t-out'); void t.offsetWidth;
+        t.classList.add('t-in');
+        setTimeout(()=>t.classList.remove('t-in'), 340);
+    }, delay);
+}
+// Header box: tween its height from what it was to what the new content needs.
+function seasonMorphHeader(change){
+    const hdr = document.querySelector('#league-table-screen .league-header');
+    if(!hdr){ change(); return; }
+    const h0 = hdr.offsetHeight;
+    change();
+    hdr.style.height = '';                      // natural height of the new content
+    const h1 = hdr.offsetHeight;
+    if(Math.abs(h1-h0) < 2) return;
+    hdr.classList.add('hdr-anim');
+    hdr.style.height = h0+'px';
+    void hdr.offsetHeight;
+    hdr.style.height = h1+'px';
+    clearTimeout(hdr.__morphT);
+    hdr.__morphT = setTimeout(()=>{ hdr.style.height=''; hdr.classList.remove('hdr-anim'); }, 460);
+}
+
 function seasonShowView(view, opts){
     opts = opts || {};
     if(!SEASON_VIEW_TITLES[view]) view = 'main';
@@ -109,8 +139,9 @@ function seasonShowView(view, opts){
     box.style.setProperty('--sx', (dir*30)+'px');
     clearTimeout(seasonSwapTimer);
     seasonPlay(box, 'sv-out');
+    seasonAnimateTitle(SEASON_VIEW_TITLES[view], 150);
     seasonSwapTimer = setTimeout(()=>{
-        seasonApplyView(view, prev);
+        seasonMorphHeader(()=>seasonApplyView(view, prev, true));
         seasonPlay(box, 'sv-in', 360);
     }, 160);
 }

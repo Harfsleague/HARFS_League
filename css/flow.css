@@ -127,28 +127,36 @@ body[data-season-view="schedule"] #ssec-history{ display:none; }
 .sv-fade{ animation:svFade .3s ease-out both; }
 @keyframes svFade{ from{ opacity:0; transform:scale(.85); } to{ opacity:1; transform:none; } }
 
-/* League | Cup bar — same glass pill as the bottom nav, docked right above it.
-   It starts tucked BEHIND the bottom nav (z-index 99 < 100) and slides up out of it. */
+/* title swap + header box resize */
+.season-title{ transition:opacity .16s ease, transform .16s ease, filter .16s ease; }
+.season-title.t-out{ opacity:0; transform:translateY(-10px); filter:blur(3px); }
+.season-title.t-in{ animation:titleIn .3s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes titleIn{ from{ opacity:0; transform:translateY(10px); filter:blur(3px); } to{ opacity:1; transform:none; filter:none; } }
+#league-table-screen .league-header.hdr-anim{ overflow:hidden; transition:height .4s cubic-bezier(.22,1,.36,1); }
+body.perf-no-anim .season-title,
+body.perf-no-anim #league-table-screen .league-header.hdr-anim{ transition:none !important; animation:none !important; }
+
+/* League | Cup bar — built to look exactly like the bottom nav (same glass, rim, sheen, lens, refraction:
+   see the .season-subnav entries in css/liquid-glass.css). It sits in its own row ABOVE the bottom
+   nav with a clear gap, and starts tucked BEHIND it (z-index 99 < 100), sliding up out of it. */
 .season-subnav{
-    position:absolute; bottom:70px; left:50%;
-    width:58%; max-width:220px;
-    display:flex; justify-content:space-between; align-items:center; padding:4px 6px;
+    position:absolute; bottom:82px; left:50%;
+    width:60%; max-width:230px;
+    display:flex; justify-content:space-between; align-items:center; padding:6px 8px;
     background:rgba(10,18,30,0.75);
     backdrop-filter:blur(28px) saturate(200%); -webkit-backdrop-filter:blur(28px) saturate(200%);
     border-radius:9999px; z-index:99;
     border:1px solid rgba(255,255,255,0.09);
-    box-shadow:0 8px 30px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.07);
+    box-shadow:0 8px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);
     opacity:0; pointer-events:none;
-    transform:translateX(-50%) translateY(58px) scale(.8);
-    transition:transform .5s cubic-bezier(.22,1.25,.36,1), opacity .28s ease;
+    transform:translateX(-50%) translateY(70px) scale(.8);
+    transition:transform .55s cubic-bezier(.22,1.25,.36,1), opacity .3s ease;
 }
 .bottom-nav.active + .season-subnav.show{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0) scale(1); transition-delay:.1s, .1s; }
-.season-subnav .nav-item{ padding:6px 0; }
-.season-subnav .nav-item i{ font-size:0.95rem; margin-bottom:2px; }
 /* keep the floating extras clear of the bar while it is out */
-body.season-subnav-on .season-fab{ bottom:128px; }
-body.season-subnav-on .mini-player{ bottom:126px; }
-body.season-subnav-on #league-table-screen{ padding-bottom:150px; }
+body.season-subnav-on .season-fab{ bottom:150px; }
+body.season-subnav-on .mini-player{ bottom:148px; }
+body.season-subnav-on #league-table-screen{ padding-bottom:170px; }
 body.perf-no-anim .season-subnav,
 body.perf-no-anim #season-sections{ transition:none !important; animation:none !important; }
 

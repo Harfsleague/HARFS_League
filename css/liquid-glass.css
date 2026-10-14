@@ -44,6 +44,7 @@
 }
 body.fx-paused .ambient-orb,
 body.fx-paused .bottom-nav::before,
+body.fx-paused .season-subnav::before,
 body.fx-paused #hero-logo-container::before{ animation-play-state:paused; }
 
 /* ---------------------------------------------------------------------
@@ -78,7 +79,7 @@ body:not(.lite-mode):not(.perf-no-shadow) :is(.league-header,.season-history-car
     box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 14px var(--primary-glow);
 }
 /* gradient rim (static: costs nothing after first paint) */
-body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.settings-panel,.bottom-nav,#hero-logo-container.in-header,.mini-player)::after{
+body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.settings-panel,.bottom-nav,.season-subnav,#hero-logo-container.in-header,.mini-player)::after{
     content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none;
     background:linear-gradient(140deg,rgba(255,255,255,.40),rgba(255,255,255,0) 28%,rgba(255,255,255,0) 70%,rgba(255,255,255,.14));
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
@@ -91,7 +92,7 @@ body:not(.lite-mode) :is(.season-history-card,.league-header,.ai-entry-capsule,.
 /* ---------------------------------------------------------------------
    3. FLOATING GLASS — real backdrop-filter, upgraded to refraction by JS
    --------------------------------------------------------------------- */
-body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav,.mini-player,.back-to-top-fab,#hero-logo-container.in-header,#hero-logo-container.box-forming){
+body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav,.season-subnav,.mini-player,.back-to-top-fab,#hero-logo-container.in-header,#hero-logo-container.box-forming){
     background-color:rgba(14,22,38,.82);
     background-image:
         radial-gradient(90% 150% at var(--gx) var(--gy),rgba(255,255,255,.11),rgba(255,255,255,0) 62%),
@@ -105,6 +106,10 @@ body:not(.lite-mode):not(.perf-no-blur) :is(.bottom-nav,.mini-player,.back-to-to
 body:not(.lite-mode):not(.perf-no-blur) .bottom-nav{
     -webkit-backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
     backdrop-filter:var(--lg-bf-nav,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
+}
+body:not(.lite-mode):not(.perf-no-blur) .season-subnav{
+    -webkit-backdrop-filter:var(--lg-bf-sub,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
+    backdrop-filter:var(--lg-bf-sub,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
 }
 body:not(.lite-mode):not(.perf-no-blur) #hero-logo-container.in-header{
     -webkit-backdrop-filter:var(--lg-bf-cap,blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05));
@@ -127,6 +132,7 @@ body:not(.lite-mode) :is(.modal-overlay,.team-picker-sheet){ -webkit-backdrop-fi
 
 /* one soft highlight glides across the nav / capsule now and then (transform only) */
 body:not(.lite-mode):not(.perf-no-sheen) .bottom-nav::before,
+body:not(.lite-mode):not(.perf-no-sheen) .season-subnav::before,
 body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
     content:''; position:absolute; top:0; bottom:0; left:0; width:42%;
     pointer-events:none; border-radius:0;
@@ -144,7 +150,7 @@ body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
 /* ---------------------------------------------------------------------
    4. LIQUID NAV — the active "lens" slides, stretches, and can be dragged
    --------------------------------------------------------------------- */
-.bottom-nav{ touch-action:none; }
+.bottom-nav,.season-subnav{ touch-action:none; }
 .nav-item{ z-index:1; color:#94a3b8; }
 .nav-item.active{ color:var(--nav-active-color); }
 .lg-lens{
@@ -171,9 +177,9 @@ body:not(.lite-mode):not(.perf-no-sheen) #hero-logo-container.in-header::before{
     0%{ transform:scale(1); } 35%{ transform:scale(1.10,.965); } 70%{ transform:scale(.99,1.01); } 100%{ transform:scale(1); }
 }
 /* with the lens present, the per-item active chrome steps aside */
-.bottom-nav.lg-has-lens .nav-item.active{ background:none; border-color:transparent; box-shadow:none; }
-.bottom-nav.lg-has-lens .nav-item::after{ display:none; }
-.bottom-nav.lg-has-lens .nav-item:active{ transform:none; }
+:is(.bottom-nav,.season-subnav).lg-has-lens .nav-item.active{ background:none; border-color:transparent; box-shadow:none; }
+:is(.bottom-nav,.season-subnav).lg-has-lens .nav-item::after{ display:none; }
+:is(.bottom-nav,.season-subnav).lg-has-lens .nav-item:active{ transform:none; }
 
 /* press light: highlight follows the finger */
 .lg-light{
@@ -276,26 +282,26 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
    Nothing is removed — the look stays, the cost drops.
    --------------------------------------------------------------------- */
 body.tier-2{ --lg-blur:20px; --lg-sat:150%; }
-body.tier-2 .bottom-nav::before,body.tier-2 #hero-logo-container::before{ display:none; }
+body.tier-2 .bottom-nav::before,body.tier-2 .season-subnav::before,body.tier-2 #hero-logo-container::before{ display:none; }
 body.tier-3{ --lg-blur:14px; --lg-sat:140%; }
 body.tier-3 .ambient-orb{ animation:none; }
 body.tier-3 #particle-canvas{ display:none; }
-body.tier-3 .bottom-nav::before,body.tier-3 #hero-logo-container::before{ display:none; }
+body.tier-3 .bottom-nav::before,body.tier-3 .season-subnav::before,body.tier-3 #hero-logo-container::before{ display:none; }
 body.tier-3 :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content){
     -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-    :is(.bottom-nav,.mini-player,#hero-logo-container.in-header,.settings-panel,.team-picker-panel){ background-color:rgba(10,18,30,.92); }
+    :is(.bottom-nav,.season-subnav,.mini-player,#hero-logo-container.in-header,.settings-panel,.team-picker-panel){ background-color:rgba(10,18,30,.92); }
 }
 @media (prefers-reduced-motion:reduce){
-    .ambient-orb,.bottom-nav::before,#hero-logo-container::before{ animation:none !important; }
+    .ambient-orb,.bottom-nav::before,.season-subnav::before,#hero-logo-container::before{ animation:none !important; }
     .lg-lens,.lg-lens i{ transition:none !important; animation:none !important; }
     .match-card-mini{ opacity:1; transform:none; transition:none; }
 }
 /* Lite mode keeps winning over everything here */
 body.lite-mode .match-card-mini{ opacity:1; transform:none; transition:none; content-visibility:visible; }
-body.lite-mode .lg-lens,body.lite-mode .bottom-nav::before,body.lite-mode #hero-logo-container::before{ display:none !important; }
-body.lite-mode .bottom-nav.lg-has-lens .nav-item.active{ background:var(--nav-active-bg); border-color:var(--nav-active-border); }
+body.lite-mode .lg-lens,body.lite-mode .bottom-nav::before,body.lite-mode .season-subnav::before,body.lite-mode #hero-logo-container::before{ display:none !important; }
+body.lite-mode :is(.bottom-nav,.season-subnav).lg-has-lens .nav-item.active{ background:var(--nav-active-bg); border-color:var(--nav-active-border); }
 
 /* ---------------------------------------------------------------------
    7. DENSER FILLS for the remaining surfaces

@@ -1301,7 +1301,8 @@ body:not(.lite-mode) .season-history-card{
     position:relative;
     overflow:hidden;
 }
-body:not(.lite-mode) .bottom-nav{
+body:not(.lite-mode) .bottom-nav,
+body:not(.lite-mode) .season-subnav{
     overflow:hidden;
 }
 /* height-capped bottom sheets need their own content to scroll */
@@ -1335,6 +1336,7 @@ body.lite-mode * {
 }
 body.lite-mode .app-container,
 body.lite-mode .bottom-nav,
+body.lite-mode .season-subnav,
 body.lite-mode .league-header,
 body.lite-mode .season-history-card,
 body.lite-mode .match-card-mini,
@@ -1388,6 +1390,7 @@ body.perf-no-blur *{
 }
 body.perf-no-blur .app-container,
 body.perf-no-blur .bottom-nav,
+body.perf-no-blur .season-subnav,
 body.perf-no-blur .league-header,
 body.perf-no-blur .season-history-card,
 body.perf-no-blur .match-card-mini,

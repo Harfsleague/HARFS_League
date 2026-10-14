@@ -121,7 +121,7 @@
     }
     function buildLens(id,el,opts){
         const r0=el.getBoundingClientRect();
-        const w=Math.round(r0.width), h=Math.round(r0.height);
+        const w=Math.round(el.offsetWidth||r0.width), h=Math.round(el.offsetHeight||r0.height);   // offset* ignores transforms (the Season bar is scaled while tucked away)
         if(w<40||h<20) return null;
         const radius=Math.min(opts.radius||h/2, h/2, w/2);
         const url=makeMap(w,h,radius,opts.bezel);
@@ -145,6 +145,7 @@
     }
     const LENSES=[
         {id:'lg-nav', sel:'#bottom-navigation', prop:'--lg-bf-nav', bezel:11, scale:12, blur:.5, radius:null},
+        {id:'lg-sub', sel:'#season-subnav', prop:'--lg-bf-sub', bezel:11, scale:12, blur:.5, radius:null},
         {id:'lg-cap', sel:'#hero-logo-container.in-header', prop:'--lg-bf-cap', bezel:11, scale:10, blur:.5, radius:28}
     ];
     const bfChain = id=>`blur(calc(var(--lg-blur) * .8)) url(#${id}) saturate(1.25) brightness(1.04)`;   // frost first, then the lens bends it
@@ -178,34 +179,31 @@
     // ---------------------------------------------------------
     // 4. LIQUID NAV LENS
     // ---------------------------------------------------------
-    const nav=doc.getElementById('bottom-navigation');
-    let lens=null, lensW=0;
-    if(nav){
-        lens=doc.createElement('div'); lens.className='lg-lens'; lens.setAttribute('aria-hidden','true');
+    // One lens per bar: the 4-tab bottom nav and the Season League | Cup bar share the same behaviour.
+    function setupNavLens(nav){
+        if(!nav) return;
+        const lens=doc.createElement('div'); lens.className='lg-lens'; lens.setAttribute('aria-hidden','true');
         lens.innerHTML='<i></i>';
         nav.insertBefore(lens,nav.firstChild);
         nav.classList.add('lg-has-lens');
-    }
-    let lensIdx=-1, moveTimer=0;
-    function placeLens(animate){
-        if(!nav||!lens) return;
-        const it=nav.querySelector('.nav-item.active');
-        if(!it){ lens.classList.remove('lg-ready'); return; }
-        const items=[].slice.call(nav.querySelectorAll('.nav-item'));
-        const idx=items.indexOf(it);
-        lensW=it.offsetWidth;
-        lens.style.top=it.offsetTop+'px'; lens.style.width=lensW+'px'; lens.style.height=it.offsetHeight+'px';
-        lens.style.transform=`translate3d(${it.offsetLeft}px,0,0)`;
-        if(!lens.classList.contains('lg-ready')){
-            lens.style.transition='none'; void lens.offsetWidth;
-            lens.classList.add('lg-ready'); lens.style.transition='';
-        }else if(animate && idx!==lensIdx && !reduceMotion){
-            lens.classList.remove('lg-move'); void lens.offsetWidth; lens.classList.add('lg-move');
-            clearTimeout(moveTimer); moveTimer=setTimeout(()=>lens.classList.remove('lg-move'),650);
+        let lensW=0, lensIdx=-1, moveTimer=0;
+        function placeLens(animate){
+            const it=nav.querySelector('.nav-item.active');
+            if(!it){ lens.classList.remove('lg-ready'); return; }
+            const items=[].slice.call(nav.querySelectorAll('.nav-item'));
+            const idx=items.indexOf(it);
+            lensW=it.offsetWidth;
+            lens.style.top=it.offsetTop+'px'; lens.style.width=lensW+'px'; lens.style.height=it.offsetHeight+'px';
+            lens.style.transform=`translate3d(${it.offsetLeft}px,0,0)`;
+            if(!lens.classList.contains('lg-ready')){
+                lens.style.transition='none'; void lens.offsetWidth;
+                lens.classList.add('lg-ready'); lens.style.transition='';
+            }else if(animate && idx!==lensIdx && !reduceMotion){
+                lens.classList.remove('lg-move'); void lens.offsetWidth; lens.classList.add('lg-move');
+                clearTimeout(moveTimer); moveTimer=setTimeout(()=>lens.classList.remove('lg-move'),650);
+            }
+            lensIdx=idx;
         }
-        lensIdx=idx;
-    }
-    if(nav){
         new MutationObserver(()=>placeLens(true)).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
         if('ResizeObserver' in window) new ResizeObserver(()=>placeLens(false)).observe(nav);
         placeLens(false);
@@ -224,7 +222,8 @@
             }
             if(drag.moved){
                 const r=nav.getBoundingClientRect();
-                const x=clamp(e.clientX-r.left-lensW/2,2,r.width-lensW-2);
+                const sc=r.width/(nav.offsetWidth||r.width);              // the Season bar can be mid-scale
+                const x=clamp((e.clientX-r.left)/sc-lensW/2,2,nav.offsetWidth-lensW-2);
                 lens.style.transform=`translate3d(${x}px,0,0)`;
             }
         });
@@ -246,13 +245,15 @@
         // the app's own route-swipe must not fire from a drag on the bar
         ['touchstart','touchend'].forEach(t=>nav.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
     }
+    setupNavLens(doc.getElementById('bottom-navigation'));
+    setupNavLens(doc.getElementById('season-subnav'));
 
     // ---------------------------------------------------------
     // 5. SPECULAR LIGHT — phone tilt (or mouse) moves the highlight
     // Written only to the few elements that use it: setting a custom
     // property on :root would restyle the whole document every frame.
     // ---------------------------------------------------------
-    const RECEIVERS=['.bottom-nav','#hero-logo-container','.league-header','.mini-player'];
+    const RECEIVERS=['.bottom-nav','.season-subnav','#hero-logo-container','.league-header','.mini-player'];
     let tx=.5, ty=0, cx=.5, cy=0, lightRunning=false, lightFrame=0;
     function lightLoop(){
         lightRunning=true;
