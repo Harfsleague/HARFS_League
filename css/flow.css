@@ -303,3 +303,25 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .gc-chip.cancelled{ border-color:rgba(248,113,113,.45); background:rgba(248,113,113,.1); }
 .gc-chip.cancelled > span{ text-decoration:line-through; color:#fca5a5; }
 .mba-hist .game-cards{ justify-content:flex-start; margin:2px 0 6px 28px; }
+
+
+/* =====================================================
+   AI ASSISTANT — same look as the other screens (glass header card, round icon buttons, themed title)
+   ===================================================== */
+#ai-chat-screen .ai-chat-inner{ padding:0 12px; }
+.ai-panel{
+    background:rgba(10,18,30,0.65); border:1px solid rgba(255,255,255,0.07); border-radius:22px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+}
+.ai-panel-header{ padding:14px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.ai-panel-title{ font-size:1.05rem; font-weight:900; letter-spacing:3px; text-transform:uppercase; color:var(--header-text); }
+.ai-panel-title i{ color:var(--primary); font-size:.9rem; letter-spacing:0; }
+.ai-panel-back-btn, .ai-icon-btn{
+    width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.05); color:#d1d5db; font-size:.8rem;
+}
+.ai-panel-back-btn:active, .ai-icon-btn:active{ transform:scale(.9); background:rgba(255,255,255,0.12); color:var(--primary); }
+.ai-msg.model{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); }
+.ai-input-bar{ border-top:1px solid rgba(255,255,255,0.07); align-items:center; }
+#ai-chat-input{ border-radius:999px; padding:11px 18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14); }
+.ai-send-btn{ border-radius:50%; }

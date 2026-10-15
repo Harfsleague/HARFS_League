@@ -212,7 +212,7 @@
 
     <nav class="bottom-nav" id="bottom-navigation">
         <div class="nav-item" id="nav-main">
-            <i class="fas fa-trophy"></i><span>Overall</span>
+            <i class="fas fa-house"></i><span>Home</span>
         </div>
         <div class="nav-item active" onclick="navigate('league')" id="nav-season">
             <i class="fas fa-futbol"></i><span>Season</span>
@@ -610,7 +610,7 @@
                     <div class="perf-toggle on" id="ai-assistant-toggle"></div>
                 </div>
             </div>
-            <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to hide the assistant from the Overall page.</p>
+            <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to hide the assistant from the Home page.</p>
 
             <div id="settings-admin-section" style="display:none;">
                 <div class="settings-section-label">Bayern Admin</div>
@@ -821,7 +821,7 @@
             </div>
         </div>
     </div>
-    <!-- ============ CARDS (Overall → Cards): a team sees only its own hand ============ -->
+    <!-- ============ CARDS (Home → Cards): a team sees only its own hand ============ -->
     <div id="cards-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardsSheet()">
         <div class="team-picker-panel hero-modal cards-modal">
             <div class="modal-x-close" onclick="closeCardsSheet()"><i class="fas fa-times"></i></div>
@@ -922,7 +922,7 @@
                      suggestion chips in most chat apps. -->
                 <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
                 <div class="ai-input-bar">
-                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" onkeyup="if(event.key==='Enter')sendAiMessage()">
+                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" enterkeyhint="send" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();sendAiMessage()}">
                     <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>

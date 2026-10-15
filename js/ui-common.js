@@ -219,18 +219,7 @@ function startApp(){
     }, 1800);
 }
 
-(function(){
-    let sx=0,sy=0,st=0;
-    const app=document.getElementById('app-container');
-    app.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();},{passive:true});
-    app.addEventListener('touchend',e=>{
-        const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy,dt=Date.now()-st;
-        if(Math.abs(dx)>55&&Math.abs(dy)<50&&dt<350){
-            if(dx<0&&currentRouteIndex<ROUTES.length-1){haptic([6]);navigate(ROUTES[currentRouteIndex+1]);}
-            else if(dx>0&&currentRouteIndex>0){haptic([6]);navigate(ROUTES[currentRouteIndex-1]);}
-        }
-    },{passive:true});
-})();
+// (Swiping left/right between pages was removed on purpose — pages change only through the bottom navigation.)
 
 // ============================================================
 // NAV WIRING

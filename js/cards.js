@@ -322,7 +322,7 @@ function renderCardsAdmin(){
     const el = document.getElementById('cards-admin-body'); if(!el) return;
     if(!isFullAdmin()){ el.innerHTML=''; return; }
     if(!cardsData){ el.innerHTML = '<div class="text-center text-gray-600 text-xs">Loading...</div>'; return; }
-    let html = `<p class="mba-admin-hint" style="margin-top:0"><i class="fas fa-robot mr-1"></i> Cards are dealt, activated and used <b>automatically</b> — you can only create and edit cards here. To see your own hand (Bayern) open Overall → Cards.</p>
+    let html = `<p class="mba-admin-hint" style="margin-top:0"><i class="fas fa-robot mr-1"></i> Cards are dealt, activated and used <b>automatically</b> — you can only create and edit cards here. To see your own hand (Bayern) open Home → Cards.</p>
         <p class="flow-next"><i class="fas fa-circle-info"></i> ${escapeHtml(cardsNextDealText())}</p>`;
     // --- deck ---
     html += `<div class="flow-section-title" style="margin-top:12px;">Deck</div><div class="ca-deck">`

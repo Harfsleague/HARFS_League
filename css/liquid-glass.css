@@ -52,7 +52,7 @@ body.fx-paused #hero-logo-container::before{ animation-play-state:paused; }
    --------------------------------------------------------------------- */
 body:not(.lite-mode):not(.perf-no-blur) :is(
     .league-header,.table-wrap,.season-history-card,.weird-card,.admin-section,
-    .ranking-card,.stat-card,.glass-button,.glass-input,.ai-entry-capsule
+    .ranking-card,.stat-card,.glass-button,.glass-input,.ai-entry-capsule,.ai-panel
 ){
     -webkit-backdrop-filter:none; backdrop-filter:none;
     background-color:rgba(12,20,34,.80);
@@ -63,7 +63,7 @@ body:not(.lite-mode):not(.perf-no-blur) :is(
     border-top-color:var(--lg-rim-hi);
     border-bottom-color:var(--lg-rim-lo);
 }
-body:not(.lite-mode):not(.perf-no-shadow) :is(.league-header,.season-history-card,.glass-button,.ai-entry-capsule,.table-wrap){
+body:not(.lite-mode):not(.perf-no-shadow) :is(.league-header,.season-history-card,.glass-button,.ai-entry-capsule,.table-wrap,.ai-panel){
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.32),
         inset 0 -1px 0 rgba(255,255,255,.05),
@@ -120,7 +120,7 @@ body:not(.lite-mode):not(.perf-no-blur) :is(.mini-player,.back-to-top-fab,#hero-
     backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(1.05);
 }
 /* sheets / modals: real translucency, smaller blur (was 30px at 0.99 alpha = invisible + costly) */
-body:not(.lite-mode):not(.perf-no-blur) :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content,.login-panel,.settings-screen-panel){
+body:not(.lite-mode):not(.perf-no-blur) :is(.settings-panel,.team-picker-panel,.appearance-panel,.modal-content,.login-panel,.settings-screen-panel){
     -webkit-backdrop-filter:blur(36px) saturate(155%);
     backdrop-filter:blur(36px) saturate(155%);
     background-image:

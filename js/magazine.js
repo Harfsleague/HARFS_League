@@ -163,6 +163,13 @@ function cupScoreLine(teams, score) {
     return `${teamLabel(teams[0])} <b>${escapeHtml(x)}</b> - <b>${escapeHtml(y)}</b> ${teamLabel(teams[1])}`;
 }
 
+// The magazine is right-to-left: the FIRST team of a pair is drawn on the RIGHT. A number block that reads
+// left-to-right must therefore list the second team's figure first, or every score looks swapped.
+function cupLegOnScreen(score) {
+    const p = String(score).split('-');
+    return p.length === 2 ? `${p[1].trim()}-${p[0].trim()}` : String(score);
+}
+
 function renderCupSection(issue) {
     const cup = issue.cup;
     if (!cup || !cup.hasActivity) return '';
@@ -175,13 +182,13 @@ function renderCupSection(issue) {
     const semis = (cup.bracket?.semis || []).map(s => {
         const [a, b] = s.teams || [];
         const legs = (s.legs || []).map(l => `
-            <span class="magazine-cup-leg ${l.playedThisWeek ? 'is-new' : ''}">${l.score ? `${escapeHtml(l.score)}` : '—'}</span>`).join('');
+            <span class="magazine-cup-leg ${l.playedThisWeek ? 'is-new' : ''}">${l.score ? escapeHtml(cupLegOnScreen(l.score)) : '—'}</span>`).join('');
         return `
         <div class="magazine-cup-card">
             <div class="magazine-cup-card-title">نیمه‌نهایی ${s.semi}</div>
             <div class="magazine-cup-series">
                 <span class="${s.winner === a ? 'is-winner' : ''}">${teamLabel(a)}</span>
-                <b>${s.wins?.[a] ?? 0} - ${s.wins?.[b] ?? 0}</b>
+                <b dir="ltr">${s.wins?.[b] ?? 0} - ${s.wins?.[a] ?? 0}</b>
                 <span class="${s.winner === b ? 'is-winner' : ''}">${teamLabel(b)}</span>
             </div>
             <div class="magazine-cup-legs" dir="ltr">${legs || '<span class="magazine-form-streak">—</span>'}</div>

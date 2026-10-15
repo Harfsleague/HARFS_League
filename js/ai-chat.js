@@ -93,7 +93,8 @@ function openAiPanel(){
         pushAiMessage('model', "Hi! 👋 I'm the HARFS analysis assistant. I can review the table, results and team trends, and chat with you about strategy. What would you like to know?");
     }
     renderAiSuggestions();
-    setTimeout(()=>{ const inp=document.getElementById('ai-chat-input'); if(inp) inp.focus(); }, 350);
+    // no auto-focus on purpose: the keyboard must only appear after the user taps "Type your message…"
+    const inp0=document.getElementById('ai-chat-input'); if(inp0) inp0.blur();
 }
 function closeAiPanel(){
     navigate('main-league');

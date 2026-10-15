@@ -452,7 +452,7 @@ function computeSuperCupCounts(){
 // Rendering — shared pieces
 // ------------------------------------------------------------
 function flowTeamChip(team, cls){
-    return `<span class="flow-team ${cls||''}"><img src="${teamLogoUrl(team)}" alt="" onerror="this.style.opacity='0.3'"><span>${escapeHtml(teamShort(team))}</span></span>`;
+    return `<span class="flow-team ${cls||''}"><img src="${teamLogoUrl(team)}" alt="" decoding="async" onerror="this.style.opacity='0.3'"><span>${escapeHtml(teamShort(team))}</span></span>`;
 }
 function flowStepperHtml(){
     const idx = flowStageIndex();
@@ -599,12 +599,15 @@ function renderFlowAdmin(){
 // ------------------------------------------------------------
 // Public view — Season tab → Schedule
 // ------------------------------------------------------------
+// Only touch the DOM when the markup really changed: re-creating ~48 team logos on every tab switch is what made
+// the Schedule page pop in half-drawn.
+function flowSetHtml(el, html){ if(el.__flowHtml===html) return; el.__flowHtml = html; el.innerHTML = html; }
 function renderFlowSchedule(){
     const el = document.getElementById('schedule-season-body');
     if(!el) return;
     const f = flowCur(); const p = flowPhase();
     if(!f){
-        el.innerHTML = `<div class="flow-empty"><i class="fas fa-calendar-days"></i><p>No season is running.<br>The full schedule appears here as soon as the next season starts.</p></div>`;
+        flowSetHtml(el, `<div class="flow-empty"><i class="fas fa-calendar-days"></i><p>No season is running.<br>The full schedule appears here as soon as the next season starts.</p></div>`);
         return;
     }
     const rnd = flowCurrentRound(f);
@@ -644,7 +647,7 @@ function renderFlowSchedule(){
     if(flowSuperCupValid(f)) superInner = flowSuperSummaryHtml(f) + `<div class="flow-summary-row"><span>🏆 Winner</span>${flowTeamChip(f.superCup.winner)}</div>`;
     html += stageBlock('5 · Super Cup', superInner, stageState(4));
 
-    el.innerHTML = html;
+    flowSetHtml(el, html);
 }
 
 function renderFlowViews(){

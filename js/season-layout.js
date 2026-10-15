@@ -124,6 +124,23 @@ function seasonMorphHeader(change){
     hdr.__morphT = setTimeout(()=>{ hdr.style.height=''; hdr.classList.remove('hdr-anim'); }, 460);
 }
 
+// Same height tween as seasonMorphHeader, but the new content is already in place: the header is first put back at
+// its previous height (hdr.__h0, recorded just before the swap) and then glides to the natural height.
+function seasonMorphHeaderTo(view){
+    const hdr = document.querySelector('#league-table-screen .league-header');
+    if(!hdr || hdr.__h0==null) return;
+    const h0 = hdr.__h0; hdr.__h0 = null;
+    hdr.style.height = '';
+    const h1 = hdr.offsetHeight;
+    if(Math.abs(h1-h0) < 2) return;
+    hdr.classList.add('hdr-anim');
+    hdr.style.height = h0+'px';
+    void hdr.offsetHeight;
+    hdr.style.height = h1+'px';
+    clearTimeout(hdr.__morphT);
+    hdr.__morphT = setTimeout(()=>{ hdr.style.height=''; hdr.classList.remove('hdr-anim'); }, 460);
+}
+
 function seasonShowView(view, opts){
     opts = opts || {};
     if(!SEASON_VIEW_TITLES[view]) view = 'main';
@@ -144,11 +161,19 @@ function seasonShowView(view, opts){
     const dir = view==='main' ? -1 : 1;
     box.style.setProperty('--sx', (dir*30)+'px');
     clearTimeout(seasonSwapTimer);
+    const hdr0 = document.querySelector('#league-table-screen .league-header');
+    if(hdr0){ hdr0.style.height=''; hdr0.__h0 = hdr0.offsetHeight; }
     seasonPlay(box, 'sv-out');
     seasonAnimateTitle(SEASON_VIEW_TITLES[view], 150);
     seasonSwapTimer = setTimeout(()=>{
-        seasonMorphHeader(()=>seasonApplyView(view, prev, true));
-        seasonPlay(box, 'sv-in', 360);
+        // The heavy part (rendering the timetable / history) runs while the box is still invisible (sv-out keeps it
+        // at opacity 0). The slide-in and the header morph only start AFTER the new content has been laid out and
+        // painted — before, a season with a real timetable made the header appear half-sized and the motion stutter.
+        seasonApplyView(view, prev, true);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            seasonMorphHeaderTo(view);
+            seasonPlay(box, 'sv-in', 360);
+        }));
     }, 160);
 }
 

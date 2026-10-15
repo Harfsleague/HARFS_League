@@ -2125,7 +2125,7 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 }
 .magazine-issue-picker-row:hover,.magazine-issue-picker-row.active{ background:rgba(255,255,255,0.07);color:#fff; }
 .magazine-issue-picker-date{ color:#6b7280;font-size:0.64rem; }
-.magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;letter-spacing:0.02em;background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;letter-spacing:0.02em;color:var(--header-text);background:linear-gradient(90deg,var(--header-text),var(--primary));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 .magazine-panel-back-btn{background:none;border:none;color:inherit;font-size:1.1rem;}
 
 /* ---- Cover hero: title/subtitle overlaid on the image like a real
