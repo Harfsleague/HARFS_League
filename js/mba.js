@@ -694,6 +694,8 @@ function renderMbaSeasonView(){
     if(!isCur && ctx.canEdit && !mbaData.current && last && last.edition===t.edition){
         html += `<button class="mba-reopen-btn" onclick="reopenLastMbaEdition()"><i class="fas fa-rotate-left mr-1"></i>Reopen this edition to correct the outcome</button>`;
     }
+    if(el.__mbaHtml===html && el.children.length) return;   // unchanged → keep the DOM (no flash when switching pages)
+    el.__mbaHtml = html;
     el.innerHTML = html;
 }
 

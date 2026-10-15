@@ -325,3 +325,6 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .ai-input-bar{ border-top:1px solid rgba(255,255,255,0.07); align-items:center; }
 #ai-chat-input{ border-radius:999px; padding:11px 18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14); }
 .ai-send-btn{ border-radius:50%; }
+
+/* Season page switch: animate only transform/opacity on their own layer (no layout work per frame) */
+#season-sections.sv-out, #season-sections.sv-in, #season-sections.sv-tab{ will-change:transform,opacity; backface-visibility:hidden; }

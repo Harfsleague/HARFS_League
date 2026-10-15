@@ -45,7 +45,7 @@ function seasonSyncSubnav(route){
     if(on){
         if(!bar.querySelector('.nav-item.active')){ const t = bar.querySelector(`.nav-item[data-tab="${seasonTab}"]`); if(t) t.classList.add('active'); }
         const again = ()=>{ if(bar.__lgPlace) bar.__lgPlace(false); };
-        requestAnimationFrame(again); setTimeout(again, 120); setTimeout(again, 700);
+        requestAnimationFrame(again); setTimeout(again, 700);
     }
 }
 function seasonSetTab(tab, opts){
@@ -80,7 +80,7 @@ function seasonApplyView(view, prev, keepTitle){
         if(typeof currentSeasonIdx!=='undefined') currentSeasonIdx = 0;
         if(typeof syncSeasonPill==='function') syncSeasonPill();
         const sel = $('season-selector'); if(sel) sel.value = 'current';
-        if(needReset || prev!=='main'){
+        if(needReset){
             if(typeof loadSelectedSeason==='function') loadSelectedSeason('current');
         }
         if(typeof updateCurrentDateTime==='function' && !needReset) updateCurrentDateTime();
@@ -161,8 +161,6 @@ function seasonShowView(view, opts){
     const dir = view==='main' ? -1 : 1;
     box.style.setProperty('--sx', (dir*30)+'px');
     clearTimeout(seasonSwapTimer);
-    const hdr0 = document.querySelector('#league-table-screen .league-header');
-    if(hdr0){ hdr0.style.height=''; hdr0.__h0 = hdr0.offsetHeight; }
     seasonPlay(box, 'sv-out');
     seasonAnimateTitle(SEASON_VIEW_TITLES[view], 150);
     seasonSwapTimer = setTimeout(()=>{
@@ -171,7 +169,6 @@ function seasonShowView(view, opts){
         // painted — before, a season with a real timetable made the header appear half-sized and the motion stutter.
         seasonApplyView(view, prev, true);
         requestAnimationFrame(()=>requestAnimationFrame(()=>{
-            seasonMorphHeaderTo(view);
             seasonPlay(box, 'sv-in', 360);
         }));
     }, 160);

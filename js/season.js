@@ -130,6 +130,11 @@ function updateHistoryDots(filter){
 
 function renderSeasonHistoryList(history){
     history=history||[];
+    // Same data as what is already drawn → keep the DOM (rebuilding it + GlassFX re-sampling is what made page switches stutter)
+    const sigList=document.getElementById('season-history-list');
+    const sig=history.map(m=>`${m.timestamp}|${m.score}|${m.home}|${m.away}|${m.cards?JSON.stringify(m.cards):''}`).join(';')+'#'+TEAM_NAMES.map(t=>teamShort(t)).join(',');
+    if(sigList && sigList.__sig===sig && sigList.children.length) return;
+    if(sigList) sigList.__sig=sig;
     const loadingEl=document.getElementById('season-history-loading');
     if(loadingEl)loadingEl.style.display='none';
     buildSeasonHistoryChips();
