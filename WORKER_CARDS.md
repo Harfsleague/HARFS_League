@@ -21,8 +21,12 @@ changed by the Worker's own card rules.
 * **After every 2nd matchweek** (each team has played each other team once) → 2 random cards for
   every team: after MW 2, 4, 6. Nothing after the last matchweek (only the CUP final + Super Cup
   are left and they allow no cards). Dealing is idempotent — it can never be dealt twice.
-* **Keep limit: 3 cards. “No” cards do not count** (checked on `activate`).
-* One active card per team. “No” cancels the opponent's card.
+* **Keep limit: 5 cards — every card counts**, “No” and “Combo point” included (checked on `activate`).
+* **Up to 2 active cards per team per game.** Each active “No” cancels one card of the opponent (earliest activated first).
+* **Combo point** (system card, can be dealt randomly): a team holding 3 redeems them (`action:"combo"`) for **+4 league points**.
+  The Worker keeps a ledger (`cards_data.json → bonus`) and writes `Pts`, `Bonus`, `BonusSeason` into `league_data.json`.
+  *Verify & Repair* re-applies the ledger, so the 4 points are approved (not removed) when the table is rebuilt.
+  Not possible once every league fixture is played.
 * Cards can be used in **league games, CUP semifinals and the third-place match**.
   **CUP final and Super Cup: no cards** (`consume` returns `free:true`, active cards stay in the hand).
 * When the admin saves a result, the app calls `consume` first; the Worker removes the active cards
@@ -38,8 +42,9 @@ changed by the Worker's own card rules.
 
 | action | who | body | notes |
 |---|---|---|---|
+| `combo` | a team (own hand) | – | redeem 3 Combo point cards → +4 league points |
 | `sync` | any logged-in account | – | deals whatever is due (new season / every 2nd matchweek) |
-| `activate` / `deactivate` / `discard` | the 4 teams (acting on **their own** hand only) | `uid` | `activate` refused while > 3 non-“No” cards |
+| `activate` / `deactivate` / `discard` | the 4 teams (acting on **their own** hand only) | `uid` | `activate` refused while > 5 cards or with 2 cards already active |
 | `consume` | admin only (called by the app while saving a result) | `stage` (`league`\|`semi`\|`third`\|`final`\|`super`), `home`, `away`, `gameKey` | validated against `season_flow.json` / `match_history.json` / `mba_history.json`; idempotent per game |
 | `deck_save` | admin only | `card:{ id?, name, desc, draw, img? }` | picture itself is uploaded through `/gh/…/contents/cards/<id>.jpg` |
 | `deck_delete` | admin only | `id` | also removes the card from every hand |

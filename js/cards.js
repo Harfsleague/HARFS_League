@@ -6,18 +6,21 @@
 // take, activate, discard or change anybody's card, and cannot deal.
 //
 // RULES
-//   1. A new season: every team gets 2 "No" cards (they cancel the opponent's card) + 2 random cards.
+//   1. A new season: every team gets 2 "No" cards (a "No" cancels one card of the opponent) + 2 random cards.
 //   2. After every 2nd matchweek (= every team has played every other team once) every team gets
 //      2 more random cards, automatically. Nothing is dealt after the last matchweek.
-//   3. A team may KEEP at most 3 cards. "No" cards do NOT count towards that limit.
-//   4. Only ONE card per team can be active in a game; each team uses at most one card per game.
+//   3. A team may KEEP at most 5 cards — every card counts, "No" and "Combo point" included.
+//   4. In ONE game a team may play up to 2 cards.
 //   5. Cards can be used in league games and CUP semifinals (and the third-place match) —
 //      NOT in the CUP final and NOT in the Super Cup.
-//   6. A team activates / deactivates / discards its own cards (Overall → Cards). Bayern is both the
+//   6. "Combo point": a team holding 3 of them can redeem them for +4 league points (Home → Cards).
+//      The Worker keeps a ledger (cards_data.json → bonus) and writes the points into league_data.json
+//      (fields Pts + Bonus + BonusSeason); Verify & Repair re-applies the ledger, so the 4 points are approved.
+//   7. A team activates / deactivates / discards its own cards (Home → Cards). Bayern is both the
 //      admin and a team: as a team it plays by exactly the same rules as everybody else.
-//   7. While a result is entered the admin only SEES each team's active card above the team. When the
+//   8. While a result is entered the admin only SEES each team's active cards above the team. When the
 //      result is saved the cards are used up and written into the game's history record
-//      (match.cards / CUP leg.cards = { <Team>: { card, name, cancelled } }).
+//      (match.cards / CUP leg.cards = { <Team>: [{ card, name, cancelled }] }).
 //
 // DATA — cards_data.json (data repo). Written ONLY by the Worker (the /gh/ proxy refuses the admin):
 //   { v:2, deck:[{ id, name, desc, img:<timestamp|null>, draw:<bool>, system?:true }],
@@ -27,7 +30,11 @@
 // ============================================================
 
 const GITHUB_CARDS_FILE = 'cards_data.json';
-const CARDS_MAX_KEEP = 3;          // "No" cards are not counted
+const CARDS_MAX_KEEP = 5;          // every card counts
+const CARDS_MAX_ACTIVE = 2;        // cards a team may play in one game
+const CARD_COMBO_ID = 'combo';
+const COMBO_NEED = 3;
+const COMBO_POINTS = 4;
 const CARDS_START_NO = 2;
 const CARDS_WEEKLY_DRAW = 2;       // random cards per deal
 const CARDS_DEAL_EVERY = 2;        // matchweeks between two deals
@@ -46,6 +53,12 @@ const CARD_NO_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
     + '<rect width="300" height="420" rx="26" fill="url(#g)"/><rect x="10" y="10" width="280" height="400" rx="20" fill="none" stroke="#fca5a5" stroke-opacity=".5" stroke-width="3"/>'
     + '<circle cx="150" cy="190" r="86" fill="none" stroke="#fecaca" stroke-width="18"/><path d="M89 251L211 129" stroke="#fecaca" stroke-width="18" stroke-linecap="round"/>'
     + '<text x="150" y="350" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="58" font-weight="900" fill="#fff" letter-spacing="6">NO</text></svg>');
+const CARD_COMBO_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14532d"/><stop offset="1" stop-color="#854d0e"/></linearGradient></defs>'
+    + '<rect width="300" height="420" rx="26" fill="url(#g)"/><rect x="10" y="10" width="280" height="400" rx="20" fill="none" stroke="#fde68a" stroke-opacity=".6" stroke-width="3"/>'
+    + '<text x="150" y="215" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="120" font-weight="900" fill="#fde68a">+4</text>'
+    + '<text x="150" y="290" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="34" font-weight="900" fill="#fff" letter-spacing="3">COMBO</text>'
+    + '<text x="150" y="335" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#fef3c7">POINT</text></svg>');
 function cardPlaceholderSvg(name){
     const t = String([...(name||'?')].slice(0,2).join('')).replace(/[<>&"]/g,'');
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(
@@ -63,23 +76,37 @@ function cardsNormalize(d){
     if(!d.deals || typeof d.deals!=='object') d.deals = {};
     if(!d.used || typeof d.used!=='object') d.used = {};
     if(!Array.isArray(d.log)) d.log = [];
+    if(!d.bonus || typeof d.bonus!=='object') d.bonus = {};
+    if(!d.deck.some(c=>c.id===CARD_COMBO_ID)){
+        d.deck.push({ id:CARD_COMBO_ID, name:'Combo point', desc:`Hold ${COMBO_NEED} of these and redeem them for +${COMBO_POINTS} league points.`, img:null, draw:true, system:true });
+    }
     if(!d.deck.some(c=>c.id===CARD_NO_ID)){
         d.deck.unshift({ id:CARD_NO_ID, name:'No', desc:'Cancels the card your opponent plays in this game.', img:null, draw:false, system:true });
     }
-    d.deck.forEach(c=>{ if(c.id===CARD_NO_ID){ c.system = true; } if(typeof c.draw!=='boolean') c.draw = c.id!==CARD_NO_ID; });
+    d.deck.forEach(c=>{ if(c.id===CARD_NO_ID||c.id===CARD_COMBO_ID){ c.system = true; } if(typeof c.draw!=='boolean') c.draw = c.id!==CARD_NO_ID; });
     TEAM_NAMES.forEach(t=>{ if(!Array.isArray(d.hands[t])) d.hands[t] = []; });
     return d;
 }
-function cardsKeep(team){ return cardsHand(team).filter(h=>h.card!==CARD_NO_ID).length; }   // "No" cards are free
+function cardsKeep(team){ return cardsHand(team).length; }   // every card counts
 function cardsRid(){ return Math.random().toString(36).slice(2,10); }
 function cardDef(id){ return (cardsData && cardsData.deck.find(c=>c.id===id)) || null; }
 function cardImgUrl(def){
     if(!def) return cardPlaceholderSvg('?');
     if(def.img) return `${GITHUB_IMAGE_BASE_URL}cards/${def.id}.jpg?v=${def.img}`;
-    return def.id===CARD_NO_ID ? CARD_NO_SVG : cardPlaceholderSvg(def.name);
+    return def.id===CARD_NO_ID ? CARD_NO_SVG : (def.id===CARD_COMBO_ID ? CARD_COMBO_SVG : cardPlaceholderSvg(def.name));
 }
 function cardsHand(team){ return (cardsData && cardsData.hands[team]) || []; }
-function cardsActiveOf(team){ return cardsHand(team).find(h=>h.active) || null; }
+function cardsActiveList(team){ return cardsHand(team).filter(h=>h.active && h.card!==CARD_COMBO_ID).sort((a,b)=>(a.at||0)-(b.at||0)).slice(0,CARDS_MAX_ACTIVE); }
+// Each opposing "No" cancels one of our other cards (the earliest activated first) — same rule as the Worker.
+function cardsActiveView(team, opp){
+    let left = cardsActiveList(opp).filter(h=>h.card===CARD_NO_ID).length;
+    return cardsActiveList(team).map(h=>{
+        let cancelled = false;
+        if(h.card!==CARD_NO_ID && left>0){ cancelled = true; left--; }
+        const d = cardDef(h.card);
+        return { card:h.card, name:d?d.name:h.card, cancelled };
+    });
+}
 
 // ---------------- load / server calls ----------------
 async function cardsLoad(force){
@@ -148,7 +175,11 @@ async function cardsRecordGame(stage, teams, gameKey){
 function cardsUsageToStore(u){
     if(!u || (!u.home && !u.away)) return null;
     const out = {};
-    [u.home, u.away].forEach(s=>{ if(s && s.team) out[s.team] = { card:s.card, name:s.name, cancelled:!!s.cancelled }; });
+    [u.home, u.away].forEach(side=>{
+        if(!side || !side.team) return;
+        const list = (side.cards || (side.card ? [side] : [])).map(c=>({ card:c.card, name:c.name, cancelled:!!c.cancelled }));
+        if(list.length) out[side.team] = list;
+    });
     return Object.keys(out).length ? out : null;
 }
 const CARDS_FREE_STAGES = ['final','super'];
@@ -158,11 +189,27 @@ function cardsOver(team){ return Math.max(0, cardsKeep(team) - CARDS_MAX_KEEP); 
 async function cardsAct(team, action, uid){
     haptic([8]);
     if(!loggedInTeam || loggedInTeam!==team || !harfsSessionToken){ showToast('Log in with your team first','error',2400); return false; }
-    if(action==='activate' && cardsOver(team)){ showToast(`Discard ${cardsOver(team)} card(s) first — you can keep ${CARDS_MAX_KEEP} at most (“No” cards don't count).`,'error',3600); return false; }
+    if(action==='activate'){
+        if(cardsOver(team)){ showToast(`Discard ${cardsOver(team)} card(s) first — you can keep ${CARDS_MAX_KEEP} cards at most.`,'error',3600); return false; }
+        if(cardsActiveList(team).length>=CARDS_MAX_ACTIVE){ showToast(`You can play at most ${CARDS_MAX_ACTIVE} cards in one game — deactivate one first.`,'error',3600); return false; }
+    }
     const r = await cardsApi({ action, uid });
     if(!r.ok){ showToast(r.error,'error',3600); await cardsLoad(true); renderCardsAll(); return false; }
     renderCardsAll();
     return true;
+}
+
+// Redeem 3 "Combo point" cards for +4 league points (the Worker writes the points into the league table).
+async function cardsComboRedeem(){
+    haptic([10]);
+    if(!loggedInTeam || !TEAM_NAMES.includes(loggedInTeam)) return;
+    const ok = await showConfirm({icon:'🃏',title:`Redeem ${COMBO_NEED} Combo point cards?`,message:`You get +${COMBO_POINTS} points in the league table right away. The ${COMBO_NEED} cards are used up.`,okLabel:`+${COMBO_POINTS} points`,okColor:'green'});
+    if(!ok) return;
+    const r = await cardsApi({ action:'combo' });
+    if(!r.ok){ showToast(r.error,'error',4200); await cardsLoad(true); renderCardsAll(); return; }
+    showToast(r.leagueOk===false ? `Combo redeemed — the table update is pending, it syncs automatically` : `+${COMBO_POINTS} points added to the league table 🎉`,'success',3200);
+    try{ await loadLeagueDataFromGitHub(); if(typeof loadSelectedSeason==='function') loadSelectedSeason('current'); }catch(e){}
+    renderCardsAll();
 }
 
 // ---------------- Overall → Cards sheet (a team sees only its own cards) ----------------
@@ -170,14 +217,14 @@ function cardTileHtml(h, team, mine){
     const def = cardDef(h.card);
     const name = def ? def.name : h.card;
     const desc = def && def.desc ? `<div class="cd-desc" dir="auto">${escapeHtml(def.desc)}</div>` : '';
-    const free = h.card===CARD_NO_ID ? '<span class="cd-free">free</span>' : '';
+    const isCombo = h.card===CARD_COMBO_ID;
     const acts = mine ? `<div class="cd-acts">
-            <button class="cd-btn ${h.active?'on':''}" onclick="cardsAct('${team}','${h.active?'deactivate':'activate'}','${h.uid}')">${h.active?'Active ✓':'Use in next game'}</button>
+            ${isCombo ? `<span class="cd-btn cd-info">${COMBO_NEED} = +${COMBO_POINTS} pts</span>` : `<button class="cd-btn ${h.active?'on':''}" onclick="cardsAct('${team}','${h.active?'deactivate':'activate'}','${h.uid}')">${h.active?'Active ✓':'Use in next game'}</button>`}
             <button class="cd-btn cd-del" onclick="cardsDiscardAsk('${team}','${h.uid}')" aria-label="Discard"><i class="fas fa-trash"></i></button>
         </div>` : '';
     return `<div class="cd-tile${h.active?' active':''}">
         <div class="cd-img-wrap" onclick="cardsZoom('${h.card}')"><img class="cd-img" src="${cardImgUrl(def)}" alt="" onerror="this.src='${cardPlaceholderSvg(name).replace(/'/g,'%27')}'">${h.active?'<span class="cd-flag">ACTIVE</span>':''}</div>
-        <div class="cd-name" dir="auto">${escapeHtml(name)}${free}</div>${desc}${acts}
+        <div class="cd-name" dir="auto">${escapeHtml(name)}</div>${desc}${acts}
     </div>`;
 }
 async function cardsDiscardAsk(team, uid){
@@ -197,30 +244,68 @@ function cardsZoom(cardId){
 function cardsZoomClose(){ const b=document.getElementById('cards-zoom'); if(b) b.classList.remove('open'); }
 function renderCardsSheet(){
     const box = document.getElementById('cards-body'); if(!box) return;
+    if(cardsInfoOpen){ renderCardsInfo(); return; }
     const team = loggedInTeam;
     if(!team || !TEAM_NAMES.includes(team)){
         box.innerHTML = `<div class="cards-empty"><i class="fas fa-lock"></i><p>${team?'Cards belong to the teams. Log in with a team account to see yours.':'Log in with your team to see your cards.'}</p></div>`;
         return;
     }
     const hand = cardsHand(team);
-    const keep = cardsKeep(team), over = cardsOver(team), noN = hand.length - keep;
-    let html = `<div class="cards-team"><img src="${teamLogoUrl(team)}" alt=""><span dir="auto">${escapeHtml(TEAM_DISPLAY_NAMES[team]||team)}</span><b>${keep}/${CARDS_MAX_KEEP}</b>${noN?`<b class="cards-no-count">+${noN} “No”</b>`:''}</div>`;
-    if(over) html += `<div class="cards-warn"><i class="fas fa-triangle-exclamation"></i> You hold ${keep} cards (not counting “No”) — discard ${over}, the limit is ${CARDS_MAX_KEEP}.</div>`;
+    const keep = cardsKeep(team), over = cardsOver(team);
+    const comboN = hand.filter(h=>h.card===CARD_COMBO_ID).length, actN = cardsActiveList(team).length;
+    let html = `<div class="cards-team"><img src="${teamLogoUrl(team)}" alt=""><span dir="auto">${escapeHtml(TEAM_DISPLAY_NAMES[team]||team)}</span><b>${keep}/${CARDS_MAX_KEEP}</b></div>`;
+    if(over) html += `<div class="cards-warn"><i class="fas fa-triangle-exclamation"></i> You hold ${keep} cards — discard ${over}, the limit is ${CARDS_MAX_KEEP}.</div>`;
+    if(comboN) html += `<div class="cards-combo"><span>🃏 Combo point: <b>${comboN}</b> / ${COMBO_NEED}</span>${comboN>=COMBO_NEED?`<button class="cd-btn on" onclick="cardsComboRedeem()">Redeem → +${COMBO_POINTS} pts</button>`:`<span class="cards-combo-hint">collect ${COMBO_NEED} for +${COMBO_POINTS} league points</span>`}</div>`;
+    if(actN) html += `<div class="cards-active-note">${actN}/${CARDS_MAX_ACTIVE} cards active for your next game</div>`;
     html += hand.length
         ? `<div class="cards-grid">${hand.map(h=>cardTileHtml(h, team, true)).join('')}</div>`
         : `<div class="cards-empty"><i class="fas fa-clone"></i><p>No cards in your hand right now.</p></div>`;
-    html += `<div class="cards-rules">
-        <b>How it works</b>
+    box.innerHTML = html;
+}
+// ---- "i": how cards work + every card in the game ----
+let cardsInfoOpen = false;
+function cardsRulesHtml(){
+    return `<div class="cards-rules"><b>How it works</b>
         <ul><li>A new season starts with ${CARDS_START_NO} “No” cards + ${CARDS_WEEKLY_DRAW} random cards — dealt automatically.</li>
         <li>After every ${CARDS_DEAL_EVERY}nd matchweek (once every team has played every other team) you automatically get ${CARDS_WEEKLY_DRAW} more random cards.</li>
-        <li>You can keep ${CARDS_MAX_KEEP} cards at most — “No” cards don’t count. Discard the extras.</li>
-        <li>One card per game. “No” cancels your opponent’s card.</li>
+        <li>You can keep ${CARDS_MAX_KEEP} cards at most — “No” and “Combo point” count too. Discard the extras.</li>
+        <li>In one game you can play up to ${CARDS_MAX_ACTIVE} cards. Each “No” cancels one card of your opponent.</li>
+        <li>Collect ${COMBO_NEED} “Combo point” cards and redeem them for +${COMBO_POINTS} league points.</li>
         <li>Cards work in league games and CUP semifinals — not in the CUP final or the Super Cup.</li>
         <li>Once you activate a card the admin cannot change it.</li></ul></div>`;
-    box.innerHTML = html;
+}
+function cardsInfoTag(c){
+    if(c.id===CARD_NO_ID) return `Every team starts each season with ${CARDS_START_NO} · cancels one card of your opponent · not in the random deal`;
+    if(c.id===CARD_COMBO_ID) return `Part of the random deal · ${COMBO_NEED} cards = +${COMBO_POINTS} league points · redeemed, not played in a game`;
+    return c.draw ? 'Part of the random deal · play it in a league game or CUP semifinal' : 'Not part of the random deal';
+}
+function renderCardsInfo(){
+    const box = document.getElementById('cards-body'); if(!box) return;
+    const deck = (cardsData && cardsData.deck) || [];
+    box.innerHTML = cardsRulesHtml()
+        + `<div class="flow-section-title" style="margin:14px 0 8px;text-align:center;">All cards in the game</div>`
+        + `<div class="cards-info-list">` + deck.map(c=>`<div class="cards-info-item">
+            <div class="cd-img-wrap" onclick="cardsZoom('${c.id}')"><img class="cd-img" src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"></div>
+            <div class="cards-info-text"><div class="cd-name" dir="auto">${escapeHtml(c.name)}</div>
+            ${c.desc?`<div class="cd-desc" dir="auto">${escapeHtml(c.desc)}</div>`:''}
+            <div class="cards-info-tag">${escapeHtml(cardsInfoTag(c))}</div></div></div>`).join('') + `</div>`;
+}
+function cardsApplyInfoChrome(){
+    const b = document.getElementById('cards-info-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
+    if(b){ b.classList.toggle('on', cardsInfoOpen); b.innerHTML = cardsInfoOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-info"></i>'; }
+    if(t) t.textContent = cardsInfoOpen ? 'How cards work' : 'Cards';
+    if(s) s.textContent = cardsInfoOpen ? 'Rules and every card · tap a picture to enlarge it' : 'Your hand · tap a card to enlarge it';
+}
+function cardsToggleInfo(){
+    haptic([6]);
+    cardsInfoOpen = !cardsInfoOpen;
+    cardsApplyInfoChrome();
+    renderCardsSheet();
+    const sc = document.getElementById('cards-body'); if(sc) sc.scrollTop = 0;
 }
 async function openCardsSheet(){
     haptic([8]);
+    cardsInfoOpen = false; cardsApplyInfoChrome();
     document.getElementById('cards-sheet').classList.add('open');
     renderCardsSheet();
     await cardsLoad(true);
@@ -239,17 +324,11 @@ function renderCardsAll(){
 // The admin cannot change, give, take or cancel a card: the card is whatever the team activated.
 function cardsBadgeHtml(team, opp){
     if(!cardsData) return '<div class="cd-badge empty">—</div>';
-    const act = cardsActiveOf(team); const oppAct = cardsActiveOf(opp);
-    let inner;
-    if(act){
-        const def = cardDef(act.card);
-        const cancelled = oppAct && oppAct.card===CARD_NO_ID && act.card!==CARD_NO_ID;
-        const cancels = act.card===CARD_NO_ID && oppAct;
-        inner = `<img src="${cardImgUrl(def)}" alt="" onclick="cardsZoom('${act.card}')"><span class="cb-name${cancelled?' cancelled':''}" dir="auto">${escapeHtml(def?def.name:act.card)}</span>`
-              + (cancelled ? `<span class="cb-note">cancelled by No</span>` : '')
-              + (cancels ? `<span class="cb-note">cancels ${escapeHtml((cardDef(oppAct.card)||{}).name||'opponent card')}</span>` : '');
-    } else inner = `<span class="cb-none">no card</span>`;
-    return `<div class="cd-badge ${act?'has':''}">${inner}</div>`;
+    const view = cardsActiveView(team, opp);
+    const oppNo = cardsActiveList(opp).filter(h=>h.card===CARD_NO_ID).length;
+    if(!view.length) return `<div class="cd-badge"><span class="cb-none">no card</span></div>`;
+    const items = view.map(c=>`<div class="cb-item"><img src="${cardImgUrl(cardDef(c.card))}" alt="" onclick="cardsZoom('${c.card}')"><span class="cb-name${c.cancelled?' cancelled':''}" dir="auto">${escapeHtml(c.name)}</span>${c.cancelled?'<span class="cb-note">cancelled by No</span>':''}</div>`).join('');
+    return `<div class="cd-badge has multi">${items}</div>`;
 }
 // Both teams of a game, side by side — League form and CUP semifinal / third-place sheet. (View only.)
 function cardsMatchPanelHtml(home, away){
@@ -282,7 +361,7 @@ async function cardsRefreshPanels(){
 async function cardsSummaryText(teams){
     if(!isFullAdmin()) return '';
     await cardsLoad(true);
-    const one = t=>{ const a = cardsActiveOf(t); const d = a && cardDef(a.card); return `${teamShort(t)}: ${a ? (d?d.name:a.card) : 'no card'}`; };
+    const one = t=>{ const v = cardsActiveView(t, t===teams[0]?teams[1]:teams[0]); return `${teamShort(t)}: ${v.length ? v.map(c=>c.name+(c.cancelled?' ✕':'')).join(' + ') : 'no card'}`; };
     return `\n🃏 ${one(teams[0])} · ${one(teams[1])}`;
 }
 
@@ -291,16 +370,18 @@ async function cardsSummaryText(teams){
 function cardsUsedImg(c){
     const def = cardDef(c.card);
     if(def) return cardImgUrl(def);
-    return c.card===CARD_NO_ID ? CARD_NO_SVG : cardPlaceholderSvg(c.name||'?');
+    return c.card===CARD_NO_ID ? CARD_NO_SVG : (c.card===CARD_COMBO_ID ? CARD_COMBO_SVG : cardPlaceholderSvg(c.name||'?'));
 }
 function cardsGameHtml(cards){
     if(!cards || typeof cards!=='object') return '';
-    const teams = Object.keys(cards).filter(t=>cards[t]);
-    if(!teams.length) return '';
-    return `<div class="game-cards">` + teams.map(t=>{
-        const c = cards[t];
-        return `<span class="gc-chip${c.cancelled?' cancelled':''}"><img src="${cardsUsedImg(c)}" alt="" onerror="this.style.display='none'"><b>${escapeHtml(teamShort(t))}</b><span dir="auto">${escapeHtml(c.name||c.card)}</span>${c.cancelled?'<i class="fas fa-ban" title="Cancelled by “No”"></i>':''}</span>`;
-    }).join('') + `</div>`;
+    const chips = [];
+    Object.keys(cards).forEach(t=>{
+        const v = cards[t]; if(!v) return;
+        (Array.isArray(v) ? v : [v]).forEach(c=>{
+            chips.push(`<span class="gc-chip${c.cancelled?' cancelled':''}"><img src="${cardsUsedImg(c)}" alt="" onerror="this.style.display='none'"><b>${escapeHtml(teamShort(t))}</b><span dir="auto">${escapeHtml(c.name||c.card)}</span>${c.cancelled?'<i class="fas fa-ban" title="Cancelled by “No”"></i>':''}</span>`);
+        });
+    });
+    return chips.length ? `<div class="game-cards">${chips.join('')}</div>` : '';
 }
 // Public history screens call this so the pictures resolve even if nobody opened Cards yet.
 function cardsEnsureLoaded(then){
@@ -322,7 +403,7 @@ function renderCardsAdmin(){
     const el = document.getElementById('cards-admin-body'); if(!el) return;
     if(!isFullAdmin()){ el.innerHTML=''; return; }
     if(!cardsData){ el.innerHTML = '<div class="text-center text-gray-600 text-xs">Loading...</div>'; return; }
-    let html = `<p class="mba-admin-hint" style="margin-top:0"><i class="fas fa-robot mr-1"></i> Cards are dealt, activated and used <b>automatically</b> — you can only create and edit cards here. To see your own hand (Bayern) open Home → Cards.</p>
+    let html = `<p class="mba-admin-hint" style="margin-top:0"><i class="fas fa-robot mr-1"></i> Cards are dealt, activated and used <b>automatically</b> — you can only create and edit cards here (including the “Combo point” card’s picture and text). To see your own hand (Bayern) open Home → Cards.</p>
         <p class="flow-next"><i class="fas fa-circle-info"></i> ${escapeHtml(cardsNextDealText())}</p>`;
     // --- deck ---
     html += `<div class="flow-section-title" style="margin-top:12px;">Deck</div><div class="ca-deck">`
@@ -347,7 +428,7 @@ function openCardEditor(id){
     document.getElementById('card-edit-title').textContent = def ? `Edit “${def.name}”` : 'New card';
     document.getElementById('card-edit-name').value = def ? def.name : '';
     document.getElementById('card-edit-desc').value = def ? (def.desc||'') : '';
-    const draw = document.getElementById('card-edit-draw'); draw.checked = def ? !!def.draw : true; draw.disabled = !!(def && def.system);
+    const draw = document.getElementById('card-edit-draw'); draw.checked = def ? !!def.draw : true; draw.disabled = !!(def && def.id===CARD_NO_ID);
     document.getElementById('card-edit-preview').src = def ? cardImgUrl(def) : cardPlaceholderSvg('?');
     document.getElementById('card-edit-delete').style.display = (def && !def.system) ? 'flex' : 'none';
     document.getElementById('card-edit-status').textContent = '';

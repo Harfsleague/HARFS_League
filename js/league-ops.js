@@ -180,7 +180,24 @@ async function loadMatchHistoryFromGitHub(){
 // GITHUB SAVERS
 // ============================================================
 async function saveMainLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_MAIN_LEAGUE_FILE,ts,m,mainSha);}
-async function saveLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_LEAGUE_FILE,ts,m,sha);}
+// Combo points are written into league_data.json by the Worker (fields Bonus / BonusSeason, already inside Pts).
+// Before every save pull the latest values so this app never overwrites them with a stale copy.
+async function leagueSyncComboBonus(){
+    try{
+        const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}&_t=${Date.now()}`);
+        if(!r.ok) return;
+        const dd=await r.json(); sha=dd.sha;
+        const c=await(await fetch(dd.download_url+'?t='+Date.now())).json();
+        Object.keys(c).forEach(k=>{
+            const L=leagueData[k]; if(!L) return;
+            const rb=(c[k].BonusSeason!==undefined)?(c[k].Bonus||0):0, lb=L.Bonus||0;
+            if(rb!==lb || (c[k].BonusSeason||null)!==(L.BonusSeason||null)){ L.Pts=(L.Pts||0)-lb+rb; L.Bonus=rb; if(c[k].BonusSeason!==undefined) L.BonusSeason=c[k].BonusSeason; }
+        });
+    }catch(e){}
+}
+async function saveLeagueDataToGitHub(d,m,syncBonus){
+    if(syncBonus && d===leagueData) await leagueSyncComboBonus();
+    const ts={};Object.keys(d).forEach(k=>{const{name,...r}=d[k];ts[k]=r;});return saveFile(GITHUB_LEAGUE_FILE,ts,m,sha);}
 async function saveMatchHistoryToGitHub(d,m){return saveFile(GITHUB_MATCHES_FILE,d,m,matchesSha);}
 
 function updateTeamStats(t,gf,ga){t.P++;t.GF+=gf;t.GA+=ga;if(gf>ga){t.W++;t.Pts+=3;}else if(gf===ga){t.D++;t.Pts++;}else t.L++;}
@@ -194,7 +211,7 @@ async function deleteMatch(i){
     const p=m.score.split('-');const hs=parseInt(p[0]),as=parseInt(p[1]);
     revertTeamStats(leagueData[m.home],hs,as);revertTeamStats(leagueData[m.away],as,hs);
     matchHistory.splice(i,1);
-    const s1=await saveLeagueDataToGitHub(leagueData,"Reverted stats");
+    const s1=await saveLeagueDataToGitHub(leagueData,"Reverted stats",true);
     const s2=await saveMatchHistoryToGitHub(matchHistory,"Deleted match");
     if(s1&&s2)showToast('Match deleted, stats reverted','success');
     await refreshAllLeagueViews();
@@ -241,7 +258,7 @@ async function saveEditedMatch(){
     m.score=`${editHomeScore}-${editAwayScore}`;
     m.editedAt=new Date().toISOString();
     closeEditMatchModal();
-    const s1=await saveLeagueDataToGitHub(leagueData,`Edited match result: ${m.score}`);
+    const s1=await saveLeagueDataToGitHub(leagueData,`Edited match result: ${m.score}`,true);
     const s2=await saveMatchHistoryToGitHub(matchHistory,'Edited match result');
     showToast(s1&&s2?'Match result updated ✏️':'Saved locally — check network',s1&&s2?'success':'info');
     await refreshAllLeagueViews();

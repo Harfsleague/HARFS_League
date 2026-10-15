@@ -316,7 +316,7 @@ async function flowSaveFixture(id){
         const m = { home:fx.home, away:fx.away, score:`${d.h}-${d.a}`, timestamp:new Date().toISOString(), fx:fx.id, round:fx.round };
         if(cardsUsed) m.cards = cardsUsed;
         matchHistory.unshift(m);
-        const s1 = await saveLeagueDataToGitHub(leagueData, `MW${fx.round}: ${m.score}`);
+        const s1 = await saveLeagueDataToGitHub(leagueData, `MW${fx.round}: ${m.score}`, true);
         const s2 = await saveMatchHistoryToGitHub(matchHistory, `MW${fx.round} history ${m.score}`);
         delete flowDraft[id];
         showToast(s1&&s2 ? `Saved: ${fx.home} ${m.score} ${fx.away}` : 'Saved locally — check network', s1&&s2?'success':'info');

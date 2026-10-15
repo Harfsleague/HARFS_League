@@ -536,8 +536,7 @@
     <!-- ============ GOLDEN MOMENTS ============ -->
     <div id="weird-screen" class="page-screen">
         <div class="league-header">
-            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments</h2>
-            <p class="text-xs mt-1" style="color:#6b7280;">Special memories — forever preserved</p>
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments ⭐</h2>
         </div>
         <div class="w-full px-4">
             <div id="weird-events-list">
@@ -825,9 +824,10 @@
     <div id="cards-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardsSheet()">
         <div class="team-picker-panel hero-modal cards-modal">
             <div class="modal-x-close" onclick="closeCardsSheet()"><i class="fas fa-times"></i></div>
+            <button type="button" id="cards-info-btn" class="cards-info-btn" onclick="cardsToggleInfo()" aria-label="How cards work"><i class="fas fa-info"></i></button>
             <div class="team-picker-handle"></div>
-            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Cards</h4>
-            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Your hand · tap a card to enlarge it</div>
+            <h4 class="text-xl font-black text-white mb-0.5" id="cards-title" style="text-align:center;">Cards</h4>
+            <div id="cards-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Your hand · tap a card to enlarge it</div>
             <div id="cards-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
         </div>
     </div>

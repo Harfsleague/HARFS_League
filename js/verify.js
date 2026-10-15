@@ -48,7 +48,7 @@ function auditArchivedSeasons(){
             });
             table.forEach(r=>{
                 const x = tmp[r.name]; if(!x) return;
-                const diffs = ['P','W','D','L','GF','GA','Pts'].filter(k=>(r[k]||0)!==x[k]);
+                const diffs = ['P','W','D','L','GF','GA','Pts'].filter(k=>(r[k]||0)!==(x[k]+(k==='Pts'?(r.Bonus||0):0)));   // Combo point bonus counts as approved
                 if(diffs.length) items.push({ level:'warn', text:`${tag}: ${TEAM_DISPLAY_NAMES[r.name]||r.name} — saved ${diffs.join('/')} differ from that season’s match history.` });
             });
         }
@@ -98,6 +98,19 @@ async function recalculateLeagueTable(){
         if(leagueData[m.home]) updateTeamStats(leagueData[m.home], hs, as);
         if(leagueData[m.away]) updateTeamStats(leagueData[m.away], as, hs);
     });
+    // Combo point cards: the Worker's ledger (cards_data.json → bonus) is the source of truth for the +4 point bonuses.
+    // They are approved here, so the rebuilt table keeps them instead of silently dropping them.
+    const comboNotes = [];
+    try{
+        await cardsLoad(true);
+        const fl = (typeof flowCur==='function') ? flowCur() : null;
+        const key = fl ? `${fl.seasonId}:${fl.createdAt||0}` : null;
+        const ledger = (key && cardsData && cardsData.bonus && cardsData.bonus[key]) || {};
+        TEAM_NAMES.forEach(t=>{
+            const b = Number(ledger[t])||0;
+            if(b>0){ leagueData[t].Pts += b; leagueData[t].Bonus = b; leagueData[t].BonusSeason = key; comboNotes.push(`${TEAM_DISPLAY_NAMES[t]||t}: +${b} (Combo point)`); }
+        });
+    }catch(e){}
     const leagueSaved = await saveLeagueDataToGitHub(leagueData, 'Verified & rebuilt table from match history');
 
     const leagueItems = [];
@@ -106,6 +119,7 @@ async function recalculateLeagueTable(){
         const diffs = ['P','W','D','L','GF','GA','Pts'].filter(k=>(b[k]||0)!==a[k]).map(k=>`${k} ${b[k]||0}→${a[k]}`);
         if(diffs.length) leagueItems.push({ level:'fixed', text:`${TEAM_DISPLAY_NAMES[t]||t}: ${diffs.join(', ')}` });
     });
+    if(comboNotes.length) leagueItems.push({ level:'ok', text:`Combo point bonuses approved — ${comboNotes.join(', ')}` });
     if(!leagueItems.length) leagueItems.push({ level:'ok', text:`Season table matches all ${matchHistory.length} saved match${matchHistory.length===1?'':'es'}.` });
     if(!leagueSaved) leagueItems.push({ level:'warn', text:'Table rebuilt locally but could not be saved to GitHub — check your connection.' });
 
