@@ -647,6 +647,9 @@
 
             <div class="settings-section-label">Account</div>
             <div class="settings-page-grid">
+                <div class="settings-page-tile wide" id="settings-notif-tile" onclick="openNotifSheet()">
+                    <i class="fas fa-bell" style="margin-right:8px;"></i><span>Notifications</span>
+                </div>
                 <div class="settings-page-tile wide" id="settings-devices-tile" onclick="openSessionsSheet()">
                     <i class="fas fa-laptop-mobile" style="margin-right:8px;"></i><span>Devices &amp; Sessions</span>
                 </div>
@@ -668,6 +671,17 @@
             <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Devices &amp; Sessions</h4>
             <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Where you are signed in</div>
             <div id="sessions-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+
+    <!-- ============ NOTIFICATIONS (Settings) ============ -->
+    <div id="notif-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeNotifSheet()">
+        <div class="team-picker-panel hero-modal sessions-modal">
+            <div class="modal-x-close" onclick="closeNotifSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Notifications</h4>
+            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Choose what HARFS may tell you</div>
+            <div id="notif-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
         </div>
     </div>
 
@@ -987,6 +1001,7 @@
 <script src="js/offline.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/sessions.js"></script>
+<script src="js/notifications.js"></script>
 <script src="js/appearance.js"></script>
 <script src="js/ui-common.js"></script>
 <script src="js/memories.js"></script>
@@ -1000,6 +1015,7 @@
 <script src="js/reactions.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/magazine.js"></script>
+<script src="js/gif-encoder.js"></script>
 <script src="js/magazine-comments.js"></script>
 <script src="js/ai-chat.js"></script>
 <script src="js/mba.js"></script>

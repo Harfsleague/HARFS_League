@@ -500,6 +500,7 @@ function renderSettingsScreen(){
         if(subtitle) subtitle.textContent=SYMBOLIC_ROLES[loggedInTeam]||'HARFS League Account';
         if(logoutTile) logoutTile.style.display='flex';
         const devTile=document.getElementById('settings-devices-tile'); if(devTile) devTile.style.display='flex';
+        const nTile=document.getElementById('settings-notif-tile'); if(nTile) nTile.style.display='flex';
         if(signinTile) signinTile.style.display='none';
     } else {
         // Logged out (the login screen is showing; there is no guest mode)
@@ -508,6 +509,7 @@ function renderSettingsScreen(){
         if(subtitle) subtitle.textContent='Not signed in';
         if(logoutTile) logoutTile.style.display='none';
         const devTile2=document.getElementById('settings-devices-tile'); if(devTile2) devTile2.style.display='none';
+        const nTile2=document.getElementById('settings-notif-tile'); if(nTile2) nTile2.style.display='none';
         if(signinTile) signinTile.style.display='flex';
     }
     const adminSection=document.getElementById('settings-admin-section');

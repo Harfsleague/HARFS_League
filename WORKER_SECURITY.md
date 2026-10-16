@@ -8,7 +8,6 @@ Deploy the new `worker.js` **before** (or together with) this app update.
 |---|---|
 | `GITHUB_PAT` | already set |
 | `MEDIA_KEY` | **new, required** — any long random text (e.g. 40+ characters). Moment pictures / videos / songs are encrypted with a key derived from it. **Never change or lose it afterwards**, or the existing encrypted files can no longer be opened. |
-| `GIPHY_API_KEY` | *optional* — free key from developers.giphy.com. Enables GIF **search** in magazine comments. Without it people can still upload a GIF or paste a GIPHY / Tenor / Imgur link. |
 
 Without `MEDIA_KEY` the Worker refuses to save moments (it will not store them unencrypted).
 
@@ -31,9 +30,27 @@ New moments are encrypted automatically by the Worker while the app saves them (
 * Sessions created before this update keep working and are upgraded automatically.
 
 ## 4. Magazine comments
-`GET|POST /comments`, `POST /comments/delete`, `POST /comments/gif`, `GET /gifs/search`, `GET /comments/gif/<id>`.
+`GET|POST /comments`, `POST /comments/delete`, `POST /comments/gif`, `GET /comments/gif/<id>`.
 Stored in KV (`comments:<issue>`), max 400 per issue, 600 characters each, one reply level (thread). A user can delete their own
 comments; the admin (Bayern) can delete any.
+GIFs are **upload only**: a GIF / picture (max 4 MB), or a **video** — the app converts its first 10 seconds to a GIF in the browser
+(own encoder `js/gif-encoder.js`, adaptive colours per frame, retries with fewer/smaller frames until the GIF is ≤ ~3.6 MB) and uploads the result.
 
 ## 5. Season page
 The separate *Results* page was merged into **Season**: season/edition pickers, league table, match history and CUP are all on one page; the header keeps only the Schedule button.
+
+## 6. Push notifications
+Nothing to configure for the keys — the Worker creates its own VAPID key pair on first use and keeps it in KV (`vapid_keys`).
+Settings → **Notifications** (per device: on/off · per account: which topics):
+
+| topic | when | default |
+|---|---|---|
+| New magazine issue | the Worker notices a higher `issueNumber` in `weekly_magazine_archive.json` | on |
+| New Golden Moment | right after a moment is saved (never for the person who posted it) | on |
+| Matchweek reminder | Thursday from 18:00 (Asia/Tehran): the open matchweek's games | on |
+| Magazine comments | every new comment (not your own) | **off** |
+
+**Add a Cron Trigger** (Worker → Settings → Triggers → Cron, e.g. `*/10 * * * *`) so the magazine and Thursday notifications go out
+even when nobody has the app open. Without it they still go out, but only when somebody opens the app (the check runs at most every 4 minutes).
+iPhone / iPad: push works only for the app added to the Home Screen (iOS 16.4+).
+Endpoints: `GET /push/key`, `GET|POST /push/prefs`, `POST /push/subscribe`, `POST /push/unsubscribe`, `POST /push/test`.

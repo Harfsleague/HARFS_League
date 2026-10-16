@@ -13,6 +13,7 @@ let harfsKickShown = false;
 function harfsForceLogout(reason){
     if(harfsKickShown) return;
     harfsKickShown = true;
+    try{ if(typeof notifDisableDevice==='function') notifDisableDevice(); }catch(e){}   // stop this device's notifications for the account that was signed out
     loggedInTeam = null; harfsSessionToken = null;
     localStorage.removeItem('harfs_team'); localStorage.removeItem('harfs_session');
     try{ updateHeaderForLogin(); }catch(e){}

@@ -401,3 +401,20 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .mag-gif-tools{ display:flex; flex-direction:column; gap:8px; }
 .mag-gif-upload{ display:flex; align-items:center; justify-content:center; gap:8px; padding:9px; border-radius:14px; border:1px dashed rgba(255,255,255,.25); font-size:.72rem; color:#d1d5db; cursor:pointer; }
 .mag-gif-link{ display:flex; gap:6px; } .mag-gif-link input{ flex:1; } .mag-gif-link button{ padding:0 14px; border-radius:14px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:#e5e7eb; font-size:.7rem; font-weight:700; cursor:pointer; }
+
+/* Notifications sheet */
+.notif-master{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 14px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }
+.notif-master.on{ border-color:color-mix(in srgb,var(--primary) 55%,transparent); background:color-mix(in srgb,var(--primary) 9%,transparent); }
+.notif-master-text{ display:flex; flex-direction:column; gap:2px; } .notif-master-text b{ font-size:.82rem; color:#f3f4f6; } .notif-master-text span{ font-size:.62rem; color:#9ca3af; }
+.notif-note{ display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:16px; font-size:.68rem; line-height:1.6; color:#e5e7eb; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }
+.notif-note.warn{ border-color:rgba(251,191,36,.4); background:rgba(251,191,36,.08); color:#fde68a; }
+.notif-rows{ display:flex; flex-direction:column; gap:8px; }
+.notif-row{ display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+.notif-ico{ flex:0 0 36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.07); color:var(--primary); }
+.notif-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; } .notif-info b{ font-size:.76rem; color:#f3f4f6; } .notif-info span{ font-size:.58rem; color:#9ca3af; line-height:1.5; }
+
+/* comment GIF upload */
+.mag-gif-note{ font-size:.62rem; color:#9ca3af; text-align:center; line-height:1.7; margin:8px 4px 0; }
+.mag-gif-status{ display:flex; flex-direction:column; gap:6px; margin-top:10px; font-size:.68rem; color:#d1d5db; text-align:center; }
+.mag-gif-bar{ height:6px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; }
+.mag-gif-bar span{ display:block; height:100%; width:0; background:var(--primary); border-radius:99px; transition:width .2s; }

@@ -214,6 +214,7 @@ function startApp(){
                 showLoginScreen();
             } else {
                 navigate('main-league');
+                if(typeof harfsConsumePendingOpen==='function') harfsConsumePendingOpen();   // opened from a notification
             }
         }, 750);
     }, 1800);

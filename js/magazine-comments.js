@@ -2,8 +2,8 @@
 // magazine-comments.js  —  COMMENTS at the end of every magazine issue
 // ------------------------------------------------------------
 // Any signed-in account can write a comment (text and/or a GIF) and reply to other comments.
-// Stored by the Worker (KV) — GET|POST /comments, POST /comments/delete, POST /comments/gif, GET /gifs/search.
-// GIFs: search (needs the optional GIPHY_API_KEY secret on the Worker), paste a GIPHY / Tenor / Imgur link, or upload a file.
+// Stored by the Worker (KV) — GET|POST /comments, POST /comments/delete, POST /comments/gif.
+// GIFs: upload a GIF / picture, or a video — its first 10 seconds are converted to a GIF in the browser (js/gif-encoder.js).
 // Loaded as a classic (non-module) script — shares the global scope.
 // ============================================================
 let magCIssue = null;            // issue key of the comments currently shown
@@ -50,12 +50,9 @@ function magCommentsMount(issue){
                 <button type="button" class="mag-c-send" id="mag-c-send" onclick="magSendComment()" aria-label="ارسال"><i class="fas fa-paper-plane"></i></button>
             </div>
             <div class="mag-gif-picker" id="mag-gif-picker" hidden>
-                <input type="search" id="mag-gif-q" class="glass-input" placeholder="جستجوی GIF…" oninput="magGifSearchDebounced()" dir="auto">
-                <div class="mag-gif-grid" id="mag-gif-grid"></div>
-                <div class="mag-gif-tools">
-                    <label class="mag-gif-upload"><i class="fas fa-upload"></i> آپلود از دستگاه<input type="file" accept="image/gif,image/webp,image/png,image/jpeg" onchange="magUploadGif(event)" hidden></label>
-                    <div class="mag-gif-link"><input type="url" id="mag-gif-url" class="glass-input" placeholder="یا لینک GIF (GIPHY / Tenor / Imgur)" dir="ltr"><button type="button" onclick="magUseGifLink()">افزودن</button></div>
-                </div>
+                <label class="mag-gif-upload"><i class="fas fa-photo-film"></i> آپلود GIF یا ویدئو<input type="file" accept="image/gif,image/webp,image/png,image/jpeg,video/*" onchange="magUploadMedia(event)" hidden></label>
+                <p class="mag-gif-note">ویدئو (حداکثر ۱۰ ثانیهٔ اول) به‌صورت خودکار و با کیفیت به GIF تبدیل می‌شود.</p>
+                <div class="mag-gif-status" id="mag-gif-status" hidden><div class="mag-gif-bar"><span id="mag-gif-bar"></span></div><span id="mag-gif-msg"></span></div>
             </div>
         </div>
     </section>`);
@@ -146,34 +143,40 @@ function magCloseGifPicker(){ const p=document.getElementById('mag-gif-picker');
 function magToggleGifPicker(){
     const p = document.getElementById('mag-gif-picker'); if(!p) return;
     p.hidden = !p.hidden;
-    if(!p.hidden) magGifSearch('');
 }
-function magGifSearchDebounced(){ clearTimeout(magGifTimer); magGifTimer = setTimeout(()=>magGifSearch(document.getElementById('mag-gif-q').value.trim()), 400); }
-async function magGifSearch(q){
-    const grid = document.getElementById('mag-gif-grid'); if(!grid) return;
-    grid.innerHTML = '<div class="mag-c-empty"><span class="spinner"></span></div>';
-    try{
-        const d = await magApi('/gifs/search?q='+encodeURIComponent(q));
-        if(!d.enabled){ grid.innerHTML = '<div class="mag-c-empty">جستجوی GIF فعال نیست — از آپلود یا لینک استفاده کن.</div>'; return; }
-        grid.innerHTML = d.results.length ? d.results.map(g=>`<img src="${escapeHtml(g.preview)}" alt="" loading="lazy" referrerpolicy="no-referrer" onclick="magSetGif('${escapeHtml(g.url)}')">`).join('') : '<div class="mag-c-empty">چیزی پیدا نشد</div>';
-    }catch(e){ grid.innerHTML = `<div class="mag-c-empty">${escapeHtml(e.message||'خطا')}</div>`; }
+function magGifStatus(frac, msg){
+    const box = document.getElementById('mag-gif-status'); if(!box) return;
+    if(frac===null){ box.hidden = true; return; }
+    box.hidden = false;
+    document.getElementById('mag-gif-bar').style.width = Math.round(frac*100)+'%';
+    document.getElementById('mag-gif-msg').textContent = msg || '';
 }
-function magUseGifLink(){
-    const el = document.getElementById('mag-gif-url'); const u = (el.value||'').trim();
-    if(!/^https:\/\/(media\d*\.giphy\.com|i\.giphy\.com|media\.tenor\.com|c\.tenor\.com|i\.imgur\.com)\//.test(u)){ showToast('فقط لینک مستقیم GIPHY، Tenor یا Imgur قبول است','error',3200); return; }
-    magSetGif(u); el.value = '';
+function magBlobToDataUrl(blob){
+    return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(new Error('read failed')); r.readAsDataURL(blob); });
 }
-async function magUploadGif(e){
+const MAG_GIF_MAX = 3600000;      // bytes of the finished GIF (the Worker accepts up to 4 MB)
+let magUploading = false;
+async function magUploadMedia(e){
     const file = e.target.files && e.target.files[0]; e.target.value = '';
-    if(!file) return;
-    if(file.size > 1500000){ showToast('حجم فایل باید کمتر از ۱٫۵ مگابایت باشد','error',3200); return; }
-    const reader = new FileReader();
-    reader.onload = async ev=>{
-        try{
-            showToast('در حال آپلود…','info',1500);
-            const d = await magApi('/comments/gif','POST',{ data: ev.target.result });
-            magSetGif(d.url);
-        }catch(err){ showToast(err.message||'آپلود نشد','error',3200); }
-    };
-    reader.readAsDataURL(file);
+    if(!file || magUploading) return;
+    magUploading = true;
+    try{
+        let blob = file;
+        if(file.type.startsWith('video/')){
+            if(file.size > 150*1024*1024) throw new Error('حجم ویدئو بیش از حد است');
+            magGifStatus(0.02, 'در حال خواندن ویدئو…');
+            blob = await HarfsGif.fromVideo(file, { maxSeconds:10, maxBytes:MAG_GIF_MAX, onProgress:(f,m)=>magGifStatus(f*0.92, m==='Reading the video…'?'در حال خواندن ویدئو…':'در حال ساخت GIF…') });
+        } else if(blob.size > 4000000){
+            throw new Error('حجم فایل باید کمتر از ۴ مگابایت باشد');
+        }
+        magGifStatus(0.94, 'در حال آپلود…');
+        const d = await magApi('/comments/gif','POST',{ data: await magBlobToDataUrl(blob) });
+        magSetGif(d.url);
+        magGifStatus(null);
+    }catch(err){
+        magGifStatus(null);
+        const m = String(err && err.message || '');
+        showToast(/video error|cannot be read|timeout/.test(m) ? 'این ویدئو قابل خواندن نیست (فرمت پشتیبانی نمی‌شود)' : (m || 'آپلود نشد'),'error',4200);
+    }
+    magUploading = false;
 }

@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v44';
+const CACHE_VERSION = 'harfs-shell-v45';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -142,4 +142,34 @@ self.addEventListener('fetch', event => {
       return cached || network;
     })
   );
+});
+
+
+// ---------------------------------------------------------------------------------------------
+// PUSH NOTIFICATIONS — the Worker (worker.js → PUSH NOTIFICATIONS) sends an encrypted JSON payload
+// { title, body, url, tag }; tapping a notification opens the app on the right page.
+// ---------------------------------------------------------------------------------------------
+const NOTIF_ICON = 'https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png';
+self.addEventListener('push', event => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) { d = { body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(d.title || 'HARFS League', {
+    body: d.body || '',
+    icon: NOTIF_ICON,
+    badge: NOTIF_ICON,
+    tag: d.tag || 'harfs',
+    renotify: true,
+    data: { url: d.url || '' }
+  }));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '';
+  event.waitUntil((async () => {
+    const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of wins) {
+      if ('focus' in c) { await c.focus(); c.postMessage({ type: 'harfs-open', target }); return; }
+    }
+    await clients.openWindow('./' + (target ? '?open=' + encodeURIComponent(target) : ''));
+  })());
 });

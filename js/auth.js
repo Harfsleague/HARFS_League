@@ -111,6 +111,7 @@ async function submitLoginPassword(){
         hideLoginScreen();
         updateHeaderForLogin();
         navigate('main-league');
+        try{ if(typeof notifResync==='function') notifResync(); if(typeof harfsConsumePendingOpen==='function') harfsConsumePendingOpen(); }catch(e){}
         showToast(`Welcome, ${TEAM_DISPLAY_NAMES[team]||team} 👋`,'success',2400);
     }catch(e){
         errEl.textContent='Could not reach the login server — check your connection';
@@ -119,9 +120,10 @@ async function submitLoginPassword(){
     btn.disabled=false; btn.textContent = loginIsNewAccount ? 'Set Password & Continue' : 'Log In';
 }
 function logoutTeam(){
-    showConfirm({icon:'👋', title:'Log Out?', message:`Log out of ${TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam} on this device?`, okLabel:'Log Out', okColor:'red'}).then(ok=>{
+    showConfirm({icon:'👋', title:'Log Out?', message:`Log out of ${TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam} on this device?`, okLabel:'Log Out', okColor:'red'}).then(async ok=>{
         if(!ok) return;
         // sign this device out on the server too, so the token stops working everywhere
+        try{ if(typeof notifOnLogout==='function') await notifOnLogout(); }catch(e){}       // this device stops getting this account's notifications
         if(harfsSessionToken){ try{ fetch(`${HARFS_AUTH_API}/auth/logout`,{method:'POST',headers:{Authorization:ghAuthHeader()}}); }catch(e){} }
         loggedInTeam=null; harfsSessionToken=null;
         localStorage.removeItem('harfs_team'); localStorage.removeItem('harfs_session');
