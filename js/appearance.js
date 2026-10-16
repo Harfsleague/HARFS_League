@@ -499,16 +499,15 @@ function renderSettingsScreen(){
         if(badgeName) badgeName.textContent=TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam;
         if(subtitle) subtitle.textContent=SYMBOLIC_ROLES[loggedInTeam]||'HARFS League Account';
         if(logoutTile) logoutTile.style.display='flex';
+        const devTile=document.getElementById('settings-devices-tile'); if(devTile) devTile.style.display='flex';
         if(signinTile) signinTile.style.display='none';
     } else {
-        // Guest (or logged out) — no team picture to show, so leave the
-        // avatar's neutral background as a plain placeholder circle and
-        // swap in a "Guest" identity + a way back into the login flow
-        // instead of a Log Out button.
+        // Logged out (the login screen is showing; there is no guest mode)
         if(badgeLogo) badgeLogo.removeAttribute('src');
-        if(badgeName) badgeName.textContent='Guest';
+        if(badgeName) badgeName.textContent='—';
         if(subtitle) subtitle.textContent='Not signed in';
         if(logoutTile) logoutTile.style.display='none';
+        const devTile2=document.getElementById('settings-devices-tile'); if(devTile2) devTile2.style.display='none';
         if(signinTile) signinTile.style.display='flex';
     }
     const adminSection=document.getElementById('settings-admin-section');

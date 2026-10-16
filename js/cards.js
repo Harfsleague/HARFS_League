@@ -117,7 +117,7 @@ async function cardsLoad(force){
     if(navigator.onLine){
         let got = false;
         try{                                                  // 1) the Worker (no GitHub rate limit, always fresh)
-            const r = await fetch(`${HARFS_AUTH_API}/cards`, { cache:'no-store' });
+            const r = await fetch(`${HARFS_AUTH_API}/cards`, { cache:'no-store', headers: harfsSessionToken ? { Authorization: ghAuthHeader() } : {} });
             const d = r.ok ? await r.json().catch(()=>null) : null;
             if(d && d.ok && d.data){ cardsData = cardsNormalize(d.data); got = true; }
         }catch(e){}

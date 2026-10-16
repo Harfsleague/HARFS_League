@@ -240,7 +240,14 @@ function findMomentShardFile(id){
     }
     return null;
 }
+let momentThumbBusy=false;
 function renderWeirdEvents(){
+    renderWeirdEventsNow();
+    if(momentThumbBusy||!weirdEvents||!weirdEvents.length)return;
+    momentThumbBusy=true;
+    momentResolveThumbs(weirdEvents).then(changed=>{ momentThumbBusy=false; if(changed)renderWeirdEventsNow(); }).catch(()=>{momentThumbBusy=false;});
+}
+function renderWeirdEventsNow(){
     const list=document.getElementById('weird-events-list');
     const loadingEl=document.getElementById('weird-loading');
     if(loadingEl)loadingEl.style.display='none';
@@ -262,7 +269,7 @@ function renderWeirdEvents(){
         const mediaCol = visual.length>0
             ?`<div class="weird-card-mediacol">
                 ${visibleThumbs.map((m,i)=>{
-                    const preview=m.thumb||(m.type==='image'?m.src:null);
+                    const preview=momentPlainSrc(m.thumb||(m.type==='image'?m.src:null));
                     const isLast = i===visibleThumbs.length-1 && extraCount>0;
                     const badge = isLast ? `<span class="weird-media-count-badge">+${extraCount}</span>` : '';
                     if(m.type==='video'){
@@ -324,7 +331,7 @@ async function playWeirdAudio(eventId,mediaIndex){
     const btn=card.querySelector('.weird-audio-play-btn');
     if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading…';}
     try{
-        const src=m.file?await fetchMomentMediaFile(m.file):m.src;
+        const src=m.file?await fetchMomentMediaFile(m.file):await momentResolveOne(m.src);
         card.innerHTML=`<i class="fas fa-music"></i><span>${m.name||'Track'}</span><audio src="${src}" controls autoplay></audio>`;
     }catch(err){
         if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-play"></i> Play';}
@@ -353,7 +360,7 @@ async function openWeirdLightbox(eventId,mediaIndex){
         // file, so the real photo/video is fetched here, on tap — nothing
         // heavy is downloaded just from scrolling the feed. Legacy events
         // (saved before this) still carry the full data inline as `src`.
-        const fullSrc=m.file?await fetchMomentMediaFile(m.file):m.src;
+        const fullSrc=m.file?await fetchMomentMediaFile(m.file):await momentResolveOne(m.src);
         if(loadingEl)loadingEl.style.display='none';
         if(m.type==='video'){
             vidEl.style.display='block';vidEl.src=fullSrc;vidEl.currentTime=0;
@@ -768,11 +775,72 @@ function fetchMomentMediaFile(path){
     // and the service worker cache it normally. A "?t=timestamp" busts that
     // caching on every single view, which is exactly why a previously
     // opened photo/video could still fail to reappear once offline.
-    const url=`${GITHUB_IMAGE_BASE_URL}${path}`;
-    return fetch(url).then(r=>{
+    // The files on GitHub are ENCRYPTED. Only the Worker can open them, and only for a signed-in account.
+    if(!harfsSessionToken)return Promise.reject(new Error('Log in to view moments'));
+    return fetch(`${HARFS_AUTH_API}/media?path=${encodeURIComponent(path)}`,{headers:{Authorization:ghAuthHeader()}}).then(r=>{
         if(!r.ok)throw new Error('HTTP '+r.status);
         return r.text();
     }).then(text=>{ momentMediaCache[path]=text; return text; });
+}
+
+// ---- encrypted pictures that live INSIDE the shard JSON (thumbnails, old inline photos) ----
+// They are stored as "HENC1:…". The Worker decrypts them for signed-in accounts; results are cached in memory.
+const momentPlainCache={};   // encrypted string -> data URL
+function momentPlainSrc(v){
+    if(!v)return null;
+    if(typeof v==='string'&&v.startsWith('HENC1:'))return momentPlainCache[v]||null;   // not decrypted (yet) → placeholder icon
+    return v;
+}
+async function momentResolveOne(v){
+    if(!v||typeof v!=='string'||!v.startsWith('HENC1:'))return v;
+    if(momentPlainCache[v])return momentPlainCache[v];
+    const r=await fetch(`${HARFS_AUTH_API}/media/decrypt`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:ghAuthHeader()},body:JSON.stringify({items:[v]})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.ok||!d.items||!d.items[0])throw new Error('decrypt failed');
+    momentPlainCache[v]=d.items[0];
+    return d.items[0];
+}
+// Decrypts the thumbnails of every moment in a few batched calls. Resolves true when something new became visible.
+async function momentResolveThumbs(events){
+    if(!harfsSessionToken)return false;
+    const want=[];
+    (events||[]).forEach(ev=>getMomentMedia(ev).forEach(m=>{
+        const v=m.thumb||(m.type==='image'?m.src:null);
+        if(typeof v==='string'&&v.startsWith('HENC1:')&&!momentPlainCache[v]&&!want.includes(v))want.push(v);
+    }));
+    if(!want.length)return false;
+    let changed=false;
+    for(let i=0;i<want.length;i+=12){
+        const batch=want.slice(i,i+12);
+        try{
+            const r=await fetch(`${HARFS_AUTH_API}/media/decrypt`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:ghAuthHeader()},body:JSON.stringify({items:batch})});
+            const d=await r.json().catch(()=>({}));
+            if(r.ok&&d.ok)d.items.forEach((p,k)=>{ if(p){momentPlainCache[batch[k]]=p;changed=true;} });
+        }catch(e){}
+    }
+    return changed;
+}
+
+// ---- admin: encrypt the files that were uploaded before encryption existed ----
+let momentMigrating=false;
+async function migrateMomentMediaUi(){
+    if(momentMigrating)return;
+    const st=document.getElementById('moment-migrate-status');
+    const ok=await showConfirm({icon:'🔐',title:'Encrypt existing moment files?',message:'Photos, videos and songs already on GitHub are re-saved encrypted. This can take a minute.',okLabel:'Encrypt',okColor:'purple'});
+    if(!ok)return;
+    momentMigrating=true;
+    try{
+        let total=0;
+        for(let i=0;i<400;i++){
+            const r=await fetch(`${HARFS_AUTH_API}/admin/media/migrate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:ghAuthHeader()},body:'{}'});
+            const d=await r.json().catch(()=>({}));
+            if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));
+            total+=d.converted||0;
+            if(st)st.textContent=d.done?`Done — ${total} file(s) encrypted.`:`Encrypting… ${d.remaining} left (${total} done)`;
+            if(d.done){showToast('Moment files are encrypted 🔐','success',2600);break;}
+        }
+    }catch(e){ if(st)st.textContent='Stopped: '+(e.message||'error'); showToast(e.message||'Encryption stopped','error',4000); }
+    momentMigrating=false;
 }
 
 function saveFile(filename,data,msg,curSha,onProgress){

@@ -56,13 +56,10 @@
      see HARFS_AUTH_API below. -->
 <div id="login-screen">
     <div class="login-panel">
-        <div id="login-screen-close-btn" onclick="hideLoginScreen()" style="display:none;"><i class="fas fa-xmark"></i></div>
-        <div id="login-step-pick">
+                <div id="login-step-pick">
             <div class="login-title">Welcome to HARFS</div>
             <div class="login-sub">Select your team to continue</div>
             <div class="login-team-grid" id="login-team-grid"><!-- filled by JS --></div>
-            <div class="login-divider"><span>or</span></div>
-            <div class="login-guest-btn" onclick="continueAsGuest()"><i class="fas fa-user-large-slash mr-1"></i> Continue as Guest</div>
         </div>
         <div id="login-step-password" style="display:none;">
             <div class="login-selected-team">
@@ -278,17 +275,15 @@
             <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
                 <option value="current">Current Season</option>
             </select>
-            <!-- Main Season page → Schedule (calendar) / Results (bar chart). Icons only. -->
+            <!-- Season page → Schedule (calendar). Icon only. (Results were merged into the Season page.) -->
             <div class="season-header-actions" id="season-header-actions">
                 <button class="season-icon-btn" onclick="seasonShowView('schedule')" aria-label="Schedule"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
-                <button class="season-icon-btn" onclick="seasonShowView('results')" aria-label="Results"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="11" width="3.4" height="9" rx="1"/><rect x="10.3" y="4" width="3.4" height="16" rx="1"/><rect x="16.1" y="8" width="3.4" height="12" rx="1"/></svg></button>
             </div>
         </div>
 
-        <!-- Season screen = three views (js/season-layout.js, body[data-season-view]):
-             main     → League table + CUP of the CURRENT season only
-             schedule → timetable of the current season only
-             results  → League table + CUP + match history of ANY season (season pickers live here) -->
+        <!-- Season screen = two views (js/season-layout.js, body[data-season-view]):
+             main     → League table + match history + CUP of ANY season (season / edition pickers on top)
+             schedule → timetable of the current season only -->
         <div id="season-sections">
         <section id="ssec-league" data-sec="league">
         <div id="ssec-league-nav" class="ssec-slot">
@@ -494,6 +489,16 @@
                 </div>
             </div>
 
+            <!-- Signed-in devices of every account (admin only) -->
+            <div class="admin-section" data-cat="users">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#a78bfa);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Active Sessions</h3>
+                    <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-4px 0 10px;line-height:1.5;">Where each account is signed in. Sign out a single device or every device of an account.</p>
+                    <div id="admin-sessions-body"></div>
+                </div>
+            </div>
+
             <div class="weird-admin-section" data-perm="moments" data-cat="moments">
                 <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
                 <div class="admin-section-body" style="padding:14px;">
@@ -517,6 +522,11 @@
                         <span class="weird-save-btn-fill" id="weird-save-btn-fill"></span>
                         <span class="weird-save-btn-label" id="weird-save-btn-label"><i class="fas fa-bolt mr-2"></i> Save Event</span>
                     </button>
+                    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+                        <p style="font-size:0.62rem;color:#6b7280;text-align:center;line-height:1.6;margin:0 4px 8px;">New moments are encrypted automatically. Use this once to encrypt the files that were uploaded earlier — they can then only be opened inside the app by signed-in accounts.</p>
+                        <button class="glass-button w-full text-xs font-bold py-2" onclick="migrateMomentMediaUi()"><i class="fas fa-lock mr-2"></i>Encrypt existing moment files</button>
+                        <div id="moment-migrate-status" style="font-size:0.62rem;color:#9ca3af;text-align:center;margin-top:6px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -637,6 +647,9 @@
 
             <div class="settings-section-label">Account</div>
             <div class="settings-page-grid">
+                <div class="settings-page-tile wide" id="settings-devices-tile" onclick="openSessionsSheet()">
+                    <i class="fas fa-laptop-mobile" style="margin-right:8px;"></i><span>Devices &amp; Sessions</span>
+                </div>
                 <div class="settings-page-tile wide danger-tile" id="settings-logout-tile" onclick="logoutTeam()" style="display:none;">
                     <i class="fas fa-right-from-bracket" style="margin-right:8px;"></i><span>Log Out</span>
                 </div>
@@ -644,6 +657,17 @@
                     <i class="fas fa-right-to-bracket" style="margin-right:8px;"></i><span>Log In / Pick a Team</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ============ DEVICES & SESSIONS (own account) ============ -->
+    <div id="sessions-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeSessionsSheet()">
+        <div class="team-picker-panel hero-modal sessions-modal">
+            <div class="modal-x-close" onclick="closeSessionsSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Devices &amp; Sessions</h4>
+            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Where you are signed in</div>
+            <div id="sessions-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
         </div>
     </div>
 
@@ -962,6 +986,7 @@
 <script src="js/config.js"></script>
 <script src="js/offline.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/sessions.js"></script>
 <script src="js/appearance.js"></script>
 <script src="js/ui-common.js"></script>
 <script src="js/memories.js"></script>
@@ -975,6 +1000,7 @@
 <script src="js/reactions.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/magazine.js"></script>
+<script src="js/magazine-comments.js"></script>
 <script src="js/ai-chat.js"></script>
 <script src="js/mba.js"></script>
 <script src="js/flow.js"></script>

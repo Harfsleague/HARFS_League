@@ -3,22 +3,21 @@
 // ------------------------------------------------------------
 // Views (body[data-season-view], CSS in css/flow.css):
 //
-//   main      League table / CUP of the CURRENT season only. No season pickers.
-//             Two icon buttons in the header (calendar / bar chart) lead to the other views.
+//   main      Season = league table + match history (results) of ANY season (season picker on top),
+//             or the CUP of any edition (edition picker on top). The old separate "Results" view
+//             was merged into this one. One icon button in the header (calendar) opens the Schedule.
 //   schedule  The timetable of the CURRENT season (js/flow.js → renderFlowSchedule).
-//   results   Laid out exactly like main, but for ANY season: season picker above the
-//             league table, CUP edition picker above the CUP, match history under the league.
 //
-// Tabs (body[data-season-tab]) — in main and results the League | Cup bar
+// Tabs (body[data-season-tab]) — in main the League | Cup bar
 // (#season-subnav, docked above the bottom nav) switches between the two.
 // The bar slides out from behind the bottom nav when the Season screen opens and
 // slides back in when you leave it or open the Schedule.
 //
-// Going back to main (or leaving the Season screen) snaps to the current season.
+// Leaving the Season screen snaps back to the current season.
 // Loaded as a classic (non-module) script — shares the global scope.
 // ============================================================
 
-const SEASON_VIEW_TITLES = { main:'Season', schedule:'Schedule', results:'Results' };
+const SEASON_VIEW_TITLES = { main:'Season', schedule:'Schedule' };
 let seasonView = 'main';
 let seasonTab = 'league';
 let seasonSwapTimer = null;
@@ -75,19 +74,11 @@ function seasonApplyView(view, prev, keepTitle){
     const dt = $('current-datetime'); if(dt) dt.style.display = view==='schedule' ? 'none' : '';
 
     if(view==='main'){
-        // the main page is always the running season (and its CUP), whatever was browsed in Results
-        const needReset = (typeof currentSeasonIdx!=='undefined' && currentSeasonIdx!==0) || (typeof isViewingArchive!=='undefined' && isViewingArchive);
-        if(typeof currentSeasonIdx!=='undefined') currentSeasonIdx = 0;
-        if(typeof syncSeasonPill==='function') syncSeasonPill();
-        const sel = $('season-selector'); if(sel) sel.value = 'current';
-        if(needReset){
-            if(typeof loadSelectedSeason==='function') loadSelectedSeason('current');
-        }
-        if(typeof updateCurrentDateTime==='function' && !needReset) updateCurrentDateTime();
-    } else if(view==='results'){
+        // Season = table + results of whichever season is selected in the picker (current by default).
         if(typeof syncSeasonPill==='function') syncSeasonPill();
         if(typeof renderMbaSeasonView==='function') renderMbaSeasonView();
         if(typeof renderSeasonHistoryList==='function' && typeof isViewingArchive!=='undefined' && !isViewingArchive) renderSeasonHistoryList(matchHistory);
+        if(typeof updateCurrentDateTime==='function') updateCurrentDateTime();
     } else if(view==='schedule'){
         if(typeof renderFlowSchedule==='function') renderFlowSchedule();
     }
@@ -147,7 +138,7 @@ function seasonShowView(view, opts){
     if(!opts.silent) haptic([6]);
     const prev = seasonView;
     seasonView = view;
-    // the League | Cup bar tucks away for the Schedule and returns with Main / Results
+    // the League | Cup bar tucks away for the Schedule and returns with the Season page
     seasonSyncSubnav(typeof ROUTES!=='undefined' && typeof currentRouteIndex!=='undefined' ? ROUTES[currentRouteIndex] : 'league');
 
     const box = document.getElementById('season-sections');
@@ -157,7 +148,7 @@ function seasonShowView(view, opts){
         seasonApplyView(view, prev);
         return;
     }
-    // slide the old view out, swap, slide the new one in (forward = into Schedule/Results, back = to Main)
+    // slide the old view out, swap, slide the new one in (forward = into the Schedule, back = to Season)
     const dir = view==='main' ? -1 : 1;
     box.style.setProperty('--sx', (dir*30)+'px');
     clearTimeout(seasonSwapTimer);

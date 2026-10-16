@@ -17,6 +17,7 @@ function hasAnyTool(){ return canManageMusic() || canAddMoment(); }
 
 // Asks the Worker what the logged-in account may do (called on login / app start).
 async function refreshMyPerms(){
+    sessionsLastCheck = Date.now();
     harfsIsAdmin = false;
     harfsPerms = { music:false, moments:false };
     if(loggedInTeam && harfsSessionToken){

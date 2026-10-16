@@ -79,7 +79,7 @@ let loginIsNewAccount = false;
 // (see submitLoginPassword() in auth.js). loggedInTeam stays null for a
 // guest, so every existing "if(!loggedInTeam)" write-action guard already
 // does the right thing — it just prompts them to log in first.
-let isGuestMode = localStorage.getItem('harfs_guest')==='1';
+localStorage.removeItem('harfs_guest');   // guest mode was removed — every user must sign in
 
 
 let leagueData={},mainLeagueData={};

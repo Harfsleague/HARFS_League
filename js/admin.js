@@ -32,6 +32,7 @@ function showAdminDashboard(){
         return;
     }
     loadAdminPermsUi();
+    if(typeof loadAdminSessionsUi==='function') loadAdminSessionsUi();
     // Edit Mode (isAdminUnlocked) is a separate on/off toggle in Profile →
     // Bayern Admin — visiting the dashboard itself doesn't turn it on.
     // keep leagueData in sync with GitHub before any admin edit/delete/verify happens.
@@ -70,6 +71,7 @@ function navigate(route){
         syncSeasonPill();
         const sel = document.getElementById('season-selector');
         if(sel) sel.value = 'current';
+        if(typeof loadSelectedSeason==='function') loadSelectedSeason('current');
         updateCurrentDateTime();
     }
 

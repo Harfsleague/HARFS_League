@@ -493,6 +493,7 @@ function renderMagazine(issue) {
             <p>${escapeHtml(issue.funnyClosing)}</p>
         </div>
     `;
+    if (typeof magCommentsMount === 'function') magCommentsMount(issue);   // comments section at the very end (js/magazine-comments.js)
 }
 
 // ============================================================

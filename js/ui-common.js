@@ -210,7 +210,7 @@ function startApp(){
         logo.classList.add('in-header');
         setTimeout(()=>{
             document.getElementById('bottom-navigation').classList.add('active');
-            if(!loggedInTeam && !isGuestMode){
+            if(!loggedInTeam){
                 showLoginScreen();
             } else {
                 navigate('main-league');
