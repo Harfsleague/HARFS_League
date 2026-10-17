@@ -535,6 +535,42 @@ function mbaSingleBlock(t, kind, ctx){
         ${add}${lockedNote}
     </div>`;
 }
+// ---- Super Cup of the season this CUP edition belongs to (league champion vs CUP champion) ----
+// The result is entered in Admin → Season Control (js/flow.js); it is shown here, read-only, under the third-place game.
+function mbaSuperSeason(edition){
+    const f = (typeof flowCur==='function') ? flowCur() : null;
+    if(f && f.cupEdition===edition) return { f, archived:false };
+    if(f && f.cupEdition==null && !mbaData.current && edition===mbaNextEdition()) return { f, archived:false };   // draw still pending
+    const s = (typeof archivedSeasons!=='undefined' ? archivedSeasons : []).find(x=>x.cupEdition===edition);
+    return s ? { f:s, archived:true } : null;
+}
+function mbaSuperHtml(edition){
+    const ss = mbaSuperSeason(edition);
+    const divider = `<div class="mba-super-divider" aria-hidden="true"></div>`;
+    if(!ss) return divider + `<div class="mba-third-wrap mba-super-wrap"><div class="mba-block mba-super mba-pending"><div class="mba-block-head"><span>⚡ Super Cup</span><span class="mba-block-tag">—</span></div><div class="mba-pending-note">No Super Cup recorded</div></div></div>`;
+    const f = ss.f;
+    const sc = f.superCup && f.superCup.winner && f.superCup.teams ? f.superCup : null;
+    let teams = sc ? sc.teams : null;
+    if(!teams && !ss.archived && typeof flowSuperCupTeams==='function'){ const w = flowSuperCupTeams(f); if(w) teams = w.teams; }
+    const tbd = `<div class="mba-team-row tbd"><span class="mba-team-label"><span class="mba-logo mba-logo-tbd">?</span><span class="nm">${ss.archived?'—':'To be decided'}</span></span><span class="mba-wins">–</span></div>`;
+    let rows, hist = '', note = '';
+    if(teams){
+        rows = teams.map(team=>{
+            const isW = sc && sc.winner===team;
+            const score = sc && sc.scores ? sc.scores[team] : null;
+            return `<div class="mba-team-row${isW?' winner':''}${sc&&!isW?' loser':''}"><span class="mba-team-label">${mbaTeamLabel(team)}${isW?'<i class="fas fa-bolt mba-crown"></i>':''}</span><span class="mba-wins">${sc ? (score!=null?score:(isW?'✓':'')) : '–'}</span></div>`;
+        }).join('');
+        hist = sc ? `<div class="mba-hist"><div class="mba-hist-title">Match history</div><div class="mba-hist-row"><span class="mba-hist-tag">FT</span>${mbaScoreHtml(teams, sc)}</div></div>` : '';
+        if(!sc) note = `<div class="mba-pending-note">${ss.archived?'Not played':'To be played after the CUP final'}</div>`;
+    } else {
+        rows = tbd + tbd;
+        note = `<div class="mba-pending-note">${ss.archived?'No Super Cup recorded':'League champion vs CUP champion'}</div>`;
+    }
+    return divider + `<div class="mba-third-wrap mba-super-wrap"><div class="mba-block mba-super${sc?' decided':''}${teams?'':' mba-pending'}">
+        <div class="mba-block-head"><span>⚡ Super Cup</span><span class="mba-block-tag">${sc?'Played':(teams?'To play':'Upcoming')}</span></div>
+        ${rows}${hist}${note}
+    </div></div>`;
+}
 // Semifinals on the left, Final on the right, joined by connector lines;
 // the Third-Place match sits underneath. Connector geometry lives in css/mba.css
 // (both link cells are exactly half the tree's height, so lines meet at the Final's centre).
@@ -549,6 +585,7 @@ function mbaTreeHtml(t, ctx){
             <div class="mba-cell mba-c-final">${mbaSingleBlock(t,'final',ctx)}</div>
         </div>
         <div class="mba-third-wrap">${mbaSingleBlock(t,'third',ctx)}</div>
+        ${mbaSuperHtml(t.edition)}
     </div>`;
 }
 function mbaCompletedSummaryHtml(rec){
@@ -648,7 +685,7 @@ function mbaPendingHtml(pend){
         <div class="mba-pending-note">${note}</div>
     </div>`;
     const semiNote = `Draw after league matchweek ${pend.afterRound}`;
-    return `<div class="mba-edition-label">CUP — Edition ${pend.edition} · Season ${pend.seasonId} · Draw pending</div>
+    return `<div class="mba-edition-label">CUP ${pend.edition}</div>
     <div class="mba-tree-scroll">
         <div class="mba-tree">
             <div class="mba-cell mba-c-semi1">${block('mba-semi','Semifinal 1',`First to ${MBA_SEMI_WINS_NEEDED}`,semiNote)}</div>
@@ -658,8 +695,8 @@ function mbaPendingHtml(pend){
             <div class="mba-cell mba-c-final">${block('mba-final','🏆 Final','Upcoming','Waiting for the semifinals')}</div>
         </div>
         <div class="mba-third-wrap">${block('mba-third','🥉 Third place','Upcoming','Waiting for the semifinals')}</div>
-    </div>
-    <p class="flow-note" style="text-align:center;margin-top:10px;">The semifinal pairs are drawn after matchweek ${pend.afterRound} of the league.</p>`;
+        ${mbaSuperHtml(pend.edition)}
+    </div>`;
 }
 
 // Season picker → CUP follows: an archived season shows its own CUP edition, the running season shows its newest one.
@@ -707,7 +744,7 @@ function renderMbaSeasonView(){
     const ctx = mbaMakeCtx('view', opt.scope, t.edition);
     let html = '';
     if(!isCur) html += mbaCompletedSummaryHtml(t);
-    html += `<div class="mba-edition-label">CUP — Edition ${t.edition}${isCur?' · In progress':''}</div>`;
+    html += `<div class="mba-edition-label">CUP ${t.edition}</div>`;
     html += mbaTreeHtml(t, ctx);
     const last = mbaData.completed[mbaData.completed.length-1];
     if(!isCur && ctx.canEdit && !mbaData.current && last && last.edition===t.edition){
