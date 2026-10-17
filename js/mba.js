@@ -89,8 +89,9 @@ async function loadMbaDataFromGitHub(){
             mbaData = await (await fetch(d.download_url+'?t='+Date.now())).json();
             await idbSet('mbaData','v',mbaData);
         }
+        else if(r.status!==404) console.warn('mba_history load failed:', r.status);
         // A 404 here is expected before the very first tournament — mbaData stays {current:null,completed:[]}.
-    }catch(e){}
+    }catch(e){ console.warn('mba_history load error:', e); }
     normalizeMbaData();
     renderMbaSeasonView();
     if(document.getElementById('admin-screen')?.classList.contains('active')) renderMbaAdminSection();
@@ -727,20 +728,23 @@ function renderMbaSeasonView(){
     if(!el) return;
     const { opt } = mbaSelected();
     if(!opt){
+        el.__mbaHtml = null;
         el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No CUP tournaments yet.</p>';
         return;
     }
     if(opt.scope==='none'){
+        el.__mbaHtml = null;
         el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No CUP tournament is recorded for this season.<br>Use the arrows above to browse the editions.</p>';
         return;
     }
     if(opt.scope==='pending'){
+        el.__mbaHtml = null;
         el.innerHTML = mbaPendingHtml(opt.pend);
         return;
     }
     const isCur = opt.scope==='current';
     const t = isCur ? mbaData.current : mbaData.completed.find(r=>r.edition===opt.edition);
-    if(!t){ el.innerHTML = ''; return; }
+    if(!t){ el.__mbaHtml = null; el.innerHTML = ''; return; }
     const ctx = mbaMakeCtx('view', opt.scope, t.edition);
     let html = '';
     if(!isCur) html += mbaCompletedSummaryHtml(t);
