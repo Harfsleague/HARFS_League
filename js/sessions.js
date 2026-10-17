@@ -26,6 +26,16 @@ function harfsForceLogout(reason){
 (function(){
     const realFetch = window.fetch.bind(window);
     window.fetch = async function(input, init){
+        // READ the data repo through our Worker (it holds the GitHub token: 5000 requests/hour) instead of anonymously
+        // (60 requests/hour per IP — when that ran out the league / CUP / archive silently loaded as "nothing").
+        // Everybody is signed in now, so every contents GET can go through the Worker; if it fails we fall back to the direct call.
+        try{
+            if(typeof input==='string' && harfsSessionToken && input.startsWith(BASE_API) && (!init || !init.method || init.method==='GET')){
+                const viaWorker = await realFetch(ghProxyUrl(input), { ...(init||{}), headers:{ ...((init && init.headers) || {}), Authorization: ghAuthHeader() } });
+                if(viaWorker.ok || viaWorker.status===404) return viaWorker;
+                if(viaWorker.status===401){ harfsForceLogout('You were signed out on this device'); return viaWorker; }
+            }
+        }catch(e){ /* network hiccup → direct call below */ }
         const res = await realFetch(input, init);
         try{
             if(res.status===401 && harfsSessionToken){
