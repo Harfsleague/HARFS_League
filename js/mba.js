@@ -598,6 +598,7 @@ function mbaBuildOptions(){
 }
 function mbaSelected(){
     const opts = mbaBuildOptions();
+    if(mbaViewValue==='none') return { opts, idx:-1, opt:{ value:'none', label:'No CUP this season', scope:'none' } };
     let idx = opts.findIndex(o=>o.value===mbaViewValue);
     if(idx<0) idx = 0;
     return { opts, idx, opt: opts[idx] || null };
@@ -662,10 +663,24 @@ function mbaPendingHtml(pend){
 }
 
 // Season picker → CUP follows: an archived season shows its own CUP edition, the running season shows its newest one.
+// Which CUP edition belongs to an ARCHIVED season? New archives carry `cupEdition`; older ones (e.g. Season 7 ↔ Edition 1)
+// don't, so the edition is found by date: it was created after the previous season ended and not after this one ended.
+function mbaEditionForSeason(s){
+    if(!s) return null;
+    const done = mbaData.completed || [];
+    if(s.cupEdition!=null) return done.some(r=>r.edition===s.cupEdition) ? s.cupEdition : null;
+    const all = (typeof archivedSeasons!=='undefined' && Array.isArray(archivedSeasons)) ? [...archivedSeasons].sort((a,b)=>a.seasonId-b.seasonId) : [];
+    const i = all.findIndex(x=>x.seasonId===s.seasonId);
+    const end = Date.parse(s.date);
+    const start = i>0 ? Date.parse(all[i-1].date) : -Infinity;
+    if(isNaN(end)) return null;
+    const hit = done.filter(r=>(r.createdAt||0) > (isNaN(start)?-Infinity:start) && (r.createdAt||0) <= end);
+    return hit.length ? hit[hit.length-1].edition : null;
+}
+// Season picker → CUP follows: an archived season shows its own CUP edition (or says it had none), the running season its newest one.
 function mbaFollowSeason(val){
     if(val==='current') mbaViewValue = null;
-    else if(val && val.cupEdition!=null && (mbaData.completed||[]).some(r=>r.edition===val.cupEdition)) mbaViewValue = 'ed:'+val.cupEdition;
-    else return;
+    else { const ed = mbaEditionForSeason(val); mbaViewValue = ed!=null ? 'ed:'+ed : 'none'; }
     renderMbaSeasonView();
 }
 
@@ -676,6 +691,10 @@ function renderMbaSeasonView(){
     const { opt } = mbaSelected();
     if(!opt){
         el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No CUP tournaments yet.</p>';
+        return;
+    }
+    if(opt.scope==='none'){
+        el.innerHTML = '<p style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:24px;">No CUP tournament is recorded for this season.<br>Use the arrows above to browse the editions.</p>';
         return;
     }
     if(opt.scope==='pending'){
