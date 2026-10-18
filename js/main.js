@@ -11,23 +11,35 @@ initializeLeagueData();
 initializeMainLeagueData();
 applyAppearance();   // apply saved palette/scheme/performance before first paint
 
-document.addEventListener('DOMContentLoaded',async()=>{
-    // Load any already-cached team logos into memory BEFORE the first
-    // render that needs them — this is a quick local IndexedDB read (a
-    // handful of tiny records), so awaiting it here doesn't meaningfully
-    // delay startup, and avoids a flash-of-live-URL on every load.
-    await preloadTeamLogosFromCache();
-    ensureTeamLogosCached(); // best-effort background refresh/first-time cache, not awaited
-    // Awaited (unlike the other loaders below) so any team's custom
-    // name/logo — and TEAM_DISPLAY_NAMES/teamLogoUrl() derived from it — are
-    // already in place before the login screen or first render happens.
-    await loadMainLeagueDataFromGitHub();
+document.addEventListener('DOMContentLoaded',()=>{
+    // ---- STARTUP SPEED --------------------------------------------------
+    // The HARFS intro animation used to start only AFTER `await`-ing the
+    // team-logo cache and the GitHub round-trips (loadMainLeagueDataFromGitHub =
+    // 2 sequential network requests), so on a slow / filtered connection the
+    // logo could take many seconds to appear. Now the animation starts on the
+    // very first tick, and the data loads in parallel with it. The animation
+    // only waits (briefly, see startApp) for the LOCAL cache copy of the
+    // league data — never for the network.
+    let cacheReadyResolve;
+    const cacheReady = new Promise(r=>{ cacheReadyResolve = r; });
+
     updateCurrentDateTime();
     setInterval(updateCurrentDateTime,60000);
-    loadArchiveDropdown();
-    // CUP first, then the schedule: the schedule's phase is derived from the CUP edition + match history
-    loadMbaDataFromGitHub().then(()=>loadFlowFromGitHub());
     setupOverallHold();
     setupSeasonFabScroll();
-    startApp();
+    startApp(cacheReady);                       // <- logo shows immediately
+
+    (async()=>{
+        try{
+            await preloadTeamLogosFromCache();  // quick local IndexedDB read
+            ensureTeamLogosCached();            // best-effort background refresh, not awaited
+            // cacheReadyResolve fires as soon as the cached copy is merged in (before the network request)
+            await loadMainLeagueDataFromGitHub(()=>cacheReadyResolve());
+        }catch(e){ /* offline / API hiccup: the cached data (if any) is already in place */ }
+        cacheReadyResolve();                    // first-ever launch (no cache): release after the network attempt
+        try{ updateHeaderForLogin(); }catch(e){}// custom team logo / names may have just arrived
+        loadArchiveDropdown();
+        // CUP first, then the schedule: the schedule's phase is derived from the CUP edition + match history
+        loadMbaDataFromGitHub().then(()=>loadFlowFromGitHub());
+    })();
 });

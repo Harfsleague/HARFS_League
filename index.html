@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Startup speed: open the connections early and don't let the two big CDN stylesheets block the first paint
+         (the HARFS intro logo is styled by css/styles.css, which stays render-blocking). The media="print" trick
+         loads them in the background and switches them on as soon as they arrive. -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+    <link rel="preconnect" href="https://api.github.com" crossorigin>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" crossorigin="anonymous" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </noscript>
     <link rel="manifest" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/manifest.json">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/icon-192.png">
@@ -15,6 +26,7 @@
 <link rel="stylesheet" href="css/mba.css">
 <link rel="stylesheet" href="css/flow.css">
 <link rel="stylesheet" href="css/liquid-glass.css">
+<link rel="stylesheet" href="css/chat.css">
 </head>
 <body>
 
@@ -259,6 +271,13 @@
                 </button>
                 <button class="ov-tile" onclick="openCardsSheet()" aria-label="Cards">
                     <i class="fas fa-clone"></i><span>Cards</span>
+                </button>
+                <button class="ov-tile ov-tile-chat" onclick="openChatPage()" aria-label="Chat">
+                    <i class="fas fa-comments"></i><span>Chat</span>
+                    <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
+                </button>
+                <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
+                    <i class="fas fa-gamepad"></i><span>Game</span>
                 </button>
             </div>
         </div>
@@ -967,6 +986,63 @@
         </div>
     </div>
 
+    <!-- ============ GROUP CHAT — full-page (Overall → Chat) ============ -->
+    <div id="chat-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel chat-panel">
+                <div class="ai-panel-header">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="ai-panel-title"><i class="fas fa-comments"></i> HARFS Chat</div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="openNotifSheet()" title="Notifications"><i class="fas fa-bell"></i></button>
+                    </div>
+                </div>
+                <div class="chat-body">
+                    <div class="chat-scroll" id="chat-scroll" onscroll="chatOnScroll()">
+                        <div id="chat-messages"></div>
+                    </div>
+                    <button class="chat-jump" id="chat-jump" onclick="chatScrollBottom(true)" hidden><i class="fas fa-chevron-down"></i><b id="chat-jump-n"></b></button>
+                </div>
+                <div class="chat-compose">
+                    <div class="chat-chip" id="chat-replybar" hidden><span><i class="fas fa-reply"></i> <b id="chat-reply-name"></b> <em id="chat-reply-text"></em></span><button type="button" onclick="chatCancelReply()" aria-label="Cancel"><i class="fas fa-xmark"></i></button></div>
+                    <div class="chat-chip chat-attach" id="chat-attachbar" hidden></div>
+                    <div class="chat-progress" id="chat-progress" hidden><span id="chat-progress-bar"></span></div>
+                    <div class="chat-rec" id="chat-rec" hidden>
+                        <button type="button" class="chat-rec-cancel" onclick="chatRecCancel()" aria-label="Cancel"><i class="fas fa-trash"></i></button>
+                        <span class="chat-rec-dot"></span><span id="chat-rec-time">0:00</span>
+                        <button type="button" class="chat-send" onclick="chatRecSend()" aria-label="Send voice"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div class="chat-row" id="chat-row">
+                        <label class="chat-icon-btn" aria-label="Attach"><i class="fas fa-paperclip"></i><input type="file" id="chat-file" multiple onchange="chatPickFiles(event)" hidden></label>
+                        <textarea id="chat-input" rows="1" maxlength="300" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)"></textarea>
+                        <button type="button" class="chat-icon-btn" id="chat-mic" onclick="chatRecStart()" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
+                        <button type="button" class="chat-send" id="chat-send" onclick="chatSend()" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="chat-viewer" onclick="chatCloseViewer()"><div class="chat-viewer-x"><i class="fas fa-times"></i></div><div id="chat-viewer-body"></div></div>
+
+    <!-- ============ GAME — Tetris (Overall → Game) ============ -->
+    <div id="game-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel game-panel">
+                <div class="ai-panel-header">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="ai-panel-title"><i class="fas fa-gamepad"></i> Game</div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="gameReload()" title="Reload"><i class="fas fa-rotate-right"></i></button>
+                        <a class="ai-icon-btn" id="game-ext" href="https://sj2005zarisfi-source.github.io/tetris-game/" target="_blank" rel="noopener" title="Open in browser"><i class="fas fa-up-right-from-square"></i></a>
+                    </div>
+                </div>
+                <div class="game-stage" id="game-stage">
+                    <div class="game-loading" id="game-loading"><span class="spinner"></span><span id="game-loading-msg">Loading game…</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ AI ASSISTANT SETTINGS ============ -->
     <div id="ai-settings-modal" class="modal-overlay">
         <div class="modal-content" style="max-width:320px;" dir="ltr">
@@ -1024,6 +1100,7 @@
 <script src="js/season-layout.js"></script>
 <script src="js/verify.js"></script>
 <script src="js/admin-music.js"></script>
+<script src="js/chat.js"></script>
 <script src="js/glass-fx.js"></script>
 <script src="js/main.js"></script>
 

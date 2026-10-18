@@ -195,20 +195,24 @@ let currentRouteIndex=1;
 // APP STARTUP ANIMATION — logo fades/scales in at center, then
 // glides to the header (replaces the old intro video entirely).
 // ============================================================
-function startApp(){
+function startApp(cacheReady){
     const logo = document.getElementById('hero-logo-container');
     updateHeaderForLogin();
 
-    // Phase 1 — box + text fade in at center
+    // Phase 1 — box + text fade in at center (starts at once — never waits for data)
     setTimeout(()=>{
         logo.classList.add('box-forming');
-    }, 200);
+    }, 120);
 
-    // Phase 2 — after 1.6s, glide smoothly to header
+    // Phase 2 — glide smoothly to header
     setTimeout(()=>{
         logo.classList.remove('box-forming');
         logo.classList.add('in-header');
-        setTimeout(()=>{
+        // Phase 3 — only now do we need the (local, cached) league data: wait for it,
+        // but never longer than 4 s so a dead network can't freeze the intro.
+        const ready = cacheReady ? Promise.race([cacheReady, new Promise(r=>setTimeout(r,4000))]) : Promise.resolve();
+        setTimeout(async()=>{
+            await ready;
             document.getElementById('bottom-navigation').classList.add('active');
             if(!loggedInTeam){
                 showLoginScreen();
@@ -217,7 +221,7 @@ function startApp(){
                 if(typeof harfsConsumePendingOpen==='function') harfsConsumePendingOpen();   // opened from a notification
             }
         }, 750);
-    }, 1800);
+    }, 1500);
 }
 
 // (Swiping left/right between pages was removed on purpose — pages change only through the bottom navigation.)

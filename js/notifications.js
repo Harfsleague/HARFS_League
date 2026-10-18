@@ -5,7 +5,9 @@
 //   • a new magazine issue          • a new Golden Moment
 //   • Thursday-evening reminder of the matchweek's games
 //   • (optional, off by default) new comments on the magazine
-// This device must allow notifications (browser permission + a push subscription); the four topics are the ACCOUNT's choice.
+//   • new messages in the group chat
+// This device must allow notifications (browser permission + a push subscription); the five topics are the ACCOUNT's choice.
+// Chat extras (this device only, js/chat.js): show the unread-message count on the Chat tile / app icon, and the in-app banner.
 // iPhone / iPad: notifications only exist for the app installed on the Home Screen (Share → Add to Home Screen).
 // Loaded as a classic (non-module) script — shares the global scope.
 // ============================================================
@@ -13,9 +15,10 @@ const NOTIF_TOPICS = [
     { key:'magazine', icon:'fa-newspaper',     title:'New magazine issue',            sub:'When a new HARFS Weekly Magazine is published' },
     { key:'moments',  icon:'fa-star',          title:'New Golden Moment',             sub:'When a new post is added to Moments' },
     { key:'reminder', icon:'fa-futbol',        title:'Matchweek reminder',            sub:'Every Thursday evening: this week’s games' },
-    { key:'comments', icon:'fa-comments',      title:'Magazine comments',             sub:'Every new comment under a magazine issue' }
+    { key:'comments', icon:'fa-comments',      title:'Magazine comments',             sub:'Every new comment under a magazine issue' },
+    { key:'chat',     icon:'fa-message',       title:'Chat messages',                 sub:'Every new message in the HARFS group chat' }
 ];
-let notifPrefs = { magazine:true, moments:true, reminder:true, comments:false };
+let notifPrefs = { magazine:true, moments:true, reminder:true, comments:false, chat:true };
 
 function notifSupported(){ return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
 function notifB64uToBytes(b64u){
@@ -108,6 +111,19 @@ async function renderNotifSheet(){
     box.innerHTML = `${top}
         <div class="settings-section-label" style="margin-top:14px;">Notify me about</div>
         <div class="notif-rows">${rows}</div>
+        <div class="settings-section-label" style="margin-top:14px;">Chat · this device</div>
+        <div class="notif-rows">
+            <div class="notif-row">
+                <div class="notif-ico"><i class="fas fa-bell"></i></div>
+                <div class="notif-info"><b>Unread message count</b><span>Show the number of unread chat messages on the Chat tile and the app icon</span></div>
+                <div class="perf-toggle ${chatBadgeEnabled()?'on':''}" onclick="notifToggleChatLocal('badge',this)"></div>
+            </div>
+            <div class="notif-row">
+                <div class="notif-ico"><i class="fas fa-message"></i></div>
+                <div class="notif-info"><b>In-app message banner</b><span>Show a banner at the top when a new message arrives while you are in the app</span></div>
+                <div class="perf-toggle ${chatToastEnabled()?'on':''}" onclick="notifToggleChatLocal('toast',this)"></div>
+            </div>
+        </div>
         <p class="sess-hint" style="margin-top:8px;">These choices belong to your account (<b>${escapeHtml(TEAM_DISPLAY_NAMES[loggedInTeam]||loggedInTeam)}</b>) and apply on all your devices that have notifications turned on.</p>
         ${on ? `<button class="glass-button w-full font-bold mt-2" onclick="notifSendTest(this)"><i class="fas fa-paper-plane mr-2"></i>Send a test notification</button>` : ''}`;
 }
@@ -125,6 +141,12 @@ async function notifToggleTopic(key, el){
     try{ const d = await notifApi('/push/prefs','POST',{ prefs:{ [key]: next } }); notifPrefs = d.prefs; }
     catch(e){ el.classList.toggle('on', !next); showToast(e.message||'Could not save','error',2600); }
 }
+function notifToggleChatLocal(which, el){
+    haptic([6]);
+    const next = !el.classList.contains('on');
+    el.classList.toggle('on', next);
+    if(which==='badge') chatSetBadgeEnabled(next); else chatSetToastEnabled(next);
+}
 async function notifSendTest(btn){
     haptic([8]); btn.disabled = true;
     try{
@@ -140,6 +162,7 @@ try{ const q = new URLSearchParams(location.search).get('open'); if(q){ harfsPen
 function harfsOpenTarget(target){
     if(!target) return;
     if(target==='magazine'){ if(typeof openMagazinePanel==='function') openMagazinePanel(); }
+    else if(target==='chat'){ if(typeof openChatPage==='function') openChatPage(); }
     else if(target==='moments'){ navigate('weird'); }
     else if(target==='schedule'){ navigate('league'); setTimeout(()=>{ if(typeof seasonShowView==='function') seasonShowView('schedule',{ silent:true }); }, 80); }
 }

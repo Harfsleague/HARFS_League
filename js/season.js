@@ -298,10 +298,13 @@ function loadSelectedSeason(val){
             }
     }
 }
-async function loadMainLeagueDataFromGitHub(){
+// onCached (optional): called right after the locally cached copy has been merged in and BEFORE any network
+// request — main.js uses it so the startup animation never has to wait for the network.
+async function loadMainLeagueDataFromGitHub(onCached){
     if(!Object.keys(mainLeagueData).length)initializeMainLeagueData();
     const cached=repairMojibake(await idbGet('mainLeagueData','v'));
     if(cached) Object.keys(cached).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...cached[k]};});
+    if(cached && typeof onCached==='function'){ try{ syncTeamDisplayNames(); }catch(e){} try{ onCached(); }catch(e){} }
     if(!navigator.onLine){
         setSyncStatus('offline');
         PROFILE_TEAMS.forEach(ensureWalletFields);

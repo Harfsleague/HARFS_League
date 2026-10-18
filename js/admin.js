@@ -61,6 +61,7 @@ function exitAdmin(){
 }
 function navigate(route){
     haptic([8]);
+    if(typeof harfsChatGameOnRoute==='function') harfsChatGameOnRoute(route);   // chat polling / game iframe lifecycle (js/chat.js)
 
     // if leaving the league (season) screen, reset back to the current season
     const prevRoute = ROUTES[currentRouteIndex];
@@ -101,7 +102,7 @@ function navigate(route){
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-admin',
         'settings':'nav-settings','admin':'nav-settings',
-        'magazine':'nav-main','ai-chat':'nav-main'
+        'magazine':'nav-main','ai-chat':'nav-main','chat':'nav-main','game':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
@@ -110,7 +111,7 @@ function navigate(route){
         'main-league':'main-league-screen','league':'league-table-screen',
         'weird':'weird-screen','admin':'admin-screen',
         'settings':'settings-screen','magazine':'magazine-screen',
-        'ai-chat':'ai-chat-screen'
+        'ai-chat':'ai-chat-screen','chat':'chat-screen','game':'game-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{

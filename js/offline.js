@@ -77,10 +77,9 @@ function teamLogoUrl(team){
 
 async function preloadTeamLogosFromCache(){
     try{
-        for(const team of TEAM_NAMES){
-            const rec = await idbGet('teamLogos', team);
-            if(rec && rec.dataUrl) teamLogoDataUrls[team] = rec.dataUrl;
-        }
+        // all reads in parallel (they used to be awaited one by one)
+        const recs = await Promise.all(TEAM_NAMES.map(team=>idbGet('teamLogos', team)));
+        TEAM_NAMES.forEach((team,i)=>{ const rec = recs[i]; if(rec && rec.dataUrl) teamLogoDataUrls[team] = rec.dataUrl; });
     }catch(e){ /* IndexedDB unavailable — falls back to live URLs, same as before this feature existed */ }
 }
 

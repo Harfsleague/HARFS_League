@@ -181,9 +181,9 @@ body.perf-no-anim #season-sections{ transition:none !important; animation:none !
    OVERALL — shortcut icons (Magazine · Assistant · Federation · Cards)
    Rounded squares, side by side in one row.
    ===================================================== */
-.ov-tiles{ display:flex; justify-content:center; gap:10px; margin-top:16px; }
+.ov-tiles{ display:grid; grid-template-columns:repeat(3,minmax(0,82px)); justify-content:center; gap:10px; margin-top:16px; }   /* 3 × 2 so six shortcuts stay a comfortable size on a phone */
 .ov-tile{
-    flex:1 1 0; max-width:82px; aspect-ratio:1/1; border-radius:22px;
+    width:100%; aspect-ratio:1/1; border-radius:22px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
     color:var(--primary); cursor:pointer; position:relative; overflow:hidden;
     background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
@@ -198,6 +198,8 @@ body.perf-no-anim #season-sections{ transition:none !important; animation:none !
 .ov-tile:nth-child(1){ color:#fbbf24; }
 .ov-tile:nth-child(3){ color:#c084fc; }
 .ov-tile:nth-child(4){ color:#f87171; }
+.ov-tile:nth-child(5){ color:#34d399; }
+.ov-tile:nth-child(6){ color:#fb923c; }
 body.ai-disabled .ov-tile-ai{ display:none !important; }
 
 /* =====================================================
