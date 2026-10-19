@@ -3,6 +3,8 @@
 // ------------------------------------------------------------
 // CHAT
 //   • One shared room for all accounts: text, replies, photos, videos, voice messages and any other file.
+//   • Everything is ENCRYPTED AT REST on the Worker (AES-GCM, like the Moments): messages, names, senders and files. Pictures,
+//     videos, voice messages and files are not public URLs — they are fetched with the login token and shown from a local blob.
 //   • Backed by the Worker (KV) — GET /chat/poll · GET /chat/messages · POST /chat/send · POST /chat/upload
 //     · GET /chat/media/<id> · POST /chat/delete · POST /chat/read · GET /chat/unread   (see worker.js → CHAT).
 //   • Push notifications: topic "chat" (Settings → Notifications). The unread-message count on the Chat tile
@@ -14,7 +16,7 @@
 //     opened, removed when you leave it — so nothing is downloaded at startup and the game stops in the background).
 // Loaded as a classic (non-module) script — shares the global scope.
 // ============================================================
-const CHAT_MAX_TEXT   = 300;
+const CHAT_MAX_TEXT   = 250;     // the Worker stores each message encrypted inside a 1 KB KV record
 const CHAT_MAX_FILE   = 20 * 1024 * 1024;          // must match CHAT_MAX_BYTES in the Worker
 const CHAT_MAX_ATTACH = 5;
 const CHAT_MAX_REC_S  = 300;
@@ -43,7 +45,39 @@ async function chatApi(path, method, body){
 }
 function chatBadgeEnabled(){ try{ return localStorage.getItem(CHAT_BADGE_KEY) !== '0'; }catch(e){ return true; } }
 function chatToastEnabled(){ try{ return localStorage.getItem(CHAT_TOAST_KEY) !== '0'; }catch(e){ return true; } }
-function chatMediaUrl(m, dl){ return `${HARFS_AUTH_API}/chat/media/${m.mi}${dl?'?dl=1':''}`; }
+
+// ---- encrypted media: fetched with the login token (never a public URL), decrypted by the Worker, kept as a local blob ----
+const chatBlobCache = new Map();                 // media id -> Promise<blob: URL>
+function chatSafeType(m){ const t = String(m.mm||''); return /^(image|video|audio)\//.test(t) ? t : 'application/octet-stream'; }
+function chatBlob(m){
+    if(!chatBlobCache.has(m.mi)){
+        const p = (async()=>{
+            const res = await fetch(`${HARFS_AUTH_API}/chat/media/${m.mi}`, { headers:{ Authorization: ghAuthHeader() } });
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            return URL.createObjectURL(new Blob([await res.arrayBuffer()], { type: chatSafeType(m) }));
+        })();
+        p.catch(()=>chatBlobCache.delete(m.mi));
+        chatBlobCache.set(m.mi, p);
+    }
+    return chatBlobCache.get(m.mi);
+}
+function chatBlobsForget(){ chatBlobCache.forEach(p=>p.then(u=>URL.revokeObjectURL(u)).catch(()=>{})); chatBlobCache.clear(); }
+function chatDownloadUrl(url, name){ const a = document.createElement('a'); a.href = url; a.download = name || 'file'; document.body.appendChild(a); a.click(); a.remove(); }
+// tap on a picture / video / voice message / file
+async function chatMediaTap(id){
+    const m = chatMsgs.find(x=>x.id===id), node = chatNodes.get(id); if(!m || !node || !m.mi) return;
+    const slot = node.querySelector('.chat-media'); if(!slot || slot.dataset.state === 'loading') return;
+    if(slot.dataset.state === 'ready'){ if(m.k === 'image') chatOpenViewer(id); return; }
+    slot.dataset.state = 'loading'; slot.classList.add('loading');
+    try{
+        const url = await chatBlob(m);
+        if(m.k === 'image'){ slot.innerHTML = `<img class="chat-img" alt="" src="${url}">`; slot.dataset.state = 'ready'; }
+        else if(m.k === 'video'){ slot.innerHTML = `<video class="chat-vid" controls playsinline preload="metadata" src="${url}"></video>`; slot.dataset.state = 'ready'; }
+        else if(m.k === 'audio'){ slot.innerHTML = `<audio class="chat-aud" controls src="${url}"></audio>`; slot.dataset.state = 'ready'; }
+        else { chatDownloadUrl(url, m.mn); slot.dataset.state = ''; }
+    }catch(e){ slot.dataset.state = ''; showToast('Could not load the file','error',2400); }
+    slot.classList.remove('loading');
+}
 
 // ---------------- page open / close ----------------
 function openChatPage(){
@@ -95,6 +129,7 @@ function chatReset(){
     if(!chatLoaded && !chatUnread && !chatSeenVersion) return;
     chatMsgs = []; chatLoaded = false; chatSeenVersion = ''; chatReadTs = 0; chatReply = null;
     chatNodes.clear(); const box = chatEl('chat-messages'); if(box) box.innerHTML = '';
+    chatBlobsForget();
     chatSetUnread(0);
 }
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) chatSchedule(true); });
@@ -156,10 +191,11 @@ function chatBuildNode(m){
     const parent = m.r ? chatMsgs.find(x=>x.id===m.r) : null;
     let media = '';
     if(m.mi){
-        if(m.k === 'image')      media = `<img class="chat-img" loading="lazy" alt="" src="${chatMediaUrl(m)}" onclick="chatOpenViewer('${m.id}')">`;
-        else if(m.k === 'video') media = `<video class="chat-vid" controls playsinline preload="metadata" src="${chatMediaUrl(m)}"></video>`;
-        else if(m.k === 'audio') media = `<audio class="chat-aud" controls preload="none" src="${chatMediaUrl(m)}"></audio>`;
-        else media = `<a class="chat-file" href="${chatMediaUrl(m,true)}" target="_blank" rel="noopener"><i class="fas ${chatFileIcon(m.mn,m.mm)}"></i><span><b dir="auto">${escapeHtml(m.mn||'file')}</b><em>${chatSize(m.ms||0)}</em></span><i class="fas fa-download chat-file-dl"></i></a>`;
+        const ico = m.k==='image' ? 'fa-image' : m.k==='video' ? 'fa-circle-play' : m.k==='audio' ? 'fa-microphone' : chatFileIcon(m.mn,m.mm);
+        const inner = m.k==='file'
+            ? `<div class="chat-file"><i class="fas ${ico}"></i><span><b dir="auto">${escapeHtml(m.mn||'file')}</b><em>${chatSize(m.ms||0)}</em></span><i class="fas fa-download chat-file-dl"></i></div>`
+            : `<div class="chat-ph chat-ph-${m.k}"><i class="fas ${ico}"></i><span>${m.k==='audio' ? 'Voice message' : ''} ${chatSize(m.ms||0)}</span></div>`;
+        media = `<div class="chat-media" onclick="event.stopPropagation();chatMediaTap('${m.id}')">${inner}</div>`;
     }
     const quote = m.r ? `<div class="chat-quote" onclick="chatJumpTo('${m.r}')"><b>${parent ? escapeHtml(TEAM_DISPLAY_NAMES[parent.t]||parent.t) : ''}</b><span dir="auto">${parent ? escapeHtml(chatPreviewText(parent)) : 'پیام حذف شده'}</span></div>` : '';
     const canDel = mine || loggedInTeam === 'Bayern';
@@ -195,7 +231,7 @@ function chatRender(){
     let prev = null;
     chatMsgs.forEach((m,i)=>{
         let node = chatNodes.get(m.id);
-        if(!node){ node = chatBuildNode(m); chatNodes.set(m.id,node); }
+        if(!node){ node = chatBuildNode(m); chatNodes.set(m.id,node); if(m.k==='image' && m.mi && (m.ms||0) <= 6*1048576) setTimeout(()=>chatMediaTap(m.id),0); }
         if(node.parentNode !== box || node.previousElementSibling !== prev){
             box.insertBefore(node, prev ? prev.nextSibling : box.firstChild);
         }
@@ -417,10 +453,13 @@ async function chatRecFinished(){
 }
 
 // ---------------- full-screen picture viewer ----------------
-function chatOpenViewer(id){
+async function chatOpenViewer(id){
     const m = chatMsgs.find(x=>x.id===id); if(!m) return;
-    chatEl('chat-viewer-body').innerHTML = `<img src="${chatMediaUrl(m)}" alt=""><a class="chat-viewer-dl" href="${chatMediaUrl(m,true)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><i class="fas fa-download"></i></a>`;
-    chatEl('chat-viewer').classList.add('open');
+    try{
+        const url = await chatBlob(m);
+        chatEl('chat-viewer-body').innerHTML = `<img src="${url}" alt=""><a class="chat-viewer-dl" href="${url}" download="${escapeHtml(m.mn||'image')}" onclick="event.stopPropagation()"><i class="fas fa-download"></i></a>`;
+        chatEl('chat-viewer').classList.add('open');
+    }catch(e){ showToast('Could not open the picture','error',2400); }
 }
 function chatCloseViewer(){ chatEl('chat-viewer').classList.remove('open'); chatEl('chat-viewer-body').innerHTML = ''; }
 

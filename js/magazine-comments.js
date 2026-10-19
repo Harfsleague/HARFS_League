@@ -2,7 +2,8 @@
 // magazine-comments.js  —  COMMENTS at the end of every magazine issue
 // ------------------------------------------------------------
 // Any signed-in account can write a comment (text and/or a GIF) and reply to other comments.
-// Stored by the Worker (KV) — GET|POST /comments, POST /comments/delete, POST /comments/gif.
+// Stored by the Worker (KV), ENCRYPTED AT REST — GET|POST /comments, POST /comments/delete, POST /comments/gif.
+// Comment GIFs are not public any more: GET /comments/gif/<id> needs the login token, so they are fetched with it (harfsAuthImg).
 // GIFs: upload a GIF / picture, or a video — its first 10 seconds are converted to a GIF in the browser (js/gif-encoder.js).
 // Loaded as a classic (non-module) script — shares the global scope.
 // ============================================================
@@ -81,7 +82,7 @@ function magCommentHtml(c, isReply){
         <div class="mag-c-main">
             <div class="mag-c-head"><b dir="auto">${escapeHtml(name)}</b><span>${magAgo(c.ts)}</span></div>
             ${c.text?`<div class="mag-c-text" dir="auto">${escapeHtml(c.text).replace(/\n/g,'<br>')}</div>`:''}
-            ${c.gif?`<img class="mag-c-gif" src="${escapeHtml(c.gif.url)}" alt="GIF" loading="lazy" referrerpolicy="no-referrer">`:''}
+            ${c.gif?`<img class="mag-c-gif" data-authsrc="${escapeHtml(c.gif.url)}" alt="GIF" referrerpolicy="no-referrer">`:''}
             <div class="mag-c-acts"><button type="button" onclick="magReplyTo('${c.id}')"><i class="fas fa-reply"></i> پاسخ</button>${magCanDelete(c)?`<button type="button" class="del" onclick="magDeleteComment('${c.id}')"><i class="fas fa-trash"></i> حذف</button>`:''}</div>
         </div>
     </div>`;
@@ -96,6 +97,21 @@ function magCommentsRender(){
         const replies = magCList.filter(r=>r.replyTo===c.id);
         return `<div class="mag-thread">${magCommentHtml(c,false)}${replies.length?`<div class="mag-replies">${replies.map(r=>magCommentHtml(r,true)).join('')}</div>`:''}</div>`;
     }).join('');
+    box.querySelectorAll('img[data-authsrc]').forEach(img=>harfsAuthImg(img, img.dataset.authsrc));
+}
+
+// Loads a picture that needs the login token (our own encrypted /comments/gif/<id>) into an <img>; any other URL is used as is.
+const harfsImgCache = new Map();
+function harfsAuthImg(img, url){
+    if(!img || !url) return;
+    if(!/\/comments\/gif\//.test(url)){ img.referrerPolicy='no-referrer'; img.src = url; return; }
+    let p = harfsImgCache.get(url);
+    if(!p){
+        p = fetch(url,{ headers:{ Authorization: ghAuthHeader() } }).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.blob(); }).then(b=>URL.createObjectURL(b));
+        p.catch(()=>harfsImgCache.delete(url));
+        harfsImgCache.set(url,p);
+    }
+    p.then(u=>{ img.src = u; }).catch(()=>{ img.style.opacity = '.3'; });
 }
 
 // ---------------- write / reply / delete ----------------
@@ -135,7 +151,7 @@ async function magDeleteComment(id){
 function magSetGif(url){
     magCGif = { url };
     const box = document.getElementById('mag-c-gifprev'); if(!box) return;
-    box.querySelector('img').src = url; box.hidden = false;
+    harfsAuthImg(box.querySelector('img'), url); box.hidden = false;
     magCloseGifPicker();
 }
 function magClearGif(){ magCGif = null; const box=document.getElementById('mag-c-gifprev'); if(box){ box.hidden = true; box.querySelector('img').removeAttribute('src'); } }

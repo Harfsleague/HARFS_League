@@ -826,7 +826,7 @@ let momentMigrating=false;
 async function migrateMomentMediaUi(){
     if(momentMigrating)return;
     const st=document.getElementById('moment-migrate-status');
-    const ok=await showConfirm({icon:'🔐',title:'Encrypt existing moment files?',message:'Photos, videos and songs already on GitHub are re-saved encrypted. This can take a minute.',okLabel:'Encrypt',okColor:'purple'});
+    const ok=await showConfirm({icon:'🔐',title:'Encrypt existing files?',message:'Moment photos / videos / songs already on GitHub, plus any older magazine comments (and their GIFs) and chat messages / files, are re-saved encrypted. This can take a minute.',okLabel:'Encrypt',okColor:'purple'});
     if(!ok)return;
     momentMigrating=true;
     try{
@@ -837,7 +837,16 @@ async function migrateMomentMediaUi(){
             if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));
             total+=d.converted||0;
             if(st)st.textContent=d.done?`Done — ${total} file(s) encrypted.`:`Encrypting… ${d.remaining} left (${total} done)`;
-            if(d.done){showToast('Moment files are encrypted 🔐','success',2600);break;}
+            if(d.done)break;
+        }
+        // chat + magazine comments (a few items per call, like the moments above)
+        for(let i=0;i<400;i++){
+            const r=await fetch(`${HARFS_AUTH_API}/admin/encrypt/migrate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:ghAuthHeader()},body:'{}'});
+            const d=await r.json().catch(()=>({}));
+            if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));
+            total+=d.converted||0;
+            if(st)st.textContent=d.done?`Done — ${total} item(s) encrypted.`:`Encrypting chat & comments… ${d.remaining} left (${total} done)`;
+            if(d.done){showToast('Everything is encrypted 🔐','success',2600);break;}
         }
     }catch(e){ if(st)st.textContent='Stopped: '+(e.message||'error'); showToast(e.message||'Encryption stopped','error',4000); }
     momentMigrating=false;

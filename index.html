@@ -543,7 +543,7 @@
                     </button>
                     <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
                         <p style="font-size:0.62rem;color:#6b7280;text-align:center;line-height:1.6;margin:0 4px 8px;">New moments are encrypted automatically. Use this once to encrypt the files that were uploaded earlier — they can then only be opened inside the app by signed-in accounts.</p>
-                        <button class="glass-button w-full text-xs font-bold py-2" onclick="migrateMomentMediaUi()"><i class="fas fa-lock mr-2"></i>Encrypt existing moment files</button>
+                        <button class="glass-button w-full text-xs font-bold py-2" onclick="migrateMomentMediaUi()"><i class="fas fa-lock mr-2"></i>Encrypt existing files (moments, chat, comments)</button>
                         <div id="moment-migrate-status" style="font-size:0.62rem;color:#9ca3af;text-align:center;margin-top:6px;"></div>
                     </div>
                 </div>
@@ -1014,7 +1014,7 @@
                     </div>
                     <div class="chat-row" id="chat-row">
                         <label class="chat-icon-btn" aria-label="Attach"><i class="fas fa-paperclip"></i><input type="file" id="chat-file" multiple onchange="chatPickFiles(event)" hidden></label>
-                        <textarea id="chat-input" rows="1" maxlength="300" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)"></textarea>
+                        <textarea id="chat-input" rows="1" maxlength="250" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)"></textarea>
                         <button type="button" class="chat-icon-btn" id="chat-mic" onclick="chatRecStart()" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
                         <button type="button" class="chat-send" id="chat-send" onclick="chatSend()" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
                     </div>
