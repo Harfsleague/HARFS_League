@@ -1,0 +1,55 @@
+/* =====================================================
+   EMERGENCY & OFFLINE panel, banner, QR / scanner, identity picker
+   ===================================================== */
+#lite-banner{
+    position:fixed; left:50%; transform:translateX(-50%); top:calc(env(safe-area-inset-top,0px) + 2px); z-index:7000;
+    background:rgba(180,83,9,.95); color:#fff; font-size:.58rem; font-weight:800; letter-spacing:.04em; padding:2px 10px;
+    border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,.4); cursor:pointer; white-space:nowrap;
+}
+.lite-card{ display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px; font-size:.78rem; background:rgba(255,255,255,.06); margin-bottom:10px; }
+.lite-dot{ width:10px; height:10px; border-radius:50%; background:#9ca3af; flex-shrink:0; }
+.lite-s-on .lite-dot{ background:#34d399; box-shadow:0 0 8px #34d399; }
+.lite-s-off .lite-dot{ background:#fbbf24; } .lite-s-em .lite-dot{ background:#f97316; box-shadow:0 0 8px #f97316; }
+.lite-s-em{ background:rgba(249,115,22,.14); } .lite-s-off{ background:rgba(251,191,36,.1); }
+.lite-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+.lite-stat{ background:rgba(255,255,255,.06); border-radius:12px; padding:9px 6px; text-align:center; display:flex; flex-direction:column; gap:2px; }
+.lite-stat b{ font-size:1.05rem; color:#fff; } .lite-stat span{ font-size:.58rem; color:#9ca3af; }
+.lite-stat.lite-warn b{ color:#fbbf24; }
+.lite-btns{ display:flex; flex-direction:column; gap:8px; margin:10px 0; }
+.lite-btn{
+    display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:11px 14px; border-radius:13px; border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.07); color:#e5e7eb; font-weight:800; font-size:.78rem; cursor:pointer; font-family:inherit;
+}
+.lite-btn:active{ transform:scale(.98); } .lite-btn:disabled{ opacity:.5; }
+.lite-btn.lite-primary{ background:linear-gradient(135deg,var(--primary),var(--accent)); color:#0b1220; border:none; }
+.lite-back{ background:none; border:none; color:var(--primary); font-size:.75rem; font-weight:800; cursor:pointer; padding:4px 0 10px; font-family:inherit; }
+.lite-title{ color:#fff; font-weight:900; font-size:.9rem; margin:6px 0; text-align:center; }
+.lite-hint, .lite-note{ color:#9ca3af; font-size:.66rem; line-height:1.6; margin:8px 0; }
+.lite-note{ background:rgba(255,255,255,.05); border-radius:12px; padding:10px 12px; }
+.lite-note.lite-ok{ background:rgba(52,211,153,.1); color:#a7f3d0; } .lite-note.lite-bad{ background:rgba(239,68,68,.12); color:#fca5a5; }
+.lite-files{ margin-top:8px; font-size:.7rem; color:#cbd5e1; } .lite-files summary{ cursor:pointer; color:var(--primary); font-weight:800; padding:6px 0; }
+.lite-file{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:.68rem; }
+.lite-file span{ flex:1; word-break:break-all; } .lite-file em{ font-style:normal; color:#6b7280; font-size:.6rem; }
+.lite-file i.fa-circle-check{ color:#34d399; } .lite-file i.fa-pen{ color:#fbbf24; } .lite-file i.fa-circle-xmark{ color:#f87171; }
+.lite-plan{ background:rgba(255,255,255,.05); border-radius:12px; padding:10px 12px; margin-bottom:8px; font-size:.72rem; color:#e5e7eb; }
+.lite-sum{ color:#a7f3d0; font-weight:800; margin-top:3px; }
+.lite-tag{ background:rgba(251,191,36,.18); color:#fbbf24; border-radius:999px; padding:1px 8px; font-size:.58rem; margin-inline-start:6px; }
+.lite-warn-t{ color:#fbbf24; font-size:.66rem; cursor:pointer; margin-top:4px; }
+.lite-conf{ font-size:.6rem; color:#9ca3af; padding:4px 0; border-top:1px dashed rgba(255,255,255,.08); word-break:break-all; }
+.lite-journal{ font-size:.6rem; color:#9ca3af; margin:10px 0; line-height:1.7; } .lite-journal b{ color:#cbd5e1; display:block; }
+.lite-pref{ display:block; font-size:.7rem; color:#cbd5e1; margin:6px 0; }
+.lite-roster{ font-size:.68rem; color:#cbd5e1; text-align:center; margin-bottom:8px; }
+.lite-qr{ background:#fff; border-radius:14px; padding:8px; display:flex; justify-content:center; margin:10px auto; max-width:360px; }
+.lite-qr canvas{ max-width:100%; height:auto; image-rendering:pixelated; }
+.lite-code{ width:100%; min-height:74px; background:rgba(0,0,0,.3); color:#9ca3af; border:1px solid rgba(255,255,255,.1); border-radius:10px; font-size:.58rem; padding:8px; word-break:break-all; margin:6px 0; font-family:monospace; }
+#lite-scan{ position:fixed; inset:0; z-index:9500; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+#lite-scan video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.lite-scan-frame{ position:relative; width:min(70vw,300px); aspect-ratio:1; border:3px solid var(--primary); border-radius:18px; box-shadow:0 0 0 100vmax rgba(0,0,0,.55); }
+.lite-scan-msg{ position:relative; color:#fff; font-size:.8rem; font-weight:800; text-shadow:0 1px 6px #000; }
+#lite-scan .lite-btn{ position:relative; width:auto; padding:10px 22px; margin-top:8px; }
+#lite-who{ position:fixed; inset:0; z-index:9400; background:#0b1220; display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto; }
+.lite-who-box{ width:100%; max-width:420px; }
+.lite-who-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:12px 0; }
+/* the lite file / emergency mode has no use for things that need the internet */
+html.lite-mode .chat-attach-btn, html.lite-mode #chat-mic, html.lite-mode #chat-file{ display:none !important; }
+html.lite-mode .chat-row label.chat-icon-btn{ display:none !important; }

@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="css/flow.css">
 <link rel="stylesheet" href="css/liquid-glass.css">
 <link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/lite.css">
 </head>
 <body>
 
@@ -666,6 +667,9 @@
 
             <div class="settings-section-label">Account</div>
             <div class="settings-page-grid">
+                <div class="settings-page-tile wide" id="settings-lite-tile" onclick="openLiteSheet()">
+                    <i class="fas fa-life-ring" style="margin-right:8px;"></i><span>Emergency &amp; Offline</span>
+                </div>
                 <div class="settings-page-tile wide" id="settings-notif-tile" onclick="openNotifSheet()">
                     <i class="fas fa-bell" style="margin-right:8px;"></i><span>Notifications</span>
                 </div>
@@ -690,6 +694,17 @@
             <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Devices &amp; Sessions</h4>
             <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Where you are signed in</div>
             <div id="sessions-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+
+    <!-- ============ EMERGENCY & OFFLINE (Settings) ============ -->
+    <div id="lite-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeLiteSheet()">
+        <div class="team-picker-panel hero-modal sessions-modal">
+            <div class="modal-x-close" onclick="closeLiteSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Emergency &amp; Offline</h4>
+            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Keep working when the internet is cut</div>
+            <div id="lite-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
         </div>
     </div>
 
@@ -1077,6 +1092,7 @@
 <script src="js/offline.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/sessions.js"></script>
+<script src="js/offline-gh.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/appearance.js"></script>
 <script src="js/ui-common.js"></script>
@@ -1101,6 +1117,9 @@
 <script src="js/verify.js"></script>
 <script src="js/admin-music.js"></script>
 <script src="js/chat.js"></script>
+<script src="js/lite-net.js"></script>
+<script src="js/vendor/qrcode.min.js"></script>
+<script src="js/lite-ui.js"></script>
 <script src="js/glass-fx.js"></script>
 <script src="js/main.js"></script>
 

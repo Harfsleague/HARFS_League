@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v48';
+const CACHE_VERSION = 'harfs-shell-v49';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -45,11 +45,14 @@ const APP_SHELL = [
   './css/flow.css',
   './css/liquid-glass.css',
   './css/chat.css',
+  './css/lite.css',
+  './css/lite-vendor.css',
   './js/config.js',
   './js/glass-fx.js',
   './js/offline.js',
   './js/auth.js',
   './js/sessions.js',
+  './js/offline-gh.js',
   './js/notifications.js',
   './js/appearance.js',
   './js/ui-common.js',
@@ -74,6 +77,14 @@ const APP_SHELL = [
   './js/verify.js',
   './js/admin-music.js',
   './js/chat.js',
+  './js/lite-net.js',
+  './js/vendor/qrcode.min.js',
+  './js/vendor/jsqr.min.js',
+  './js/lite-ui.js',
+  './fonts/manifest.json',
+  './fonts/Champions-Bold.ttf',
+  './fonts/danstevis.otf',
+  './fonts/Far_MashinTahrir.ttf',
   './js/main.js',
 ];
 
