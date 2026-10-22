@@ -25,12 +25,18 @@ async function liteChatLoad(){
     liteChatLoaded = true;
 }
 async function liteChatAll(){ await liteChatLoad(); return Array.from(liteChatMap.values()); }
-// returns the messages that were new to us
+// returns the messages that were new to us.  Reactions travel as small records { k:'rx', mid, t, e, ts } (e = emoji, '' = taken back):
+// the newest one per (message, account) wins, so everybody ends up with the same picture.
 async function liteChatMerge(list){
     await liteChatLoad(); const fresh = [];
     for(const m of (list || [])){
         if(!m || typeof m.id !== 'string' || typeof m.ts !== 'number') continue;
         const cur = liteChatMap.get(m.id);
+        if(m.k === 'rx'){
+            if(cur && cur.ts >= m.ts) continue;
+            const rx = { id:m.id, ts:m.ts, k:'rx', mid:String(m.mid||''), t:String(m.t||'').slice(0,40), e:String(m.e||'').slice(0,12) };
+            liteChatMap.set(m.id, rx); await litePut('chat', m.id, rx); fresh.push(rx); continue;
+        }
         if(cur && (cur.del || !m.del)) continue;                         // a deletion always wins
         const clean = { id:m.id, ts:m.ts, t:String(m.t||'').slice(0,40), x:String(m.x||'').slice(0,250), ...(m.del?{del:true}:{}), ...(m.r?{r:String(m.r)}:{}) };
         liteChatMap.set(m.id, clean); await litePut('chat', m.id, clean); fresh.push(clean);
@@ -41,15 +47,28 @@ async function liteChatMerge(list){
 async function liteChatApi(path, method, body){
     await liteChatLoad();
     const me = (typeof loggedInTeam !== 'undefined' && loggedInTeam) || '?';
-    const visible = ()=>Array.from(liteChatMap.values()).filter(m=>!m.del).sort((a,b)=>a.id < b.id ? -1 : 1);
+    const visible = ()=>Array.from(liteChatMap.values()).filter(m=>!m.del && m.k !== 'rx').sort((a,b)=>a.id < b.id ? -1 : 1);
     const readTs = liteMeta.chatRead || 0;
     if(path === '/chat/poll') return { ok:true, v:String(liteChatVersion) };
-    if(path.startsWith('/chat/messages')) return { ok:true, v:String(liteChatVersion), me, messages:visible().slice(-150) };
+    if(path.startsWith('/chat/messages')){
+        const messages = visible().slice(-150), ids = new Set(messages.map(m=>m.id)), reactions = {};
+        liteChatMap.forEach(r=>{ if(r.k === 'rx' && r.e && ids.has(r.mid)) (reactions[r.mid] = reactions[r.mid] || {})[r.t] = r.e; });
+        return { ok:true, v:String(liteChatVersion), me, messages, reactions };
+    }
     if(path === '/chat/unread'){
         const un = visible().filter(m=>m.ts > readTs && m.t !== me), last = un[un.length-1];
-        return { ok:true, count:un.length, last: last ? { t:last.t, p:String(last.x).slice(0,60) } : null };
+        return { ok:true, count:un.length, readTs, last: last ? { t:last.t, p:String(last.x).slice(0,60) } : null };
     }
     if(path === '/chat/read'){ liteMeta.chatRead = Math.max(readTs, Number(body && body.ts) || Date.now()); await liteSaveMeta(); return { ok:true }; }
+    if(path === '/chat/react'){
+        const mid = String((body && body.id) || ''); if(!liteChatMap.get(mid)) throw new Error('That message no longer exists');
+        const rid = `rx|${mid}|${me}`, curRx = liteChatMap.get(rid), curE = curRx ? curRx.e : '';
+        const e = body && body.emoji ? String(body.emoji) : '';
+        const rx = { id:rid, ts:Math.max(Date.now(), (curRx ? curRx.ts : 0) + 1), k:'rx', mid, t:me, e: (!e || e === curE) ? '' : e };
+        await liteChatMerge([rx]); liteNetBroadcast({ t:'chat', msgs:[rx] });
+        const reactions = {}; liteChatMap.forEach(r=>{ if(r.k === 'rx' && r.mid === mid && r.e) reactions[r.t] = r.e; });
+        return { ok:true, v:String(liteChatVersion), reactions };
+    }
     if(path === '/chat/send'){
         const text = String((body && body.text) || '').trim().slice(0, 250);
         if(!text) throw new Error('Write something first (files and voice messages need the internet)');

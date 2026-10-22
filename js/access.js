@@ -4,6 +4,7 @@
 // The Bayern admin can give any other account two extra abilities:
 //   music   -> upload / rename / delete tracks in the music library
 //   moments -> add NEW golden moments  (edit / pin / delete stay admin-only)
+//   cards   -> create / edit / delete cards of the deck and upload their pictures (Sezar has it by default)
 // The permissions live in the Cloudflare Worker (KV). The Worker is also the
 // ONLY place that holds the GitHub token: every GitHub write goes through
 // <worker>/gh/... and is allowed or refused there, so hiding a button in the
@@ -13,20 +14,21 @@
 function isFullAdmin(){ return loggedInTeam === 'Bayern'; }
 function canManageMusic(){ return isFullAdmin() || !!harfsPerms.music; }
 function canAddMoment(){ return isFullAdmin() || !!harfsPerms.moments; }
+function canEditCards(){ return isFullAdmin() || !!harfsPerms.cards; }
 function hasAnyTool(){ return canManageMusic() || canAddMoment(); }
 
 // Asks the Worker what the logged-in account may do (called on login / app start).
 async function refreshMyPerms(){
     sessionsLastCheck = Date.now();
     harfsIsAdmin = false;
-    harfsPerms = { music:false, moments:false };
+    harfsPerms = { music:false, moments:false, cards:false };
     if(loggedInTeam && harfsSessionToken){
         try{
             const res = await fetch(`${HARFS_AUTH_API}/me`, { headers:{ Authorization: ghAuthHeader() } });
             const d = await res.json().catch(()=>({}));
             if(res.ok && d.ok){
                 harfsIsAdmin = !!d.isAdmin;
-                harfsPerms = { music: !!d.perms?.music, moments: !!d.perms?.moments };
+                harfsPerms = { music: !!d.perms?.music, moments: !!d.perms?.moments, cards: !!d.perms?.cards };
             }
         }catch(e){ /* offline: keep everything locked, the Worker enforces anyway */ }
     }
@@ -62,6 +64,7 @@ async function loadAdminPermsUi(){
                 <div class="perm-name">${escapeHtml(TEAM_DISPLAY_NAMES[a.team] || a.team)}</div>
                 <label class="perm-cell"><span>Music</span><div class="perf-toggle ${a.perms.music?'on':''}" onclick="toggleAdminPerm('${a.team}','music',this)"></div></label>
                 <label class="perm-cell"><span>Moments</span><div class="perf-toggle ${a.perms.moments?'on':''}" onclick="toggleAdminPerm('${a.team}','moments',this)"></div></label>
+                <label class="perm-cell"><span>Cards</span><div class="perf-toggle ${a.perms.cards?'on':''}" onclick="toggleAdminPerm('${a.team}','cards',this)"></div></label>
             </div>`).join('');
     }catch(e){
         box.innerHTML = `<div class="text-center text-red-400 text-xs">Could not load permissions (${escapeHtml(e.message||'error')})</div>`;

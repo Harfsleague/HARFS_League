@@ -260,6 +260,7 @@ function renderCardsSheet(){
     html += hand.length
         ? `<div class="cards-grid">${hand.map(h=>cardTileHtml(h, team, true)).join('')}</div>`
         : `<div class="cards-empty"><i class="fas fa-clone"></i><p>No cards in your hand right now.</p></div>`;
+    if(canEditCards() && !isFullAdmin()) html += `<button type="button" class="cd-btn on" style="width:100%;margin-top:14px;" onclick="cardsToggleInfo()"><i class="fas fa-pen"></i> Edit the cards of the game</button>`;
     box.innerHTML = html;
 }
 // ---- "i": how cards work + every card in the game ----
@@ -288,7 +289,8 @@ function renderCardsInfo(){
             <div class="cd-img-wrap" onclick="cardsZoom('${c.id}')"><img class="cd-img" src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"></div>
             <div class="cards-info-text"><div class="cd-name" dir="auto">${escapeHtml(c.name)}</div>
             ${c.desc?`<div class="cd-desc" dir="auto">${escapeHtml(c.desc)}</div>`:''}
-            <div class="cards-info-tag">${escapeHtml(cardsInfoTag(c))}</div></div></div>`).join('') + `</div>`;
+            <div class="cards-info-tag">${escapeHtml(cardsInfoTag(c))}</div></div></div>`).join('') + `</div>`
+        + ((canEditCards() && !isFullAdmin()) ? `<div class="cards-editor-block"><p class="mba-admin-hint" style="margin-top:14px"><i class="fas fa-pen mr-1"></i> You can create, edit and delete cards. Dealing, activating and using them stays automatic.</p>${cardsDeckEditorHtml()}</div>` : '');
 }
 function cardsApplyInfoChrome(){
     const b = document.getElementById('cards-info-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
@@ -399,6 +401,13 @@ function cardsNextDealText(){
     if(next>=N) return 'No more deals this season — only the CUP final and the Super Cup are left, and cards are not allowed there.';
     return `Next automatic deal: after matchweek ${next} — ${CARDS_WEEKLY_DRAW} random cards for every team.`;
 }
+// the deck as a grid you can tap to edit (admin dashboard, and the Cards sheet for accounts with the "cards" permission)
+function cardsDeckEditorHtml(){
+    if(!cardsData) return '';
+    return `<div class="flow-section-title" style="margin-top:12px;">Deck</div><div class="ca-deck">`
+        + cardsData.deck.map(c=>`<div class="ca-deck-item" onclick="openCardEditor('${c.id}')"><img src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"><span dir="auto">${escapeHtml(c.name)}</span>${c.draw?'':'<i class="fas fa-ban" title="Not part of the random deal"></i>'}</div>`).join('')
+        + `<div class="ca-deck-item ca-add" onclick="openCardEditor(null)"><i class="fas fa-plus"></i><span>New card</span></div></div>`;
+}
 function renderCardsAdmin(){
     const el = document.getElementById('cards-admin-body'); if(!el) return;
     if(!isFullAdmin()){ el.innerHTML=''; return; }
@@ -406,9 +415,7 @@ function renderCardsAdmin(){
     let html = `<p class="mba-admin-hint" style="margin-top:0"><i class="fas fa-robot mr-1"></i> Cards are dealt, activated and used <b>automatically</b> — you can only create and edit cards here (including the “Combo point” card’s picture and text). To see your own hand (Bayern) open Home → Cards.</p>
         <p class="flow-next"><i class="fas fa-circle-info"></i> ${escapeHtml(cardsNextDealText())}</p>`;
     // --- deck ---
-    html += `<div class="flow-section-title" style="margin-top:12px;">Deck</div><div class="ca-deck">`
-        + cardsData.deck.map(c=>`<div class="ca-deck-item" onclick="openCardEditor('${c.id}')"><img src="${cardImgUrl(c)}" alt=""><span dir="auto">${escapeHtml(c.name)}</span>${c.draw?'':'<i class="fas fa-ban" title="Not in the random deal"></i>'}</div>`).join('')
-        + `<div class="ca-deck-item ca-add" onclick="openCardEditor(null)"><i class="fas fa-plus"></i><span>New card</span></div></div>`;
+    html += cardsDeckEditorHtml();
     // --- log (read-only) ---
     if(cardsData.log.length){
         html += `<details class="flow-danger" style="margin-top:12px"><summary>Card log</summary>`
@@ -447,7 +454,7 @@ function cardsPickImage(e){
     reader.readAsDataURL(file);
 }
 async function saveCardEditor(){
-    if(!isFullAdmin()){ showToast('Admin only','error',2000); return; }
+    if(!canEditCards()){ showToast('You are not allowed to edit cards','error',2400); return; }
     if(cardsDeckBusy) return;
     const name = document.getElementById('card-edit-name').value.trim();
     if(!name){ showToast('Give the card a name','error',2000); return; }

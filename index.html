@@ -1005,12 +1005,22 @@
     <div id="chat-screen" class="page-screen">
         <div class="ai-chat-inner">
             <div class="ai-panel chat-panel">
-                <div class="ai-panel-header">
+                <div class="ai-panel-header chat-head">
                     <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
-                    <div class="ai-panel-title"><i class="fas fa-comments"></i> HARFS Chat</div>
-                    <div class="ai-panel-header-actions">
-                        <button class="ai-icon-btn" onclick="openNotifSheet()" title="Notifications"><i class="fas fa-bell"></i></button>
+                    <div class="chat-head-info">
+                        <div class="ai-panel-title"><i class="fas fa-comments"></i> HARFS Chat</div>
+                        <div class="chat-sub" id="chat-sub"><span class="chat-dot"></span><span id="chat-sub-txt">Group · everyone in the league</span></div>
                     </div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="chatToggleSearch()" title="Search" aria-label="Search"><i class="fas fa-magnifying-glass"></i></button>
+                        <button class="ai-icon-btn" onclick="openNotifSheet()" title="Notifications" aria-label="Notifications"><i class="fas fa-bell"></i></button>
+                    </div>
+                </div>
+                <div class="chat-searchbar" id="chat-searchbar" hidden>
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input id="chat-search" type="search" dir="auto" placeholder="Search messages, names, files…" oninput="chatSearchInput(this.value)" autocomplete="off">
+                    <span id="chat-search-n"></span>
+                    <button type="button" onclick="chatToggleSearch()" aria-label="Close search"><i class="fas fa-xmark"></i></button>
                 </div>
                 <div class="chat-body">
                     <div class="chat-scroll" id="chat-scroll" onscroll="chatOnScroll()">
@@ -1027,10 +1037,14 @@
                         <span class="chat-rec-dot"></span><span id="chat-rec-time">0:00</span>
                         <button type="button" class="chat-send" onclick="chatRecSend()" aria-label="Send voice"><i class="fas fa-paper-plane"></i></button>
                     </div>
+                    <div class="chat-emoji" id="chat-emoji" hidden></div>
                     <div class="chat-row" id="chat-row">
-                        <label class="chat-icon-btn" aria-label="Attach"><i class="fas fa-paperclip"></i><input type="file" id="chat-file" multiple onchange="chatPickFiles(event)" hidden></label>
-                        <textarea id="chat-input" rows="1" maxlength="250" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)"></textarea>
-                        <button type="button" class="chat-icon-btn" id="chat-mic" onclick="chatRecStart()" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
+                        <button type="button" class="chat-icon-btn" id="chat-emoji-btn" onclick="chatToggleEmoji()" aria-label="Emoji"><i class="far fa-face-smile"></i></button>
+                        <div class="chat-field">
+                            <textarea id="chat-input" rows="1" maxlength="250" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)" onfocus="chatToggleEmoji(false)"></textarea>
+                            <label class="chat-clip" aria-label="Attach"><i class="fas fa-paperclip"></i><input type="file" id="chat-file" multiple onchange="chatPickFiles(event)" hidden></label>
+                        </div>
+                        <button type="button" class="chat-icon-btn chat-mic" id="chat-mic" onclick="chatRecStart()" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
                         <button type="button" class="chat-send" id="chat-send" onclick="chatSend()" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
@@ -1041,19 +1055,16 @@
 
     <!-- ============ GAME — Tetris (Overall → Game) ============ -->
     <div id="game-screen" class="page-screen">
-        <div class="ai-chat-inner">
-            <div class="ai-panel game-panel">
-                <div class="ai-panel-header">
-                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
-                    <div class="ai-panel-title"><i class="fas fa-gamepad"></i> Game</div>
-                    <div class="ai-panel-header-actions">
-                        <button class="ai-icon-btn" onclick="gameReload()" title="Reload"><i class="fas fa-rotate-right"></i></button>
-                        <a class="ai-icon-btn" id="game-ext" href="https://sj2005zarisfi-source.github.io/tetris-game/" target="_blank" rel="noopener" title="Open in browser"><i class="fas fa-up-right-from-square"></i></a>
-                    </div>
-                </div>
-                <div class="game-stage" id="game-stage">
-                    <div class="game-loading" id="game-loading"><span class="spinner"></span><span id="game-loading-msg">Loading game…</span></div>
-                </div>
+        <div class="game-stage" id="game-stage">
+            <div class="game-loading" id="game-loading"><span class="spinner"></span><span id="game-loading-msg">Loading game…</span></div>
+        </div>
+        <div class="game-fab" id="game-fab">
+            <button type="button" class="game-fab-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+            <button type="button" class="game-fab-btn game-fab-more" onclick="gameMenu()" aria-label="Menu"><i class="fas fa-ellipsis"></i></button>
+            <div class="game-fab-menu">
+                <button type="button" class="game-fab-btn" onclick="gameReload()" aria-label="Reload"><i class="fas fa-rotate-right"></i></button>
+                <button type="button" class="game-fab-btn" onclick="gameToggleFullscreen();gameMenu(false)" aria-label="Full screen"><i class="fas fa-expand"></i></button>
+                <a class="game-fab-btn" id="game-ext" href="https://sj2005zarisfi-source.github.io/tetris-game/" target="_blank" rel="noopener" aria-label="Open in browser"><i class="fas fa-up-right-from-square"></i></a>
             </div>
         </div>
     </div>

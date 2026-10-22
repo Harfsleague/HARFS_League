@@ -67,7 +67,7 @@ let harfsSessionToken = localStorage.getItem('harfs_session') || null;
 // Every GitHub WRITE is sent to <worker>/gh/... with the normal login session token; the
 // Worker checks what this account may do and repeats the call with its own GITHUB_PAT secret.
 let harfsIsAdmin = false;                              // set by refreshMyPerms() (js/access.js)
-let harfsPerms = { music:false, moments:false };       // what the admin granted this account
+let harfsPerms = { music:false, moments:false, cards:false };       // what the admin granted this account
 const GH_LOGIN_MSG = 'Please log in to save changes';
 function ghProxyUrl(url){ const root='https://api.github.com/'; return url.startsWith(root) ? `${HARFS_AUTH_API}/gh/${url.slice(root.length)}` : url; }
 function ghAuthHeader(){ return harfsSessionToken ? `Bearer ${harfsSessionToken}` : null; }

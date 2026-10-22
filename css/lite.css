@@ -51,5 +51,4 @@
 .lite-who-box{ width:100%; max-width:420px; }
 .lite-who-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:12px 0; }
 /* the lite file / emergency mode has no use for things that need the internet */
-html.lite-mode .chat-attach-btn, html.lite-mode #chat-mic, html.lite-mode #chat-file{ display:none !important; }
-html.lite-mode .chat-row label.chat-icon-btn{ display:none !important; }
+html.lite-mode .chat-clip, html.lite-mode #chat-mic{ display:none !important; }   /* files and voice messages need the internet */

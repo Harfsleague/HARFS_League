@@ -157,7 +157,8 @@ let reactReleasedAt = 0;         // time the last hold ended (swallows the click
 let reactCardEl = null;
 
 function reactTeamsFor(id, emoji){
-    const map = momentReactions[id] || {};
+    // ids that start with "c:" are chat messages (js/chat.js keeps their reactions)
+    const map = (String(id).startsWith('c:') && typeof chatReactMap === 'function') ? chatReactMap(String(id).slice(2)) : (momentReactions[id] || {});
     return Object.keys(map).filter(t => map[t] === emoji);
 }
 function reactEnsureCard(){
