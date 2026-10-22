@@ -701,9 +701,10 @@
     <div id="lite-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeLiteSheet()">
         <div class="team-picker-panel hero-modal sessions-modal">
             <div class="modal-x-close" onclick="closeLiteSheet()"><i class="fas fa-times"></i></div>
+            <button type="button" id="lite-info-btn" class="cards-info-btn" onclick="liteToggleGuide()" aria-label="راهنما"><i class="fas fa-info"></i></button>
             <div class="team-picker-handle"></div>
-            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Emergency &amp; Offline</h4>
-            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Keep working when the internet is cut</div>
+            <h4 class="text-xl font-black text-white mb-0.5" id="lite-title" style="text-align:center;">Emergency &amp; Offline</h4>
+            <div id="lite-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Keep working when the internet is cut</div>
             <div id="lite-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
         </div>
     </div>
@@ -896,7 +897,7 @@
     <div id="cards-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardsSheet()">
         <div class="team-picker-panel hero-modal cards-modal">
             <div class="modal-x-close" onclick="closeCardsSheet()"><i class="fas fa-times"></i></div>
-            <button type="button" id="cards-info-btn" class="cards-info-btn" onclick="cardsToggleInfo()" aria-label="How cards work"><i class="fas fa-info"></i></button>
+            <button type="button" id="cards-info-btn" class="cards-info-btn" onclick="cardsToggleInfo()" aria-label="راهنمای کارت‌ها"><i class="fas fa-info"></i></button>
             <div class="team-picker-handle"></div>
             <h4 class="text-xl font-black text-white mb-0.5" id="cards-title" style="text-align:center;">Cards</h4>
             <div id="cards-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Your hand · tap a card to enlarge it</div>

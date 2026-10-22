@@ -340,6 +340,11 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .cards-info-btn{ position:absolute; top:12px; left:12px; z-index:3; width:32px; height:32px; border-radius:50%; border:1.5px solid rgba(255,255,255,.25); background:rgba(255,255,255,.06); color:#e5e7eb; font-size:.8rem; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .cards-info-btn.on{ color:var(--primary); border-color:var(--primary); }
 .cards-info-btn:active{ transform:scale(.92); }
+.cards-fa{ font-family:inherit; }
+.cards-fa .cards-rules{ font-size:.7rem; line-height:1.9; }
+.cards-fa .cards-rules b{ color:#e2e8f0; font-size:.78rem; }
+.cards-fa .cards-info-tag{ font-size:.64rem; }
+.cards-fa .cd-desc{ font-size:.7rem; }
 .cards-info-list{ display:flex; flex-direction:column; gap:10px; }
 .cards-info-item{ display:flex; gap:12px; align-items:center; padding:10px; border-radius:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
 .cards-info-item .cd-img-wrap{ flex:0 0 72px; width:72px; margin:0; }

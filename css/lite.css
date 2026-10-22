@@ -52,3 +52,33 @@
 .lite-who-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:12px 0; }
 /* the lite file / emergency mode has no use for things that need the internet */
 html.lite-mode .chat-clip, html.lite-mode #chat-mic{ display:none !important; }   /* files and voice messages need the internet */
+
+/* ---------- Persian guide (the "i" button) ---------- */
+.lite-guide{ font-size:.74rem; line-height:1.95; color:#cbd5e1; text-align:start; padding-bottom:8px; }
+.lg-hero{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:16px; background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(251,191,36,.08)); border:1px solid rgba(249,115,22,.3); margin-bottom:10px; }
+.lg-hero > i{ font-size:1.7rem; color:#fb923c; }
+.lg-hero b{ display:block; color:#fff; font-size:.92rem; font-weight:900; }
+.lg-hero span{ font-size:.68rem; color:#9ca3af; }
+.lg-p{ margin:8px 0; }
+.lg-sec{ margin:8px 0; border-radius:14px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); overflow:hidden; }
+.lg-sec > summary{ cursor:pointer; padding:11px 14px; font-weight:900; color:#fff; font-size:.8rem; list-style:none; display:flex; align-items:center; justify-content:space-between; }
+.lg-sec > summary::-webkit-details-marker{ display:none; }
+.lg-sec > summary::after{ content:'\f078'; font-family:'Font Awesome 6 Free'; font-weight:900; font-size:.65rem; color:var(--primary); transition:transform .2s; }
+.lg-sec[open] > summary::after{ transform:rotate(180deg); }
+.lg-body{ padding:0 14px 12px; }
+.lg-steps{ margin:6px 0; padding-inline-start:22px; list-style:decimal; }
+.lg-steps li{ margin:5px 0; padding-inline-start:2px; }
+.lg-ul{ margin:6px 0; padding-inline-start:20px; list-style:disc; }
+.lg-ul li{ margin:5px 0; }
+.lg-h{ display:block; color:var(--primary); font-size:.76rem; margin:12px 0 2px; }
+.lg-note{ margin:10px 0 4px; padding:9px 12px; border-radius:12px; background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.25); color:#fde68a; font-size:.7rem; }
+.lg-opt{ padding:8px 0; border-top:1px dashed rgba(255,255,255,.08); }
+.lg-opt:first-child{ border-top:none; }
+.lg-opt b{ display:inline-block; color:#fff; background:rgba(255,255,255,.08); border-radius:8px; padding:0 8px; font-size:.7rem; margin-bottom:2px; }
+.lg-opt p{ margin:2px 0 0; }
+.lg-qa{ padding:8px 0; border-top:1px dashed rgba(255,255,255,.08); }
+.lg-qa:first-child{ border-top:none; }
+.lg-qa b{ color:#fff; font-size:.74rem; }
+.lg-qa p{ margin:2px 0 0; }
+.lg-foot{ text-align:center; color:#6b7280; font-size:.62rem; margin-top:10px; }
+.lite-guide b[dir="ltr"], .lite-guide span[dir="ltr"]{ unicode-bidi:isolate; }

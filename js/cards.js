@@ -266,37 +266,38 @@ function renderCardsSheet(){
 // ---- "i": how cards work + every card in the game ----
 let cardsInfoOpen = false;
 function cardsRulesHtml(){
-    return `<div class="cards-rules"><b>How it works</b>
-        <ul><li>A new season starts with ${CARDS_START_NO} “No” cards + ${CARDS_WEEKLY_DRAW} random cards — dealt automatically.</li>
-        <li>After every ${CARDS_DEAL_EVERY}nd matchweek (once every team has played every other team) you automatically get ${CARDS_WEEKLY_DRAW} more random cards.</li>
-        <li>You can keep ${CARDS_MAX_KEEP} cards at most — “No” and “Combo point” count too. Discard the extras.</li>
-        <li>In one game you can play up to ${CARDS_MAX_ACTIVE} cards. Each “No” cancels one card of your opponent.</li>
-        <li>Collect ${COMBO_NEED} “Combo point” cards and redeem them for +${COMBO_POINTS} league points.</li>
-        <li>Cards work in league games and CUP semifinals — not in the CUP final or the Super Cup.</li>
-        <li>Once you activate a card the admin cannot change it.</li></ul></div>`;
+    return `<div class="cards-rules" dir="rtl"><b>کارت‌ها چطور کار می‌کنند</b>
+        <ul><li>هر فصل با ${CARDS_START_NO} کارت «No» و ${CARDS_WEEKLY_DRAW} کارت تصادفی شروع می‌شود — به‌صورت خودکار پخش می‌شود.</li>
+        <li>بعد از هر ${CARDS_DEAL_EVERY} هفتهٔ بازی (وقتی هر تیم با همهٔ تیم‌های دیگر بازی کرده باشد) خودکار ${CARDS_WEEKLY_DRAW} کارت تصادفی دیگر می‌گیرید.</li>
+        <li>حداکثر ${CARDS_MAX_KEEP} کارت می‌توانید نگه دارید — کارت‌های «No» و «Combo point» هم حساب می‌شوند. اضافه‌ها را دور بریزید.</li>
+        <li>در هر بازی حداکثر ${CARDS_MAX_ACTIVE} کارت می‌توانید بازی کنید. هر کارت «No» یک کارت حریف را لغو می‌کند.</li>
+        <li>با جمع‌کردن ${COMBO_NEED} کارت «Combo point» می‌توانید آن‌ها را با +${COMBO_POINTS} امتیاز لیگ عوض کنید.</li>
+        <li>کارت‌ها در بازی‌های لیگ و نیمه‌نهایی CUP کار می‌کنند — در فینال CUP و Super Cup نه.</li>
+        <li>بعد از فعال‌کردن یک کارت، ادمین دیگر نمی‌تواند آن را تغییر دهد.</li></ul></div>`;
 }
 function cardsInfoTag(c){
-    if(c.id===CARD_NO_ID) return `Every team starts each season with ${CARDS_START_NO} · cancels one card of your opponent · not in the random deal`;
-    if(c.id===CARD_COMBO_ID) return `Part of the random deal · ${COMBO_NEED} cards = +${COMBO_POINTS} league points · redeemed, not played in a game`;
-    return c.draw ? 'Part of the random deal · play it in a league game or CUP semifinal' : 'Not part of the random deal';
+    if(c.id===CARD_NO_ID) return `هر تیم در شروع هر فصل ${CARDS_START_NO} عدد دارد · یک کارت حریف را لغو می‌کند · جزو پخش تصادفی نیست`;
+    if(c.id===CARD_COMBO_ID) return `جزو پخش تصادفی · ${COMBO_NEED} کارت = +${COMBO_POINTS} امتیاز لیگ · تبدیل می‌شود، در بازی استفاده نمی‌شود`;
+    return c.draw ? 'جزو پخش تصادفی · در بازی لیگ یا نیمه‌نهایی CUP قابل استفاده است' : 'جزو پخش تصادفی نیست';
 }
 function renderCardsInfo(){
     const box = document.getElementById('cards-body'); if(!box) return;
     const deck = (cardsData && cardsData.deck) || [];
-    box.innerHTML = cardsRulesHtml()
-        + `<div class="flow-section-title" style="margin:14px 0 8px;text-align:center;">All cards in the game</div>`
+    box.innerHTML = `<div class="cards-fa" dir="rtl">` + cardsRulesHtml()
+        + `<div class="flow-section-title" style="margin:14px 0 8px;text-align:center;">همهٔ کارت‌های بازی</div>`
         + `<div class="cards-info-list">` + deck.map(c=>`<div class="cards-info-item">
             <div class="cd-img-wrap" onclick="cardsZoom('${c.id}')"><img class="cd-img" src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"></div>
             <div class="cards-info-text"><div class="cd-name" dir="auto">${escapeHtml(c.name)}</div>
             ${c.desc?`<div class="cd-desc" dir="auto">${escapeHtml(c.desc)}</div>`:''}
             <div class="cards-info-tag">${escapeHtml(cardsInfoTag(c))}</div></div></div>`).join('') + `</div>`
-        + ((canEditCards() && !isFullAdmin()) ? `<div class="cards-editor-block"><p class="mba-admin-hint" style="margin-top:14px"><i class="fas fa-pen mr-1"></i> You can create, edit and delete cards. Dealing, activating and using them stays automatic.</p>${cardsDeckEditorHtml()}</div>` : '');
+        + ((canEditCards() && !isFullAdmin()) ? `<div class="cards-editor-block"><p class="mba-admin-hint" style="margin-top:14px"><i class="fas fa-pen ml-1"></i> شما می‌توانید کارت بسازید، ویرایش کنید و حذف کنید. پخش، فعال‌سازی و استفاده از کارت‌ها همچنان خودکار است.</p>${cardsDeckEditorHtml(true)}</div>` : '')
+        + `</div>`;
 }
 function cardsApplyInfoChrome(){
     const b = document.getElementById('cards-info-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
     if(b){ b.classList.toggle('on', cardsInfoOpen); b.innerHTML = cardsInfoOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-info"></i>'; }
-    if(t) t.textContent = cardsInfoOpen ? 'How cards work' : 'Cards';
-    if(s) s.textContent = cardsInfoOpen ? 'Rules and every card · tap a picture to enlarge it' : 'Your hand · tap a card to enlarge it';
+    if(t) t.textContent = cardsInfoOpen ? 'راهنمای کارت‌ها' : 'Cards';
+    if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید' : 'Your hand · tap a card to enlarge it';
 }
 function cardsToggleInfo(){
     haptic([6]);
@@ -402,11 +403,11 @@ function cardsNextDealText(){
     return `Next automatic deal: after matchweek ${next} — ${CARDS_WEEKLY_DRAW} random cards for every team.`;
 }
 // the deck as a grid you can tap to edit (admin dashboard, and the Cards sheet for accounts with the "cards" permission)
-function cardsDeckEditorHtml(){
+function cardsDeckEditorHtml(fa){
     if(!cardsData) return '';
-    return `<div class="flow-section-title" style="margin-top:12px;">Deck</div><div class="ca-deck">`
-        + cardsData.deck.map(c=>`<div class="ca-deck-item" onclick="openCardEditor('${c.id}')"><img src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"><span dir="auto">${escapeHtml(c.name)}</span>${c.draw?'':'<i class="fas fa-ban" title="Not part of the random deal"></i>'}</div>`).join('')
-        + `<div class="ca-deck-item ca-add" onclick="openCardEditor(null)"><i class="fas fa-plus"></i><span>New card</span></div></div>`;
+    return `<div class="flow-section-title" style="margin-top:12px;">${fa?'ویرایش دک':'Deck'}</div><div class="ca-deck">`
+        + cardsData.deck.map(c=>`<div class="ca-deck-item" onclick="openCardEditor('${c.id}')"><img src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"><span dir="auto">${escapeHtml(c.name)}</span>${c.draw?'':`<i class="fas fa-ban" title="${fa?'جزو پخش تصادفی نیست':'Not part of the random deal'}"></i>`}</div>`).join('')
+        + `<div class="ca-deck-item ca-add" onclick="openCardEditor(null)"><i class="fas fa-plus"></i><span>${fa?'کارت جدید':'New card'}</span></div></div>`;
 }
 function renderCardsAdmin(){
     const el = document.getElementById('cards-admin-body'); if(!el) return;
