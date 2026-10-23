@@ -524,15 +524,16 @@ function mbaSingleBlock(t, kind, ctx){
             <span class="mba-wins">${decided ? (sc!=null ? sc : (isW?'✓':'')) : '–'}</span>
         </div>`;
     }).join('');
-    const hist = decided
-        ? `<div class="mba-hist-row"><span class="mba-hist-tag">FT</span>${mbaScoreHtml(teams,res)}${mbaEditBtn(ctx,kind,null,null)}</div>${typeof cardsGameHtml==='function'?cardsGameHtml(res.cards):''}`
-        : `<div class="mba-hist-empty">Not played yet</div>`;
+    // single games (final / third place): the score is already in the team rows — no "Match history" box.
+    // The admin's edit pencil moves to the header; the cards used in the game stay under the score.
+    const usedCards = decided && typeof cardsGameHtml==='function' ? cardsGameHtml(res.cards) : '';
+    const editBtn = decided ? mbaEditBtn(ctx,kind,null,null) : '';
     const add = (ctx.canRecord && ctx.allowFinal && !decided)
         ? `<button class="mba-add-btn" onclick="openMbaResultSheet('current',${ctx.edition},'${kind}',null,null)"><i class="fas fa-plus"></i> Add result</button>` : '';
     return `<div class="mba-block ${cls}${decided?' decided':''}">
-        <div class="mba-block-head"><span>${label}</span><span class="mba-block-tag">${decided?'Played':'To play'}</span></div>
+        <div class="mba-block-head"><span>${label}</span><span style="display:flex;align-items:center;gap:6px;"><span class="mba-block-tag">${decided?'Played':'To play'}</span>${editBtn}</span></div>
         ${rows}
-        <div class="mba-hist"><div class="mba-hist-title">Match history</div>${hist}</div>
+        ${usedCards}
         ${add}${lockedNote}
     </div>`;
 }
@@ -554,14 +555,13 @@ function mbaSuperHtml(edition){
     let teams = sc ? sc.teams : null;
     if(!teams && !ss.archived && typeof flowSuperCupTeams==='function'){ const w = flowSuperCupTeams(f); if(w) teams = w.teams; }
     const tbd = `<div class="mba-team-row tbd"><span class="mba-team-label"><span class="mba-logo mba-logo-tbd">?</span><span class="nm">${ss.archived?'—':'To be decided'}</span></span><span class="mba-wins">–</span></div>`;
-    let rows, hist = '', note = '';
+    let rows, note = '';
     if(teams){
         rows = teams.map(team=>{
             const isW = sc && sc.winner===team;
             const score = sc && sc.scores ? sc.scores[team] : null;
             return `<div class="mba-team-row${isW?' winner':''}${sc&&!isW?' loser':''}"><span class="mba-team-label">${mbaTeamLabel(team)}${isW?'<i class="fas fa-bolt mba-crown"></i>':''}</span><span class="mba-wins">${sc ? (score!=null?score:(isW?'✓':'')) : '–'}</span></div>`;
         }).join('');
-        hist = sc ? `<div class="mba-hist"><div class="mba-hist-title">Match history</div><div class="mba-hist-row"><span class="mba-hist-tag">FT</span>${mbaScoreHtml(teams, sc)}</div></div>` : '';
         if(!sc) note = `<div class="mba-pending-note">${ss.archived?'Not played':'To be played after the CUP final'}</div>`;
     } else {
         rows = tbd + tbd;
@@ -569,7 +569,7 @@ function mbaSuperHtml(edition){
     }
     return divider + `<div class="mba-third-wrap mba-super-wrap"><div class="mba-block mba-super${sc?' decided':''}${teams?'':' mba-pending'}">
         <div class="mba-block-head"><span>⚡ Super Cup</span><span class="mba-block-tag">${sc?'Played':(teams?'To play':'Upcoming')}</span></div>
-        ${rows}${hist}${note}
+        ${rows}${note}
     </div></div>`;
 }
 // Semifinals on the left, Final on the right, joined by connector lines;
