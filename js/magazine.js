@@ -423,11 +423,13 @@ function renderMagazine(issue) {
             <img src="${coverUrl}" class="magazine-hero-img" alt="cover" onerror="if(this.src!=='${defaultCoverUrl}'){this.src='${defaultCoverUrl}';}else{this.style.display='none';}">
             <div class="magazine-hero-scrim"></div>
             <div class="magazine-hero-content">
-                <div class="magazine-masthead">HARFS WEEKLY</div>
-                <div class="magazine-issue-date">شمارهٔ ${issue.issueNumber ?? ''} · ${jFormatDate(issue.issueDate)}</div>
                 <h1 class="magazine-title">${escapeHtml(issue.issueTitle)}</h1>
-                <div class="magazine-subtitle">${escapeHtml(issue.coverSubtitle)}</div>
             </div>
+        </div>
+        <div class="magazine-hero-meta">
+            <div class="magazine-masthead">HARFS WEEKLY</div>
+            <div class="magazine-issue-date">شمارهٔ ${issue.issueNumber ?? ''} · ${jFormatDate(issue.issueDate)}</div>
+            <div class="magazine-subtitle">${escapeHtml(issue.coverSubtitle)}</div>
         </div>
 
         ${weekType === 'cup_only' ? cupSection : ''}
