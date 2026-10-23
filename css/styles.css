@@ -2134,7 +2134,13 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 .magazine-hero{position:relative;min-height:160px;overflow:hidden;background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--primary) 22%,var(--bg,#0f172a)),var(--bg,#0f172a) 70%);}
 .magazine-hero-img{display:block;width:100%;height:auto;object-fit:contain;}
 .magazine-hero-scrim{position:absolute;left:0;right:0;bottom:0;height:60%;pointer-events:none;background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--bg,#0f172a) 70%,transparent) 100%);}
-.magazine-hero-content{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:14px 18px;}
+.magazine-hero-content{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:34px 18px 12px;}
+/* the cover is gently blurred behind the headline (fades out upwards, so there is no hard edge) */
+.magazine-hero-content::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+  background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.28) 100%);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 55%);mask-image:linear-gradient(180deg,transparent 0%,#000 55%);}
+.magazine-hero-content .magazine-title{position:relative;margin:0;text-shadow:0 1px 8px rgba(0,0,0,0.55);}
 .magazine-hero-meta{padding:14px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);}
 .magazine-masthead{font-size:0.68rem;font-weight:800;letter-spacing:0.12em;color:var(--primary);text-transform:uppercase;direction:ltr;text-align:right;margin-bottom:8px;}
 .magazine-issue-date{font-size:0.72rem;color:var(--header-text);opacity:.85;margin-bottom:6px;}
