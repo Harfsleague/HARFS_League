@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v53';
+const CACHE_VERSION = 'harfs-shell-v54';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -50,6 +50,7 @@ const APP_SHELL = [
   './js/config.js',
   './js/glass-fx.js',
   './js/offline.js',
+  './js/snapshot.js',
   './js/auth.js',
   './js/sessions.js',
   './js/offline-gh.js',
@@ -162,6 +163,10 @@ self.addEventListener('fetch', event => {
   // Workers, CDN libraries) is left to the network as before — js/offline.js
   // is what supplies the offline fallback for the app's actual data.
   if (url.origin !== self.location.origin) return;
+
+  // data/snapshot.json (the one-file data copy for a device's first visit) must always come from the network —
+  // js/snapshot.js asks for it with cache:'no-cache'; serving it from this cache would hand out old league data.
+  if (url.pathname.endsWith('/data/snapshot.json')) return;
 
   event.respondWith(
     caches.match(req).then(cached => {
