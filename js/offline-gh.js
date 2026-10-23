@@ -340,9 +340,14 @@ async function liteWriteThrough(kind, path, res){
             await liteSettled();
             const path = metaPath || rawPath, kind = metaPath ? 'meta' : 'raw';
             const rec = liteFiles.get(path);
-            if(liteIsEmergency() || (rec && rec.dirty) || !(await liteNetOk())){
+            // Local-first only when it is explicitly wanted: emergency mode, unsynced local edits, or the device is really offline.
+            // (This used to ALSO wait for a connectivity probe — a request to the Worker with a 4 s timeout — before every league
+            //  file read. On a slow / filtered connection that probe timed out, and a FIRST visit, which has no local copy yet,
+            //  was then answered with "Not available offline" for every data file: an empty app, or a multi-second wait.
+            //  Now the real request is simply tried; if it fails and a local copy exists, the catch below serves the copy.)
+            if(liteIsEmergency() || (rec && rec.dirty) || !navigator.onLine){
                 if(rec) return liteLocalResponse(kind, rec);
-                if(liteIsEmergency() || !navigator.onLine || liteNetState.ok === false) return liteJson({ message:'Not available offline' }, 404);
+                if(liteIsEmergency() || !navigator.onLine) return liteJson({ message:'Not available offline' }, 404);
             }
             try{
                 const res = await prev(input, init);

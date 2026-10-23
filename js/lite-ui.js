@@ -318,7 +318,7 @@ async function liteBuildStandalone(onStep){
     const vs = doc.createElement('style'); vs.textContent = vendor; head.insertBefore(vs, head.firstChild);
     for(const l of Array.from(doc.querySelectorAll('link[rel="stylesheet"]'))){
         const href = l.getAttribute('href') || '';
-        if(/^https?:/.test(href)){ l.remove(); continue; }
+        if(/^https?:/.test(href) || /(^|\/)lite-vendor\.css$/.test(href)){ l.remove(); continue; }   // the vendor CSS is already inlined above
         const st = doc.createElement('style'); st.textContent = await get(href); l.replaceWith(st);
     }
     step('Reading the code…');
