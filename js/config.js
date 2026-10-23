@@ -10,6 +10,8 @@
 const J_MONTHS_EN=["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"];
 function toEnglishDigits(s){if(!s)return s;return s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
 
+// Shown (tiny) under "Log Out" in Settings. Keep it equal to the number in CACHE_VERSION (harfs-shell-vNN) in sw.js — bump both on every update.
+const APP_VERSION="v53";
 const GITHUB_REPO="Harfsleague/HARFS_Data";
 const GITHUB_LEAGUE_BRANCH="main";
 const GITHUB_LEAGUE_FILE="league_data.json";
