@@ -123,12 +123,11 @@ async function cardsLoad(force){
         }catch(e){}
         if(!got){
             try{                                              // 2) straight from GitHub
-                const r = await fetch(`${BASE_API}${GITHUB_CARDS_FILE}?ref=${GITHUB_LEAGUE_BRANCH}&_t=${Date.now()}`);
-                if(r.ok){
-                    const d = await r.json();
-                    cardsData = cardsNormalize(await (await fetch(d.download_url+'?t='+Date.now())).json());
+                const j = await ghFetchJson(GITHUB_CARDS_FILE,{bust:true,rawBust:true});
+                if(j.ok){
+                    cardsData = cardsNormalize(j.data);
                     got = true;
-                } else if(r.status===404){ if(!cardsData) cardsData = cardsNormalize(cardsDefault()); }
+                } else if(j.status===404){ if(!cardsData) cardsData = cardsNormalize(cardsDefault()); }
             }catch(e){}
         }
         if(got){ try{ await idbSet('cardsData','v',cardsData); }catch(e){} }

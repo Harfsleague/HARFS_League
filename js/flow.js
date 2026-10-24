@@ -87,13 +87,12 @@ async function loadFlowFromGitHub(){
     if(cached) flowData = cached;
     if(navigator.onLine){
         try{
-            const r = await fetch(`${BASE_API}${GITHUB_FLOW_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-            if(r.ok){
-                const d = await r.json();
-                flowSha = d.sha;
-                flowData = await (await fetch(d.download_url+'?t='+Date.now())).json();
+            const j = await ghFetchJson(GITHUB_FLOW_FILE,{rawBust:true});
+            if(j.ok){
+                flowSha = j.sha;
+                flowData = j.data;
                 await idbSet('flowData','v',flowData);
-            } else if(r.status===404){
+            } else if(j.status===404){
                 flowSha = null; // expected before the first scheduled season
             }
         }catch(e){}

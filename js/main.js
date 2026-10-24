@@ -23,10 +23,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     let cacheReadyResolve;
     const cacheReady = new Promise(r=>{ cacheReadyResolve = r; });
 
-    updateCurrentDateTime();
+    // Each pre-start helper is isolated: if one throws (e.g. a missing element) the app must still start.
+    const safe = fn => { try{ fn(); }catch(e){ console.error('[HARFS] startup step failed:', e); } };
+    safe(updateCurrentDateTime);
     setInterval(updateCurrentDateTime,60000);
-    setupOverallHold();
-    setupSeasonFabScroll();
+    safe(setupOverallHold);
+    safe(setupSeasonFabScroll);
     startApp(cacheReady);                       // <- logo shows immediately
 
     (async()=>{
