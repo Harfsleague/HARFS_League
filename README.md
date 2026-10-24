@@ -14,10 +14,11 @@ Single-page league app (plain HTML/CSS/JS, no build step) with an offline-first 
 
 ## Release checklist
 
-Every change to `index.html`, `js/` or `css/` needs **both** numbers bumped together, otherwise users can get a mix of old and new files:
+Every change to `index.html`, `js/` or `css/` needs the version bumped, otherwise users can get a mix of old and new files. One command keeps both numbers (`APP_VERSION` in `js/config.js`, `CACHE_VERSION` in `sw.js`) in step:
 
-1. `APP_VERSION` in `js/config.js` (e.g. `v55` → `v56`)
-2. `CACHE_VERSION` in `sw.js` (`harfs-shell-v55` → `harfs-shell-v56`)
+    node scripts/bump-version.mjs        # +1   (or: node scripts/bump-version.mjs 60)
+
+Data files of the data repo are read through `ghFetchJson()` in `js/config.js` — use it instead of writing the contents-API + `download_url` two-step by hand.
 
 If you add or remove a file in `js/` or `css/`, also update the `<script>` / `<link>` list in `index.html` **and** `APP_SHELL` in `sw.js`.
 

@@ -1,38 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Startup speed: Tailwind + Font Awesome now come from OUR OWN origin (css/lite-vendor.css = the same two stylesheets
+         reduced to the classes/icons the app really uses, icon fonts embedded) instead of cdn.jsdelivr.net and
+         cdnjs.cloudflare.com — two foreign hosts less to reach on a slow / filtered connection. It still loads in the
+         background with the media="print" trick so it never blocks the first paint (css/styles.css stays render-blocking).
+         Re-run scripts/build-lite-vendor.mjs whenever you start using new Tailwind classes or icons. -->
+    <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+    <link rel="preconnect" href="https://api.github.com" crossorigin>
+    <link rel="stylesheet" href="css/lite-vendor.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="css/lite-vendor.css">
+    </noscript>
+    <link rel="manifest" href="https://raw.githubusercontent.com/Harfsleague/HARFS_Data/main/manifest.json">
+    <!-- Tab icon: a 64x64 copy inlined here. The real icon-192.png in the data repo is a 1254x1254 picture of ~1 MB that
+         every first visit used to download just for the favicon. (apple-touch-icon below is only fetched when someone
+         adds the app to the home screen.) -->
+    <link rel="icon" type="image/png" href="data:image/png;base64,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">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<script defer src="js/config.js"></script>
-<script defer src="js/offline.js"></script>
-<script defer src="js/snapshot.js"></script>
-<script defer src="js/auth.js"></script>
-<script defer src="js/sessions.js"></script>
-<script defer src="js/offline-gh.js"></script>
-<script defer src="js/notifications.js"></script>
-<script defer src="js/appearance.js"></script>
-<script defer src="js/ui-common.js"></script>
-<script defer src="js/memories.js"></script>
-<script defer src="js/admin.js"></script>
-<script defer src="js/overall.js"></script>
-<script defer src="js/season.js"></script>
-<script defer src="js/shop.js"></script>
-<script defer src="js/league-ops.js"></script>
-<script defer src="js/profile-photos.js"></script>
-<script defer src="js/access.js"></script>
-<script defer src="js/reactions.js"></script>
-<script defer src="js/audio.js"></script>
-<script defer src="js/magazine.js"></script>
-<script defer src="js/gif-encoder.js"></script>
-<script defer src="js/magazine-comments.js"></script>
-<script defer src="js/ai-chat.js"></script>
-<script defer src="js/mba.js"></script>
-<script defer src="js/flow.js"></script>
-<script defer src="js/cards.js"></script>
-<script defer src="js/season-layout.js"></script>
-<script defer src="js/verify.js"></script>
-<script defer src="js/admin-music.js"></script>
-<script defer src="js/chat.js"></script>
-<script defer src="js/lite-net.js"></script>
-<script defer src="js/vendor/qrcode.min.js"></script>
-<script defer src="js/lite-ui.js"></script>
-<script defer src="js/glass-fx.js"></script>
-<script defer src="js/main.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/mba.css">
+<link rel="stylesheet" href="css/flow.css">
+<link rel="stylesheet" href="css/liquid-glass.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/lite.css">
+</head>
+<body>
+
+<div class="ambient-orb orb-1"></div>
+<div class="ambient-orb orb-2"></div>
+<div class="ambient-orb orb-3"></div>
+
+
+<!-- ============================================================
+     HARFS capsule — doubles as the app's notification surface.
+     Two stacked "faces" inside the same pill:
+       - .hero-capsule-brand : the HARFS wordmark (default state)
+       - .hero-capsule-notif : one in-app notification at a time
+     showToast() (js/ui-common.js) toggles the .showing-notif class on
+     the capsule to crossfade between them; setSyncStatus() (js/offline.js)
+     drives a sync-status glow around the capsule's edge. See
+     css/styles.css for both animations.
+     ============================================================ -->
+<div id="hero-logo-container">
+    <div class="hero-capsule-face hero-capsule-brand" id="hero-capsule-brand">
+        <div class="hero-text" id="harfs-text">HARFS</div>
+        <div class="hero-subtext" id="hero-sub-label">LEAGUE SYSTEM</div>
+    </div>
+    <div class="hero-capsule-face hero-capsule-notif" id="hero-capsule-notif">
+        <div class="toast-icon-bubble" id="hero-notif-icon"><i class="fas fa-info-circle"></i></div>
+        <div class="toast-body">
+            <div class="toast-label" id="hero-notif-label">Info</div>
+            <div class="toast-msg" id="hero-notif-msg"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ LOGIN SCREEN ============
+     Telegram-style: pick your team, then set (first time) or enter
+     (every time after) that team's password. Session is kept in
+     localStorage so this only shows again after a manual logout or
+     on a new device/browser. Backed by a small Cloudflare Worker —
+     see HARFS_AUTH_API below. -->
+<div id="login-screen">
+    <div class="login-panel">
+                <div id="login-step-pick">
+            <div class="login-title">Welcome to HARFS</div>
+            <div class="login-sub">Select your team to continue</div>
+            <div class="login-team-grid" id="login-team-grid"><!-- filled by JS --></div>
+        </div>
+        <div id="login-step-password" style="display:none;">
+            <div class="login-selected-team">
+                <img id="login-selected-logo" src="">
+                <div class="login-title" id="login-selected-name">Team</div>
+                <div class="login-sub" id="login-password-hint">Enter your password</div>
+            </div>
+            <input type="password" id="login-password-input" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg" placeholder="Password" onkeyup="if(event.key==='Enter')submitLoginPassword()">
+            <input type="password" id="login-password-confirm" class="glass-input w-full p-3 rounded-xl text-center tracking-widest text-lg mt-2" placeholder="Confirm password" style="display:none;" onkeyup="if(event.key==='Enter')submitLoginPassword()">
+            <button class="glass-button w-full font-bold mt-3" onclick="submitLoginPassword()" id="login-submit-btn">Continue</button>
+            <p class="login-error" id="login-error"></p>
+            <div class="login-back-btn" onclick="backToTeamPick()"><i class="fas fa-arrow-left mr-1"></i> Choose a different team</div>
+        </div>
+    </div>
+</div>
+
+<!-- Appearance Sheet (Performance customization + Color scheme + Palette) -->
+<div class="team-picker-sheet as-modal" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
+    <div class="team-picker-panel appearance-panel">
+            <div class="modal-x-close" onclick="closeAppearanceSheet()"><i class="fas fa-times"></i></div>
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Appearance</div>
+
+        <div class="appearance-section-label">Performance</div>
+        <div class="segmented-control" id="perf-segmented">
+            <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
+            <button class="segmented-btn" data-value="custom" onclick="setPerformance('custom')"><i class="fas fa-sliders"></i> Custom</button>
+        </div>
+
+        <div id="perf-custom-options" style="display:none;">
+            <div id="perf-group-toggles">
+                <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Background Effects</span>
+                        <span class="perf-option-sub">Floating orbs &amp; shimmer</span>
+                    </div>
+                    <div class="perf-toggle" id="perf-toggle-background" onclick="togglePerfGroup('background')"></div>
+                </div>
+                <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-forward"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Motion</span>
+                        <span class="perf-option-sub">Slide/fade transitions between screens</span>
+                    </div>
+                    <div class="perf-toggle" id="perf-toggle-motion" onclick="togglePerfGroup('motion')"></div>
+                </div>
+                <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-gem"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Glass Effect</span>
+                        <span class="perf-option-sub">Blur &amp; soft shadows on cards and bars</span>
+                    </div>
+                    <div class="perf-toggle" id="perf-toggle-glass" onclick="togglePerfGroup('glass')"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="appearance-section-label">Palette</div>
+        <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
+
+        <div id="custom-palette-editor" style="display:none;">
+            <div class="custom-color-row">
+                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+            </div>
+        </div>
+
+        <div class="appearance-section-label">App Font</div>
+        <div class="font-grid" id="font-grid"><!-- filled by JS from APP_FONTS --></div>
+        <div class="font-size-row">
+            <button class="font-size-btn small" onclick="adjustFontSize('app',-10)" id="app-font-size-minus" title="Smaller text"><i class="fas fa-minus"></i></button>
+            <span class="font-size-value" id="app-font-size-value">100%</span>
+            <button class="font-size-btn large" onclick="adjustFontSize('app',10)" id="app-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="appearance-section-label">Magazine Font</div>
+        <div class="font-grid" id="font-grid-magazine"><!-- filled by JS from APP_FONTS --></div>
+        <div class="font-size-row">
+            <button class="font-size-btn small" onclick="adjustFontSize('magazine',-10)" id="magazine-font-size-minus" title="Smaller text"><i class="fas fa-minus"></i></button>
+            <span class="font-size-value" id="magazine-font-size-value">100%</span>
+            <button class="font-size-btn large" onclick="adjustFontSize('magazine',10)" id="magazine-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
+        </div>
+    </div>
+</div>
+
+<!-- Playlist (centered modal, same look as the team panel) -->
+<div class="team-picker-sheet as-modal" id="playlist-sheet" onclick="if(event.target===this)closePlaylistSheet()">
+    <div class="team-picker-panel hero-modal playlist-panel">
+        <div class="modal-x-close" onclick="closePlaylistSheet()"><i class="fas fa-times"></i></div>
+        <div class="profile-header" style="flex-shrink:0;">
+            <div class="profile-header-bg"></div>
+            <div class="profile-icon-badge"><i class="fas fa-music"></i></div>
+        </div>
+        <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Playlist</h4>
+            <div id="playlist-track-count" style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;"></div>
+            <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                <div id="playlist-list-container"><!-- filled by JS --></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Edit (centered modal) — each team can only ever edit its own record;
+     see openTeamEditSheet()/saveTeamEdit() in appearance.js and js/profile-photos.js. -->
+<div class="team-picker-sheet as-modal" id="team-edit-sheet" onclick="if(event.target===this)closeTeamEditSheet()">
+    <div class="team-picker-panel hero-modal">
+        <div class="modal-x-close" onclick="closeTeamEditSheet()"><i class="fas fa-times"></i></div>
+        <div class="profile-header" style="flex-shrink:0;">
+            <div class="profile-header-bg"></div>
+            <img id="team-edit-logo-preview" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+        </div>
+        <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+            <h4 class="text-xl font-black text-white" style="text-align:center;margin-bottom:10px;">Edit Profile</h4>
+            <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-pen"></i> Name</div>
+                    <input type="text" id="team-edit-name-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Team name" maxlength="24" style="margin-bottom:8px;">
+                    <input type="text" id="team-edit-short-input" class="glass-input w-full p-3 rounded-xl text-center text-sm" placeholder="Short name" maxlength="6" style="letter-spacing:1px;">
+                    <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:8px 4px 0;line-height:1.5;">The short name (up to 6 characters) appears in tables. Leave it empty to generate it automatically.</p>
+                </div>
+                <div class="team-panel-section">
+                    <div class="team-panel-section-title"><i class="fas fa-images"></i> Photos <span id="team-edit-photo-count" style="margin-left:auto;color:#9ca3af;"></span></div>
+                    <div class="pe-grid" id="team-edit-photo-grid"></div>
+                    <input type="file" id="team-edit-photos-input" accept="image/*" multiple style="display:none;" onchange="handleTeamEditPhotosSelect(event)">
+                    <div class="pe-tools" id="team-edit-photo-tools" style="display:none;">
+                        <button data-act="left"  onclick="peMove(-1)" aria-label="Move earlier"><i class="fas fa-arrow-left"></i></button>
+                        <button data-act="right" onclick="peMove(1)" aria-label="Move later"><i class="fas fa-arrow-right"></i></button>
+                        <button data-act="main"  onclick="peMakeMain()"><i class="fas fa-star"></i> Main</button>
+                        <button data-act="rotate" onclick="peRotate()" aria-label="Rotate"><i class="fas fa-rotate-right"></i></button>
+                        <button data-act="del" class="danger" onclick="peDelete()" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <p style="font-size:0.6rem;color:#6b7280;margin:8px 2px 0;line-height:1.5;">The first photo is your main picture. Tap a photo to move it, rotate it, make it main or delete it.</p>
+                </div>
+                <div style="display:flex;gap:8px;width:100%;">
+                    <button class="glass-button flex-1 font-bold text-xs py-2.5" style="color:#9ca3af;" onclick="resetTeamEditDefaults()"><i class="fas fa-rotate-left mr-2"></i>Reset</button>
+                    <button class="glass-button flex-1 font-bold text-xs py-2.5" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" id="team-edit-save-btn" onclick="saveTeamEdit()"><i class="fas fa-check mr-2"></i>Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-container" id="app-container">
+
+    <nav class="bottom-nav" id="bottom-navigation">
+        <div class="nav-item" id="nav-main">
+            <i class="fas fa-house"></i><span>Home</span>
+        </div>
+        <div class="nav-item active" onclick="navigate('league')" id="nav-season">
+            <i class="fas fa-futbol"></i><span>Season</span>
+        </div>
+        <div class="nav-item" onclick="navigate('weird')" id="nav-admin">
+            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Memories</span>
+        </div>
+        <div class="nav-item" onclick="navigate('settings')" id="nav-settings">
+            <i class="fas fa-gear" id="nav-settings-icon"></i>
+            <img id="nav-settings-team-logo" src="">
+            <span>Profile</span>
+        </div>
+    </nav>
+
+    <!-- Season sub-nav: League | Cup. Slides out from behind the bottom nav while the Season screen is open (js/season-layout.js) -->
+    <div class="season-subnav" id="season-subnav">
+        <div class="nav-item active" data-tab="league" onclick="seasonSetTab('league')"><i class="fas fa-table"></i><span>League</span></div>
+        <div class="nav-item" data-tab="cup" onclick="seasonSetTab('cup')"><i class="fas fa-trophy"></i><span>Cup</span></div>
+    </div>
+
+    <!-- ============ MAIN LEAGUE ============ -->
+    <div id="main-league-screen" class="page-screen">
+
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 Hall Of Fame 🏆</h2>
+        </div>
+
+        <div class="w-full px-4">
+            <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
+            <div id="main-league-body" class="flex flex-col gap-2"></div>
+            <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
+                <span class="spinner"></span> Loading...
+            </div>
+            <!-- Overall shortcuts: rounded-square icons in one row -->
+            <div class="ov-tiles">
+                <button class="ov-tile" onclick="openMagazinePanel()" aria-label="HARFS Weekly Magazine">
+                    <i class="fas fa-newspaper"></i><span>Magazine</span>
+                </button>
+                <button class="ov-tile ov-tile-ai" onclick="openAiPanel()" aria-label="HARFS Assistant">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                        <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+                        <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
+                    </svg><span>Assistant</span>
+                </button>
+                <button class="ov-tile" onclick="openPeopleSheet()" aria-label="Federation and Owners">
+                    <i class="fas fa-crown"></i><span>Federation</span>
+                </button>
+                <button class="ov-tile" onclick="openCardsSheet()" aria-label="Cards">
+                    <i class="fas fa-clone"></i><span>Cards</span>
+                </button>
+                <button class="ov-tile ov-tile-chat" onclick="openChatPage()" aria-label="Chat">
+                    <i class="fas fa-comments"></i><span>Chat</span>
+                    <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
+                </button>
+                <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
+                    <i class="fas fa-gamepad"></i><span>Game</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SEASON TABLE ============ -->
+    <div id="league-table-screen" class="page-screen">
+
+        <div class="league-header" style="position:relative;">
+            <button id="season-back-btn" class="season-icon-btn season-back-btn" onclick="seasonShowView('main')" aria-label="Back" style="display:none;"><i class="fas fa-chevron-left"></i></button>
+            <h2 id="season-screen-title" class="season-title">Season</h2>
+            <div class="season-date" id="current-datetime">...</div>
+            <!-- Hidden original select (for compatibility) -->
+            <select id="season-selector" style="display:none;" onchange="loadSelectedSeason(this.value)">
+                <option value="current">Current Season</option>
+            </select>
+            <!-- Season page → Schedule (calendar). Icon only. (Results were merged into the Season page.) -->
+            <div class="season-header-actions" id="season-header-actions">
+                <button class="season-icon-btn" onclick="seasonShowView('schedule')" aria-label="Schedule"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
+            </div>
+        </div>
+
+        <!-- Season screen = two views (js/season-layout.js, body[data-season-view]):
+             main     → League table + match history + CUP of ANY season (season / edition pickers on top)
+             schedule → timetable of the current season only -->
+        <div id="season-sections">
+        <section id="ssec-league" data-sec="league">
+        <div id="ssec-league-nav" class="ssec-slot">
+            <!-- Season Navigation Pills -->
+            <div id="season-nav-wrapper" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                <button id="season-prev-btn" onclick="navigateSeason(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="season-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;min-width:130px;" onclick="openSeasonPicker()">
+                    <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="season-pill-label">Current Season</span>
+                </div>
+                <button id="season-next-btn" onclick="navigateSeason(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div id="season-league-body">
+        <div class="w-full px-3">
+            <div class="table-wrap">
+                <table class="season-table">
+                    <colgroup>
+                        <col class="c-rank">
+                        <col class="c-team">
+                        <col class="c-form"><!-- last 5 results -->
+                        <col class="c-num"><!-- P -->
+                        <col class="c-num"><!-- W -->
+                        <col class="c-num"><!-- D -->
+                        <col class="c-num"><!-- L -->
+                        <col class="c-num"><!-- GF -->
+                        <col class="c-num"><!-- GA -->
+                        <col class="c-num"><!-- GD -->
+                        <col class="c-pts"> <!-- PT -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="th-team">Team</th>
+                            <th class="th-form"></th>
+                            <th>P</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th class="th-gf">GF</th>
+                            <th class="th-ga">GA</th>
+                            <th>GD</th>
+                            <th class="th-pts" style="text-align:right;padding-right:6px;">PT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="league-table-body"></tbody>
+                </table>
+            </div>
+                        <div id="loading-message" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                <span class="spinner"></span> Loading...
+            </div>
+        </div>
+        </div><!-- /season-league-body -->
+        </section>
+
+        <section id="ssec-mba" data-sec="mba">
+        <div id="ssec-mba-nav" class="ssec-slot">
+            <!-- CUP edition navigation — independent from the League season pills above -->
+            <div id="mba-nav-wrapper" style="align-items:center;gap:8px;margin-top:8px;">
+                <button id="mba-prev-btn" onclick="navigateMbaEdition(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="mba-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;min-width:130px;" onclick="openMbaPicker()">
+                    <i class="fas fa-trophy" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="mba-pill-label">—</span>
+                </div>
+                <button id="mba-next-btn" onclick="navigateMbaEdition(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mba-season-body" style="padding:0 12px;"><!-- filled by renderMbaSeasonView() --></div>
+        </section>
+
+        <section id="ssec-history" data-sec="history">
+        <!-- Match history — merged into Season, works for current + archived seasons alike -->
+        <div class="w-full px-3" id="season-history-section">
+            <div class="season-history-card">
+                <h3 class="season-history-title" id="season-history-title"><i class="fas fa-history"></i> Match History</h3>
+                <div class="chip-bar w-full" id="season-history-filter-bar">
+                    <div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>
+                </div>
+                <div id="season-history-list">
+                    <div id="season-history-loading" class="text-center text-gray-500 mt-6 text-sm flex items-center justify-center gap-2">
+                        <span class="spinner"></span> Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </section>
+
+        <section id="ssec-schedule" data-sec="schedule">
+        <div id="schedule-season-body" style="padding:0 12px;"><!-- filled by renderFlowSchedule() (js/flow.js) --></div>
+        </section>
+        </div><!-- /season-sections -->
+
+    </div><!-- /league-table-screen -->
+
+    <!-- ============ ADMIN ============ -->
+    <div id="admin-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black text-purple-300 uppercase tracking-widest">Admin Panel</h2>
+            <button onclick="exitAdmin()" style="margin-top:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+                <i class="fas fa-arrow-left mr-1"></i>Exit Admin
+            </button>
+        </div>
+
+        <div id="admin-dashboard-section" class="w-full px-4 flex-col gap-0" style="display:flex;">
+            <!-- Admin menu: one tab per area, only the chosen area is shown (adminShowCat in js/admin.js).
+                 Accounts that only got music / moments tools never see this bar (see css: .limited-access). -->
+            <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Admin sections">
+                <button class="admin-tab active" data-tab="season" role="tab" onclick="adminShowCat('season')"><i class="fas fa-calendar-days"></i><span>Season</span></button>
+                <button class="admin-tab" data-tab="cards" role="tab" onclick="adminShowCat('cards')"><i class="fas fa-clone"></i><span>Cards</span></button>
+                <button class="admin-tab" data-tab="music" role="tab" onclick="adminShowCat('music')"><i class="fas fa-music"></i><span>Music</span></button>
+                <button class="admin-tab" data-tab="moments" role="tab" onclick="adminShowCat('moments')"><i class="fas fa-star"></i><span>Moments</span></button>
+                <button class="admin-tab" data-tab="magazine" role="tab" onclick="adminShowCat('magazine')"><i class="fas fa-newspaper"></i><span>Magazine</span></button>
+                <button class="admin-tab" data-tab="users" role="tab" onclick="adminShowCat('users')"><i class="fas fa-user-lock"></i><span>Users</span></button>
+            </div>
+            <!-- Season Control — the single card that drives League, CUP and Super Cup.
+                 Everything here is rendered by renderFlowAdmin() (js/flow.js) for the current stage. -->
+            <div class="admin-section" data-cat="season">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#22c55e,#fbbf24,#8b5cf6);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#86efac,#fde68a,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Season Control</h3>
+                    <div id="flow-admin-body"><div class="text-center text-gray-600 text-xs">Loading...</div></div>
+                </div>
+            </div>
+
+            <!-- Cards — deck editor only; dealing / using cards is automatic (js/cards.js + Worker) -->
+            <div class="admin-section" data-cat="cards">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#f87171,#a78bfa,#60a5fa);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fca5a5,#c4b5fd,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cards — create &amp; edit</h3>
+                    <div id="cards-admin-body"><div class="text-center text-gray-600 text-xs">Loading...</div></div>
+                </div>
+            </div>
+
+            <!-- Music Library Manager -->
+            <div class="admin-section" data-perm="music" data-cat="music">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#818cf8);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Music Library</h3>
+
+                    <div class="weird-upload-box" id="music-upload-box" style="margin-bottom:12px;">
+                        <input type="file" id="music-file-input" accept="audio/*" multiple onchange="handleMusicFileSelect(event)">
+                        <div id="music-upload-idle">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                            <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to upload one or more songs</p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">mp3, m4a, wav, ogg, aac</p>
+                        </div>
+                    </div>
+
+                    <div id="music-upload-progress-list"></div>
+
+                    <div id="admin-music-list" class="overflow-y-auto" style="max-height:260px;margin-top:4px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                    <button class="glass-button w-full mt-3 font-bold text-xs py-2" style="border-color:rgba(96,165,250,0.3);color:#93c5fd;" onclick="loadMusicManagerList()">
+                        <i class="fas fa-rotate mr-2"></i>Refresh List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Weekly Magazine -->
+            <div class="admin-section" data-cat="magazine">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Weekly Magazine</h3>
+                    <p id="magazine-admin-info" style="font-size:0.68rem;color:#9ca3af;text-align:center;margin-bottom:10px;">در حال بارگذاری...</p>
+
+                    <button class="glass-button w-full font-bold text-sm py-3" id="magazine-generate-btn" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.08);color:#fbbf24;" onclick="generateWeeklyMagazineNow()" disabled>
+                        <i class="fas fa-wand-magic-sparkles mr-2"></i> ساخت شمارهٔ این هفته
+                    </button>
+                    <p id="magazine-generate-hint" style="font-size:0.62rem;color:#6b7280;text-align:center;margin-top:6px;">این گزینه فقط روزهای جمعه فعال می‌شود.</p>
+
+                    <div id="magazine-gen-status" style="display:none;margin-top:10px;font-size:0.7rem;color:#e5e7eb;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;line-height:1.9;"></div>
+
+                    <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);">
+                        <h4 style="font-size:0.66rem;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">عکس جلد</h4>
+                        <select id="magazine-cover-issue-select" class="glass-input w-full p-2 rounded-xl text-xs mb-2" onchange="onMagazineCoverIssueChange()" style="font-family:inherit;"></select>
+                        <img id="magazine-cover-preview" src="" alt="cover preview" style="display:none;width:100%;border-radius:12px;margin-bottom:8px;aspect-ratio:16/9;object-fit:cover;">
+                        <div class="weird-upload-box" id="magazine-cover-upload-box">
+                            <input type="file" id="magazine-cover-file-input" accept="image/*" onchange="handleMagazineCoverSelect(event)">
+                            <div>
+                                <i class="fas fa-image" style="font-size:1.2rem;color:#6b7280;margin-bottom:4px;display:block;"></i>
+                                <p style="font-size:0.68rem;color:#6b7280;margin:0;" id="magazine-cover-upload-status">تغییر یا آپلود عکس جلد</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User permissions (admin only) -->
+            <div class="admin-section" data-cat="users">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#34d399,#60a5fa);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#6ee7b7,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">User Permissions</h3>
+                    <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-4px 0 10px;line-height:1.5;">Let an account manage the music library and/or add golden moments. Editing, pinning and deleting moments stay admin-only.</p>
+                    <div id="admin-perms-body"></div>
+                </div>
+            </div>
+
+            <!-- Signed-in devices of every account (admin only) -->
+            <div class="admin-section" data-cat="users">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#60a5fa,#a78bfa);"></div>
+                <div class="admin-section-body">
+                    <h3 style="background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Active Sessions</h3>
+                    <p style="font-size:0.62rem;color:#6b7280;text-align:center;margin:-4px 0 10px;line-height:1.5;">Where each account is signed in. Sign out a single device or every device of an account.</p>
+                    <div id="admin-sessions-body"></div>
+                </div>
+            </div>
+
+            <div class="weird-admin-section" data-perm="moments" data-cat="moments">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);"></div>
+                <div class="admin-section-body" style="padding:14px;">
+                    <h3 style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Add Golden Moment</h3>
+                    <textarea id="weird-event-text" class="glass-input w-full p-3 rounded-xl text-sm mb-3" rows="3" placeholder="Describe this special moment..." style="resize:none;font-family:inherit;line-height:1.5;"></textarea>
+                    <!-- Media upload (photo / video / song) -->
+                    <div class="weird-upload-box" id="weird-upload-box">
+                        <input type="file" id="weird-file-input" accept="image/*,video/*,audio/*" multiple onchange="handleWeirdMediaSelect(event)">
+                        <div id="weird-upload-idle">
+                            <i class="fas fa-photo-video" style="font-size:1.4rem;color:#6b7280;margin-bottom:6px;display:block;"></i>
+                            <p style="font-size:0.72rem;color:#6b7280;margin:0;">Tap to add photos, videos or a song <span style="color:#4b5563;">(max 4)</span></p>
+                            <p style="font-size:0.62rem;color:#4b5563;margin:4px 0 0;">Videos are auto-trimmed to 2 min &amp; compressed</p>
+                        </div>
+                        <div id="weird-upload-processing" style="display:none;">
+                            <span class="spinner"></span>
+                            <p style="font-size:0.68rem;color:#9ca3af;margin:6px 0 0;">Processing video…</p>
+                        </div>
+                    </div>
+                    <div class="weird-img-preview-row" id="weird-preview-row" style="display:none;"></div>
+                    <button class="glass-button w-full mt-3 font-bold text-sm py-3" id="weird-save-btn" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fbbf24;position:relative;overflow:hidden;" onclick="saveWeirdEvent()">
+                        <span class="weird-save-btn-fill" id="weird-save-btn-fill"></span>
+                        <span class="weird-save-btn-label" id="weird-save-btn-label"><i class="fas fa-bolt mr-2"></i> Save Event</span>
+                    </button>
+                    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+                        <p style="font-size:0.62rem;color:#6b7280;text-align:center;line-height:1.6;margin:0 4px 8px;">New moments are encrypted automatically. Use this once to encrypt the files that were uploaded earlier — they can then only be opened inside the app by signed-in accounts.</p>
+                        <button class="glass-button w-full text-xs font-bold py-2" onclick="migrateMomentMediaUi()"><i class="fas fa-lock mr-2"></i>Encrypt existing files (moments, chat, comments)</button>
+                        <div id="moment-migrate-status" style="font-size:0.62rem;color:#9ca3af;text-align:center;margin-top:6px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Matches -->
+            <div class="admin-section" data-cat="season">
+                <div class="admin-section-bar" style="background:linear-gradient(90deg,#374151,#4b5563);"></div>
+                <div class="admin-section-body">
+                    <h3 style="color:#6b7280;">League Results &amp; Corrections</h3>
+                    <div id="admin-history-list" class="overflow-y-auto space-y-2" style="max-height:200px;">
+                        <div class="text-center text-gray-600 text-xs">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GOLDEN MOMENTS ============ -->
+    <div id="weird-screen" class="page-screen">
+        <div class="league-header">
+            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments ⭐</h2>
+        </div>
+        <div class="w-full px-4">
+            <div id="weird-events-list">
+                <div id="weird-loading" class="text-center text-gray-500 mt-10 text-sm flex items-center justify-center gap-2">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SETTINGS (promoted from the old capsule-hold modal) ============ -->
+    <div id="settings-screen" class="page-screen">
+        <div class="league-header settings-screen-header">
+            <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Profile</h2>
+            <div class="account-card">
+                <div class="account-avatar-wrap">
+                    <img id="settings-team-badge-logo" src="" class="account-avatar">
+                    <button class="account-avatar-edit-btn" onclick="openTeamEditSheet()" aria-label="Edit team name and logo"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="account-textcol">
+                    <span id="settings-team-badge-name" class="account-name">—</span>
+                    <span class="account-subtitle" id="settings-account-subtitle">HARFS League Account</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full px-4">
+            <div class="settings-section-label">Appearance &amp; Sound</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
+                    <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
+                    <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
+                </div>
+            </div>
+
+            <div class="music-player" id="music-player">
+                <div class="mp-top">
+                    <div class="mp-art" id="mp-art" aria-hidden="true">
+                        <i class="fas fa-music"></i>
+                        <span class="mp-eq"><b></b><b></b><b></b><b></b></span>
+                    </div>
+                    <div class="mp-meta">
+                        <div class="mp-title" id="mp-title"><span>Nothing playing</span></div>
+                        <div class="mp-sub" id="mp-sub">HARFS Playlist</div>
+                    </div>
+                </div>
+                <div class="mp-seek">
+                    <span class="mp-time" id="mp-cur">0:00</span>
+                    <input type="range" class="mp-range" id="mp-seek" min="0" max="1000" value="0" step="1" aria-label="Seek" disabled>
+                    <span class="mp-time" id="mp-dur">0:00</span>
+                </div>
+                <div class="mp-controls">
+                    <button class="mp-btn" id="mp-mode-btn" onclick="cyclePlaybackMode()" aria-label="Playback mode"><i class="fas fa-random" id="mp-mode-icon"></i></button>
+                    <button class="mp-btn" onclick="playerPrev()" aria-label="Previous"><i class="fas fa-backward-step"></i></button>
+                    <button class="mp-play" id="mp-play" onclick="playerTogglePlay()" aria-label="Play / pause"><i class="fas fa-play" id="mp-play-icon"></i></button>
+                    <button class="mp-btn" onclick="playerNext()" aria-label="Next"><i class="fas fa-forward-step"></i></button>
+                    <button class="mp-btn" onclick="openPlaylistSheet()" aria-label="Playlist"><i class="fas fa-list-ul"></i></button>
+                </div>
+                <div class="mp-volume">
+                    <i class="fas fa-volume-low"></i>
+                    <input type="range" class="mp-range" id="mp-vol" min="0" max="100" value="15" step="1" aria-label="Volume">
+                    <i class="fas fa-volume-high"></i>
+                </div>
+            </div>
+
+            <div class="settings-section-label">Features</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleAiAssistant()">
+                    <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-wand-magic-sparkles"></i>HARFS Assistant</span>
+                    <div class="perf-toggle on" id="ai-assistant-toggle"></div>
+                </div>
+            </div>
+            <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to hide the assistant from the Home page.</p>
+
+            <div id="settings-admin-section" style="display:none;">
+                <div class="settings-section-label">Bayern Admin</div>
+                <div class="settings-page-grid">
+                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
+                        <i class="fas fa-user-shield" style="margin-right:8px;"></i><span>Admin Panel</span>
+                    </div>
+                    <div class="settings-page-tile wide admin-tile" style="flex-direction:row;justify-content:space-between;cursor:default;" onclick="event.stopPropagation()">
+                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-pen-to-square"></i>Edit Mode</span>
+                        <div class="perf-toggle" id="admin-edit-mode-toggle" onclick="toggleAdminEditMode()"></div>
+                    </div>
+                </div>
+                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories.</p>
+            </div>
+
+            <div id="settings-tools-section" style="display:none;">
+                <div class="settings-section-label">My Tools</div>
+                <div class="settings-page-grid">
+                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
+                        <i class="fas fa-toolbox" style="margin-right:8px;"></i><span>Music &amp; Moments Tools</span>
+                    </div>
+                </div>
+                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">The admin gave you extra abilities.</p>
+            </div>
+
+            <div class="settings-section-label">Account</div>
+            <div class="settings-page-grid">
+                <div class="settings-page-tile wide" id="settings-lite-tile" onclick="openLiteSheet()">
+                    <i class="fas fa-life-ring" style="margin-right:8px;"></i><span>Emergency &amp; Offline</span>
+                </div>
+                <div class="settings-page-tile wide" id="settings-notif-tile" onclick="openNotifSheet()">
+                    <i class="fas fa-bell" style="margin-right:8px;"></i><span>Notifications</span>
+                </div>
+                <div class="settings-page-tile wide" id="settings-devices-tile" onclick="openSessionsSheet()">
+                    <i class="fas fa-laptop-mobile" style="margin-right:8px;"></i><span>Devices &amp; Sessions</span>
+                </div>
+                <div class="settings-page-tile wide danger-tile" id="settings-logout-tile" onclick="logoutTeam()" style="display:none;">
+                    <i class="fas fa-right-from-bracket" style="margin-right:8px;"></i><span>Log Out</span>
+                </div>
+                <div class="settings-page-tile wide" id="settings-signin-tile" onclick="showLoginScreen()" style="display:none;">
+                    <i class="fas fa-right-to-bracket" style="margin-right:8px;"></i><span>Log In / Pick a Team</span>
+                </div>
+            </div>
+            <div id="settings-app-version" style="text-align:center;font-size:0.58rem;color:#6b7280;opacity:.75;margin:10px 0 2px;letter-spacing:.04em;"></div>
+        </div>
+    </div>
+
+    <!-- ============ DEVICES & SESSIONS (own account) ============ -->
+    <div id="sessions-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeSessionsSheet()">
+        <div class="team-picker-panel hero-modal sessions-modal">
+            <div class="modal-x-close" onclick="closeSessionsSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Devices &amp; Sessions</h4>
+            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Where you are signed in</div>
+            <div id="sessions-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+
+    <!-- ============ EMERGENCY & OFFLINE (Settings) ============ -->
+    <div id="lite-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeLiteSheet()">
+        <div class="team-picker-panel hero-modal sessions-modal">
+            <div class="modal-x-close" onclick="closeLiteSheet()"><i class="fas fa-times"></i></div>
+            <button type="button" id="lite-info-btn" class="cards-info-btn" onclick="liteToggleGuide()" aria-label="راهنما"><i class="fas fa-info"></i></button>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" id="lite-title" style="text-align:center;">Emergency &amp; Offline</h4>
+            <div id="lite-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Keep working when the internet is cut</div>
+            <div id="lite-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+
+    <!-- ============ NOTIFICATIONS (Settings) ============ -->
+    <div id="notif-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeNotifSheet()">
+        <div class="team-picker-panel hero-modal sessions-modal">
+            <div class="modal-x-close" onclick="closeNotifSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Notifications</h4>
+            <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Choose what HARFS may tell you</div>
+            <div id="notif-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+
+    <!-- ============ MEDIA LIGHTBOX ============ -->
+    <div id="weird-lightbox" onclick="closeWeirdLightbox()">
+        <div id="weird-lightbox-close"><i class="fas fa-times"></i></div>
+        <div id="weird-lightbox-loading" style="display:none;color:#fff;text-align:center;">
+            <div class="spinner" style="width:32px;height:32px;border-width:3px;"></div>
+            <div style="font-size:0.75rem;margin-top:10px;color:#9ca3af;">Loading…</div>
+        </div>
+        <img id="weird-lightbox-img" src="" alt="">
+        <video id="weird-lightbox-video" src="" controls playsinline onclick="event.stopPropagation()" style="display:none;"></video>
+    </div>
+    <!-- ============ CUSTOM CONFIRM ============ -->
+    <div id="custom-confirm-modal" class="modal-overlay">
+        <div class="modal-content confirm-modal text-center" style="max-width:300px;">
+            <div class="confirm-icon" id="confirm-icon">⚠️</div>
+            <h3 id="confirm-title">Are you sure?</h3>
+            <p id="confirm-message">This action cannot be undone.</p>
+            <div class="confirm-btn-row">
+                <button class="confirm-btn confirm-btn-cancel" onclick="resolveConfirm(false)">Cancel</button>
+                <button class="confirm-btn confirm-btn-ok green" id="confirm-ok-btn" onclick="resolveConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ EDIT MATCH RESULT MODAL ============ -->
+    <div id="edit-match-modal" class="modal-overlay">
+        <div class="modal-content confirm-modal text-center" style="max-width:300px;">
+            <div class="confirm-icon">✏️</div>
+            <h3>Edit Match Result</h3>
+            <p id="edit-match-teams" style="margin-bottom:14px;">Home vs Away</p>
+            <div class="flex justify-between items-center gap-4" style="margin-bottom:6px;">
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('home',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="edit-home-score-display">0</div>
+                    <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('home',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+                <div style="font-size:1.6rem;font-weight:900;color:#374151;">:</div>
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <button class="score-btn score-btn-plus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('away',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="edit-away-score-display">0</div>
+                    <button class="score-btn score-btn-minus w-full" style="border-radius:12px;height:34px;" onclick="changeEditScore('away',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+            </div>
+            <div class="confirm-btn-row" style="margin-top:14px;">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeEditMatchModal()">Cancel</button>
+                <button class="confirm-btn confirm-btn-ok green" onclick="saveEditedMatch()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Season screen's "back to top" pill — floats above the bottom nav,
+         appears once the user scrolls down into the match history.
+         Sibling of the .page-screens (not nested inside one) so it stays a
+         true non-scrolling overlay — see the .season-fab comment in the CSS. -->
+    <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="scrollSeasonToTop()">
+        <i class="fas fa-arrow-up"></i><span>Back to Top</span>
+    </div>
+
+    <!-- ============ CUP — RESULT EDITOR (record / edit a game) ============ -->
+    <div id="mba-result-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeMbaResultSheet()">
+        <div class="team-picker-panel">
+            <div class="modal-x-close" onclick="closeMbaResultSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title" id="mba-result-title">Match Result</div>
+            <div class="mba-sheet-sub" id="mba-result-sub"></div>
+            <div id="mba-result-cards"></div>
+            <div class="mba-sheet-scores">
+                <div class="mba-sheet-side">
+                    <img id="mba-result-logo-a" src="" alt="">
+                    <span class="nm" id="mba-result-name-a">—</span>
+                    <button class="score-btn score-btn-plus" onclick="changeMbaScore('a',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="mba-result-score-a">0</div>
+                    <button class="score-btn score-btn-minus" onclick="changeMbaScore('a',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+                <div class="mba-sheet-colon">:</div>
+                <div class="mba-sheet-side">
+                    <img id="mba-result-logo-b" src="" alt="">
+                    <span class="nm" id="mba-result-name-b">—</span>
+                    <button class="score-btn score-btn-plus" onclick="changeMbaScore('b',1)"><i class="fas fa-plus"></i></button>
+                    <div class="score-display" id="mba-result-score-b">0</div>
+                    <button class="score-btn score-btn-minus" onclick="changeMbaScore('b',-1)"><i class="fas fa-minus"></i></button>
+                </div>
+            </div>
+            <p class="login-error" id="mba-result-error"></p>
+            <div class="mba-sheet-note" id="mba-result-note"></div>
+            <div class="mba-sheet-actions">
+                <button class="glass-button" id="mba-result-delete-btn" style="display:none;color:#f87171;border-color:rgba(239,68,68,0.3);" onclick="deleteMbaResult()"><i class="fas fa-trash mr-2"></i>Delete</button>
+                <button class="glass-button" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="saveMbaResult()"><i class="fas fa-check mr-2"></i>Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CUP — EDITION PICKER (independent from League seasons) ============ -->
+    <div id="mba-picker-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeMbaPicker()">
+        <div class="team-picker-panel playlist-panel">
+            <div class="modal-x-close" onclick="closeMbaPicker()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title">Select CUP Edition</div>
+            <div id="mba-picker-list"></div>
+        </div>
+    </div>
+
+    <!-- ============ LEAGUE — SEASON PICKER (same look as the CUP edition picker) ============ -->
+    <div id="season-picker-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeSeasonPicker()">
+        <div class="team-picker-panel playlist-panel">
+            <div class="modal-x-close" onclick="closeSeasonPicker()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title">Select Season</div>
+            <div id="season-picker-list"></div>
+        </div>
+    </div>
+
+    <!-- ============ TEAM PANEL (tap a team on Overall) ============ -->
+    <div id="team-panel-overlay" class="modal-overlay" onclick="if(event.target===this)closeTeamPanel()">
+        <div class="modal-content" style="padding:0;overflow:hidden;max-width:360px;max-height:86vh;display:flex;flex-direction:column;position:relative;">
+            <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
+            <div class="profile-header" style="flex-shrink:0;">
+                <div class="profile-header-bg"></div>
+                <img id="team-panel-logo" src="" alt="" class="profile-avatar pv-trigger" onclick="openPhotoViewer(teamPanelCurrent)" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <div id="team-panel-photo-badge" class="pv-count-badge" style="display:none;"></div>
+            </div>
+            <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+                <h4 id="team-panel-name" class="text-xl font-black text-white mb-0.5" style="text-align:center;">Team</h4>
+                <div id="team-panel-pinned" style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;"></div>
+                <div class="team-panel-scroll" style="flex:1;min-height:0;">
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-trophy"></i> Trophy Cabinet</div>
+                        <div class="trophy-cabinet-grid" id="team-panel-trophies"></div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-crown"></i> League Records</div>
+                        <div id="team-panel-records"></div>
+                    </div>
+                    <div class="team-panel-section">
+                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> CUP &amp; Super Cup Titles</div>
+                        <div id="team-panel-mba"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GENERIC REPORT SHEET (e.g. table verification) ============ -->
+    <div id="report-sheet-overlay" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeReportSheet()">
+        <div class="team-picker-panel" style="max-height:82vh;">
+            <div class="modal-x-close" onclick="closeReportSheet()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-panel-header">
+                <div style="flex:1;min-width:0;">
+                    <div class="name" id="report-sheet-title"></div>
+                </div>
+                <div class="team-panel-close" onclick="closeReportSheet()"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="team-panel-scroll">
+                <div class="team-panel-section" id="report-sheet-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PEOPLE PANEL (federation president, owners, fans) — centered modal ============ -->
+    <div id="people-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closePeopleSheet()">
+        <div class="team-picker-panel hero-modal people-modal">
+            <div class="modal-x-close" onclick="closePeopleSheet()"><i class="fas fa-times"></i></div>
+            <div class="profile-header" style="flex-shrink:0;">
+                <div class="profile-header-bg people-hero-bg"></div>
+                <div class="profile-icon-badge people-crown"><i class="fas fa-crown"></i></div>
+            </div>
+            <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+                <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Federation &amp; Owners</h4>
+                <div style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;">The people behind HARFS · tap a photo to view</div>
+                <div id="people-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- ============ CARDS (Home → Cards): a team sees only its own hand ============ -->
+    <div id="cards-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardsSheet()">
+        <div class="team-picker-panel hero-modal cards-modal">
+            <div class="modal-x-close" onclick="closeCardsSheet()"><i class="fas fa-times"></i></div>
+            <button type="button" id="cards-info-btn" class="cards-info-btn" onclick="cardsToggleInfo()" aria-label="راهنمای کارت‌ها"><i class="fas fa-info"></i></button>
+            <div class="team-picker-handle"></div>
+            <h4 class="text-xl font-black text-white mb-0.5" id="cards-title" style="text-align:center;">Cards</h4>
+            <div id="cards-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Your hand · tap a card to enlarge it</div>
+            <div id="cards-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+        </div>
+    </div>
+    <div id="cards-zoom" class="cards-zoom" onclick="cardsZoomClose()">
+        <img src="" alt="">
+        <div class="cz-name"></div>
+        <div class="cz-desc" dir="auto"></div>
+    </div>
+    <!-- Admin: add / edit a card -->
+    <div id="card-edit-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardEditor()">
+        <div class="team-picker-panel">
+            <div class="modal-x-close" onclick="closeCardEditor()"><i class="fas fa-times"></i></div>
+            <div class="team-picker-handle"></div>
+            <div class="team-picker-title" id="card-edit-title">New card</div>
+            <div class="card-edit-grid">
+                <label class="card-edit-pic">
+                    <img id="card-edit-preview" src="" alt="">
+                    <span><i class="fas fa-image"></i> Change picture</span>
+                    <input type="file" accept="image/*" style="display:none" onchange="cardsPickImage(event)">
+                </label>
+                <div class="card-edit-fields">
+                    <input id="card-edit-name" class="glass-input" type="text" maxlength="30" placeholder="Card name" dir="auto">
+                    <textarea id="card-edit-desc" class="glass-input" rows="3" maxlength="160" placeholder="What does it do? (optional)" dir="auto"></textarea>
+                    <label class="card-edit-check"><input type="checkbox" id="card-edit-draw"> Can be drawn in the automatic random deal</label>
+                </div>
+            </div>
+            <div class="login-error" id="card-edit-status" style="display:block;color:#9ca3af;min-height:16px;"></div>
+            <div class="mba-sheet-actions">
+                <button class="glass-button" id="card-edit-delete" style="display:none;color:#f87171;border-color:rgba(239,68,68,0.3);" onclick="deleteCardFromEditor()"><i class="fas fa-trash mr-2"></i>Delete</button>
+                <button class="glass-button" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#86efac;" onclick="saveCardEditor()"><i class="fas fa-check mr-2"></i>Save</button>
+            </div>
+        </div>
+    </div>
+    <!-- ============ magazine-scree  ============ -->
+    <div id="magazine-screen" class="page-screen" dir="rtl">
+    <div class="magazine-inner">
+        <div class="magazine-panel-header">
+            <div class="magazine-panel-header-row">
+                <button class="magazine-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-right"></i></button>
+                <div class="magazine-panel-title">HARFS Weekly Magazine</div>
+            </div>
+            <div class="magazine-issue-nav" id="magazine-issue-nav"></div>
+        </div>
+        <div id="magazine-loading" style="display:flex;justify-content:center;padding:40px;">
+            <span class="spinner"></span>
+        </div>
+        <div id="magazine-body"></div>
+    </div>
+</div>
+
+<!-- ============ MAGAZINE — admin edit modal ============ -->
+<div class="modal-overlay" id="magazine-edit-modal">
+    <div class="modal-content text-center" style="max-width:420px;text-align:right;">
+        <div class="modal-x-close" onclick="closeMagazineEditModal()"><i class="fas fa-times"></i></div>
+        <h3 style="margin-bottom:12px;">ادیت شمارهٔ مجله</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;max-height:55vh;overflow-y:auto;text-align:right;">
+            <input type="text" id="magazine-edit-title" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="عنوان">
+            <input type="text" id="magazine-edit-subtitle" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="زیرعنوان جلد">
+            <textarea id="magazine-edit-standings" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="تحلیل جدول رده‌بندی"></textarea>
+            <textarea id="magazine-edit-titlerace" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="تحلیل جدال قهرمانی"></textarea>
+            <textarea id="magazine-edit-report" rows="4" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="گزارش هفته"></textarea>
+            <textarea id="magazine-edit-records" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="رکوردها و اتفاق‌های عجیب"></textarea>
+            <textarea id="magazine-edit-closing" rows="2" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="جمله پایانی"></textarea>
+            <textarea id="magazine-edit-recs" rows="4" class="glass-input w-full p-3 rounded-xl text-sm" placeholder="توصیه‌ها (هر خط یک مورد)"></textarea>
+        </div>
+        <div class="confirm-btn-row" style="margin-top:14px;">
+            <button class="confirm-btn confirm-btn-cancel" onclick="closeMagazineEditModal()">انصراف</button>
+            <button class="confirm-btn confirm-btn-ok green" onclick="saveMagazineEdit()">ذخیره</button>
+        </div>
+    </div>
+</div>
+
+    <!-- ============ AI ASSISTANT — full-page chat ============ -->
+    <div id="ai-chat-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel" dir="ltr">
+                <div class="ai-panel-header">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="ai-panel-title"><i class="fas fa-wand-magic-sparkles"></i> HARFS Assistant</div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="openAiSettings()" title="Settings"><i class="fas fa-sliders"></i></button>
+                    </div>
+                </div>
+                <div class="ai-chat-scroll" id="ai-chat-scroll">
+                    <div id="ai-chat-messages"></div>
+                    <div class="ai-typing-row" id="ai-typing-indicator" style="display:none;">
+                        <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+                <!-- Quick-ask suggestions — shown until the user sends their first
+                     real message (see renderAiSuggestions), same pattern as the
+                     suggestion chips in most chat apps. -->
+                <div class="ai-suggestions-row" id="ai-suggestions-row"></div>
+                <div class="ai-input-bar">
+                    <input type="text" id="ai-chat-input" placeholder="Type your message…" dir="auto" enterkeyhint="send" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();sendAiMessage()}">
+                    <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ GROUP CHAT — full-page (Overall → Chat) ============ -->
+    <div id="chat-screen" class="page-screen">
+        <div class="ai-chat-inner">
+            <div class="ai-panel chat-panel">
+                <div class="ai-panel-header chat-head">
+                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                    <div class="chat-head-info">
+                        <div class="ai-panel-title"><i class="fas fa-comments"></i> HARFS Chat</div>
+                        <div class="chat-sub" id="chat-sub"><span class="chat-dot"></span><span id="chat-sub-txt">Group · everyone in the league</span></div>
+                    </div>
+                    <div class="ai-panel-header-actions">
+                        <button class="ai-icon-btn" onclick="chatToggleSearch()" title="Search" aria-label="Search"><i class="fas fa-magnifying-glass"></i></button>
+                        <button class="ai-icon-btn" onclick="openNotifSheet()" title="Notifications" aria-label="Notifications"><i class="fas fa-bell"></i></button>
+                    </div>
+                </div>
+                <div class="chat-searchbar" id="chat-searchbar" hidden>
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input id="chat-search" type="search" dir="auto" placeholder="Search messages, names, files…" oninput="chatSearchInput(this.value)" autocomplete="off">
+                    <span id="chat-search-n"></span>
+                    <button type="button" onclick="chatToggleSearch()" aria-label="Close search"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="chat-body">
+                    <div class="chat-scroll" id="chat-scroll" onscroll="chatOnScroll()">
+                        <div id="chat-messages"></div>
+                    </div>
+                    <button class="chat-jump" id="chat-jump" onclick="chatScrollBottom(true)" hidden><i class="fas fa-chevron-down"></i><b id="chat-jump-n"></b></button>
+                </div>
+                <div class="chat-compose">
+                    <div class="chat-chip" id="chat-replybar" hidden><span><i class="fas fa-reply"></i> <b id="chat-reply-name"></b> <em id="chat-reply-text"></em></span><button type="button" onclick="chatCancelReply()" aria-label="Cancel"><i class="fas fa-xmark"></i></button></div>
+                    <div class="chat-chip chat-attach" id="chat-attachbar" hidden></div>
+                    <div class="chat-progress" id="chat-progress" hidden><span id="chat-progress-bar"></span></div>
+                    <div class="chat-rec" id="chat-rec" hidden>
+                        <button type="button" class="chat-rec-cancel" onclick="chatRecCancel()" aria-label="Cancel"><i class="fas fa-trash"></i></button>
+                        <span class="chat-rec-dot"></span><span id="chat-rec-time">0:00</span>
+                        <button type="button" class="chat-send" onclick="chatRecSend()" aria-label="Send voice"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div class="chat-emoji" id="chat-emoji" hidden></div>
+                    <div class="chat-row" id="chat-row">
+                        <button type="button" class="chat-icon-btn" id="chat-emoji-btn" onclick="chatToggleEmoji()" aria-label="Emoji"><i class="far fa-face-smile"></i></button>
+                        <div class="chat-field">
+                            <textarea id="chat-input" rows="1" maxlength="250" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)" onfocus="chatToggleEmoji(false)"></textarea>
+                            <label class="chat-clip" aria-label="Attach"><i class="fas fa-paperclip"></i><input type="file" id="chat-file" multiple onchange="chatPickFiles(event)" hidden></label>
+                        </div>
+                        <button type="button" class="chat-icon-btn chat-mic" id="chat-mic" onclick="chatRecStart()" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
+                        <button type="button" class="chat-send" id="chat-send" onclick="chatSend()" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="chat-viewer" onclick="chatCloseViewer()"><div class="chat-viewer-x"><i class="fas fa-times"></i></div><div id="chat-viewer-body"></div></div>
+
+    <!-- ============ GAME — Tetris (Overall → Game) ============ -->
+    <div id="game-screen" class="page-screen">
+        <div class="game-stage" id="game-stage">
+            <div class="game-loading" id="game-loading"><span class="spinner"></span><span id="game-loading-msg">Loading game…</span></div>
+        </div>
+        <div class="game-fab" id="game-fab">
+            <button type="button" class="game-fab-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+            <button type="button" class="game-fab-btn game-fab-more" onclick="gameMenu()" aria-label="Menu"><i class="fas fa-ellipsis"></i></button>
+            <div class="game-fab-menu">
+                <button type="button" class="game-fab-btn" onclick="gameReload()" aria-label="Reload"><i class="fas fa-rotate-right"></i></button>
+                <button type="button" class="game-fab-btn" onclick="gameToggleFullscreen();gameMenu(false)" aria-label="Full screen"><i class="fas fa-expand"></i></button>
+                <a class="game-fab-btn" id="game-ext" href="https://sj2005zarisfi-source.github.io/tetris-game/" target="_blank" rel="noopener" aria-label="Open in browser"><i class="fas fa-up-right-from-square"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AI ASSISTANT SETTINGS ============ -->
+    <div id="ai-settings-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:320px;" dir="ltr">
+            <h3 style="font-size:0.95rem;font-weight:800;margin-bottom:16px;text-align:center;">
+                <i class="fas fa-sliders" style="color:var(--primary);margin-right:6px;"></i>Assistant Settings
+            </h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:11px 14px;margin-bottom:14px;">
+                <label class="ai-toggle-switch">
+                    <input type="checkbox" id="ai-full-data-toggle" onchange="toggleAiDataMode()">
+                    <span class="ai-toggle-slider"></span>
+                </label>
+                <div style="text-align:left;">
+                    <div style="font-size:0.75rem;font-weight:800;">Send Full Data</div>
+                    <div style="font-size:0.6rem;color:#6b7280;margin-top:2px;">Off = only summary stats are sent</div>
+                </div>
+            </div>
+            <button class="glass-button w-full font-bold text-sm py-3" style="border-color:rgba(96,165,250,0.3);color:var(--primary);" onclick="saveAiSettings()">
+                <i class="fas fa-check mr-2"></i>Save
+            </button>
+            <button class="glass-button w-full font-bold text-sm py-2.5 mt-2" style="color:#f87171;border-color:rgba(239,68,68,0.25);" onclick="clearAiChat()">
+                <i class="fas fa-trash mr-2"></i>Clear Chat
+            </button>
+            <button class="glass-button w-full font-bold text-sm py-2.5 mt-2" style="color:#9ca3af;" onclick="closeAiSettings()">Close</button>
+        </div>
+    </div>
+
+</div><!-- /app-container -->
+
+<audio id="background-music" style="display:none;"></audio>
+
+<script src="js/config.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/snapshot.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/sessions.js"></script>
+<script src="js/offline-gh.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/appearance.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/memories.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/overall.js"></script>
+<script src="js/season.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/league-ops.js"></script>
+<script src="js/profile-photos.js"></script>
+<script src="js/access.js"></script>
+<script src="js/reactions.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/magazine.js"></script>
+<script src="js/gif-encoder.js"></script>
+<script src="js/magazine-comments.js"></script>
+<script src="js/ai-chat.js"></script>
+<script src="js/mba.js"></script>
+<script src="js/flow.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/season-layout.js"></script>
+<script src="js/verify.js"></script>
+<script src="js/admin-music.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/lite-net.js"></script>
+<script src="js/vendor/qrcode.min.js"></script>
+<script src="js/lite-ui.js"></script>
+<script src="js/glass-fx.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('./sw.js')
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.error(e));
+    });
+}
+</script>
+</body>
+</html>

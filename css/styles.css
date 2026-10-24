@@ -143,11 +143,6 @@ body {
 .orb-2 { width:430px;height:430px; background:radial-gradient(circle,var(--orb2),transparent); bottom:-120px;right:-120px; opacity:0.33; animation-delay:-6s; }
 .orb-3 { width:240px;height:240px; background:radial-gradient(circle,var(--orb3),transparent); top:40%;right:-80px; opacity:0.2; animation-delay:-3s; }
 
-@keyframes floatOrb {
-    0%,100%{transform:translate3d(0,0,0) scale(1);}
-    50%{transform:translate3d(25px,-40px,0) scale(1.06);}
-}
-
 /* =====================================================
    APP CONTAINER
    ===================================================== */

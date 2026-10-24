@@ -191,6 +191,7 @@ function startApp(cacheReady){
 // ============================================================
 function setupOverallHold(){
     const navMain=document.getElementById('nav-main');
+    if(!navMain){ console.error('[HARFS] #nav-main not found (readyState:'+document.readyState+')'); return; }
     navMain.addEventListener('click',()=>navigate('main-league'));
 }
 

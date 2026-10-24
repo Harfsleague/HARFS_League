@@ -82,14 +82,13 @@ async function loadMbaDataFromGitHub(){
     const cached = await idbGet('mbaData','v');
     if(cached) mbaData = cached;
     try{
-        const r = await fetch(`${BASE_API}${GITHUB_MBA_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-        if(r.ok){
-            const d = await r.json();
-            mbaSha = d.sha;
-            mbaData = await (await fetch(d.download_url+'?t='+Date.now())).json();
+        const j = await ghFetchJson(GITHUB_MBA_FILE,{rawBust:true});
+        if(j.ok){
+            mbaSha = j.sha;
+            mbaData = j.data;
             await idbSet('mbaData','v',mbaData);
         }
-        else if(r.status!==404) console.warn('mba_history load failed:', r.status);
+        else if(j.status!==404) console.warn('mba_history load failed:', j.status);
         // A 404 here is expected before the very first tournament — mbaData stays {current:null,completed:[]}.
     }catch(e){ console.warn('mba_history load error:', e); }
     normalizeMbaData();
