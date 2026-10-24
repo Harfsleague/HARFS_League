@@ -11,7 +11,7 @@ const J_MONTHS_EN=["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar
 function toEnglishDigits(s){if(!s)return s;return s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
 
 // Shown (tiny) under "Log Out" in Settings. Keep it equal to the number in CACHE_VERSION (harfs-shell-vNN) in sw.js — bump both on every update.
-const APP_VERSION="v54";
+const APP_VERSION="v55";
 const GITHUB_REPO="Harfsleague/HARFS_Data";
 const GITHUB_LEAGUE_BRANCH="main";
 const GITHUB_LEAGUE_FILE="league_data.json";
@@ -75,13 +75,8 @@ function ghProxyUrl(url){ const root='https://api.github.com/'; return url.start
 function ghAuthHeader(){ return harfsSessionToken ? `Bearer ${harfsSessionToken}` : null; }
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
 let loginIsNewAccount = false;
-// GUEST MODE — lets someone open the app and look around without ever
-// picking a team/password. Persisted so a guest isn't dropped back on the
-// login screen on every reload; cleared the moment they actually log in
-// (see submitLoginPassword() in auth.js). loggedInTeam stays null for a
-// guest, so every existing "if(!loggedInTeam)" write-action guard already
-// does the right thing — it just prompts them to log in first.
-localStorage.removeItem('harfs_guest');   // guest mode was removed — every user must sign in
+// Guest mode was removed — every user must sign in. Clear the old flag left on devices that used it.
+localStorage.removeItem('harfs_guest');
 
 
 let leagueData={},mainLeagueData={};

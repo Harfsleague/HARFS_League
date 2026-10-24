@@ -341,7 +341,7 @@ async function liteBuildStandalone(onStep){
     try{
         const manifest = JSON.parse(await get('fonts/manifest.json')); fonts.manifest = manifest;
         for(const m of manifest){ const buf = new Uint8Array(await (await fetch('fonts/'+m.file)).arrayBuffer()); let bin = ''; for(let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i+0x8000));
-            fonts.files[m.file] = `data:font/${m.format==='otf'?'otf':'ttf'};base64,${btoa(bin)}`; }
+            fonts.files[m.file] = `data:font/${m.format==='woff2'?'woff2':m.format==='otf'?'otf':'ttf'};base64,${btoa(bin)}`; }
     }catch(e){ /* fonts are optional */ }
     let jsqr = ''; try{ jsqr = await get('js/vendor/jsqr.min.js'); }catch(e){}
     const esc = o=>JSON.stringify(o).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');

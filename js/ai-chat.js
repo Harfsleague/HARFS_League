@@ -144,11 +144,6 @@ function pushAiMessage(role, text){
     renderAiSuggestions();
     return msg;
 }
-function escapeHtml(s){
-    const d=document.createElement('div');
-    d.textContent = s==null ? '' : String(s);
-    return d.innerHTML;
-}
 
 // ---- Lightweight pipe-table detector/renderer for AI chat bubbles ----
 // Trailing \r (seen from some proxies/streaming chunks) used to silently
