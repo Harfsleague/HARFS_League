@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-restore-2026-10-24T06-13-51';
+const CACHE_VERSION = 'harfs-shell-v57';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -83,9 +83,9 @@ const APP_SHELL = [
   './js/vendor/jsqr.min.js',
   './js/lite-ui.js',
   './fonts/manifest.json',
-  './fonts/Champions-Bold.ttf',
-  './fonts/danstevis.otf',
-  './fonts/Far_MashinTahrir.ttf',
+  './fonts/Champions-Bold.woff2',
+  './fonts/danstevis.woff2',
+  './fonts/Far_MashinTahrir.woff2',
   './js/main.js',
 ];
 
@@ -113,6 +113,9 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => !keep.includes(k)).map(k => caches.delete(k))))
+      // one-time clean-up: JSON entries that older versions stored in the image cache
+      .then(() => caches.open(IMAGE_CACHE_VERSION).then(cache => cache.keys().then(reqs =>
+        Promise.all(reqs.filter(r => new URL(r.url).pathname.endsWith('.json')).map(r => cache.delete(r))))).catch(() => {}))
       .then(() => self.clients.claim())
   );
 });
@@ -129,7 +132,9 @@ self.addEventListener('fetch', event => {
   // replaced) — never left to fail purely because we're offline.
   // moment_reactions.json lives on the same host but is LIVE data (reactions change all the time):
   // never cache-first, always straight from the network (js/reactions.js keeps its own offline copy).
-  if (url.hostname === 'raw.githubusercontent.com' && url.pathname.endsWith('/moment_reactions.json')) return;
+  // Same for every JSON file (league data, magazine ...): the app keeps its own offline copy in IndexedDB, and a cache-first
+  // answer here handed out data one visit old and stored one new entry per '?t=<timestamp>' URL (the cache only ever grew).
+  if (url.hostname === 'raw.githubusercontent.com' && url.pathname.endsWith('.json')) return;
 
   if (IMAGE_CACHE_HOSTS.includes(url.hostname)) {
     event.respondWith(

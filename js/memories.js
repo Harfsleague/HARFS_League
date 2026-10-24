@@ -5,26 +5,6 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // ============================================================
-// GOLDEN MOMENTS — IMAGE COMPRESSION
-// ============================================================
-function compressImage(base64,maxW,maxH,quality){
-    return new Promise(resolve=>{
-        const img=new Image();
-        img.onload=()=>{
-            let w=img.width,h=img.height;
-            if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
-            if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
-            const canvas=document.createElement('canvas');
-            canvas.width=w;canvas.height=h;
-            canvas.getContext('2d').drawImage(img,0,0,w,h);
-            resolve(canvas.toDataURL('image/jpeg',quality));
-        };
-        img.onerror=()=>resolve(base64);
-        img.src=base64;
-    });
-}
-
-// ============================================================
 // GOLDEN MOMENTS — VIDEO TRIM + COMPRESSION (client-side, in-app)
 // Re-encodes the clip through a canvas so it is capped at
 // MAX_MOMENT_VIDEO_SECONDS, downscaled, and bitrate-limited —

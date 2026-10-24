@@ -285,7 +285,6 @@ body.tier-2{ --lg-blur:20px; --lg-sat:150%; }
 body.tier-2 .bottom-nav::before,body.tier-2 .season-subnav::before,body.tier-2 #hero-logo-container::before{ display:none; }
 body.tier-3{ --lg-blur:14px; --lg-sat:140%; }
 body.tier-3 .ambient-orb{ animation:none; }
-body.tier-3 #particle-canvas{ display:none; }
 body.tier-3 .bottom-nav::before,body.tier-3 .season-subnav::before,body.tier-3 #hero-logo-container::before{ display:none; }
 body.tier-3 :is(.settings-panel,.ai-panel,.team-picker-panel,.appearance-panel,.modal-content){
     -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);

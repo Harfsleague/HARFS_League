@@ -11,7 +11,7 @@
 //   The Cloudflare Worker commits them as normal image files in the data
 //   repo:   profile_photos/<team>/<id>.jpg
 //   and main_league_data.json[team].customPhotos only keeps the ordered
-//   list  [{ id, ts }]  — see WORKER_PROFILE_PHOTOS.md for the Worker side.
+//   list  [{ id, ts }]  — see docs/WORKER_PROFILE_PHOTOS.md for the Worker side.
 // • Anyone can tap an avatar on Overall (team card, team panel, Federation
 //   & Owners) to open the full-screen slider viewer defined below.
 // • The logged-in team edits its own photos in the Edit Team modal

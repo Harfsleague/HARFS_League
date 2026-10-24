@@ -150,10 +150,10 @@ async function loadLeagueDataFromGitHub(){
     if(!navigator.onLine){ setSyncStatus('offline'); return leagueData; }
     setSyncStatus('syncing');
     try{
-        const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-        if(r.ok){
-            const d=await r.json();sha=d.sha;
-            const c=await(await fetch(d.download_url)).json();
+        const j=await ghFetchJson(GITHUB_LEAGUE_FILE);
+        if(j.ok){
+            sha=j.sha;
+            const c=j.data;
             Object.keys(c).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...c[k]};});
             await idbSet('leagueData','v',c);
         }
@@ -166,10 +166,10 @@ async function loadMatchHistoryFromGitHub(){
     if(cached) matchHistory = cached;
     if(!navigator.onLine){ setSyncStatus('offline'); return matchHistory; }
     try{
-        const r=await fetch(`${BASE_API}${GITHUB_MATCHES_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-        if(r.ok){
-            const d=await r.json();matchesSha=d.sha;
-            matchHistory=await(await fetch(d.download_url)).json();
+        const j=await ghFetchJson(GITHUB_MATCHES_FILE);
+        if(j.ok){
+            matchesSha=j.sha;
+            matchHistory=j.data;
             await idbSet('matchHistory','v',matchHistory);
         }
     }catch(e){ matchHistory=cached||[]; setSyncStatus(cached?'offline':'error'); return matchHistory; }
@@ -184,10 +184,10 @@ async function saveMainLeagueDataToGitHub(d,m){const ts={};Object.keys(d).forEac
 // Before every save pull the latest values so this app never overwrites them with a stale copy.
 async function leagueSyncComboBonus(){
     try{
-        const r=await fetch(`${BASE_API}${GITHUB_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}&_t=${Date.now()}`);
-        if(!r.ok) return;
-        const dd=await r.json(); sha=dd.sha;
-        const c=await(await fetch(dd.download_url+'?t='+Date.now())).json();
+        const j=await ghFetchJson(GITHUB_LEAGUE_FILE,{bust:true,rawBust:true});
+        if(!j.ok) return;
+        sha=j.sha;
+        const c=j.data;
         Object.keys(c).forEach(k=>{
             const L=leagueData[k]; if(!L) return;
             const rb=(c[k].BonusSeason!==undefined)?(c[k].Bonus||0):0, lb=L.Bonus||0;
@@ -280,7 +280,7 @@ async function refreshAllLeagueViews(){
     if(typeof renderFlowViews==='function')renderFlowViews();
 }
 async function archiveCurrentSeason(finalTable,finalHistory,extra){
-    try{const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);if(r.ok){const d=await r.json();archiveSha=d.sha;archivedSeasons=await(await fetch(d.download_url)).json();}}catch(e){}
+    try{const j=await ghFetchJson(GITHUB_ARCHIVE_FILE);if(j.ok){archiveSha=j.sha;archivedSeasons=j.data;}}catch(e){}
     const n=archivedSeasons.length+1;
     archivedSeasons.push({seasonId:n,date:new Date().toISOString(),table:finalTable,history:finalHistory||[],...(extra||{})});
     await saveFile(GITHUB_ARCHIVE_FILE,archivedSeasons,`Archived Season ${n}`,archiveSha);
