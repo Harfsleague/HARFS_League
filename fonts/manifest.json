@@ -2,19 +2,19 @@
   {
     "id": "champions-bold",
     "label": "Champions Bold",
-    "file": "Champions-Bold.woff2",
-    "format": "woff2"
+    "file": "Champions-Bold.ttf",
+    "format": "ttf"
   },
   {
     "id": "danstevis",
     "label": "Danstevis",
-    "file": "danstevis.woff2",
-    "format": "woff2"
+    "file": "danstevis.otf",
+    "format": "otf"
   },
   {
     "id": "far-mashintahrir",
     "label": "Far MashinTahrir",
-    "file": "Far_MashinTahrir.woff2",
-    "format": "woff2"
+    "file": "Far_MashinTahrir.ttf",
+    "format": "ttf"
   }
 ]
