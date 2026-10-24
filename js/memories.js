@@ -173,7 +173,7 @@ function renderWeirdPreview(){
         } else if(m.type==='video'){
             inner=`<video src="${m.src}" muted playsinline></video><div class="weird-preview-badge"><i class="fas fa-play"></i>${m.duration||MAX_MOMENT_VIDEO_SECONDS}s</div>`;
         } else {
-            inner=`<i class="fas fa-music"></i><span>${(m.name||'Track')}</span>`;
+            inner=`<i class="fas fa-music"></i><span>${escapeHtml(m.name||'Track')}</span>`;
         }
         return `<div class="weird-img-preview${m.type==='audio'?' weird-media-audio':''}">
             ${inner}
@@ -268,7 +268,7 @@ function renderWeirdEventsNow(){
             ?`<div class="weird-card-audio-list">
                 ${audios.map(m=>`
                     <div class="weird-audio-card" id="weird-audio-${ev.id}-${m.idx}">
-                        <i class="fas fa-music"></i><span>${m.name||'Track'}</span>
+                        <i class="fas fa-music"></i><span>${escapeHtml(m.name||'Track')}</span>
                         <button class="weird-audio-play-btn" onclick="playWeirdAudio(${ev.id},${m.idx})"><i class="fas fa-play"></i> Play</button>
                     </div>`).join('')}
                </div>`:'';
@@ -312,7 +312,7 @@ async function playWeirdAudio(eventId,mediaIndex){
     if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading…';}
     try{
         const src=m.file?await fetchMomentMediaFile(m.file):await momentResolveOne(m.src);
-        card.innerHTML=`<i class="fas fa-music"></i><span>${m.name||'Track'}</span><audio src="${src}" controls autoplay></audio>`;
+        card.innerHTML=`<i class="fas fa-music"></i><span>${escapeHtml(m.name||'Track')}</span><audio src="${src}" controls autoplay></audio>`;
     }catch(err){
         if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-play"></i> Play';}
         showToast('Could not load audio — check connection','error');

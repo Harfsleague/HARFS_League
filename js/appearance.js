@@ -128,17 +128,17 @@ let currentPalette = localStorage.getItem('palette') || 'ocean';
 // and Custom, where Background/Motion are set by hand — each one
 // groups a couple of the underlying effects that always make sense to
 // move together:
-//   Background Effects -> orbs + particles + sheen  (ambient decoration)
+//   Background Effects -> orbs + sheen  (ambient decoration)
 //   Motion             -> anim             (screen transitions)
 //   Glass              -> blur + shadows   (frosted glass look)
 // on, and the app tunes its own cost automatically (see js/glass-fx.js). Only the
 // Lite preset turns it off.
 // ------------------------------------------------------------
-const PERF_KEYS = ['orbs','particles','blur','shadows','sheen','anim'];
-const PERF_ALL_ON  = { orbs:true,  particles:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
-const PERF_ALL_OFF = { orbs:false, particles:false, blur:false, shadows:false, sheen:false, anim:false };
+const PERF_KEYS = ['orbs','blur','shadows','sheen','anim'];
+const PERF_ALL_ON  = { orbs:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
+const PERF_ALL_OFF = { orbs:false, blur:false, shadows:false, sheen:false, anim:false };
 const PERF_GROUPS = {
-    background: ['orbs','particles','sheen'],
+    background: ['orbs','sheen'],
     motion:     ['anim'],
     glass:      ['blur','shadows'],
 };
@@ -194,7 +194,6 @@ function applyAppearance(){
     const p = currentPerfValues();
     document.body.classList.toggle('lite-mode', PERF_KEYS.every(k=>!p[k])); // convenience alias when everything's off
     document.body.classList.toggle('perf-no-orbs', !p.orbs);
-    document.body.classList.toggle('perf-no-particles', !p.particles);
     document.body.classList.toggle('perf-no-blur', !p.blur);
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
     document.body.classList.toggle('perf-no-sheen', !p.sheen);
