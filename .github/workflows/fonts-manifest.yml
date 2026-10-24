@@ -1,0 +1,43 @@
+name: Fonts Manifest
+
+# Keeps fonts/manifest.json in sync with whatever font files actually sit
+# in /fonts, so pushing a new .ttf/.otf/.woff/.woff2 there is the only
+# step needed — no manual CSS or JS edit. See scripts/generate-fonts-manifest.mjs
+# and loadCustomFonts() in js/appearance.js.
+#
+# NOTE: this workflow pushes a commit back to this repo using the default
+# GITHUB_TOKEN, which requires "Read and write permissions" under this
+# repo's Settings → Actions → General → Workflow permissions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "fonts/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Regenerate fonts/manifest.json
+        run: node scripts/generate-fonts-manifest.mjs
+
+      - name: Commit manifest if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add fonts/manifest.json
+          git diff --cached --quiet && echo "No changes." || git commit -m "Update fonts manifest"
+          git push

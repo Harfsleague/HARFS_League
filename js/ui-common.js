@@ -1,33 +1,78 @@
 // ============================================================
-// ui-common.js  —  UI-COMMON — shared helpers, music toggle, toast, confirm dialog, date/time, swipe routes, startup animation, nav wiring
+// ui-common.js  —  UI-COMMON — particles, music toggle, toast, confirm dialog, date/time, swipe routes, startup animation, nav wiring
 // Loaded as a classic (non-module) script — shares the global scope
 // with every other file below, in load order, exactly as this code
 // used to run when it was one inline <script> block.
 // ============================================================
 // ============================================================
-// SHARED HELPERS (used by many screens — keep them in this early-loaded file)
+// PARTICLES
 // ============================================================
-function escapeHtml(s){
-    const d=document.createElement('div');
-    d.textContent = s==null ? '' : String(s);
-    return d.innerHTML;
-}
-function compressImage(base64,maxW,maxH,quality){
-    return new Promise(resolve=>{
-        const img=new Image();
-        img.onload=()=>{
-            let w=img.width,h=img.height;
-            if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
-            if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
-            const canvas=document.createElement('canvas');
-            canvas.width=w;canvas.height=h;
-            canvas.getContext('2d').drawImage(img,0,0,w,h);
-            resolve(canvas.toDataURL('image/jpeg',quality));
-        };
-        img.onerror=()=>resolve(base64);
-        img.src=base64;
-    });
-}
+(function(){
+    const canvas=document.getElementById('particle-canvas');
+    const ctx=canvas.getContext('2d',{alpha:true});
+    let W,H,rafId=null;
+    const particles=[];
+    // Fewer particles than before (36 vs 55) — noticeably lighter on the
+    // main thread while staying visually indistinguishable at this size/opacity.
+    const PARTICLE_COUNT=36;
+    // How many of the 36 pre-generated particles actually get drawn each
+    // frame — driven by the Floating Particles amount slider in the
+    // Appearance sheet (see setPerfAmount()/previewPerfAmount() in appearance.js). Keeping the
+    // full particle array around and just drawing a prefix of it is cheaper
+    // and simpler than rebuilding the array on every slider move.
+    let activeParticleCount = PARTICLE_COUNT;
+    window.setParticleDensity = function(pct){
+        activeParticleCount = Math.max(0, Math.round(PARTICLE_COUNT * (Math.max(0,Math.min(100,pct))/100)));
+    };
+    function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+    resize();window.addEventListener('resize',resize);
+    for(let i=0;i<PARTICLE_COUNT;i++){
+        particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+            r:Math.random()*1.5+0.3,dx:(Math.random()-0.5)*0.25,dy:(Math.random()-0.5)*0.25,
+            o:Math.random()*0.38+0.08,pulse:Math.random()*Math.PI*2});
+    }
+    let cachedColor=null;
+    function refreshColor(){
+        const s=getComputedStyle(document.documentElement);
+        cachedColor=s.getPropertyValue('--particle-color').trim()||'147,197,253';
+    }
+    refreshColor();
+    // Palette/scheme changes are the only thing that ever changes this value —
+    // re-reading getComputedStyle on every single frame (as before) was wasted work.
+    const paletteObserver=new MutationObserver(refreshColor);
+    paletteObserver.observe(document.body,{attributes:true,attributeFilter:['data-palette','style']});
+    function draw(){
+        // frozen while scrolling / a sheet is open (body.fx-paused, see glass-fx.js)
+        if(document.body.classList.contains('fx-paused')){rafId=requestAnimationFrame(draw);return;}
+        ctx.clearRect(0,0,W,H);
+        for(let i=0;i<activeParticleCount;i++){
+            const p=particles[i];
+            p.pulse+=0.012;
+            const o=p.o*(0.6+0.4*Math.sin(p.pulse));
+            ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=`rgba(${cachedColor},${o})`;ctx.fill();
+            p.x+=p.dx;p.y+=p.dy;
+            if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+            if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+        }
+        rafId=requestAnimationFrame(draw);
+    }
+    // Skip all work entirely when the canvas isn't visible: it's hidden via
+    // CSS in Lite mode (display:none) and pointless to keep painting while
+    // the tab is backgrounded — both previously burned CPU/battery for nothing.
+    function shouldRun(){
+        return false; // background particles removed (they slowed phones down)
+    }
+    function start(){ if(rafId===null && shouldRun()) draw(); }
+    function stop(){ if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }
+    function sync(){ shouldRun() ? start() : stop(); }
+    document.addEventListener('visibilitychange', sync);
+    // Performance mode is applied via a body class toggle (setPerformance →
+    // applyAppearance), so a lightweight interval catches that transition
+    // without needing to hook into every call site that can change it.
+    setInterval(sync, 800);
+    sync();
+})();
 
 // ============================================================
 // MUSIC TOGGLE (hold on HARFS capsule)
@@ -191,7 +236,6 @@ function startApp(cacheReady){
 // ============================================================
 function setupOverallHold(){
     const navMain=document.getElementById('nav-main');
-    if(!navMain){ console.error('[HARFS] #nav-main not found (readyState:'+document.readyState+')'); return; }
     navMain.addEventListener('click',()=>navigate('main-league'));
 }
 

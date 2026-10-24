@@ -255,10 +255,10 @@ async function loadArchiveDropdown(){
     const cached=await idbGet('archivedSeasons','v');
     if(cached) archivedSeasons=cached;
     try{
-        const j=await ghFetchJson(GITHUB_ARCHIVE_FILE);
-        if(j.ok){
-            archiveSha=j.sha;
-            archivedSeasons=j.data;
+        const r=await fetch(`${BASE_API}${GITHUB_ARCHIVE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();archiveSha=d.sha;
+            archivedSeasons=await(await fetch(d.download_url)).json();
             await idbSet('archivedSeasons','v',archivedSeasons);
             const sel=document.getElementById('season-selector');
             sel.innerHTML='<option value="current">Current Season</option>';
@@ -313,10 +313,10 @@ async function loadMainLeagueDataFromGitHub(onCached){
     }
     setSyncStatus('syncing');
     try{
-        const j=await ghFetchJson(GITHUB_MAIN_LEAGUE_FILE);
-        if(j.ok){
-            mainSha=j.sha;
-            const c=repairMojibake(j.data);
+        const r=await fetch(`${BASE_API}${GITHUB_MAIN_LEAGUE_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
+        if(r.ok){
+            const d=await r.json();mainSha=d.sha;
+            const c=repairMojibake(await(await fetch(d.download_url)).json());
             Object.keys(c).forEach(k=>{if(mainLeagueData[k])mainLeagueData[k]={...mainLeagueData[k],...c[k]};});
             await idbSet('mainLeagueData','v',c);
         }

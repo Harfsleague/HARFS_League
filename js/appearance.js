@@ -83,7 +83,7 @@ const FONT_FORMAT_BY_EXT = { woff2:'woff2', woff:'woff', ttf:'truetype', otf:'op
 async function loadCustomFonts(){
     let manifest;
     try{
-        const res = await fetch('fonts/manifest.json',{cache:'no-cache'});
+        const res = await fetch(`fonts/manifest.json?cachebust=${Date.now()}`);
         if(!res.ok) return;
         manifest = await res.json();
     }catch(e){ return; }

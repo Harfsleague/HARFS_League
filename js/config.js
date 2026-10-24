@@ -11,7 +11,7 @@ const J_MONTHS_EN=["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar
 function toEnglishDigits(s){if(!s)return s;return s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
 
 // Shown (tiny) under "Log Out" in Settings. Keep it equal to the number in CACHE_VERSION (harfs-shell-vNN) in sw.js — bump both on every update.
-const APP_VERSION="v57";
+const APP_VERSION="v54";
 const GITHUB_REPO="Harfsleague/HARFS_Data";
 const GITHUB_LEAGUE_BRANCH="main";
 const GITHUB_LEAGUE_FILE="league_data.json";
@@ -53,18 +53,6 @@ const SYMBOLIC_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg 
 const PERSON_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#4338ca"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#g)"/><g fill="#fff" fill-opacity=".92"><circle cx="48" cy="37" r="15"/><path d="M19 83c3-17 15-26 29-26s26 9 29 26a48 48 0 0 1-58 0z"/></g></svg>');
 function symbolicDefaultLogo(t){return t==='Purple'?SYMBOLIC_DEFAULT_LOGO:PERSON_DEFAULT_LOGO;}
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
-// ONE place that reads a JSON file of the data repo: the contents API (gives the file's `sha`, needed for saving) and
-// then its download_url (the content). Same two requests, in the same order, as the loaders used to do by hand — js/sessions.js
-// (Worker proxy) and js/offline-gh.js (offline answers) both recognise exactly these URLs.
-//   bust    -> add &_t=<now> to the contents call     rawBust -> add ?t=<now> to the download call
-// Returns { ok, status, sha, data }. ok=false (status e.g. 404) when the contents call failed. Network / JSON errors are thrown.
-async function ghFetchJson(file,{bust=false,rawBust=false}={}){
-    const r=await fetch(`${BASE_API}${file}?ref=${GITHUB_LEAGUE_BRANCH}${bust?`&_t=${Date.now()}`:''}`);
-    if(!r.ok) return {ok:false,status:r.status,sha:null,data:null};
-    const d=await r.json();
-    const data=await(await fetch(rawBust?d.download_url+'?t='+Date.now():d.download_url)).json();
-    return {ok:true,status:r.status,sha:d.sha,data};
-}
 
 // ============================================================
 // HARFS AUTH / PURCHASES API (Cloudflare Worker)
@@ -87,8 +75,13 @@ function ghProxyUrl(url){ const root='https://api.github.com/'; return url.start
 function ghAuthHeader(){ return harfsSessionToken ? `Bearer ${harfsSessionToken}` : null; }
 let loginPickedTeam = null; // team currently mid-login (chosen on the grid, awaiting password)
 let loginIsNewAccount = false;
-// Guest mode was removed — every user must sign in. Clear the old flag left on devices that used it.
-localStorage.removeItem('harfs_guest');
+// GUEST MODE — lets someone open the app and look around without ever
+// picking a team/password. Persisted so a guest isn't dropped back on the
+// login screen on every reload; cleared the moment they actually log in
+// (see submitLoginPassword() in auth.js). loggedInTeam stays null for a
+// guest, so every existing "if(!loggedInTeam)" write-action guard already
+// does the right thing — it just prompts them to log in first.
+localStorage.removeItem('harfs_guest');   // guest mode was removed — every user must sign in
 
 
 let leagueData={},mainLeagueData={};

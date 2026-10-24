@@ -1,0 +1,427 @@
+/* ============================================================
+   flow.css — Season Control (admin) + Season → Schedule view
+   Rendered by js/flow.js. Mirrors the look of css/mba.css.
+   ============================================================ */
+
+.flow-head{ text-align:center; margin-bottom:10px; }
+.flow-head-title{ font-size:0.9rem; font-weight:900; color:#f3f4f6; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+.flow-head-sub{ font-size:0.64rem; color:#6b7280; margin-top:3px; }
+.flow-chip{
+    font-size:0.55rem; font-weight:800; letter-spacing:0.4px; text-transform:uppercase;
+    padding:2px 8px; border-radius:99px; color:var(--primary);
+    background:rgba(96,165,250,0.12); border:1px solid rgba(96,165,250,0.3);
+}
+
+/* ---- stage stepper ---- */
+.flow-stepper{ display:flex; gap:4px; margin:6px 0 10px; }
+.flow-step{ flex:1; min-width:0; text-align:center; opacity:0.5; position:relative; }
+.flow-step:not(:last-child)::after{
+    content:''; position:absolute; top:13px; left:calc(50% + 15px); right:calc(-50% + 15px);
+    height:2px; background:rgba(255,255,255,0.1);
+}
+.flow-step.done:not(:last-child)::after{ background:#22c55e; }
+.flow-step-dot{
+    width:26px; height:26px; margin:0 auto 4px; border-radius:50%; font-size:0.6rem;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#9ca3af;
+}
+.flow-step-label{ font-size:0.54rem; font-weight:800; color:#d1d5db; line-height:1.2; }
+.flow-step-sub{ font-size:0.48rem; color:#6b7280; margin-top:1px; line-height:1.2; }
+.flow-step.done{ opacity:0.9; }
+.flow-step.done .flow-step-dot{ background:rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80; }
+.flow-step.active{ opacity:1; }
+.flow-step.active .flow-step-dot{ background:rgba(251,191,36,0.15); border-color:#fbbf24; color:#fbbf24; box-shadow:0 0 10px rgba(251,191,36,0.35); }
+
+.flow-next{ font-size:0.66rem; color:#9ca3af; text-align:center; line-height:1.55; margin:2px 4px 12px; }
+.flow-next i{ margin-right:4px; color:#6b7280; }
+.flow-note{ font-size:0.62rem; color:#6b7280; line-height:1.5; margin:4px 2px 8px; text-align:center; }
+.flow-section-title{ font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; margin:10px 0 6px; }
+
+/* ---- team chip + fixture rows ---- */
+.flow-team{ display:flex; align-items:center; gap:6px; min-width:0; flex:1; font-size:0.72rem; font-weight:800; color:#e5e7eb; }
+.flow-team img{ width:22px; height:22px; border-radius:50%; object-fit:contain; background:#f8fafc; flex-shrink:0; }
+.flow-team span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.flow-team.away{ flex-direction:row-reverse; text-align:right; }
+.flow-fixture{
+    display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:6px;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px;
+}
+.flow-fixture.played{ background:rgba(255,255,255,0.05); }
+.flow-vs{ font-size:0.62rem; font-weight:800; color:#4b5563; flex-shrink:0; }
+.flow-score{ font-size:0.82rem; font-weight:900; color:#e5e7eb; display:flex; align-items:center; gap:3px; flex-shrink:0; min-width:44px; justify-content:center; }
+.flow-score i{ color:#4b5563; font-style:normal; }
+.flow-score.hw{ color:#fbbf24; }
+.flow-score.aw{ color:#fbbf24; }
+
+/* ---- admin: score entry card ---- */
+.flow-scorer{
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px; padding:12px; margin-bottom:10px;
+}
+.flow-scorer-teams{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.flow-scorer-row{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; }
+.flow-scorer-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; max-width:120px; }
+.flow-scorer-col .score-btn{ width:100%; height:34px; border-radius:12px; }
+.flow-scorer-num{ font-size:1.7rem; font-weight:900; color:#f3f4f6; line-height:1.1; }
+.flow-colon{ font-size:1.6rem; font-weight:900; color:#374151; }
+
+/* ---- admin: coming-up, summary, tools ---- */
+.flow-upnext{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:0.62rem; color:#9ca3af; padding:5px 8px; background:rgba(255,255,255,0.025); border-radius:10px; margin-bottom:4px; }
+.flow-mw{ font-weight:900; color:#6b7280; width:34px; flex-shrink:0; }
+.flow-summary{ background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:6px 12px; margin-bottom:10px; }
+.flow-summary-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; font-size:0.7rem; color:#cbd5e1; }
+.flow-summary-row + .flow-summary-row{ border-top:1px solid rgba(255,255,255,0.05); }
+.flow-summary-row .flow-team{ flex:0 1 auto; }
+.flow-link-btn{ display:block; margin:2px auto 0; background:none; border:none; color:#93c5fd; font-size:0.66rem; font-weight:700; cursor:pointer; padding:6px; }
+.flow-tools{ display:flex; gap:10px; margin-top:16px; }
+.flow-danger{ margin-top:12px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; }
+.flow-danger summary{ font-size:0.62rem; font-weight:800; color:#f87171; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
+.flow-danger .mba-cancel-btn{ margin-bottom:6px; }
+
+/* ---- Season → Schedule view ---- */
+.flow-empty{ text-align:center; color:#6b7280; font-size:0.74rem; padding:36px 12px; line-height:1.7; }
+.flow-empty i{ font-size:1.8rem; display:block; margin-bottom:10px; opacity:0.4; }
+.flow-block{ margin:0 0 12px; padding:10px 12px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); }
+.flow-block.active{ border-color:rgba(251,191,36,0.45); box-shadow:0 0 18px rgba(251,191,36,0.08); }
+.flow-block.done{ opacity:0.92; }
+.flow-block-title{ font-size:0.72rem; font-weight:900; color:#f3f4f6; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.flow-block.todo .flow-block-title{ color:#9ca3af; }
+.flow-week{ margin-bottom:8px; }
+.flow-week-head{ font-size:0.58rem; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#6b7280; margin:2px 2px 5px; display:flex; align-items:center; gap:6px; }
+.flow-week.current .flow-week-head{ color:#fbbf24; }
+.flow-week.current .flow-fixture{ border-color:rgba(251,191,36,0.3); }
+
+/* =====================================================
+   SEASON SCREEN VIEWS  (js/season-layout.js → body[data-season-view] + body[data-season-tab])
+   views: main = Season (any season, pickers + results) · schedule = timetable
+   tabs (main): league = league table + match history · cup = the CUP
+   ===================================================== */
+#season-sections{ display:flex; flex-direction:column; align-items:center; width:100%; gap:18px; }
+#season-sections > section{ display:block; width:100%; }
+.ssec-slot{ padding:0 12px; }
+#ssec-league-nav #season-nav-wrapper,
+#ssec-mba-nav #mba-nav-wrapper{ display:flex; align-items:center; gap:8px; margin:0 0 10px; }
+/* Season (main): table + results + pickers, no timetable */
+body[data-season-view="main"] #ssec-schedule{ display:none; }
+/* League / Cup tab */
+body[data-season-tab="league"] #ssec-mba{ display:none; }
+body[data-season-tab="cup"] #ssec-league,
+body[data-season-tab="cup"] #ssec-history{ display:none; }
+/* schedule: only the timetable (wins over the tab rules) */
+body[data-season-view="schedule"] #ssec-league,
+body[data-season-view="schedule"] #ssec-mba,
+body[data-season-view="schedule"] #ssec-history{ display:none; }
+#ssec-history .season-history-card{ margin-bottom:0; }
+
+/* page-to-page motion (schedule / results in and out, League ⇄ Cup) */
+#season-sections.sv-out{ animation:svOut .16s ease-in forwards; }
+#season-sections.sv-in{ animation:svIn .34s cubic-bezier(.2,.8,.2,1) both; }
+#season-sections.sv-tab{ animation:svTab .28s ease-out both; }
+@keyframes svOut{ to{ opacity:0; transform:translateX(calc(var(--sx,28px) * -1)) scale(.985); } }
+@keyframes svIn{ from{ opacity:0; transform:translateX(var(--sx,28px)) scale(.985); } to{ opacity:1; transform:none; } }
+@keyframes svTab{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.sv-fade{ animation:svFade .3s ease-out both; }
+@keyframes svFade{ from{ opacity:0; transform:scale(.85); } to{ opacity:1; transform:none; } }
+
+/* title swap + header box resize */
+.season-title{ transition:opacity .16s ease, transform .16s ease, filter .16s ease; }
+.season-title.t-out{ opacity:0; transform:translateY(-10px); filter:blur(3px); }
+.season-title.t-in{ animation:titleIn .3s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes titleIn{ from{ opacity:0; transform:translateY(10px); filter:blur(3px); } to{ opacity:1; transform:none; filter:none; } }
+#league-table-screen .league-header.hdr-anim{ overflow:hidden; transition:height .4s cubic-bezier(.22,1,.36,1); }
+body.perf-no-anim .season-title,
+body.perf-no-anim #league-table-screen .league-header.hdr-anim{ transition:none !important; animation:none !important; }
+
+/* League | Cup bar — built to look exactly like the bottom nav (same glass, rim, sheen, lens, refraction:
+   see the .season-subnav entries in css/liquid-glass.css). It sits in its own row ABOVE the bottom
+   nav with a clear gap, and starts tucked BEHIND it (z-index 99 < 100), sliding up out of it. */
+.season-subnav{
+    position:absolute; bottom:82px; left:50%;
+    width:auto;                                   /* compact capsule: as wide as its two options */
+    display:flex; justify-content:center; align-items:center; gap:2px; padding:4px 5px;
+    background:rgba(10,18,30,0.75);
+    backdrop-filter:blur(28px) saturate(200%); -webkit-backdrop-filter:blur(28px) saturate(200%);
+    border-radius:9999px; z-index:99;
+    border:1px solid rgba(255,255,255,0.09);
+    box-shadow:0 8px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);
+    opacity:0; pointer-events:none;
+    transform:translateX(-50%) translateY(70px) scale(.8);
+    transition:transform .55s cubic-bezier(.22,1.25,.36,1), opacity .3s ease;
+}
+.season-subnav .nav-item{ flex:0 0 auto; min-width:62px; padding:5px 14px; }
+.season-subnav .nav-item i{ font-size:.92rem; margin-bottom:1px; }
+.season-subnav .nav-item span{ font-size:.54rem; }
+.season-subnav .nav-item.active::after{ display:none; }
+.bottom-nav.active + .season-subnav.show{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0) scale(1); transition-delay:.1s, .1s; }
+/* keep the floating extras clear of the bar while it is out */
+body.season-subnav-on .season-fab{ bottom:150px; }
+body.season-subnav-on .mini-player{ bottom:148px; }
+body.season-subnav-on #league-table-screen{ padding-bottom:170px; }
+body.perf-no-anim .season-subnav,
+body.perf-no-anim #season-sections{ transition:none !important; animation:none !important; }
+
+/* header: bigger title + date, icon buttons bottom-right */
+.season-title{ font-size:1.5rem; font-weight:900; letter-spacing:3px; text-transform:uppercase; color:var(--header-text); margin:0 0 2px; line-height:1.2; }
+.season-date{ font-size:0.82rem; color:#9ca3af; font-family:monospace; margin-bottom:2px; }
+.season-header-actions{ align-self:flex-end; display:flex; gap:10px; margin-top:8px; }
+.season-icon-btn{ width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.05); color:#d1d5db; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; font-size:0.8rem; transition:transform .12s, background .15s, color .15s; }
+.season-icon-btn:active{ transform:scale(0.9); background:rgba(255,255,255,0.12); color:var(--primary); }
+.season-back-btn{ position:absolute; left:12px; top:12px; }
+
+/* merged match history: date under a played fixture + team-filter dimming */
+.flow-fixture-wrap{ margin-bottom:6px; }
+.flow-fixture-wrap .flow-fixture{ margin-bottom:0; }
+.flow-fx-date{ font-size:0.55rem; color:#6b7280; text-align:center; margin-top:3px; font-family:monospace; letter-spacing:0.3px; }
+.flow-fixture.fx-dim, .flow-fixture-wrap.fx-dim{ opacity:0.2; transition:opacity .2s; }
+
+
+
+
+/* =====================================================
+   OVERALL — shortcut icons (Magazine · Assistant · Federation · Cards)
+   Rounded squares, side by side in one row.
+   ===================================================== */
+.ov-tiles{ display:grid; grid-template-columns:repeat(3,minmax(0,82px)); justify-content:center; gap:10px; margin-top:16px; }   /* 3 × 2 so six shortcuts stay a comfortable size on a phone */
+.ov-tile{
+    width:100%; aspect-ratio:1/1; border-radius:22px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    color:var(--primary); cursor:pointer; position:relative; overflow:hidden;
+    background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 6px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);
+    transition:transform .15s ease, border-color .2s ease;
+    -webkit-tap-highlight-color:transparent;
+}
+.ov-tile i{ font-size:1.35rem; }
+.ov-tile span{ font-size:.56rem; font-weight:800; letter-spacing:.4px; color:#cbd5e1; }
+.ov-tile:active{ transform:scale(.94); }
+.ov-tile:nth-child(1){ color:#fbbf24; }
+.ov-tile:nth-child(3){ color:#c084fc; }
+.ov-tile:nth-child(4){ color:#f87171; }
+.ov-tile:nth-child(5){ color:#34d399; }
+.ov-tile:nth-child(6){ color:#fb923c; }
+body.ai-disabled .ov-tile-ai{ display:none !important; }
+
+/* =====================================================
+   CARDS
+   ===================================================== */
+.cards-team{ display:flex; align-items:center; gap:8px; justify-content:center; margin:0 0 10px; font-weight:900; color:#f1f5f9; font-size:.9rem; }
+.cards-team img{ width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,.2); }
+.cards-team b{ font-size:.72rem; color:var(--primary); background:rgba(255,255,255,.07); border-radius:999px; padding:2px 8px; }
+.cards-warn{ background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.35); color:#fca5a5; border-radius:12px; padding:8px 10px; font-size:.68rem; font-weight:700; margin-bottom:10px; text-align:center; }
+.cards-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; }
+.cd-tile{ display:flex; flex-direction:column; gap:5px; padding:6px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+.cd-tile.active{ border-color:rgba(74,222,128,.6); box-shadow:0 0 14px rgba(74,222,128,.25); }
+.cd-img-wrap{ position:relative; aspect-ratio:5/7; border-radius:12px; overflow:hidden; background:#0f172a; cursor:zoom-in; }
+.cd-img{ width:100%; height:100%; object-fit:cover; display:block; }
+.cd-flag{ position:absolute; top:6px; inset-inline-start:6px; font-size:.5rem; font-weight:900; letter-spacing:.6px; background:#22c55e; color:#052e16; border-radius:999px; padding:2px 6px; }
+.cd-name{ font-size:.74rem; font-weight:900; color:#f1f5f9; text-align:center; }
+.cd-desc{ font-size:.58rem; color:#9ca3af; text-align:center; line-height:1.35; }
+.cd-acts{ display:flex; gap:4px; }
+.cd-btn{ flex:1; font-size:.58rem; font-weight:800; padding:6px 4px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#e2e8f0; cursor:pointer; }
+.cd-btn.on{ background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.5); color:#86efac; }
+.cd-btn.cd-del{ flex:0 0 32px; color:#f87171; }
+.cards-empty{ text-align:center; color:#6b7280; padding:26px 10px; font-size:.75rem; }
+.cards-empty i{ font-size:1.6rem; display:block; margin-bottom:8px; opacity:.6; }
+.cards-rules{ margin-top:14px; font-size:.62rem; color:#94a3b8; background:rgba(255,255,255,.03); border-radius:12px; padding:10px 12px; }
+.cards-rules ul{ margin:6px 0 0; padding-inline-start:16px; list-style:disc; line-height:1.6; }
+.cards-zoom{ position:fixed; inset:0; z-index:100000; display:none; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; background:rgba(3,7,18,.86); }
+.cards-zoom.open{ display:flex; }
+.cards-zoom img{ width:min(70vw,300px); aspect-ratio:5/7; object-fit:cover; border-radius:20px; box-shadow:0 16px 50px rgba(0,0,0,.6); }
+.cz-name{ font-size:1.1rem; font-weight:900; color:#fff; }
+.cz-desc{ font-size:.75rem; color:#cbd5e1; text-align:center; max-width:300px; }
+
+/* admin: active cards above the teams while entering a result */
+.cd-match{ display:flex; align-items:stretch; justify-content:space-between; gap:6px; margin-bottom:10px; }
+.cd-match-vs{ align-self:center; color:#6b7280; font-size:.7rem; }
+.cd-badge{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px; border-radius:12px; background:rgba(255,255,255,.04); border:1px dashed rgba(255,255,255,.14); }
+.cd-badge.has{ border-style:solid; border-color:rgba(167,139,250,.55); background:rgba(167,139,250,.08); }
+.cd-badge img{ width:46px; aspect-ratio:5/7; object-fit:cover; border-radius:7px; cursor:zoom-in; }
+.cb-name{ font-size:.66rem; font-weight:900; color:#e9d5ff; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cb-name.cancelled{ text-decoration:line-through; color:#f87171; }
+.cb-note{ font-size:.54rem; font-weight:700; color:#fbbf24; }
+.cb-none{ font-size:.62rem; color:#6b7280; }
+.cb-warn{ font-size:.54rem; color:#fca5a5; font-weight:800; }
+.cb-select{ width:100%; font-size:.6rem; padding:4px 6px; border-radius:8px; background:rgba(15,23,42,.85); color:#e2e8f0; border:1px solid rgba(255,255,255,.12); }
+#mba-result-cards{ width:100%; }
+#mba-result-cards .cd-match{ margin:6px 0 4px; }
+
+/* admin: Cards section */
+.ca-team{ background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:8px 10px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px; }
+.ca-team-head{ display:flex; align-items:center; gap:8px; font-size:.78rem; color:#f1f5f9; }
+.ca-team-head img{ width:22px; height:22px; border-radius:50%; object-fit:cover; }
+.ca-team-head span{ font-size:.66rem; color:#9ca3af; }
+.ca-team-head em{ font-style:normal; font-size:.62rem; color:#fca5a5; font-weight:800; margin-inline-start:auto; }
+.ca-card{ display:flex; align-items:center; gap:8px; padding:4px; border-radius:10px; }
+.ca-card.active{ background:rgba(34,197,94,.08); }
+.ca-card img{ width:30px; aspect-ratio:5/7; object-fit:cover; border-radius:5px; cursor:zoom-in; }
+.ca-nm{ flex:1; min-width:0; font-size:.72rem; font-weight:800; color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ca-b{ font-size:.58rem; font-weight:800; padding:5px 8px; border-radius:9px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#e2e8f0; cursor:pointer; }
+.ca-x{ color:#f87171; }
+.ca-deck{ display:grid; grid-template-columns:repeat(auto-fill,minmax(74px,1fr)); gap:8px; }
+.ca-deck-item{ position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; }
+.ca-deck-item img{ width:100%; aspect-ratio:5/7; object-fit:cover; border-radius:10px; border:1px solid rgba(255,255,255,.12); }
+.ca-deck-item span{ font-size:.6rem; font-weight:800; color:#cbd5e1; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ca-deck-item > i.fa-ban{ position:absolute; top:4px; inset-inline-end:4px; font-size:.6rem; color:#fca5a5; background:rgba(0,0,0,.55); border-radius:50%; padding:3px; }
+.ca-add{ justify-content:center; aspect-ratio:5/7; border:1px dashed rgba(255,255,255,.25); border-radius:10px; color:#94a3b8; }
+.ca-add i{ font-size:1.1rem; }
+.card-edit-grid{ display:flex; gap:12px; align-items:flex-start; margin:10px 0; }
+.card-edit-pic{ flex:0 0 96px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; font-size:.58rem; color:var(--primary); font-weight:800; }
+.card-edit-pic img{ width:96px; aspect-ratio:5/7; object-fit:cover; border-radius:12px; border:1px solid rgba(255,255,255,.18); }
+.card-edit-fields{ flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.card-edit-fields .glass-input{ width:100%; font-size:.8rem; padding:9px 10px; }
+.card-edit-check{ font-size:.68rem; color:#cbd5e1; display:flex; gap:6px; align-items:center; }
+
+
+/* =====================================================
+   ADMIN MENU — one tab per area (adminShowCat in js/admin.js)
+   ===================================================== */
+.admin-tabs{ position:sticky; top:0; z-index:6; display:flex; gap:6px; overflow-x:auto; padding:8px 2px 10px; margin:0 0 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.admin-tabs::-webkit-scrollbar{ display:none; }
+.admin-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; font-size:.7rem; font-weight:800; color:#cbd5e1; background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.12); cursor:pointer; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+.admin-tab i{ font-size:.78rem; opacity:.85; }
+.admin-tab.active{ color:#fff; background:linear-gradient(90deg,rgba(139,92,246,.55),rgba(59,130,246,.5)); border-color:rgba(196,181,253,.6); box-shadow:0 4px 14px rgba(99,102,241,.3); }
+/* the full admin sees ONE area at a time; accounts with only granted tools are handled by .limited-access */
+#admin-dashboard-section:not(.limited-access) > .admin-cat-off{ display:none !important; }
+
+/* =====================================================
+   CARDS — view-only badges, history chips, misc
+   ===================================================== */
+.cd-lock{ display:flex; align-items:center; justify-content:center; gap:6px; font-size:.58rem; font-weight:700; color:#94a3b8; margin:0 0 10px; }
+.cd-lock button{ background:none; border:none; color:#93c5fd; font-size:.7rem; padding:2px 6px; cursor:pointer; }
+.cd-lock.cd-nocards{ color:#fbbf24; background:rgba(251,191,36,.08); border:1px dashed rgba(251,191,36,.35); border-radius:10px; padding:7px 10px; margin:6px 0 10px; }
+.cd-free{ display:inline-block; margin-inline-start:5px; font-size:.48rem; font-weight:900; letter-spacing:.4px; text-transform:uppercase; color:#86efac; background:rgba(34,197,94,.14); border-radius:999px; padding:1px 5px; vertical-align:middle; }
+.cards-team .cards-no-count{ color:#86efac; }
+.game-cards{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-top:6px; }
+.gc-chip{ display:inline-flex; align-items:center; gap:4px; font-size:.56rem; color:#e9d5ff; background:rgba(167,139,250,.12); border:1px solid rgba(167,139,250,.35); border-radius:999px; padding:2px 8px 2px 3px; max-width:100%; }
+.gc-chip img{ width:13px; aspect-ratio:5/7; object-fit:cover; border-radius:3px; }
+.gc-chip b{ color:#c4b5fd; font-weight:800; }
+.gc-chip > span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gc-chip i{ color:#f87171; font-size:.55rem; }
+.gc-chip.cancelled{ border-color:rgba(248,113,113,.45); background:rgba(248,113,113,.1); }
+.gc-chip.cancelled > span{ text-decoration:line-through; color:#fca5a5; }
+.mba-hist .game-cards{ justify-content:flex-start; margin:2px 0 6px 28px; }
+
+
+/* =====================================================
+   AI ASSISTANT — same look as the other screens (glass header card, round icon buttons, themed title)
+   ===================================================== */
+#ai-chat-screen .ai-chat-inner{ padding:0 12px; }
+.ai-panel{
+    background:rgba(10,18,30,0.65); border:1px solid rgba(255,255,255,0.07); border-radius:22px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+}
+.ai-panel-header{ padding:14px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.ai-panel-title{ font-size:1.05rem; font-weight:900; letter-spacing:3px; text-transform:uppercase; color:var(--header-text); }
+.ai-panel-title i{ color:var(--primary); font-size:.9rem; letter-spacing:0; }
+.ai-panel-back-btn, .ai-icon-btn{
+    width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.05); color:#d1d5db; font-size:.8rem;
+}
+.ai-panel-back-btn:active, .ai-icon-btn:active{ transform:scale(.9); background:rgba(255,255,255,0.12); color:var(--primary); }
+.ai-msg.model{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); }
+.ai-input-bar{ border-top:1px solid rgba(255,255,255,0.07); align-items:center; }
+#ai-chat-input{ border-radius:999px; padding:11px 18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14); }
+.ai-send-btn{ border-radius:50%; }
+
+/* Season page switch: animate only transform/opacity on their own layer (no layout work per frame) */
+#season-sections.sv-out, #season-sections.sv-in, #season-sections.sv-tab{ will-change:transform,opacity; backface-visibility:hidden; }
+
+/* Cards: combo banner, multi-card badge */
+.cards-combo{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0; padding:9px 12px; border-radius:14px; background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.35); font-size:.72rem; font-weight:800; color:#fde68a; }
+.cards-combo .cd-btn{ flex:0 0 auto; }
+.cards-combo-hint{ font-size:.6rem; font-weight:600; color:#d6b45a; }
+.cards-active-note{ text-align:center; font-size:.62rem; font-weight:700; color:#c4b5fd; margin:4px 0 8px; }
+.cd-btn.cd-info{ cursor:default; opacity:.85; }
+.cd-badge.multi{ display:flex; flex-direction:column; gap:6px; }
+.cd-badge .cb-item{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+
+/* Cards: info (i) view */
+.cards-info-btn{ position:absolute; top:12px; left:12px; z-index:3; width:32px; height:32px; border-radius:50%; border:1.5px solid rgba(255,255,255,.25); background:rgba(255,255,255,.06); color:#e5e7eb; font-size:.8rem; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cards-info-btn.on{ color:var(--primary); border-color:var(--primary); }
+.cards-info-btn:active{ transform:scale(.92); }
+.cards-fa{ font-family:inherit; }
+.cards-fa .cards-rules{ font-size:.7rem; line-height:1.9; }
+.cards-fa .cards-rules b{ color:#e2e8f0; font-size:.78rem; }
+.cards-fa .cards-info-tag{ font-size:.64rem; }
+.cards-fa .cd-desc{ font-size:.7rem; }
+.cards-info-list{ display:flex; flex-direction:column; gap:10px; }
+.cards-info-item{ display:flex; gap:12px; align-items:center; padding:10px; border-radius:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+.cards-info-item .cd-img-wrap{ flex:0 0 72px; width:72px; margin:0; }
+.cards-info-text{ flex:1; min-width:0; text-align:start; }
+.cards-info-tag{ margin-top:5px; font-size:.58rem; font-weight:700; color:var(--primary); line-height:1.5; }
+
+/* Devices & sessions */
+.sess-hint{ font-size:.66rem; color:#9ca3af; text-align:center; line-height:1.6; margin:0 4px 12px; }
+.sess-row{ display:flex; align-items:center; gap:12px; padding:11px 12px; margin-bottom:8px; border-radius:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+.sess-row.current{ border-color:color-mix(in srgb,var(--primary) 55%,transparent); background:color-mix(in srgb,var(--primary) 9%,transparent); }
+.sess-ico{ flex:0 0 38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.07); color:var(--primary); font-size:1.05rem; }
+.sess-info{ flex:1; min-width:0; }
+.sess-label{ font-size:.78rem; font-weight:800; color:#f3f4f6; }
+.sess-this{ font-size:.5rem; font-weight:900; letter-spacing:.4px; text-transform:uppercase; color:#86efac; background:rgba(34,197,94,.14); border-radius:999px; padding:1px 6px; margin-inline-start:4px; vertical-align:middle; }
+.sess-sub{ font-size:.58rem; color:#9ca3af; margin-top:2px; }
+.sess-x{ flex:0 0 34px; height:34px; border-radius:50%; border:1.5px solid rgba(248,113,113,.4); background:rgba(248,113,113,.08); color:#fca5a5; font-size:.75rem; cursor:pointer; }
+.sess-x:active{ transform:scale(.9); }
+.sess-acc{ margin-bottom:8px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); padding:4px 10px 8px; }
+.sess-acc > summary{ display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer; list-style:none; }
+.sess-acc > summary::-webkit-details-marker{ display:none; }
+.sess-acc[data-empty] > summary{ opacity:.6; }
+.sess-count{ margin-inline-start:auto; font-size:.6rem; font-weight:800; color:var(--primary); }
+
+/* Magazine comments */
+.mag-comments{ border-bottom:none; }
+.mag-c-list{ display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+.mag-c-empty{ text-align:center; color:#9ca3af; font-size:.74rem; padding:14px 6px; }
+.mag-thread{ border-radius:18px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); padding:10px; }
+.mag-c{ display:flex; gap:10px; align-items:flex-start; }
+.mag-c-av{ width:34px; height:34px; border-radius:50%; object-fit:cover; flex:0 0 34px; background:rgba(255,255,255,.08); }
+.mag-c-main{ flex:1; min-width:0; }
+.mag-c-head{ display:flex; align-items:baseline; gap:8px; }
+.mag-c-head b{ font-size:.78rem; color:var(--header-text); }
+.mag-c.mine .mag-c-head b{ color:var(--primary); }
+.mag-c-head span{ font-size:.58rem; color:#9ca3af; }
+.mag-c-text{ font-size:.82rem; line-height:1.8; color:#e5e7eb; margin-top:2px; word-break:break-word; }
+.mag-c-gif{ display:block; max-width:min(240px,100%); max-height:220px; border-radius:14px; margin-top:6px; background:rgba(255,255,255,.05); }
+.mag-c-acts{ display:flex; gap:14px; margin-top:4px; }
+.mag-c-acts button{ background:none; border:none; font-size:.62rem; font-weight:700; color:#9ca3af; cursor:pointer; padding:2px 0; }
+.mag-c-acts button:active{ color:var(--primary); }
+.mag-c-acts button.del:active{ color:#f87171; }
+.mag-c.deleted .mag-c-body{ font-size:.7rem; color:#6b7280; padding:4px 0; }
+.mag-replies{ margin-top:10px; margin-inline-start:22px; padding-inline-start:10px; border-inline-start:2px solid color-mix(in srgb,var(--primary) 45%,transparent); display:flex; flex-direction:column; gap:10px; }
+.mag-c.reply .mag-c-av{ width:28px; height:28px; flex-basis:28px; }
+.mag-c-composer{ position:relative; border-radius:20px; background:rgba(10,18,30,.65); border:1px solid rgba(255,255,255,.1); padding:8px; }
+.mag-c-chip{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:.68rem; color:#c4b5fd; padding:4px 10px 8px; }
+.mag-c-chip button{ background:none; border:none; color:#9ca3af; font-size:.8rem; cursor:pointer; }
+.mag-c-gifchip{ justify-content:flex-start; }
+.mag-c-gifchip img{ max-height:90px; border-radius:10px; }
+.mag-c-row{ display:flex; align-items:flex-end; gap:8px; }
+#mag-c-input{ flex:1; resize:none; min-height:40px; max-height:120px; border-radius:20px; padding:10px 14px; font-size:.82rem; line-height:1.6; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); color:#f3f4f6; font-family:inherit; outline:none; }
+.mag-c-gifbtn{ flex:0 0 auto; height:40px; padding:0 12px; border-radius:20px; font-size:.7rem; font-weight:900; letter-spacing:.5px; border:1.5px solid rgba(255,255,255,.22); background:rgba(255,255,255,.06); color:#e5e7eb; cursor:pointer; }
+.mag-c-send{ flex:0 0 40px; height:40px; border-radius:50%; border:none; background:var(--primary); color:#fff; font-size:.85rem; cursor:pointer; }
+.mag-c-send i{ transform:scaleX(-1); }
+.mag-c-send:disabled{ opacity:.5; }
+.mag-gif-picker{ margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.08); }
+.mag-gif-picker input.glass-input{ width:100%; padding:9px 12px; border-radius:14px; font-size:.75rem; }
+.mag-gif-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; max-height:230px; overflow-y:auto; margin:8px 0; }
+.mag-gif-grid img{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; cursor:pointer; background:rgba(255,255,255,.05); }
+.mag-gif-grid .mag-c-empty{ grid-column:1/-1; }
+.mag-gif-tools{ display:flex; flex-direction:column; gap:8px; }
+.mag-gif-upload{ display:flex; align-items:center; justify-content:center; gap:8px; padding:9px; border-radius:14px; border:1px dashed rgba(255,255,255,.25); font-size:.72rem; color:#d1d5db; cursor:pointer; }
+.mag-gif-link{ display:flex; gap:6px; } .mag-gif-link input{ flex:1; } .mag-gif-link button{ padding:0 14px; border-radius:14px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:#e5e7eb; font-size:.7rem; font-weight:700; cursor:pointer; }
+
+/* Notifications sheet */
+.notif-master{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 14px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }
+.notif-master.on{ border-color:color-mix(in srgb,var(--primary) 55%,transparent); background:color-mix(in srgb,var(--primary) 9%,transparent); }
+.notif-master-text{ display:flex; flex-direction:column; gap:2px; } .notif-master-text b{ font-size:.82rem; color:#f3f4f6; } .notif-master-text span{ font-size:.62rem; color:#9ca3af; }
+.notif-note{ display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:16px; font-size:.68rem; line-height:1.6; color:#e5e7eb; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }
+.notif-note.warn{ border-color:rgba(251,191,36,.4); background:rgba(251,191,36,.08); color:#fde68a; }
+.notif-rows{ display:flex; flex-direction:column; gap:8px; }
+.notif-row{ display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+.notif-ico{ flex:0 0 36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.07); color:var(--primary); }
+.notif-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; } .notif-info b{ font-size:.76rem; color:#f3f4f6; } .notif-info span{ font-size:.58rem; color:#9ca3af; line-height:1.5; }
+
+/* comment GIF upload */
+.mag-gif-note{ font-size:.62rem; color:#9ca3af; text-align:center; line-height:1.7; margin:8px 4px 0; }
+.mag-gif-status{ display:flex; flex-direction:column; gap:6px; margin-top:10px; font-size:.68rem; color:#d1d5db; text-align:center; }
+.mag-gif-bar{ height:6px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; }
+.mag-gif-bar span{ display:block; height:100%; width:0; background:var(--primary); border-radius:99px; transition:width .2s; }
