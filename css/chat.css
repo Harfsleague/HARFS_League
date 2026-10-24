@@ -141,7 +141,7 @@
 .chat-jump b:empty{ display:none; }
 
 /* ---------- composer ---------- */
-.chat-compose{ flex-shrink:0; border-top:1px solid rgba(255,255,255,.06); padding:8px 10px calc(10px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:6px; background:rgba(11,18,32,.55); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+.chat-compose{ flex-shrink:0; border-top:1px solid rgba(255,255,255,.06); padding:8px 10px calc(10px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:6px; background:rgba(11,18,32,.55); }
 .chat-row{ display:flex; align-items:flex-end; gap:7px; }
 .chat-row[hidden], .chat-rec[hidden], .chat-chip[hidden], .chat-progress[hidden], .chat-emoji[hidden], .chat-searchbar[hidden]{ display:none; }
 .chat-field{ flex:1; display:flex; align-items:flex-end; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); border-radius:22px; padding-inline-end:4px; min-width:0; transition:border-color .15s; }
@@ -207,8 +207,7 @@ body.game-fs #bottom-navigation, body.game-fs #hero-logo-container, body.game-fs
 .game-fab{ position:absolute; z-index:5; top:calc(env(safe-area-inset-top,0px) + 8px); left:calc(env(safe-area-inset-left,0px) + 8px); display:flex; align-items:center; gap:8px; }
 .game-fab-btn{
     width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(15,23,42,.62); color:#fff;
-    display:flex; align-items:center; justify-content:center; font-size:.9rem; cursor:pointer; text-decoration:none;
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); opacity:.55; transition:opacity .2s;
+    display:flex; align-items:center; justify-content:center; font-size:.9rem; cursor:pointer; text-decoration:none; opacity:.55; transition:opacity .2s;
 }
 .game-fab-btn:active, .game-fab.open .game-fab-btn{ opacity:1; }
 .game-fab-menu{ display:none; gap:8px; }

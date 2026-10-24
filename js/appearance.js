@@ -130,9 +130,8 @@ let currentPalette = localStorage.getItem('palette') || 'ocean';
 // move together:
 //   Background Effects -> orbs + sheen  (ambient decoration)
 //   Motion             -> anim             (screen transitions)
-//   Glass              -> blur + shadows   (frosted glass look)
-// on, and the app tunes its own cost automatically (see js/glass-fx.js). Only the
-// Lite preset turns it off.
+// There is no glass effect any more; blur/shadows stay in the keys only so the Lite
+// preset can still switch every shadow off.
 // ------------------------------------------------------------
 const PERF_KEYS = ['orbs','blur','shadows','sheen','anim'];
 const PERF_ALL_ON  = { orbs:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
@@ -140,7 +139,6 @@ const PERF_ALL_OFF = { orbs:false, blur:false, shadows:false, sheen:false, anim:
 const PERF_GROUPS = {
     background: ['orbs','sheen'],
     motion:     ['anim'],
-    glass:      ['blur','shadows'],
 };
 let performancePreset = localStorage.getItem('performancePreset')
     || (localStorage.getItem('performance')==='lite' || localStorage.getItem('lite')==='on' ? 'lite' : 'custom'); // migrates the old binary flag
@@ -165,11 +163,8 @@ let perfCustom = (()=>{
                 const val = merged[members[0]];
                 members.forEach(k=>merged[k]=val);
             });
-          if(!localStorage.getItem('glassToggleV1')){
-    merged.blur = true; merged.shadows = true;
-    localStorage.setItem('glassToggleV1','1');
-    localStorage.setItem('perfCustom', JSON.stringify(merged));
-}
+            // The Glass switch is gone: Custom always keeps normal shadows (older saves may have had them off).
+            merged.blur = true; merged.shadows = true;
             return merged;
         }
     }catch(e){}
@@ -192,7 +187,7 @@ function applyAppearance(){
         document.body.setAttribute('data-palette', currentPalette);
     }
     const p = currentPerfValues();
-    document.body.classList.toggle('lite-mode', PERF_KEYS.every(k=>!p[k])); // convenience alias when everything's off
+    document.body.classList.toggle('lite-mode', ['orbs','sheen','anim'].every(k=>!p[k])); // alias when every effect is off
     document.body.classList.toggle('perf-no-orbs', !p.orbs);
     document.body.classList.toggle('perf-no-blur', !p.blur);
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
@@ -251,7 +246,7 @@ function closeAppearanceSheet(){
 function setPerformance(val){
     haptic([6]);
     if(val==='custom' && performancePreset!=='custom'){
-        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active (Glass is always on in Custom)
+        perfCustom = {...currentPerfValues()}; // seed custom from whatever was active (blur/shadows are always on in Custom)
         localStorage.setItem('perfCustom', JSON.stringify(perfCustom));
     }
     performancePreset = val;

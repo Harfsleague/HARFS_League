@@ -70,7 +70,7 @@ function buildSeasonHistoryChips(){
 }
 function filterSeasonHistory(filter,chip){
     haptic([6]);currentFilter=filter;
-    const prevHidden=window.GlassFX?GlassFX.historyFiltering():new Set();
+    const prevHidden=window.HistoryFX?HistoryFX.historyFiltering():new Set();
     document.querySelectorAll('#season-history-filter-bar .chip').forEach(c=>c.classList.remove('active'));
     chip.classList.add('active');
     document.querySelectorAll('#season-history-list .match-card-mini').forEach(card=>{
@@ -79,8 +79,8 @@ function filterSeasonHistory(filter,chip){
     });
     updateHistoryLayout(filter);
     updateHistoryDots(filter);
-    // dynamic background: aurora + summary follow the selected team (js/glass-fx.js)
-    if(window.GlassFX)GlassFX.historyFiltered(prevHidden,filter);
+    // dynamic background: aurora + summary follow the selected team (js/match-history-fx.js)
+    if(window.HistoryFX)HistoryFX.historyFiltered(prevHidden,filter);
 }
 
 // Puts the SELECTED team on the left of every match card (this format has no
@@ -130,7 +130,7 @@ function updateHistoryDots(filter){
 
 function renderSeasonHistoryList(history){
     history=history||[];
-    // Same data as what is already drawn → keep the DOM (rebuilding it + GlassFX re-sampling is what made page switches stutter)
+    // Same data as what is already drawn → keep the DOM (rebuilding it + HistoryFX re-sampling is what made page switches stutter)
     const sigList=document.getElementById('season-history-list');
     const sig=history.map(m=>`${m.timestamp}|${m.score}|${m.home}|${m.away}|${m.cards?JSON.stringify(m.cards):''}`).join(';')+'#'+TEAM_NAMES.map(t=>teamShort(t)).join(',');
     if(sigList && sigList.__sig===sig && sigList.children.length) return;
@@ -167,7 +167,7 @@ function renderSeasonHistoryList(history){
     }).join('');
     // card pictures need the deck: load it once, then draw the list again
     if(history.some(m=>m && m.cards) && typeof cardsEnsureLoaded==='function') cardsEnsureLoaded(()=>renderSeasonHistoryList(history));
-    if(window.GlassFX)GlassFX.historyRendered();
+    if(window.HistoryFX)HistoryFX.historyRendered();
 }
 
 // ============================================================

@@ -133,14 +133,13 @@ body.perf-no-anim .season-title,
 body.perf-no-anim #league-table-screen .league-header.hdr-anim{ transition:none !important; animation:none !important; }
 
 /* League | Cup bar — built to look exactly like the bottom nav (same glass, rim, sheen, lens, refraction:
-   see the .season-subnav entries in css/liquid-glass.css). It sits in its own row ABOVE the bottom
+   see css/effects.css). It sits in its own row ABOVE the bottom
    nav with a clear gap, and starts tucked BEHIND it (z-index 99 < 100), sliding up out of it. */
 .season-subnav{
     position:absolute; bottom:82px; left:50%;
     width:auto;                                   /* compact capsule: as wide as its two options */
     display:flex; justify-content:center; align-items:center; gap:2px; padding:4px 5px;
     background:rgba(10,18,30,0.75);
-    backdrop-filter:blur(28px) saturate(200%); -webkit-backdrop-filter:blur(28px) saturate(200%);
     border-radius:9999px; z-index:99;
     border:1px solid rgba(255,255,255,0.09);
     box-shadow:0 8px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);
@@ -278,7 +277,7 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
    ===================================================== */
 .admin-tabs{ position:sticky; top:0; z-index:6; display:flex; gap:6px; overflow-x:auto; padding:8px 2px 10px; margin:0 0 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .admin-tabs::-webkit-scrollbar{ display:none; }
-.admin-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; font-size:.7rem; font-weight:800; color:#cbd5e1; background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.12); cursor:pointer; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+.admin-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; font-size:.7rem; font-weight:800; color:#cbd5e1; background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.12); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .admin-tab i{ font-size:.78rem; opacity:.85; }
 .admin-tab.active{ color:#fff; background:linear-gradient(90deg,rgba(139,92,246,.55),rgba(59,130,246,.5)); border-color:rgba(196,181,253,.6); box-shadow:0 4px 14px rgba(99,102,241,.3); }
 /* the full admin sees ONE area at a time; accounts with only granted tools are handled by .limited-access */
