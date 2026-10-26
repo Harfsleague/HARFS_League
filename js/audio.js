@@ -99,10 +99,13 @@ async function getLastUploadedTrack(){
 // typically numbered, so the last one is usually the newest addition.
 async function ensureOfflineTrackCached(){
     if (!PLAYLIST.length || !navigator.onLine) return;
-    const target = (await getLastUploadedTrack()) || PLAYLIST[PLAYLIST.length-1] || PLAYLIST[0];
-    if (!target) return;
     try{
         const existing = await idbGet('offlineTrack','v');
+        // Fast path: if the cached offline track is still in the current playlist and we already checked commits this session, skip the 2 unauthenticated GitHub /commits API calls.
+        if (existing && existing.blob && existing.blob.size > 0 && PLAYLIST.some(t => t.src === existing.src) && sessionStorage.getItem('harfs_offline_track_checked') === '1') return;
+        const target = (await getLastUploadedTrack()) || PLAYLIST[PLAYLIST.length-1] || PLAYLIST[0];
+        sessionStorage.setItem('harfs_offline_track_checked', '1');
+        if (!target) return;
         if (existing && existing.src === target.src && existing.blob && existing.blob.size > 0) return; // already cached
         const res = await fetch(target.src);
         if (!res.ok) return;

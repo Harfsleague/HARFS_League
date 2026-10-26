@@ -130,8 +130,8 @@ body {
 
 .ambient-orb {
     position: fixed; border-radius:50%;
-    filter: blur(64px); z-index:0; pointer-events:none;
-    animation: floatOrb 14s infinite ease-in-out;
+    filter: none; z-index:0; pointer-events:none;
+    animation: floatOrb 22s infinite ease-in-out;
     transition: background 0.8s ease;
     /* GPU-composited transform, off the main-thread paint path — smoother
        drift with noticeably less jank than the old 90px blur radius. */
@@ -343,44 +343,6 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     transition:width 0.3s ease;
 }
 .nav-item.active::after{width:18px;}
-/* =====================================================
-   MINI PLAYER — slim "now playing" pill docked above the bottom nav.
-   Sits at a fixed offset tuned for the bottom-nav's current height
-   (~12px screen gap + ~54px nav + ~10px breathing room) — if the bottom
-   nav's own padding/font-size ever changes, this offset may need a
-   matching nudge.
-   ===================================================== */
-.mini-player{
-    position:absolute; bottom:78px; left:50%;
-    transform:translateX(-50%); width:90%; max-width:360px;
-    background:rgba(10,18,30,0.8);
-    border-radius:9999px; border:1px solid rgba(255,255,255,0.09);
-    box-shadow:0 6px 24px rgba(0,0,0,0.35);
-    display:flex; align-items:center; gap:4px;
-    padding:6px 6px 6px 10px; z-index:99;
-    opacity:0; transform:translateX(-50%) translateY(8px); pointer-events:none;
-    transition:opacity 0.25s, transform 0.25s;
-}
-.mini-player.visible{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
-body.perf-no-blur .mini-player{ background:rgba(10,18,30,0.96); }
-body.perf-no-anim .mini-player{ transition:none; }
-.mini-player-tap-area{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
-.mini-player-icon{
-    width:26px;height:26px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:0.66rem;
-    background:var(--nav-active-bg); color:var(--primary);
-}
-.mini-player-title{
-    font-size:0.68rem; font-weight:700; color:#e5e7eb;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
-}
-.mini-player-btn{
-    width:30px;height:30px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:0.72rem;
-    background:rgba(255,255,255,0.07); color:#e5e7eb; border:none; cursor:pointer;
-    transition:background 0.15s;
-}
-.mini-player-btn:active{ background:rgba(255,255,255,0.14); transform:scale(0.92); }
 /* Overall / Season / History are disabled while the admin panel (PIN entry
    or dashboard) is open, so the admin can't accidentally navigate away
    mid-task — they must exit intentionally instead. */
@@ -564,19 +526,6 @@ body.perf-no-anim .mini-player{ transition:none; }
 .ranking-card.rank-3::before { background:#d97706; }
 .ranking-card.rank-other::before { background:rgba(255,255,255,0.06); }
 
-/* remaining capsules */
-.team-capsule{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:11px 14px;margin-bottom:10px;border-radius:20px;
-    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
-    position:relative;overflow:hidden;transition:transform 0.2s;
-}
-.team-capsule:active{transform:scale(0.98);}
-.capsule-logo{
-    width:44px;height:44px;border-radius:50%;object-fit:cover;
-    border:2px solid rgba(255,255,255,0.12);margin-right:12px;z-index:2;
-}
-.points-display{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;z-index:2;min-width:48px;}
 
 /* =====================================================
    SEASON TABLE  ← FIXED
@@ -684,7 +633,6 @@ body.perf-no-anim .mini-player{ transition:none; }
     font-size:0.6rem;color:#6b7280;font-family:monospace;
     margin-bottom:6px;
 }
-.mcm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .mcm-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .mcm-team{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
 .mcm-team img{width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08);}
@@ -695,10 +643,6 @@ body.perf-no-anim .mini-player{ transition:none; }
     background:rgba(0,0,0,0.3);border-radius:8px;padding:3px 10px;
     letter-spacing:1.5px;flex-shrink:0;
 }
-.match-badge{padding:3px 8px;border-radius:6px;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
-.badge-win{background:rgba(16,185,129,0.14);color:#34d399;border:1px solid rgba(16,185,129,0.3);}
-.badge-loss{background:rgba(239,68,68,0.14);color:#f87171;border:1px solid rgba(239,68,68,0.3);}
-.badge-draw{background:rgba(156,163,175,0.14);color:#d1d5db;border:1px solid rgba(156,163,175,0.25);}
 
 /* =====================================================
    GLASS CONTROLS
@@ -803,28 +747,8 @@ body.perf-no-anim .mini-player{ transition:none; }
 .stat-card .stat-lbl{font-size:0.6rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
 
 /* =====================================================
-   TEAM PICKER — custom replacement for native <select>
+   BOTTOM SHEETS (.team-picker-sheet / .team-picker-panel)
    ===================================================== */
-.team-picker-trigger{
-    background:rgba(255,255,255,0.07);
-    border:1px solid rgba(255,255,255,0.11);color:white;
-    border-radius:14px;padding:8px 10px;
-    display:flex;align-items:center;gap:8px;
-    cursor:pointer;transition:all 0.2s;flex:1;
-    min-width:0;
-}
-.team-picker-trigger:active{transform:scale(0.97);background:rgba(255,255,255,0.11);}
-.team-picker-trigger.open{border-color:var(--primary);box-shadow:0 0 12px var(--primary-glow);}
-.team-picker-trigger img{
-    width:22px;height:22px;border-radius:50%;object-fit:cover;
-    flex-shrink:0;background:rgba(255,255,255,0.08);
-}
-.team-picker-trigger span{
-    font-size:0.72rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;
-    white-space:nowrap;flex:1;text-align:center;
-}
-.team-picker-trigger i.chevron{font-size:0.6rem;color:#6b7280;flex-shrink:0;transition:transform 0.2s;}
-.team-picker-trigger.open i.chevron{transform:rotate(180deg);color:var(--primary);}
 
 .team-picker-sheet{
     position:fixed;inset:0;z-index:600;
@@ -857,31 +781,6 @@ body.perf-no-anim .mini-player{ transition:none; }
     font-size:0.7rem;font-weight:700;color:#6b7280;text-transform:uppercase;
     letter-spacing:1px;margin-bottom:12px;text-align:center;flex-shrink:0;
 }
-.team-picker-grid{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-    overflow-y:auto;padding-bottom:4px;
-}
-.team-picker-grid::-webkit-scrollbar{display:none;}
-.team-picker-option{
-    display:flex;flex-direction:column;align-items:center;gap:6px;
-    padding:12px 6px;border-radius:16px;cursor:pointer;
-    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
-    transition:all 0.2s;
-}
-.team-picker-option:active{transform:scale(0.94);}
-.team-picker-option.selected{
-    background:var(--nav-active-bg);border-color:var(--nav-active-border);
-}
-.team-picker-option img{
-    width:42px;height:42px;border-radius:50%;object-fit:cover;
-    background:rgba(255,255,255,0.08);
-}
-.team-picker-option span{
-    font-size:0.65rem;font-weight:700;text-align:center;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
-}
-.team-picker-option.selected span{color:var(--nav-active-color);}
-.team-picker-option.disabled{opacity:0.32;pointer-events:none;}
 
 /* =====================================================
    TOAST COLORS — the icon bubble / label coloring per notification
@@ -935,47 +834,6 @@ body.perf-no-anim .mini-player{ transition:none; }
 .admin-section-bar{height:3px;width:100%;}
 .admin-section-body{padding:14px;}
 .admin-section h3{font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;}
-/* =====================================================
-   CUP TOURNAMENT — bracket + history (js/mba.js)
-   ===================================================== */
-.mba-edition-label{
-    font-size:0.6rem; font-weight:800; color:#fbbf24; text-transform:uppercase;
-    letter-spacing:1px; text-align:center; margin-bottom:10px;
-}
-.mba-bracket-match{
-    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
-    border-radius:14px; padding:10px 12px; margin-bottom:10px;
-}
-.mba-match-label{ font-size:0.6rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
-.mba-pending-note{ font-size:0.66rem; color:#4b5563; text-align:center; padding:6px 0; }
-.mba-team-row{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    padding:8px 10px; border-radius:10px; margin-bottom:4px;
-    background:rgba(255,255,255,0.02); transition:background 0.15s;
-}
-.mba-team-row:last-child{ margin-bottom:0; }
-.mba-team-row.winner{ background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.25); }
-.mba-team-row[onclick]:active{ background:rgba(255,255,255,0.08); transform:scale(0.98); }
-.mba-team-label{ font-size:0.74rem; font-weight:700; color:#e5e7eb; display:flex; align-items:center; }
-.mba-leg-dots{ display:flex; gap:5px; }
-.mba-leg-dot{ width:9px;height:9px;border-radius:50%; background:rgba(255,255,255,0.12); }
-.mba-leg-dot.filled{ background:#fbbf24; }
-.mba-undo-btn{
-    width:100%; margin-top:8px; background:none; border:1px dashed rgba(255,255,255,0.14);
-    color:#6b7280; font-size:0.62rem; font-weight:700; padding:6px; border-radius:10px; cursor:pointer;
-}
-.mba-undo-btn:active{ background:rgba(255,255,255,0.05); }
-.mba-cancel-btn{
-    width:100%; margin-top:4px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2);
-    color:#f87171; font-size:0.64rem; font-weight:700; padding:9px; border-radius:12px; cursor:pointer;
-}
-.mba-cancel-btn:active{ transform:scale(0.98); }
-.mba-history-card{
-    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
-    border-radius:14px; padding:10px 12px; margin-bottom:8px;
-}
-.mba-history-header{ display:flex; justify-content:space-between; font-size:0.68rem; font-weight:800; color:#e5e7eb; margin-bottom:8px; }
-.mba-history-podium{ display:flex; flex-direction:column; gap:5px; font-size:0.7rem; color:#cbd5e1; }
 #match-preview{
     background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);
     border-radius:14px;padding:10px 14px;margin-top:12px;
@@ -1274,7 +1132,6 @@ body.perf-no-anim .mini-player{ transition:none; }
     position: fixed;
     overflow: hidden;
 }
-body:not(.lite-mode) .settings-panel,
 body:not(.lite-mode) .season-history-card{
     position:relative;
     overflow:hidden;
@@ -1318,7 +1175,6 @@ body.lite-mode .match-card-mini,
 body.lite-mode .weird-card,
 body.lite-mode .admin-section,
 body.lite-mode .modal-content,
-body.lite-mode .settings-panel,
 body.lite-mode .appearance-panel,
 body.lite-mode .ai-panel,
 body.lite-mode .glass-button,
@@ -1367,7 +1223,6 @@ body.perf-no-blur .match-card-mini,
 body.perf-no-blur .weird-card,
 body.perf-no-blur .admin-section,
 body.perf-no-blur .modal-content,
-body.perf-no-blur .settings-panel,
 body.perf-no-blur .appearance-panel,
 body.perf-no-blur .ai-panel,
 body.perf-no-blur .glass-button,
@@ -1441,53 +1296,12 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 .perf-toggle.on{ background:var(--primary); border-color:var(--primary); }
 .perf-toggle.on::after{ transform:translateX(18px); }
 
-/* =====================================================
-   SETTINGS PANEL — small, square, centered, no explanations
-   ===================================================== */
-.settings-panel{
-    width:min(76vw,270px);
-    aspect-ratio:1/1;
-    max-height:88vh;
-    overflow:hidden;
-    background:linear-gradient(160deg,rgba(10,18,30,0.99),rgba(15,23,42,0.99));
-    border:1px solid rgba(255,255,255,0.09);
-    border-top:1px solid rgba(255,255,255,0.18);
-    border-radius:28px;
-    box-shadow:0 24px 60px rgba(0,0,0,0.6);
-    padding:14px;
-    display:flex; flex-direction:column;
-    transform:scale(0.92) translateY(20px);
-    transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
-.modal-overlay.open .settings-panel{ transform:scale(1) translateY(0); }
-.settings-panel-header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:2px 4px 10px; flex-shrink:0;
-}
-.settings-panel-header span{ font-size:0.72rem; font-weight:800; letter-spacing:1.5px; color:#9ca3af; text-transform:uppercase; }
 .settings-close-btn{
     width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;
     background:rgba(255,255,255,0.08); color:#e5e7eb; display:flex;align-items:center;justify-content:center;
     font-size:0.72rem;
 }
 .settings-close-btn:active{ transform:scale(0.9); }
-.settings-grid{
-    flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px; min-height:0;
-}
-.settings-tile{
-    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
-    border-radius:16px; color:#fff; cursor:pointer;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
-    transition:all 0.15s; padding:6px;
-}
-.settings-tile:active{ transform:scale(0.94); background:rgba(255,255,255,0.1); }
-.settings-tile.active{
-    background:var(--nav-active-bg); border-color:var(--nav-active-border); color:var(--nav-active-color);
-    box-shadow:0 0 14px var(--primary-glow);
-}
-.settings-tile i{ font-size:1.15rem; }
-.settings-tile span{ font-size:0.62rem; font-weight:700; letter-spacing:0.3px; text-align:center; }
-.settings-tile.wide{ grid-column:1/-1; }
 
 /* =====================================================
    SETTINGS SCREEN — full page (promoted from the old small
@@ -1580,15 +1394,6 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 .login-team-card img{ width:44px;height:44px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.08); }
 .login-team-card span{ font-size:0.7rem; font-weight:800; }
 .login-back-btn{ font-size:0.68rem; color:#6b7280; text-align:center; margin-top:14px; cursor:pointer; }
-.login-divider{ display:flex; align-items:center; gap:10px; margin:16px 0 12px; color:#6b7280; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
-.login-divider::before,.login-divider::after{ content:''; flex:1; height:1px; background:rgba(255,255,255,0.1); }
-.login-guest-btn{
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    background:transparent; border:1px solid rgba(255,255,255,0.14); color:#d1d5db;
-    padding:12px 20px; border-radius:16px; font-weight:700; font-size:0.78rem;
-    cursor:pointer; transition:all 0.2s;
-}
-.login-guest-btn:active{ transform:scale(0.96); background:rgba(255,255,255,0.08); }
 #login-screen-close-btn{
     position:absolute; top:14px; right:14px; width:30px; height:30px; border-radius:50%;
     align-items:center; justify-content:center; color:#9ca3af; font-size:0.85rem;
@@ -1809,25 +1614,6 @@ body.lite-mode .back-to-top-fab,
 body.perf-no-blur .back-to-top-fab,
 body.perf-no-shadow .back-to-top-fab{ box-shadow:none; }
 
-/* AI entry capsule — sits below the last row of the Overall table */
-.ai-entry-capsule{
-    width:100%; display:flex; align-items:center; justify-content:center; gap:12px;
-    margin-top:14px; padding:14px 16px; border-radius:20px;
-    background:linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.12));
-    border:1px solid rgba(255,255,255,0.12);
-    cursor:pointer; transition:transform 0.15s ease; text-align:center;
-}
-.ai-entry-capsule:active{ transform:scale(0.97); }
-.ai-entry-icon{
-    width:38px;height:38px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(135deg, var(--primary), var(--accent));
-    color:#0b1220; box-shadow:0 4px 14px var(--primary-glow);
-}
-.ai-entry-text{ flex:0 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; text-align:center; align-items:center; }
-.ai-entry-title{ font-size:0.8rem; font-weight:800; color:#fff; }
-.ai-entry-sub{ font-size:0.64rem; color:#6b7280; }
-.ai-entry-chevron{ display:none; }
 
 
 /* =====================================================
@@ -2030,12 +1816,6 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 /* ============================================================
    Weekly Magazine styles — append to css/styles.css
    ============================================================ */
-.magazine-entry-capsule{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(96,165,250,0.08));border:1px solid rgba(251,191,36,0.25);border-radius:16px;padding:14px 16px;margin-top:14px;cursor:pointer;color:inherit;}
-.magazine-entry-icon{font-size:1.3rem;color:#fbbf24;}
-.magazine-entry-text{display:flex;flex-direction:column;text-align:center;align-items:center;flex:0 1 auto;}
-.magazine-entry-title{font-weight:800;font-size:0.85rem;}
-.magazine-entry-sub{font-size:0.68rem;color:#9ca3af;margin-top:2px;}
-.magazine-entry-chevron{display:none;}
 
 /* Persian text mixed with Latin team names needs an explicit RTL base
    direction, or the bidi algorithm scrambles word/number order. */
@@ -2185,18 +1965,6 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
    SYMBOLIC TEAM (Purple) — Overall list only. Purple flower badge instead of a
    rank number, one purple medal instead of gold/silver/bronze.
    ===================================================== */
-.ranking-card.rank-purple{
-    background:linear-gradient(90deg,rgba(168,85,247,0.10),rgba(168,85,247,0.02) 60%);
-    border-color:rgba(168,85,247,0.22);
-}
-.ranking-card.rank-purple::before{ background:#a855f7; }
-.ranking-card.rank-purple .ranking-badge{
-    background:linear-gradient(135deg,rgba(168,85,247,0.24),rgba(168,85,247,0.07));
-    border:1px solid rgba(168,85,247,0.45);
-    box-shadow:0 2px 12px rgba(168,85,247,0.18);
-}
-.ranking-card.rank-purple .ranking-avatar{ border:2px solid rgba(168,85,247,0.50); box-shadow:0 0 12px rgba(168,85,247,0.25); }
-.ranking-card.rank-purple .ranking-name{ color:#f3e8ff; }
 .ranking-trophy-item.ps-medal{ justify-content:center; filter:drop-shadow(0 0 6px rgba(168,85,247,0.45)); }
 .trophy-cabinet-item .ps-medal-big svg{ width:44px; height:44px; filter:drop-shadow(0 0 8px rgba(168,85,247,0.5)); }
 
@@ -2290,8 +2058,6 @@ body.fx-paused .mp-art.playing::after,body.fx-paused .mp-art.playing .mp-eq b{ a
 @media (prefers-reduced-motion:reduce){ .mp-art.playing::after,.mp-art.playing .mp-eq b,.mp-title.scroll span{ animation:none; } }
 body.lite-mode .mp-art.playing::after,body.lite-mode .mp-art.playing .mp-eq b{ animation:none; }
 
-/* HARFS Assistant switched off in Settings */
-body.ai-disabled .ai-entry-capsule{ display:none !important; }
 
 
 /* =====================================================
@@ -2307,7 +2073,6 @@ body.ai-disabled .ai-entry-capsule{ display:none !important; }
 #league-table-screen, .match-card-mini{ max-width:100%; }
 .chip{ max-width:42vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ranking-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.team-picker-option span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
 
 /* ---- Music player: the VOLUME bar must not look like the seek bar ----
    Seek   = thick, theme colour, round thumb.
@@ -2362,27 +2127,6 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 .login-panel::-webkit-scrollbar{ display:none; }
 .login-group-label{ grid-column:1 / -1; margin:8px 0 0; text-align:center; font-size:0.6rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#6b7280; }
 
-/* ---- People card on Overall (right under the last team) ---- */
-.people-card{ position:relative; display:flex; align-items:center; justify-content:center; gap:12px; margin-top:4px; padding:12px 14px; border-radius:20px; cursor:pointer; overflow:hidden;
-    background:linear-gradient(120deg,rgba(168,85,247,.24),rgba(251,191,36,.16) 55%,rgba(168,85,247,.10));
-    border:1px dashed rgba(251,191,36,.55); box-shadow:0 0 22px rgba(168,85,247,.18);
-    animation:rankCardIn .45s cubic-bezier(.34,1.56,.64,1) both; transition:transform .15s; }
-.people-card:active{ transform:scale(0.97); }
-.people-card-stack{ display:flex; flex-shrink:0; padding-inline-start:10px; }
-.people-card-stack img{ width:32px; height:32px; border-radius:50%; object-fit:cover; margin-inline-start:-10px; border:2px solid #1a1740; background:#0f172a; }
-.people-card-text{ flex:0 1 auto; min-width:0; text-align:center; }
-.people-card-title{ font-size:0.9rem; font-weight:900; letter-spacing:.3px; background:linear-gradient(90deg,#fde68a,#fbbf24,#e9d5ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.people-card-title i{ -webkit-text-fill-color:#fbbf24; font-size:.8rem; margin-inline-end:4px; }
-.people-card-sub{ font-size:0.64rem; color:#c4b5fd; margin-top:2px; }
-.people-card-chevron{ display:none; }
-
-/* ---- People panel (sheet) ---- */
-html body .team-picker-panel.people-panel{ border-top:2px solid rgba(251,191,36,.55);
-    background-image:radial-gradient(120% 55% at 50% 0%,rgba(168,85,247,.28),rgba(0,0,0,0) 70%),linear-gradient(160deg,rgba(10,18,30,.99),rgba(15,23,42,.99)) !important; }
-.people-panel-head{ text-align:center; margin:0 0 14px; flex-shrink:0; }
-.people-panel-crown{ width:42px; height:42px; margin:0 auto 8px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#fbbf24,#a855f7); color:#0b1220; box-shadow:0 0 22px rgba(251,191,36,.45); }
-.people-panel-title{ font-size:1rem; font-weight:900; letter-spacing:1px; background:linear-gradient(90deg,#fde68a,#fbbf24,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.people-panel-sub{ font-size:0.62rem; color:#9ca3af; margin-top:2px; letter-spacing:.5px; }
 .people-row{ animation:rankCardIn .4s ease both; }
 .people-row-hero{ padding:16px; background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(251,191,36,.03)); border-color:rgba(251,191,36,.4); }
 .people-row-hero .people-avatar{ width:60px; height:60px; box-shadow:0 0 16px rgba(251,191,36,.4); }

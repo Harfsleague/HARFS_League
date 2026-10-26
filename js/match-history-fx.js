@@ -24,10 +24,17 @@
     }, {capture:true, passive:true});                     // scroll doesn't bubble
     doc.addEventListener('visibilitychange', setPaused);
     const OPEN_SEL='.modal-overlay.open,.team-picker-sheet.open,#login-screen.open,.magazine-issue-picker.open';
-    new MutationObserver(()=>{
+    const sheetObs = new MutationObserver(()=>{
         const now=!!doc.querySelector(OPEN_SEL);
         if(now!==sheetOpen){ sheetOpen=now; setPaused(); }
-    }).observe(body,{subtree:true,attributes:true,attributeFilter:['class']});
+    });
+    const bindSheetObserver = ()=>{
+        doc.querySelectorAll('.modal-overlay,.team-picker-sheet,#login-screen,.magazine-issue-picker').forEach(el=>{
+            sheetObs.observe(el,{attributes:true,attributeFilter:['class']});
+        });
+    };
+    if(doc.readyState==='loading') doc.addEventListener('DOMContentLoaded', bindSheetObserver, {once:true});
+    else bindSheetObserver();
 
     // ---------------------------------------------------------
     // 2. MATCH HISTORY

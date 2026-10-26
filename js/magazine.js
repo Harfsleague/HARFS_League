@@ -43,9 +43,21 @@ function closeMagazinePanel() {
 async function loadMagazine() {
     const body = document.getElementById('magazine-body');
     const loading = document.getElementById('magazine-loading');
-    if (loading) loading.style.display = 'flex';
-    if (body) body.innerHTML = '';
-
+    const cached = await idbGet('magazineArchive', 'v');
+    if (cached && Array.isArray(cached) && cached.length && !magazineLoaded) {
+        magazineArchive = cached;
+        magazineLoaded = true;
+        magazineIssueIdx = 0;
+        renderCurrentIssue();
+    } else {
+        if (loading) loading.style.display = 'flex';
+        if (body) body.innerHTML = '';
+    }
+    if (!navigator.onLine) {
+        if (loading) loading.style.display = 'none';
+        if (!magazineArchive.length) renderMagazineEmpty();
+        return;
+    }
     try {
         const res = await fetch(`${GITHUB_IMAGE_BASE_URL}${GITHUB_MAGAZINE_FILE}?cachebust=${Date.now()}`);
         if (!res.ok) throw new Error('not found');
@@ -53,11 +65,14 @@ async function loadMagazine() {
         magazineArchive = Array.isArray(data) ? data : (data ? [data] : []); // tolerate an old single-issue file
         magazineArchive.sort((a, b) => (b.issueNumber || 0) - (a.issueNumber || 0));
         magazineLoaded = true;
-        magazineIssueIdx = 0;
+        if (magazineIssueIdx >= magazineArchive.length) magazineIssueIdx = 0;
+        idbSet('magazineArchive', 'v', magazineArchive);
         renderCurrentIssue();
     } catch (e) {
-        magazineArchive = [];
-        renderMagazineEmpty();
+        if (!magazineArchive.length) {
+            magazineArchive = [];
+            renderMagazineEmpty();
+        }
     } finally {
         if (loading) loading.style.display = 'none';
     }
@@ -562,7 +577,8 @@ async function saveMagazineEdit() {
 async function deleteMagazineIssue(idx) {
     const issue = magazineArchive[idx];
     if (!issue) return;
-    if (!confirm(`شمارهٔ ${issue.issueNumber} حذف شود؟ این کار قابل بازگشت نیست.`)) return;
+    const ok = await showConfirm({ icon:'🗑️', title:`حذف شمارهٔ ${issue.issueNumber}؟`, message:'این شماره برای همیشه از آرشیو مجله حذف می‌شود و قابل بازگشت نیست.', okLabel:'حذف', okColor:'red' });
+    if (!ok) return;
     await ensureMagazineArchiveSha();
     const prevArchive = magazineArchive.slice();
     const updated = magazineArchive.filter((_, i) => i !== idx);

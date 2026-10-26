@@ -11,7 +11,7 @@ const J_MONTHS_EN=["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar
 function toEnglishDigits(s){if(!s)return s;return s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
 
 // Shown (tiny) under "Log Out" in Settings. Keep it equal to the number in CACHE_VERSION (harfs-shell-vNN) in sw.js — bump both on every update.
-const APP_VERSION="v59";
+const APP_VERSION="v60";
 const GITHUB_REPO="Harfsleague/HARFS_Data";
 const GITHUB_LEAGUE_BRANCH="main";
 const GITHUB_LEAGUE_FILE="league_data.json";
@@ -53,17 +53,44 @@ const SYMBOLIC_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg 
 const PERSON_DEFAULT_LOGO='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#4338ca"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#g)"/><g fill="#fff" fill-opacity=".92"><circle cx="48" cy="37" r="15"/><path d="M19 83c3-17 15-26 29-26s26 9 29 26a48 48 0 0 1-58 0z"/></g></svg>');
 function symbolicDefaultLogo(t){return t==='Purple'?SYMBOLIC_DEFAULT_LOGO:PERSON_DEFAULT_LOGO;}
 const BASE_API=`https://api.github.com/repos/${GITHUB_REPO}/contents/`;
-// ONE place that reads a JSON file of the data repo: the contents API (gives the file's `sha`, needed for saving) and
-// then its download_url (the content). Same two requests, in the same order, as the loaders used to do by hand — js/sessions.js
-// (Worker proxy) and js/offline-gh.js (offline answers) both recognise exactly these URLs.
-//   bust    -> add &_t=<now> to the contents call     rawBust -> add ?t=<now> to the download call
-// Returns { ok, status, sha, data }. ok=false (status e.g. 404) when the contents call failed. Network / JSON errors are thrown.
-async function ghFetchJson(file,{bust=false,rawBust=false}={}){
-    const r=await fetch(`${BASE_API}${file}?ref=${GITHUB_LEAGUE_BRANCH}${bust?`&_t=${Date.now()}`:''}`);
-    if(!r.ok) return {ok:false,status:r.status,sha:null,data:null};
-    const d=await r.json();
-    const data=await(await fetch(rawBust?d.download_url+'?t='+Date.now():d.download_url)).json();
-    return {ok:true,status:r.status,sha:d.sha,data};
+// ONE place that reads a JSON file of the data repo:
+//   1) Uses the base64 `d.content` already included in GitHub's Contents API response (for files < 1 MB),
+//      eliminating the redundant second HTTP round-trip to `d.download_url` (falls back to `d.download_url` only when `d.content` is absent).
+//   2) Deduplicates concurrent in-flight requests for the same file and supports a short in-memory freshness cache (`maxAgeMs`, invalidated on writes).
+const _ghJsonCache = new Map();     // file -> { ts, res }
+const _ghJsonInFlight = new Map();  // file -> Promise
+function ghCacheInvalidate(file){
+    if(file) _ghJsonCache.delete(file);
+    else _ghJsonCache.clear();
+}
+async function ghFetchJson(file,{bust=false,rawBust=false,maxAgeMs=0}={}){
+    const force = bust || rawBust;
+    if(!force && maxAgeMs > 0){
+        const hit = _ghJsonCache.get(file);
+        if(hit && (Date.now() - hit.ts) < maxAgeMs){
+            return { ok:true, status:hit.res.status, sha:hit.res.sha, data:JSON.parse(JSON.stringify(hit.res.data)) };
+        }
+    }
+    if(!force && _ghJsonInFlight.has(file)) return _ghJsonInFlight.get(file);
+    const p = (async()=>{
+        const r=await fetch(`${BASE_API}${file}?ref=${GITHUB_LEAGUE_BRANCH}${bust?`&_t=${Date.now()}`:''}`);
+        if(!r.ok) return {ok:false,status:r.status,sha:null,data:null};
+        const d=await r.json();
+        let data;
+        if(d && d.content && d.encoding==='base64'){
+            data=JSON.parse(b64Decode(d.content));
+        } else {
+            data=await(await fetch(rawBust?d.download_url+'?t='+Date.now():d.download_url)).json();
+        }
+        const out={ok:true,status:r.status,sha:d.sha,data};
+        _ghJsonCache.set(file,{ts:Date.now(),res:out});
+        return out;
+    })();
+    if(!force){
+        _ghJsonInFlight.set(file, p);
+        p.finally(()=>_ghJsonInFlight.delete(file)).catch(()=>{});
+    }
+    return p;
 }
 
 // ============================================================
@@ -184,4 +211,43 @@ function repairMojibake(v){
     if(v&&typeof v==='object'){ Object.keys(v).forEach(k=>{ v[k]=repairMojibake(v[k]); }); }
     return v;
 }
-function b64Encode(s){return btoa(unescape(encodeURIComponent(s)));}
+function b64Encode(s){
+    const b=new TextEncoder().encode(String(s));
+    let out='';
+    for(let i=0;i<b.length;i+=0x8000) out+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));
+    return btoa(out);
+}
+function b64Decode(b){
+    const s=atob(String(b).replace(/\s/g,''));
+    const u=new Uint8Array(s.length);
+    for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i);
+    return new TextDecoder().decode(u);
+}
+async function workerApi(path, method, body){
+    const res = await fetch(`${HARFS_AUTH_API}${path}`, {
+        method: method || 'GET',
+        headers: { 'Content-Type': 'application/json', Authorization: ghAuthHeader() },
+        body: body ? JSON.stringify(body) : undefined
+    });
+    const d = await res.json().catch(()=>({}));
+    if(!res.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + res.status));
+    return d;
+}
+function deriveLeagueTable(history, teams = TEAM_NAMES){
+    const t = {};
+    teams.forEach(n=>{ t[n] = { name:n, P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 }; });
+    const upd = (x, gf, ga)=>{
+        if(!x) return;
+        x.P++; x.GF += gf; x.GA += ga;
+        if(gf > ga){ x.W++; x.Pts += 3; }
+        else if(gf === ga){ x.D++; x.Pts += 1; }
+        else x.L++;
+    };
+    (Array.isArray(history) ? history : []).forEach(m=>{
+        const p = String((m && m.score) || '').split('-');
+        const hs = parseInt(p[0]) || 0, as = parseInt(p[1]) || 0;
+        upd(t[m && m.home], hs, as);
+        upd(t[m && m.away], as, hs);
+    });
+    return t;
+}

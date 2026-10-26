@@ -59,8 +59,8 @@ async function liteHash(text){
     try{ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''); }
     catch(e){ let h = 5381; for(let i=0;i<text.length;i++) h = ((h<<5)+h+text.charCodeAt(i))|0; return 'f'+(h>>>0).toString(16); }
 }
-function liteB64Enc(t){ const b = new TextEncoder().encode(t); let s = ''; for(let i=0;i<b.length;i+=0x8000) s += String.fromCharCode.apply(null, b.subarray(i,i+0x8000)); return btoa(s); }
-function liteB64Dec(b){ const s = atob(String(b).replace(/\s/g,'')); const u = new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i] = s.charCodeAt(i); return new TextDecoder().decode(u); }
+const liteB64Enc = b64Encode;
+const liteB64Dec = b64Decode;
 function liteRand(n){ return Array.from(crypto.getRandomValues(new Uint8Array(n))).map(x=>x.toString(16).padStart(2,'0')).join(''); }
 function liteParse(t){ try{ return t==null ? undefined : JSON.parse(t); }catch(e){ return undefined; } }
 function liteIsEmergency(){ try{ return !!window.HARFS_LITE || localStorage.getItem(LITE_EMERGENCY_KEY) === '1'; }catch(e){ return !!window.HARFS_LITE; } }
@@ -125,6 +125,7 @@ async function liteStoreClean(path, text, sha, force){
     const hash = await liteHash(text);
     await liteSaveRec({ path, text, sha: sha || (cur && cur.sha) || ('r-'+hash.slice(0,12)), hash, dirty:false, ts:Date.now(), fetchedAt:Date.now(), dev:liteDev });
     await liteSaveBase(path, text, sha || (cur && cur.sha) || ('r-'+hash.slice(0,12)));
+    if(typeof ghCacheInvalidate==='function') ghCacheInvalidate(path);
     return true;
 }
 // a save made on this device
@@ -229,15 +230,7 @@ function liteMerge3(base, local, remote, path, ctx){
 // recomputed from the merged match list. Whatever is NOT explained by matches (combo bonus points, manual corrections) is
 // kept as a per-team "offset" and merged on its own.
 const LITE_LEAGUE_FIELDS = ['P','W','D','L','GF','GA','Pts'];
-function liteDeriveLeague(history, teams){
-    const t = {}; teams.forEach(n=>{ t[n] = { P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 }; });
-    const upd = (x, gf, ga)=>{ if(!x) return; x.P++; x.GF += gf; x.GA += ga; if(gf > ga){ x.W++; x.Pts += 3; } else if(gf === ga){ x.D++; x.Pts++; } else x.L++; };
-    (Array.isArray(history) ? history : []).forEach(m=>{
-        const p = String((m && m.score) || '').split('-'), hs = parseInt(p[0]) || 0, as = parseInt(p[1]) || 0;
-        upd(t[m.home], hs, as); upd(t[m.away], as, hs);
-    });
-    return t;
-}
+const liteDeriveLeague = deriveLeagueTable;
 // P = { baseL, locL, remL, mergedL, baseH, locH, remH, mergedH }   (parsed JSON; any may be undefined)
 function liteReconcileLeague(P){
     const merged = liteIsObj(P.mergedL) ? JSON.parse(JSON.stringify(P.mergedL)) : null;

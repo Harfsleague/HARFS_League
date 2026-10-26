@@ -121,7 +121,7 @@ function navigate(route){
         }
     });
     const target=document.getElementById(targetId);
-    if(target){target.style.display='flex';setTimeout(()=>target.classList.add('active'),40);}
+    if(target){target.style.display='flex';requestAnimationFrame(()=>requestAnimationFrame(()=>target.classList.add('active')));}
 
     if(route==='main-league')loadMainLeagueDataFromGitHub().then(renderMainLeagueTable);
     if(route==='league')Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([d,h])=>{

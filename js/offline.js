@@ -10,8 +10,8 @@ const OFFLINE_DB_NAME = 'harfs-offline';
 // ('liveScoresCache' was dropped from this list along with the Live
 // Scores feature; any leftover store of that name in an existing user's
 // browser is simply unused now, not deleted — harmless.)
-const OFFLINE_DB_VERSION = 5;
-const OFFLINE_STORES = ['leagueData','mainLeagueData','matchHistory','archivedSeasons','weirdEvents','playlist','offlineTrack','teamLogos','mbaData','flowData'];
+const OFFLINE_DB_VERSION = 6;
+const OFFLINE_STORES = ['leagueData','mainLeagueData','matchHistory','archivedSeasons','weirdEvents','playlist','offlineTrack','teamLogos','mbaData','flowData','cardsData','magazineArchive'];
 
 let _offlineDbPromise = null;
 function openOfflineDb(){

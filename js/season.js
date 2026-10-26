@@ -255,7 +255,7 @@ async function loadArchiveDropdown(){
     const cached=await idbGet('archivedSeasons','v');
     if(cached) archivedSeasons=cached;
     try{
-        const j=await ghFetchJson(GITHUB_ARCHIVE_FILE);
+        const j=await ghFetchJson(GITHUB_ARCHIVE_FILE,{maxAgeMs:60000});
         if(j.ok){
             archiveSha=j.sha;
             archivedSeasons=j.data;
@@ -313,7 +313,7 @@ async function loadMainLeagueDataFromGitHub(onCached){
     }
     setSyncStatus('syncing');
     try{
-        const j=await ghFetchJson(GITHUB_MAIN_LEAGUE_FILE);
+        const j=await ghFetchJson(GITHUB_MAIN_LEAGUE_FILE,{maxAgeMs:25000});
         if(j.ok){
             mainSha=j.sha;
             const c=repairMojibake(j.data);

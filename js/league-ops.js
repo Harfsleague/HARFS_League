@@ -150,7 +150,7 @@ async function loadLeagueDataFromGitHub(){
     if(!navigator.onLine){ setSyncStatus('offline'); return leagueData; }
     setSyncStatus('syncing');
     try{
-        const j=await ghFetchJson(GITHUB_LEAGUE_FILE);
+        const j=await ghFetchJson(GITHUB_LEAGUE_FILE,{maxAgeMs:25000});
         if(j.ok){
             sha=j.sha;
             const c=j.data;
@@ -166,7 +166,7 @@ async function loadMatchHistoryFromGitHub(){
     if(cached) matchHistory = cached;
     if(!navigator.onLine){ setSyncStatus('offline'); return matchHistory; }
     try{
-        const j=await ghFetchJson(GITHUB_MATCHES_FILE);
+        const j=await ghFetchJson(GITHUB_MATCHES_FILE,{maxAgeMs:25000});
         if(j.ok){
             matchesSha=j.sha;
             matchHistory=j.data;

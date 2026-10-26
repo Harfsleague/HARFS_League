@@ -432,28 +432,23 @@ async function loadWeirdEventsFromGitHubInner(){
     weirdShardData={};
     weirdManifestSha=null;
     try{
-        const mr=await fetch(`${BASE_API}${GITHUB_WEIRD_MANIFEST_FILE}?ref=${GITHUB_LEAGUE_BRANCH}`);
-        if(mr.ok){
-            const md=await mr.json();
-            weirdManifestSha=md.sha;
-            const manifest=await(await fetch(md.download_url+'?t='+Date.now())).json();
+        const mj=await ghFetchJson(GITHUB_WEIRD_MANIFEST_FILE,{maxAgeMs:20000});
+        if(mj.ok){
+            weirdManifestSha=mj.sha;
+            const manifest=mj.data;
             if(manifest&&Array.isArray(manifest.shards)&&manifest.shards.length)weirdShardFiles=manifest.shards;
         }
         // No manifest yet = this repo predates sharding, so we just fall
         // back to the single legacy file (weirdShardFiles default above).
     }catch(e){weirdManifestSha=null;}
 
-    let events=[];
-    for(const filename of weirdShardFiles){
+    const shardResults=await Promise.all(weirdShardFiles.map(async filename=>{
         try{
-            const r=await fetch(`${BASE_API}${filename}?ref=${GITHUB_LEAGUE_BRANCH}`);
-            if(r.ok){
-                const d=await r.json();
-                weirdShardShas[filename]=d.sha;
-                const arr=await(await fetch(d.download_url+'?t='+Date.now())).json();
-                weirdShardData[filename]=Array.isArray(arr)?arr:[];
+            const j=await ghFetchJson(filename,{maxAgeMs:20000});
+            if(j.ok){
+                weirdShardShas[filename]=j.sha;
+                weirdShardData[filename]=Array.isArray(j.data)?j.data:[];
             } else {
-                // 404 = shard not created yet, treat as empty
                 weirdShardShas[filename]=null;
                 weirdShardData[filename]=[];
             }
@@ -461,8 +456,9 @@ async function loadWeirdEventsFromGitHubInner(){
             weirdShardShas[filename]=null;
             weirdShardData[filename]=[];
         }
-        events=events.concat(weirdShardData[filename]);
-    }
+        return weirdShardData[filename];
+    }));
+    let events=shardResults.flat();
     // Safety net: de-dupe by id in case a shard's own content ever contains
     // an accidental repeat (e.g. from a previous corrupted save).
     const seen=new Set();
@@ -858,6 +854,7 @@ function saveFile(filename,data,msg,curSha,onProgress){
                     else if(filename===GITHUB_CARDS_FILE)cardsSha=d.content.sha;
                     else if(filename===GITHUB_WEIRD_MANIFEST_FILE)weirdManifestSha=d.content.sha;
                     else if(filename===GITHUB_WEIRD_FILE||filename.startsWith('weird_events_')){weirdShardShas[filename]=d.content.sha;if(filename===GITHUB_WEIRD_FILE)weirdSha=d.content.sha;}
+                    if(typeof ghCacheInvalidate==='function')ghCacheInvalidate(filename);
                     else sha=d.content.sha;
                     resolve(true);
                 }catch(e){lastSaveFileError=`Bad response from GitHub (status ${xhr.status})`;resolve(false);}

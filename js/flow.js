@@ -87,7 +87,7 @@ async function loadFlowFromGitHub(){
     if(cached) flowData = cached;
     if(navigator.onLine){
         try{
-            const j = await ghFetchJson(GITHUB_FLOW_FILE,{rawBust:true});
+            const j = await ghFetchJson(GITHUB_FLOW_FILE,{maxAgeMs:25000});
             if(j.ok){
                 flowSha = j.sha;
                 flowData = j.data;

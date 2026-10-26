@@ -400,13 +400,7 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .mag-c-send i{ transform:scaleX(-1); }
 .mag-c-send:disabled{ opacity:.5; }
 .mag-gif-picker{ margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.08); }
-.mag-gif-picker input.glass-input{ width:100%; padding:9px 12px; border-radius:14px; font-size:.75rem; }
-.mag-gif-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; max-height:230px; overflow-y:auto; margin:8px 0; }
-.mag-gif-grid img{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; cursor:pointer; background:rgba(255,255,255,.05); }
-.mag-gif-grid .mag-c-empty{ grid-column:1/-1; }
-.mag-gif-tools{ display:flex; flex-direction:column; gap:8px; }
 .mag-gif-upload{ display:flex; align-items:center; justify-content:center; gap:8px; padding:9px; border-radius:14px; border:1px dashed rgba(255,255,255,.25); font-size:.72rem; color:#d1d5db; cursor:pointer; }
-.mag-gif-link{ display:flex; gap:6px; } .mag-gif-link input{ flex:1; } .mag-gif-link button{ padding:0 14px; border-radius:14px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:#e5e7eb; font-size:.7rem; font-weight:700; cursor:pointer; }
 
 /* Notifications sheet */
 .notif-master{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 14px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }

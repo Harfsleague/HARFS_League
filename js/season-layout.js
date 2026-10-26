@@ -43,8 +43,6 @@ function seasonSyncSubnav(route){
     // League is the default tab: make sure it is the marked one, and re-measure the glass lens once the bar is out
     if(on){
         if(!bar.querySelector('.nav-item.active')){ const t = bar.querySelector(`.nav-item[data-tab="${seasonTab}"]`); if(t) t.classList.add('active'); }
-        const again = ()=>{ if(bar.__lgPlace) bar.__lgPlace(false); };
-        requestAnimationFrame(again); setTimeout(again, 700);
     }
 }
 function seasonSetTab(tab, opts){

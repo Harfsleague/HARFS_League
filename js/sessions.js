@@ -58,14 +58,7 @@ document.addEventListener('visibilitychange', ()=>{
 });
 
 // ---------------- helpers ----------------
-function sessionsAgo(ts){
-    if(!ts) return '—';
-    const s = Math.max(0, Math.round((Date.now()-ts)/1000));
-    if(s < 90) return 'just now';
-    if(s < 3600) return Math.round(s/60)+' min ago';
-    if(s < 86400) return Math.round(s/3600)+' h ago';
-    return Math.round(s/86400)+' d ago';
-}
+const sessionsAgo = ts => timeAgo(ts, { empty:'—' });
 function sessionsIcon(s){
     const os = (s.os||'').toLowerCase();
     if(os==='iphone'||os==='android') return 'fa-mobile-screen-button';
@@ -84,12 +77,7 @@ function sessionRowHtml(s, team){
         ${s.current && !team ? '' : `<button class="sess-x" onclick="${team?`adminRevokeSession('${team}','${s.sid}')`:`revokeMySession('${s.sid}')`}" aria-label="Sign out this device"><i class="fas fa-right-from-bracket"></i></button>`}
     </div>`;
 }
-async function sessionsApi(path, method, body){
-    const res = await fetch(`${HARFS_AUTH_API}${path}`, { method:method||'GET', headers:{ 'Content-Type':'application/json', Authorization: ghAuthHeader() }, body: body?JSON.stringify(body):undefined });
-    const d = await res.json().catch(()=>({}));
-    if(!res.ok || !d.ok) throw new Error(d.error || ('HTTP '+res.status));
-    return d;
-}
+const sessionsApi = workerApi;
 
 // ---------------- Settings → Devices (own sessions) ----------------
 async function openSessionsSheet(){

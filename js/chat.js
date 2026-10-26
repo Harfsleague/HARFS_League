@@ -37,12 +37,7 @@ let chatNodes = new Map();        // id -> DOM node
 let chatRec = null;               // { rec, stream, chunks, t0, timer, cancelled }
 
 function chatEl(id){ return document.getElementById(id); }
-async function chatApi(path, method, body){
-    const res = await fetch(`${HARFS_AUTH_API}${path}`, { method:method||'GET', headers:{ 'Content-Type':'application/json', Authorization: ghAuthHeader() }, body: body?JSON.stringify(body):undefined });
-    const d = await res.json().catch(()=>({}));
-    if(!res.ok || d.ok===false) throw new Error(d.error || ('HTTP '+res.status));
-    return d;
-}
+const chatApi = workerApi;
 function chatBadgeEnabled(){ try{ return localStorage.getItem(CHAT_BADGE_KEY) !== '0'; }catch(e){ return true; } }
 function chatToastEnabled(){ try{ return localStorage.getItem(CHAT_TOAST_KEY) !== '0'; }catch(e){ return true; } }
 

@@ -82,7 +82,7 @@ async function loadMbaDataFromGitHub(){
     const cached = await idbGet('mbaData','v');
     if(cached) mbaData = cached;
     try{
-        const j = await ghFetchJson(GITHUB_MBA_FILE,{rawBust:true});
+        const j = await ghFetchJson(GITHUB_MBA_FILE,{maxAgeMs:25000});
         if(j.ok){
             mbaSha = j.sha;
             mbaData = j.data;

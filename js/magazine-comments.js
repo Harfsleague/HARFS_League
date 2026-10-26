@@ -18,20 +18,9 @@ const MAG_COMMENT_MAX = 600;
 function magIssueKey(issue){
     return 'n' + String(issue && (issue.issueNumber ?? issue.issueDate) || 'x').replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
 }
-function magAgo(ts){
-    const s = Math.max(0, Math.round((Date.now()-ts)/1000));
-    if(s < 60) return 'همین الان';
-    if(s < 3600) return Math.round(s/60).toLocaleString('fa-IR')+' دقیقه پیش';
-    if(s < 86400) return Math.round(s/3600).toLocaleString('fa-IR')+' ساعت پیش';
-    return Math.round(s/86400).toLocaleString('fa-IR')+' روز پیش';
-}
+const magAgo = ts => timeAgo(ts, { fa:true });
 function magCanDelete(c){ return loggedInTeam && (c.team===loggedInTeam || loggedInTeam==='Bayern'); }
-async function magApi(path, method, body){
-    const res = await fetch(`${HARFS_AUTH_API}${path}`, { method:method||'GET', headers:{ 'Content-Type':'application/json', Authorization: ghAuthHeader() }, body: body?JSON.stringify(body):undefined });
-    const d = await res.json().catch(()=>({}));
-    if(!res.ok || d.ok===false) throw new Error(d.error || ('HTTP '+res.status));
-    return d;
-}
+const magApi = workerApi;
 
 // ---------------- mount (called at the end of renderMagazine) ----------------
 function magCommentsMount(issue){

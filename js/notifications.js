@@ -27,12 +27,7 @@ function notifB64uToBytes(b64u){
     const out = new Uint8Array(raw.length); for(let i=0;i<raw.length;i++) out[i] = raw.charCodeAt(i);
     return out;
 }
-async function notifApi(path, method, body){
-    const res = await fetch(`${HARFS_AUTH_API}${path}`, { method:method||'GET', headers:{ 'Content-Type':'application/json', Authorization: ghAuthHeader() }, body: body?JSON.stringify(body):undefined });
-    const d = await res.json().catch(()=>({}));
-    if(!res.ok || d.ok===false) throw new Error(d.error || ('HTTP '+res.status));
-    return d;
-}
+const notifApi = workerApi;
 async function notifCurrentSub(){
     if(!notifSupported()) return null;
     try{ const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }catch(e){ return null; }

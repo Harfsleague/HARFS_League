@@ -39,13 +39,7 @@ function auditArchivedSeasons(){
             items.push({ level:'warn', text:`${tag}: saved podium (${podiumStored}) differs from the points order (${podiumSorted}) — check the medals.` });
         }
         if(Array.isArray(s.history) && s.history.length){
-            const tmp = {}; TEAM_NAMES.forEach(t=>tmp[t]={ P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0 });
-            s.history.forEach(m=>{
-                const p = String(m.score).split('-');
-                const hs = parseInt(p[0])||0, as = parseInt(p[1])||0;
-                if(tmp[m.home]) updateTeamStats(tmp[m.home], hs, as);
-                if(tmp[m.away]) updateTeamStats(tmp[m.away], as, hs);
-            });
+            const tmp = deriveLeagueTable(s.history, TEAM_NAMES);
             table.forEach(r=>{
                 const x = tmp[r.name]; if(!x) return;
                 const diffs = ['P','W','D','L','GF','GA','Pts'].filter(k=>(r[k]||0)!==(x[k]+(k==='Pts'?(r.Bonus||0):0)));   // Combo point bonus counts as approved
@@ -91,13 +85,7 @@ async function recalculateLeagueTable(){
     // ---- 1) League table ----
     const before = JSON.parse(JSON.stringify(leagueData));
     await loadMatchHistoryFromGitHub();
-    initializeLeagueData();
-    matchHistory.forEach(m=>{
-        const p = m.score.split('-');
-        const hs = parseInt(p[0])||0, as = parseInt(p[1])||0;
-        if(leagueData[m.home]) updateTeamStats(leagueData[m.home], hs, as);
-        if(leagueData[m.away]) updateTeamStats(leagueData[m.away], as, hs);
-    });
+    leagueData = deriveLeagueTable(matchHistory, TEAM_NAMES);
     // Combo point cards: the Worker's ledger (cards_data.json → bonus) is the source of truth for the +4 point bonuses.
     // They are approved here, so the rebuilt table keeps them instead of silently dropping them.
     const comboNotes = [];

@@ -12,6 +12,20 @@ function escapeHtml(s){
     d.textContent = s==null ? '' : String(s);
     return d.innerHTML;
 }
+function timeAgo(ts, { fa=false, empty='—' }={}){
+    if(!ts) return empty;
+    const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if(fa){
+        if(s < 60) return 'همین الان';
+        if(s < 3600) return Math.round(s / 60).toLocaleString('fa-IR') + ' دقیقه پیش';
+        if(s < 86400) return Math.round(s / 3600).toLocaleString('fa-IR') + ' ساعت پیش';
+        return Math.round(s / 86400).toLocaleString('fa-IR') + ' روز پیش';
+    }
+    if(s < 60) return 'just now';
+    if(s < 3600) return Math.round(s / 60) + ' min ago';
+    if(s < 86400) return Math.round(s / 3600) + ' h ago';
+    return Math.round(s / 86400) + ' d ago';
+}
 function compressImage(base64,maxW,maxH,quality){
     return new Promise(resolve=>{
         const img=new Image();

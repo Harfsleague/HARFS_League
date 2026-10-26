@@ -18,7 +18,7 @@ let liteWifi = { step:'start', code:'', peerId:null, scanning:false };
 let liteLastBuild = null;
 
 const liteEsc = s=>String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-const liteAgo = ts=>{ if(!ts) return 'never'; const s = Math.max(0, Math.round((Date.now()-ts)/1000)); return s<60 ? 'just now' : s<3600 ? Math.round(s/60)+' min ago' : s<86400 ? Math.round(s/3600)+' h ago' : Math.round(s/86400)+' d ago'; };
+const liteAgo = ts => timeAgo(ts, { empty:'never' });
 const liteKB = n=>n>=1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(n/1024))+' KB';
 const liteToast = (m,k,ms)=>{ try{ showToast(m,k||'info',ms||2600); }catch(e){ console.log(m); } };
 
