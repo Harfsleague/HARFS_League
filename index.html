@@ -106,6 +106,14 @@
         <div id="perf-custom-options" style="display:none;">
             <div id="perf-group-toggles">
                 <div class="perf-option-row">
+                    <div class="perf-option-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+                    <div class="perf-option-textcol">
+                        <span class="perf-option-title">Liquid Glass</span>
+                        <span class="perf-option-sub">Frosted blur, specular rims &amp; lens depth</span>
+                    </div>
+                    <div class="perf-toggle on" id="perf-toggle-glass" onclick="togglePerfGroup('glass')"></div>
+                </div>
+                <div class="perf-option-row">
                     <div class="perf-option-icon"><i class="fas fa-circle-nodes"></i></div>
                     <div class="perf-option-textcol">
                         <span class="perf-option-title">Background Effects</span>
@@ -401,8 +409,8 @@
     <!-- ============ ADMIN ============ -->
     <div id="admin-screen" class="page-screen">
         <div class="league-header">
-            <h2 class="text-base font-black text-purple-300 uppercase tracking-widest">Admin Panel</h2>
-            <button onclick="exitAdmin()" style="margin-top:8px;font-size:0.7rem;color:#6b7280;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:99px;cursor:pointer;">
+            <h2 class="text-base font-black uppercase tracking-widest" style="color:var(--header-text);">Admin Panel</h2>
+            <button onclick="exitAdmin()" style="margin-top:8px;font-size:0.7rem;color:var(--header-text);background:var(--nav-active-bg);border:1px solid var(--nav-active-border);padding:5px 14px;border-radius:99px;cursor:pointer;">
                 <i class="fas fa-arrow-left mr-1"></i>Exit Admin
             </button>
         </div>
@@ -864,7 +872,6 @@
                 <div style="flex:1;min-width:0;">
                     <div class="name" id="report-sheet-title"></div>
                 </div>
-                <div class="team-panel-close" onclick="closeReportSheet()"><i class="fas fa-times"></i></div>
             </div>
             <div class="team-panel-scroll">
                 <div class="team-panel-section" id="report-sheet-body"></div>

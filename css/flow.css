@@ -9,7 +9,7 @@
 .flow-chip{
     font-size:0.55rem; font-weight:800; letter-spacing:0.4px; text-transform:uppercase;
     padding:2px 8px; border-radius:99px; color:var(--primary);
-    background:rgba(96,165,250,0.12); border:1px solid rgba(96,165,250,0.3);
+    background:var(--nav-active-bg); border:1px solid var(--nav-active-border);
 }
 
 /* ---- stage stepper ---- */
@@ -72,7 +72,7 @@
 .flow-summary-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; font-size:0.7rem; color:#cbd5e1; }
 .flow-summary-row + .flow-summary-row{ border-top:1px solid rgba(255,255,255,0.05); }
 .flow-summary-row .flow-team{ flex:0 1 auto; }
-.flow-link-btn{ display:block; margin:2px auto 0; background:none; border:none; color:#93c5fd; font-size:0.66rem; font-weight:700; cursor:pointer; padding:6px; }
+.flow-link-btn{ display:block; margin:2px auto 0; background:none; border:none; color:var(--primary); font-size:0.66rem; font-weight:700; cursor:pointer; padding:6px; }
 .flow-tools{ display:flex; gap:10px; margin-top:16px; }
 .flow-danger{ margin-top:12px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; }
 .flow-danger summary{ font-size:0.62rem; font-weight:800; color:#f87171; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
@@ -208,7 +208,7 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .cards-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; }
 .cd-tile{ display:flex; flex-direction:column; gap:5px; padding:6px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
 .cd-tile.active{ border-color:rgba(74,222,128,.6); box-shadow:0 0 14px rgba(74,222,128,.25); }
-.cd-img-wrap{ position:relative; aspect-ratio:5/7; border-radius:12px; overflow:hidden; background:#0f172a; cursor:zoom-in; }
+.cd-img-wrap{ position:relative; aspect-ratio:5/7; border-radius:12px; overflow:hidden; background:var(--bg-mid); cursor:zoom-in; }
 .cd-img{ width:100%; height:100%; object-fit:cover; display:block; }
 .cd-flag{ position:absolute; top:6px; inset-inline-start:6px; font-size:.5rem; font-weight:900; letter-spacing:.6px; background:#22c55e; color:#052e16; border-radius:999px; padding:2px 6px; }
 .cd-name{ font-size:.74rem; font-weight:900; color:#f1f5f9; text-align:center; }
@@ -261,9 +261,9 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
    ===================================================== */
 .admin-tabs{ position:sticky; top:0; z-index:6; display:flex; gap:6px; overflow-x:auto; padding:8px 2px 10px; margin:0 0 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .admin-tabs::-webkit-scrollbar{ display:none; }
-.admin-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; font-size:.7rem; font-weight:800; color:#cbd5e1; background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.12); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.admin-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; font-size:.7rem; font-weight:800; color:#cbd5e1; background:color-mix(in srgb,var(--bg-mid) 72%,transparent); border:1px solid rgba(255,255,255,.14); border-top-color:rgba(255,255,255,.24); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:all .2s ease; }
 .admin-tab i{ font-size:.78rem; opacity:.85; }
-.admin-tab.active{ color:#fff; background:linear-gradient(90deg,rgba(139,92,246,.55),rgba(59,130,246,.5)); border-color:rgba(196,181,253,.6); box-shadow:0 4px 14px rgba(99,102,241,.3); }
+.admin-tab.active{ color:#fff; background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 42%,transparent),color-mix(in srgb,var(--accent) 38%,transparent)),var(--nav-active-bg); border-color:var(--nav-active-border); box-shadow:0 4px 16px var(--primary-glow),inset 0 1px 0 rgba(255,255,255,.28); }
 /* the full admin sees ONE area at a time; accounts with only granted tools are handled by .limited-access */
 #admin-dashboard-section:not(.limited-access) > .admin-cat-off{ display:none !important; }
 
@@ -271,7 +271,7 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
    CARDS — view-only badges, history chips, misc
    ===================================================== */
 .cd-lock{ display:flex; align-items:center; justify-content:center; gap:6px; font-size:.58rem; font-weight:700; color:#94a3b8; margin:0 0 10px; }
-.cd-lock button{ background:none; border:none; color:#93c5fd; font-size:.7rem; padding:2px 6px; cursor:pointer; }
+.cd-lock button{ background:none; border:none; color:var(--primary); font-size:.7rem; padding:2px 6px; cursor:pointer; }
 .cd-lock.cd-nocards{ color:#fbbf24; background:rgba(251,191,36,.08); border:1px dashed rgba(251,191,36,.35); border-radius:10px; padding:7px 10px; margin:6px 0 10px; }
 .game-cards{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-top:6px; }
 .gc-chip{ display:inline-flex; align-items:center; gap:4px; font-size:.56rem; color:#e9d5ff; background:rgba(167,139,250,.12); border:1px solid rgba(167,139,250,.35); border-radius:999px; padding:2px 8px 2px 3px; max-width:100%; }
@@ -370,7 +370,7 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .mag-c.deleted .mag-c-body{ font-size:.7rem; color:#6b7280; padding:4px 0; }
 .mag-replies{ margin-top:10px; margin-inline-start:22px; padding-inline-start:10px; border-inline-start:2px solid color-mix(in srgb,var(--primary) 45%,transparent); display:flex; flex-direction:column; gap:10px; }
 .mag-c.reply .mag-c-av{ width:28px; height:28px; flex-basis:28px; }
-.mag-c-composer{ position:relative; border-radius:20px; background:rgba(10,18,30,.65); border:1px solid rgba(255,255,255,.1); padding:8px; }
+.mag-c-composer{ position:relative; border-radius:20px; background:color-mix(in srgb,var(--bg-mid) 68%,transparent); border:1px solid rgba(255,255,255,.14); border-top-color:rgba(255,255,255,.24); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.16); padding:8px; }
 .mag-c-chip{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:.68rem; color:#c4b5fd; padding:4px 10px 8px; }
 .mag-c-chip button{ background:none; border:none; color:#9ca3af; font-size:.8rem; cursor:pointer; }
 .mag-c-gifchip{ justify-content:flex-start; }

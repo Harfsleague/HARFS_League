@@ -2,6 +2,7 @@
    CSS VARIABLES — BASE (fallback = Ocean palette, dark)
    ===================================================== */
 :root {
+    --bg:      var(--bg-mid);
     --bg-from: #1e1b4b;
     --bg-mid:  #0f172a;
     --bg-to:   #020617;
@@ -113,6 +114,7 @@ body[data-palette="graphite"] {
 * { box-sizing: border-box; }
 
 body {
+    --bg: var(--bg-mid);
     /* App-wide font: Settings → Appearance → App Font (--app-font-family,
        set by applyAppearance() in js/appearance.js). The Weekly Magazine
        has its own independent choice — see #magazine-screen below. */
@@ -156,8 +158,8 @@ body {
 @media(min-width:768px){
     .app-container{
         max-width:420px; height:90vh; border-radius:40px;
-        box-shadow:0 0 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.05);
-        border:8px solid #1e293b;
+        box-shadow:0 0 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.08);
+        border:8px solid color-mix(in srgb, var(--bg-from) 55%, var(--bg-mid));
     }
 }
 
@@ -492,7 +494,6 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 .team-panel-header img{ width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.12); }
 .team-panel-header .name{ font-size:1.05rem; font-weight:900; color:#f0f4f8; }
 .team-panel-header .pinned{ font-size:0.65rem; color:var(--primary); margin-top:2px; }
-.team-panel-close{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:#9ca3af; cursor:pointer; flex-shrink:0; }
 .team-panel-scroll{ overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; display:flex; flex-direction:column; gap:12px; padding-bottom:4px; }
 .team-panel-scroll::-webkit-scrollbar{ display:none; }
 .team-panel-section{ background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:12px 14px; }
@@ -537,7 +538,7 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     table-layout:fixed;
 }
 .season-table thead tr {
-    border-bottom:1px solid rgba(var(--primary),.25);
+    border-bottom:1px solid color-mix(in srgb, var(--primary) 28%, transparent);
 }
 .season-table thead th {
     padding:11px 0;
@@ -720,7 +721,7 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 .profile-header{height:100px;position:relative;overflow:visible;}
 .profile-header-bg{
     position:absolute;inset:0;height:100px;
-    background:linear-gradient(135deg,rgba(30,58,138,0.8),rgba(109,40,217,0.6));
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 58%,var(--bg-from)),color-mix(in srgb,var(--accent) 48%,var(--bg-mid)));
     border-radius:0;overflow:hidden;
 }
 .profile-avatar{
@@ -977,7 +978,7 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 .music-item-title{font-size:0.78rem;font-weight:700;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .music-item-sub{font-size:0.6rem;color:#6b7280;}
 .music-item-rename-input{
-    width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(96,165,250,0.4);
+    width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--nav-active-border);
     border-radius:8px;padding:4px 8px;font-size:0.76rem;color:#fff;outline:none;
 }
 .music-item-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
@@ -993,14 +994,14 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 .music-item-btn.danger:active{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);}
 
 .music-upload-row{
-    background:rgba(255,255,255,0.03);border:1px solid rgba(96,165,250,0.2);
+    background:rgba(255,255,255,0.03);border:1px solid var(--nav-active-border);
     border-radius:12px;padding:8px 10px;margin-bottom:7px;transition:opacity 0.3s ease;
 }
 .music-upload-row-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;}
 .music-upload-name{font-size:0.7rem;color:#d1d5db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.music-upload-pct{font-size:0.66rem;color:#60a5fa;font-weight:800;flex:0 0 auto;}
+.music-upload-pct{font-size:0.66rem;color:var(--primary);font-weight:800;flex:0 0 auto;}
 .music-upload-bar-track{width:100%;height:5px;border-radius:99px;background:rgba(255,255,255,0.08);overflow:hidden;}
-.music-upload-bar-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#818cf8);transition:width 0.2s ease;}
+.music-upload-bar-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 0.2s ease;}
 .music-upload-row.done .music-upload-bar-fill{background:linear-gradient(90deg,#22c55e,#4ade80);}
 .music-upload-row.done .music-upload-pct{color:#4ade80;}
 .music-upload-row.failed .music-upload-bar-fill{background:linear-gradient(90deg,#ef4444,#f87171);width:100% !important;}
@@ -1160,6 +1161,7 @@ body.perf-no-blur .app-container,
 body.perf-no-blur .bottom-nav,
 body.perf-no-blur .season-subnav,
 body.perf-no-blur .league-header,
+body.perf-no-blur .magazine-panel-header,
 body.perf-no-blur .season-history-card,
 body.perf-no-blur .match-card-mini,
 body.perf-no-blur .weird-card,
@@ -1175,6 +1177,8 @@ body.perf-no-blur .toast,
 body.perf-no-blur .login-panel{
     background-color:var(--bg-mid) !important;
     background-image:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
 }
 body.perf-no-blur #hero-logo-container.in-header,
 body.perf-no-blur #hero-logo-container.box-forming{
@@ -1713,7 +1717,7 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; }
    a sync-* class is present, since it would wipe the glow out.
    ===================================================== */
 #hero-logo-container.in-header.sync-offline { --sync-rgb:148,163,184; }
-#hero-logo-container.in-header.sync-syncing { --sync-rgb:96,165,250; }
+#hero-logo-container.in-header.sync-syncing { --sync-rgb:var(--particle-color, 96,165,250); }
 #hero-logo-container.in-header.sync-synced  { --sync-rgb:34,197,94; }
 #hero-logo-container.in-header.sync-error   { --sync-rgb:239,68,68; }
 
@@ -1760,16 +1764,23 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 #magazine-screen::-webkit-scrollbar, #magazine-screen *::-webkit-scrollbar{ display:none; width:0; height:0; }
 #magazine-screen .magazine-inner{max-width:640px;width:100%;margin:0 auto;padding:0 0 40px;overflow-x:hidden;}
 #magazine-screen img,#magazine-screen table{max-width:100%;}
-.magazine-panel-header{display:flex;flex-direction:column;gap:6px;padding:14px 16px 8px;position:sticky;top:0;background:var(--bg,#0f172a);z-index:5;}
+.magazine-panel-header{
+    display:flex;flex-direction:column;gap:8px;
+    width:95%;margin:0 auto 12px;padding:12px 14px 10px;
+    position:sticky;top:4px;z-index:15;
+    border-radius:22px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 14%,rgba(255,255,255,0.06)) 0%,color-mix(in srgb,var(--bg-mid) 82%,transparent) 100%);
+    border:1px solid rgba(255,255,255,0.12);
+    border-top-color:rgba(255,255,255,0.26);
+    border-left-color:rgba(255,255,255,0.18);
+    box-shadow:0 10px 30px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.22),0 0 24px -8px var(--primary-glow);
+    backdrop-filter:blur(18px) saturate(165%);
+    -webkit-backdrop-filter:blur(18px) saturate(165%);
+}
 .magazine-panel-header-row{display:flex;align-items:center;gap:10px;}
-/* Content scrolling underneath the sticky "HARFS Weekly Magazine" header used
-   to butt straight up against it with a hard, ugly cut. This fade strip sits
-   just below the header (moves with it, since it's sticky too) and fades the
-   background from the header's solid color down to transparent, so text
-   dissolves away right as it passes under the header instead of clipping. */
 .magazine-panel-header::after{
-    content:'';position:absolute;top:100%;left:0;right:0;height:28px;
-    background:linear-gradient(180deg,var(--bg,#0f172a) 0%,rgba(15,23,42,0) 100%);
+    content:'';position:absolute;top:0;left:16px;right:16px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.38),transparent);
     pointer-events:none;
 }
 .magazine-issue-nav{
@@ -1777,43 +1788,64 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 }
 .magazine-issue-nav:empty{ display:none; }
 .magazine-nav-arrow{
-    width:30px;height:30px;border-radius:10px;border:none;flex-shrink:0;
-    background:rgba(255,255,255,0.06);color:#e5e7eb;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    width:32px;height:32px;border-radius:11px;flex-shrink:0;
+    border:1px solid rgba(255,255,255,0.12);border-top-color:rgba(255,255,255,0.22);
+    background:color-mix(in srgb,var(--primary) 8%,rgba(255,255,255,0.05));
+    color:var(--header-text);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform 0.15s ease,background 0.2s ease,border-color 0.2s ease;
 }
 .magazine-nav-arrow:disabled{ opacity:0.3; cursor:default; }
-.magazine-nav-arrow:active:not(:disabled){ transform:scale(0.92); }
+.magazine-nav-arrow:active:not(:disabled){ transform:scale(0.92); background:var(--nav-active-bg); border-color:var(--nav-active-border); }
 .magazine-issue-picker-wrap{ position:relative; }
 .magazine-issue-pill{
-    display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:none;cursor:pointer;
-    background:rgba(255,255,255,0.06);color:#e5e7eb;font-size:0.72rem;font-weight:700;
+    display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--nav-active-border);
+    background:linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02)),var(--nav-active-bg);
+    color:var(--header-text);font-size:0.72rem;font-weight:800;
+    box-shadow:0 2px 12px var(--primary-glow),inset 0 1px 0 rgba(255,255,255,0.22);
+    transition:transform 0.15s ease;
 }
+.magazine-issue-pill:active{ transform:scale(0.95); }
 .magazine-issue-picker{
-    display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:170px;max-height:240px;overflow-y:auto;
+    display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:180px;max-height:240px;overflow-y:auto;
     -ms-overflow-style:none;scrollbar-width:none;
-    background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:6px;z-index:10;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+    background:color-mix(in srgb,var(--bg-mid) 88%,#020617);
+    backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);
+    border:1px solid var(--nav-active-border);border-radius:16px;padding:6px;z-index:20;
+    box-shadow:0 14px 36px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .magazine-issue-picker::-webkit-scrollbar{ display:none; }
 .magazine-issue-picker.open{ display:block; }
 .magazine-issue-picker-row{
-    display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;
-    font-size:0.72rem;color:#cbd5e1;
+    display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;
+    font-size:0.72rem;color:#cbd5e1;transition:background 0.15s ease;
 }
-.magazine-issue-picker-row:hover,.magazine-issue-picker-row.active{ background:rgba(255,255,255,0.07);color:#fff; }
-.magazine-issue-picker-date{ color:#6b7280;font-size:0.64rem; }
-.magazine-panel-title{font-weight:800;font-size:1rem;flex:1;text-align:center;letter-spacing:0.02em;color:var(--header-text);background:linear-gradient(90deg,var(--header-text),var(--primary));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.magazine-panel-back-btn{background:none;border:none;color:inherit;font-size:1.1rem;}
+.magazine-issue-picker-row:hover,.magazine-issue-picker-row.active{ background:var(--nav-active-bg);color:var(--header-text);font-weight:700; }
+.magazine-issue-picker-date{ color:#94a3b8;font-size:0.64rem; }
+.magazine-panel-title{font-weight:900;font-size:1.02rem;flex:1;text-align:center;letter-spacing:0.04em;color:var(--header-text);background:linear-gradient(90deg,#fff 0%,var(--header-text) 50%,var(--primary) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.magazine-panel-back-btn{
+    width:36px;height:36px;border-radius:50%;flex-shrink:0;
+    border:1px solid rgba(255,255,255,0.18);border-top-color:rgba(255,255,255,0.3);
+    background:rgba(255,255,255,0.07);color:var(--header-text);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.9rem;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.18);
+    transition:transform 0.15s ease,background 0.15s ease,color 0.15s ease;
+}
+.magazine-panel-back-btn:active{ transform:scale(0.9); background:var(--nav-active-bg); color:var(--primary); }
 
-/* ---- Cover hero: the WHOLE cover image is shown (no side cropping — it keeps its own
-   aspect ratio); only the one-line title sits on the image, everything else (masthead,
-   issue number/date, subtitle) lives in the strip right below it. ---- */
-.magazine-hero{position:relative;min-height:160px;overflow:hidden;background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--primary) 22%,var(--bg,#0f172a)),var(--bg,#0f172a) 70%);}
+/* ---- Cover hero: framed glass card that adapts dynamically to the active palette ---- */
+.magazine-hero{
+    position:relative;min-height:160px;margin:0 12px;border-radius:22px;overflow:hidden;
+    border:1px solid rgba(255,255,255,0.12);border-top-color:rgba(255,255,255,0.24);
+    box-shadow:0 12px 32px rgba(0,0,0,0.35);
+    background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--primary) 26%,var(--bg-mid)),var(--bg-mid) 72%);
+}
 .magazine-hero-img{display:block;width:100%;height:auto;object-fit:contain;}
-.magazine-hero-scrim{position:absolute;left:0;right:0;bottom:0;height:60%;pointer-events:none;background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--bg,#0f172a) 70%,transparent) 100%);}
-.magazine-hero-content{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:56px 18px 4px;}
+.magazine-hero-scrim{position:absolute;left:0;right:0;bottom:0;height:60%;pointer-events:none;background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--bg-mid) 75%,transparent) 100%);}
+.magazine-hero-content{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:56px 18px 8px;}
 /* the cover is gently blurred behind the headline and melts into the theme colour at the bottom edge */
 .magazine-hero-content::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
-  background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--bg,#0f172a) 55%,transparent) 55%,var(--bg,#0f172a) 100%);
+  background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--bg-mid) 60%,transparent) 55%,var(--bg-mid) 100%);
   -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 50%);mask-image:linear-gradient(180deg,transparent 0%,#000 50%);}
 .magazine-hero-content .magazine-title{position:relative;margin:0;text-shadow:0 1px 8px rgba(0,0,0,0.45);}
 .magazine-hero-meta{padding:14px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);}
@@ -1880,7 +1912,7 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
 .magazine-interview-role{font-size:0.75rem;color:#9ca3af;}
 .magazine-interview-headline{font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#f8fafc;}
 .magazine-interview-qa{display:flex;flex-direction:column;gap:4px;}
-.magazine-interview-q{font-weight:700;font-size:0.82rem;color:#93c5fd;margin-top:10px;}
+.magazine-interview-q{font-weight:700;font-size:0.82rem;color:var(--header-text);margin-top:10px;}
 .magazine-interview-a{font-size:0.85rem;line-height:1.9;color:#e2e8f0;}
 .magazine-interview-disclaimer{margin-top:14px;font-size:0.66rem;color:#6b7280;font-style:italic;}
 .magazine-recommendations{padding-inline-start:20px;font-size:0.85rem;line-height:2.1;color:#e2e8f0;}
@@ -1918,8 +1950,8 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
     box-shadow:0 6px 18px rgba(0,0,0,0.35),0 0 0 3px rgba(255,255,255,0.06);
 }
 .mp-art::after{ content:''; position:absolute; inset:0; border-radius:50%;
-    background:conic-gradient(from 20deg,var(--primary),#a78bfa,#38bdf8,var(--primary)); }
-.mp-art::before{ content:''; position:absolute; inset:7px; border-radius:50%; background:rgba(10,16,28,0.78); z-index:1; }
+    background:conic-gradient(from 20deg,var(--primary),var(--accent),var(--header-text),var(--primary)); }
+.mp-art::before{ content:''; position:absolute; inset:7px; border-radius:50%; background:color-mix(in srgb,var(--bg-mid) 82%,#000); z-index:1; }
 .mp-art i{ position:relative; z-index:2; font-size:1.1rem; color:#fff; transition:opacity .25s; }
 .mp-art.playing::after{ animation:mpSpin 8s linear infinite; }
 @keyframes mpSpin{ to{ transform:rotate(360deg); } }
@@ -2107,6 +2139,8 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 }
 /* hero modals (playlist, Federation & Owners, Edit profile): header band like the team panel */
 .team-picker-sheet.as-modal .team-picker-panel.hero-modal{ padding:0; overflow:hidden; max-width:360px; }
+.team-picker-sheet.as-modal .team-picker-panel.sessions-modal,
+.team-picker-sheet.as-modal .team-picker-panel.cards-modal{ padding:22px 16px 18px; }
 .team-picker-sheet.as-modal .team-picker-panel.hero-modal > .modal-x-close{
     position:absolute; top:12px; right:12px; align-self:auto; margin:0;
 }
@@ -2114,7 +2148,7 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 .profile-icon-badge{
     width:80px; height:80px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; font-size:1.9rem; color:#fff;
-    background:linear-gradient(135deg,#6366f1,#a855f7);
+    background:linear-gradient(135deg,var(--primary),var(--accent));
     border:3px solid rgba(255,255,255,0.35); box-shadow:0 8px 24px rgba(0,0,0,0.5);
     position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); z-index:10;
 }
@@ -2130,7 +2164,7 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
     position:absolute; right:-4px; bottom:-4px; min-width:18px; height:18px; padding:0 5px; border-radius:999px;
     display:flex; align-items:center; justify-content:center; gap:3px;
     font-size:0.6rem; font-weight:800; color:#0b1220; background:var(--primary,#fbbf24);
-    border:2px solid #0f172a; pointer-events:none;
+    border:2px solid var(--bg-mid); pointer-events:none;
 }
 #team-panel-photo-badge{ position:absolute; bottom:-40px; left:calc(50% + 22px); right:auto; z-index:11; }
 
@@ -2235,16 +2269,17 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
 .react-count{ font-size:0.7rem; font-weight:800; }
 .react-chip{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .react-avs{ display:inline-flex; align-items:center; }
-.react-av{ width:15px; height:15px; border-radius:50%; object-fit:cover; border:1.5px solid #0f172a; background:#1f2937; }
+.react-av{ width:15px; height:15px; border-radius:50%; object-fit:cover; border:1.5px solid var(--bg-mid); background:#1f2937; }
 .react-av + .react-av{ margin-left:-5px; }
 .react-more{ font-size:0.6rem; font-weight:800; color:#9ca3af; margin-left:3px; }
-.react-chip.who-open{ border-color:rgba(96,165,250,0.6); background:rgba(96,165,250,0.16); }
+.react-chip.who-open{ border-color:var(--nav-active-border); background:var(--nav-active-bg); }
 .react-chip{ touch-action:manipulation; }
 /* floating "who reacted" card — shown ABOVE the pressed chip for exactly as long as it is held */
 .react-who-pop{
     position:fixed; z-index:99999; left:0; top:0; max-width:calc(100vw - 16px);
     display:none; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:8px 10px;
-    background:rgba(15,23,42,0.97); border:1px solid rgba(255,255,255,0.14); border-radius:14px;
+    background:color-mix(in srgb,var(--bg-mid) 92%,#000); border:1px solid var(--nav-active-border); border-radius:14px;
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
     box-shadow:0 8px 28px rgba(0,0,0,0.55); pointer-events:none;
     -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
 }
@@ -2264,7 +2299,8 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
 .react-add.open{ color:#fbbf24; border-color:rgba(251,191,36,0.4); }
 .react-picker{
     display:flex; flex-wrap:wrap; gap:2px; margin-top:8px; padding:6px;
-    background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.1); border-radius:16px;
+    background:color-mix(in srgb,var(--bg-mid) 84%,#000); border:1px solid rgba(255,255,255,0.14); border-radius:16px;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
 }
 .react-picker button{ width:36px; height:36px; font-size:1.25rem; line-height:1; background:none; border:none; border-radius:10px; cursor:pointer; }
 .react-picker button:active{ transform:scale(0.85); }

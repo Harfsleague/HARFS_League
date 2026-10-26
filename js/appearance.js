@@ -137,6 +137,7 @@ const PERF_KEYS = ['orbs','blur','shadows','sheen','anim'];
 const PERF_ALL_ON  = { orbs:true,  blur:true,  shadows:true,  sheen:true,  anim:true  };
 const PERF_ALL_OFF = { orbs:false, blur:false, shadows:false, sheen:false, anim:false };
 const PERF_GROUPS = {
+    glass:      ['blur','shadows'],
     background: ['orbs','sheen'],
     motion:     ['anim'],
 };
@@ -163,8 +164,6 @@ let perfCustom = (()=>{
                 const val = merged[members[0]];
                 members.forEach(k=>merged[k]=val);
             });
-            // The Glass switch is gone: Custom always keeps normal shadows (older saves may have had them off).
-            merged.blur = true; merged.shadows = true;
             return merged;
         }
     }catch(e){}
@@ -187,7 +186,7 @@ function applyAppearance(){
         document.body.setAttribute('data-palette', currentPalette);
     }
     const p = currentPerfValues();
-    document.body.classList.toggle('lite-mode', ['orbs','sheen','anim'].every(k=>!p[k])); // alias when every effect is off
+    document.body.classList.toggle('lite-mode', PERF_KEYS.every(k=>!p[k])); // alias when every effect is off
     document.body.classList.toggle('perf-no-orbs', !p.orbs);
     document.body.classList.toggle('perf-no-blur', !p.blur);
     document.body.classList.toggle('perf-no-shadow', !p.shadows);
@@ -383,6 +382,7 @@ function writeCustomPaletteVars(){
     const orb3   = hslToHex(bgHsl.h, 55, 42);
     const heroSub = lighten(c.primary, 80);
     const s = document.body.style;
+    s.setProperty('--bg', bgMid);
     s.setProperty('--bg-from', bgFrom);
     s.setProperty('--bg-mid', bgMid);
     s.setProperty('--bg-to', bgTo);
@@ -402,7 +402,7 @@ function writeCustomPaletteVars(){
     s.setProperty('--particle-color', `${pr.r},${pr.g},${pr.b}`);
 }
 function clearCustomPaletteVars(){
-    ['--bg-from','--bg-mid','--bg-to','--orb1','--orb2','--orb3','--primary','--primary-glow','--accent',
+    ['--bg','--bg-from','--bg-mid','--bg-to','--orb1','--orb2','--orb3','--primary','--primary-glow','--accent',
      '--header-text','--nav-active-bg','--nav-active-color','--nav-active-border','--hero-grad','--hero-sub',
      '--table-rank1-bg','--particle-color'].forEach(p=>document.body.style.removeProperty(p));
 }
