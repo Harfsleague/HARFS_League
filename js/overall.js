@@ -9,7 +9,6 @@
 // ============================================================
 // Purple-team artwork (symbolic team): a purple flower in place of the rank
 // number and a purple medal in place of the gold/silver/bronze trio.
-const PURPLE_FLOWER_SVG='<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><g fill="#c084fc"><circle cx="16" cy="9" r="5.2"/><circle cx="23.1" cy="14.2" r="5.2"/><circle cx="20.4" cy="22.6" r="5.2"/><circle cx="11.6" cy="22.6" r="5.2"/><circle cx="8.9" cy="14.2" r="5.2"/></g><circle cx="16" cy="16.5" r="3.6" fill="#fde68a"/></svg>';
 const PURPLE_MEDAL_SVG='<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M10 2h5l3 9h-5z" fill="#7e22ce"/><path d="M22 2h-5l-3 9h5z" fill="#a855f7"/><circle cx="16" cy="20" r="9" fill="#a855f7"/><circle cx="16" cy="20" r="9" fill="none" stroke="#e9d5ff" stroke-width="1.5"/><circle cx="16" cy="20" r="5.6" fill="#7e22ce"/><path d="M16 15.8l1.3 2.7 3 .4-2.2 2.1.5 3-2.6-1.4-2.6 1.4.5-3-2.2-2.1 3-.4z" fill="#f3e8ff"/></svg>';
 
 function renderMainLeagueTable(){

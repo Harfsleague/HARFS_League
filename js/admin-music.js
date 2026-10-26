@@ -218,29 +218,9 @@ async function uploadSingleMusicFile(file){
 }
 
 // ---- Raw GitHub Contents API calls scoped to the music folder ----
-function uploadMusicFile(name,base64Content,onProgress){
-    return new Promise(resolve=>{
-        const token=ghAuthHeader();
-        if(!token){ lastSaveFileError=GH_LOGIN_MSG; resolve(false); return; }
-        const body={message:'Upload music track: '+name, content:base64Content, branch:GITHUB_LEAGUE_BRANCH};
-        const xhr=new XMLHttpRequest();
-        xhr.open('PUT',ghProxyUrl(`${BASE_API}${MUSIC_FOLDER}/${encodeURIComponent(name)}`));
-        xhr.setRequestHeader('Authorization',token);
-        xhr.setRequestHeader('Content-Type','application/json');
-        if(xhr.upload&&typeof onProgress==='function'){
-            xhr.upload.onprogress=e=>{ if(e.lengthComputable) onProgress(e.loaded/e.total); };
-        }
-        xhr.onload=()=>{
-            if(xhr.status>=200&&xhr.status<300){ resolve(true); }
-            else{
-                let msg=`GitHub error ${xhr.status}`;
-                try{ const d=JSON.parse(xhr.responseText); if(d&&d.message) msg=`${xhr.status}: ${d.message}`; }catch(e){}
-                lastSaveFileError=msg; resolve(false);
-            }
-        };
-        xhr.onerror=()=>{ lastSaveFileError='Network error — connection dropped mid-upload'; resolve(false); };
-        xhr.send(JSON.stringify(body));
-    });
+async function uploadMusicFile(name,base64Content,onProgress){
+    const r = await ghPutContent(`${MUSIC_FOLDER}/${encodeURIComponent(name)}`, base64Content, 'Upload music track: '+name, { onProgress });
+    return r.ok;
 }
 
 function deleteMusicFile(name,fileSha){

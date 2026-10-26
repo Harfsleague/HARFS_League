@@ -36,10 +36,6 @@ function openMagazinePanel() {
     }
 }
 
-function closeMagazinePanel() {
-    navigate('main-league');
-}
-
 async function loadMagazine() {
     const body = document.getElementById('magazine-body');
     const loading = document.getElementById('magazine-loading');
@@ -567,6 +563,7 @@ async function saveMagazineEdit() {
 
     const saved = await saveFile(GITHUB_MAGAZINE_ARCHIVE_FILE, magazineArchive, `Edit magazine issue #${issue.issueNumber}`, magazineArchiveSha);
     if (saved) {
+        idbSet('magazineArchive', 'v', magazineArchive);
         showToast('مجله ذخیره شد', 'success', 1800);
         closeMagazineEditModal();
         renderCurrentIssue();
@@ -585,6 +582,7 @@ async function deleteMagazineIssue(idx) {
     const saved = await saveFile(GITHUB_MAGAZINE_ARCHIVE_FILE, updated, `Delete magazine issue #${issue.issueNumber}`, magazineArchiveSha);
     if (saved) {
         magazineArchive = updated;
+        idbSet('magazineArchive', 'v', magazineArchive);
         magazineIssueIdx = Math.min(idx, magazineArchive.length - 1);
         showToast('شماره حذف شد', 'success', 1800);
         renderCurrentIssue();

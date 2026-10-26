@@ -35,13 +35,15 @@ document.addEventListener('DOMContentLoaded',()=>{
         try{
             await preloadTeamLogosFromCache();  // quick local IndexedDB read
             ensureTeamLogosCached();            // best-effort background refresh, not awaited
-            // cacheReadyResolve fires as soon as the cached copy is merged in (before the network request)
-            await loadMainLeagueDataFromGitHub(()=>cacheReadyResolve());
+            // Run main league, archive, and CUP loaders in parallel so Overall trophy counts are ready immediately
+            await Promise.all([
+                loadMainLeagueDataFromGitHub(()=>cacheReadyResolve()),
+                loadArchiveDropdown(),
+                loadMbaDataFromGitHub().then(()=>loadFlowFromGitHub()),
+            ]);
         }catch(e){ /* offline / API hiccup: the cached data (if any) is already in place */ }
         cacheReadyResolve();                    // first-ever launch (no cache): release after the network attempt
         try{ updateHeaderForLogin(); }catch(e){}// custom team logo / names may have just arrived
-        loadArchiveDropdown();
-        // CUP first, then the schedule: the schedule's phase is derived from the CUP edition + match history
-        loadMbaDataFromGitHub().then(()=>loadFlowFromGitHub());
+        try{ if(typeof renderMainLeagueTable==='function') renderMainLeagueTable(); }catch(e){}
     })();
 });

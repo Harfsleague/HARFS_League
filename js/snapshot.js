@@ -20,7 +20,8 @@
         matchHistory:    'match_history.json',
         archivedSeasons: 'seasons_archive.json',
         mbaData:         'mba_history.json',
-        flowData:        'season_flow.json'
+        flowData:        'season_flow.json',
+        cardsData:       'cards_data.json'
     };
     const WAIT_MS = 3000;       // never hold the first screen longer than this for the snapshot
 

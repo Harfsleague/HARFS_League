@@ -316,20 +316,22 @@ async function liteBuildStandalone(onStep){
     const head = doc.head;
     head.querySelectorAll('noscript, link[rel="manifest"], link[rel="icon"], link[rel="apple-touch-icon"], link[rel="preconnect"]').forEach(n=>n.remove());
     const vs = doc.createElement('style'); vs.textContent = vendor; head.insertBefore(vs, head.firstChild);
-    for(const l of Array.from(doc.querySelectorAll('link[rel="stylesheet"]'))){
+    const styleLinks = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
+    await Promise.all(styleLinks.map(async l=>{
         const href = l.getAttribute('href') || '';
-        if(/^https?:/.test(href) || /(^|\/)lite-vendor\.css$/.test(href)){ l.remove(); continue; }   // the vendor CSS is already inlined above
+        if(/^https?:/.test(href) || /(^|\/)lite-vendor\.css$/.test(href)){ l.remove(); return; }
         const st = doc.createElement('style'); st.textContent = await get(href); l.replaceWith(st);
-    }
+    }));
     step('Reading the code…');
-    for(const s of Array.from(doc.querySelectorAll('script'))){
+    const scriptTags = Array.from(doc.querySelectorAll('script'));
+    await Promise.all(scriptTags.map(async s=>{
         const src = s.getAttribute('src');
-        if(!src){ if(/serviceWorker/.test(s.textContent)) s.remove(); continue; }
-        if(/^https?:/.test(src)){ s.remove(); continue; }
+        if(!src){ if(/serviceWorker/.test(s.textContent)) s.remove(); return; }
+        if(/^https?:/.test(src)){ s.remove(); return; }
         let code = await get(src);
         if(/appearance\.js$/.test(src)) code = code.split("url('fonts/${f.file}')").join("url('${(window.HARFS_LITE_FONTS && window.HARFS_LITE_FONTS.files[f.file]) || 'fonts/'+f.file}')");
         s.removeAttribute('src'); s.textContent = code.replace(/<\/script/gi, '<\\/script');
-    }
+    }));
     step('Packing the data…');
     const pkg = await liteExportPackage({ chat:false });
     Object.keys(pkg.base).forEach(p=>{ if(!pkg.files[p] || !pkg.files[p].dirty) delete pkg.base[p]; });     // a clean file's base is itself
@@ -340,8 +342,11 @@ async function liteBuildStandalone(onStep){
     const fonts = { manifest:[], files:{} };
     try{
         const manifest = JSON.parse(await get('fonts/manifest.json')); fonts.manifest = manifest;
-        for(const m of manifest){ const buf = new Uint8Array(await (await fetch('fonts/'+m.file)).arrayBuffer()); let bin = ''; for(let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i+0x8000));
-            fonts.files[m.file] = `data:font/${m.format==='woff2'?'woff2':m.format==='otf'?'otf':'ttf'};base64,${btoa(bin)}`; }
+        await Promise.all(manifest.map(async m=>{
+            const buf = new Uint8Array(await (await fetch('fonts/'+m.file)).arrayBuffer());
+            let bin = ''; for(let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i+0x8000));
+            fonts.files[m.file] = `data:font/${m.format==='woff2'?'woff2':m.format==='otf'?'otf':'ttf'};base64,${btoa(bin)}`;
+        }));
     }catch(e){ /* fonts are optional */ }
     let jsqr = ''; try{ jsqr = await get('js/vendor/jsqr.min.js'); }catch(e){}
     const esc = o=>JSON.stringify(o).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');

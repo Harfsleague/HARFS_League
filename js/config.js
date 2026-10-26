@@ -11,7 +11,7 @@ const J_MONTHS_EN=["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar
 function toEnglishDigits(s){if(!s)return s;return s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
 
 // Shown (tiny) under "Log Out" in Settings. Keep it equal to the number in CACHE_VERSION (harfs-shell-vNN) in sw.js — bump both on every update.
-const APP_VERSION="v60";
+const APP_VERSION="v61";
 const GITHUB_REPO="Harfsleague/HARFS_Data";
 const GITHUB_LEAGUE_BRANCH="main";
 const GITHUB_LEAGUE_FILE="league_data.json";
@@ -222,6 +222,35 @@ function b64Decode(b){
     const u=new Uint8Array(s.length);
     for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i);
     return new TextDecoder().decode(u);
+}
+function ghPutContent(path, contentB64, message, { sha=null, onProgress=null }={}){
+    return new Promise(resolve=>{
+        const token = ghAuthHeader();
+        if(!token){ lastSaveFileError = GH_LOGIN_MSG; resolve({ ok:false, data:null }); return; }
+        const body = { message, content:contentB64, branch:GITHUB_LEAGUE_BRANCH };
+        if(sha) body.sha = sha;
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', ghProxyUrl(`${BASE_API}${path}`));
+        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        if(xhr.upload && typeof onProgress === 'function'){
+            xhr.upload.onprogress = e=>{ if(e.lengthComputable) onProgress(e.loaded / e.total); };
+        }
+        xhr.onload = ()=>{
+            if(xhr.status >= 200 && xhr.status < 300){
+                let d = null;
+                try{ d = JSON.parse(xhr.responseText); }catch(e){}
+                resolve({ ok:true, data:d });
+            } else {
+                let msg = `GitHub error ${xhr.status}`;
+                try{ const d = JSON.parse(xhr.responseText); if(d && d.message) msg = `${xhr.status}: ${d.message}`; }catch(e){}
+                lastSaveFileError = msg;
+                resolve({ ok:false, data:null });
+            }
+        };
+        xhr.onerror = ()=>{ lastSaveFileError = 'Network error — connection dropped mid-upload'; resolve({ ok:false, data:null }); };
+        xhr.send(JSON.stringify(body));
+    });
 }
 async function workerApi(path, method, body){
     const res = await fetch(`${HARFS_AUTH_API}${path}`, {

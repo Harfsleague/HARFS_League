@@ -96,40 +96,6 @@ function seasonAnimateTitle(text, delay){
         setTimeout(()=>t.classList.remove('t-in'), 340);
     }, delay);
 }
-// Header box: tween its height from what it was to what the new content needs.
-function seasonMorphHeader(change){
-    const hdr = document.querySelector('#league-table-screen .league-header');
-    if(!hdr){ change(); return; }
-    const h0 = hdr.offsetHeight;
-    change();
-    hdr.style.height = '';                      // natural height of the new content
-    const h1 = hdr.offsetHeight;
-    if(Math.abs(h1-h0) < 2) return;
-    hdr.classList.add('hdr-anim');
-    hdr.style.height = h0+'px';
-    void hdr.offsetHeight;
-    hdr.style.height = h1+'px';
-    clearTimeout(hdr.__morphT);
-    hdr.__morphT = setTimeout(()=>{ hdr.style.height=''; hdr.classList.remove('hdr-anim'); }, 460);
-}
-
-// Same height tween as seasonMorphHeader, but the new content is already in place: the header is first put back at
-// its previous height (hdr.__h0, recorded just before the swap) and then glides to the natural height.
-function seasonMorphHeaderTo(view){
-    const hdr = document.querySelector('#league-table-screen .league-header');
-    if(!hdr || hdr.__h0==null) return;
-    const h0 = hdr.__h0; hdr.__h0 = null;
-    hdr.style.height = '';
-    const h1 = hdr.offsetHeight;
-    if(Math.abs(h1-h0) < 2) return;
-    hdr.classList.add('hdr-anim');
-    hdr.style.height = h0+'px';
-    void hdr.offsetHeight;
-    hdr.style.height = h1+'px';
-    clearTimeout(hdr.__morphT);
-    hdr.__morphT = setTimeout(()=>{ hdr.style.height=''; hdr.classList.remove('hdr-anim'); }, 460);
-}
-
 function seasonShowView(view, opts){
     opts = opts || {};
     if(!SEASON_VIEW_TITLES[view]) view = 'main';

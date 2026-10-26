@@ -96,9 +96,6 @@ function openAiPanel(){
     // no auto-focus on purpose: the keyboard must only appear after the user taps "Type your message…"
     const inp0=document.getElementById('ai-chat-input'); if(inp0) inp0.blur();
 }
-function closeAiPanel(){
-    navigate('main-league');
-}
 function openAiSettings(){
     document.getElementById('ai-full-data-toggle').checked = aiFullData;
     document.getElementById('ai-settings-modal').classList.add('open');

@@ -27,9 +27,9 @@ body.fx-paused .ambient-orb{ animation-play-state:paused; }
 /* 2. SURFACES — flat and solid (no blur, no glass) --------------------- */
 :is(
     .league-header,.table-wrap,.season-history-card,.weird-card,.admin-section,
-    .ranking-card,.stat-card,.glass-button,.glass-input,.ai-panel,
+    .ranking-card,.glass-button,.glass-input,.ai-panel,
     .bottom-nav,.season-subnav,.back-to-top-fab,
-    .team-picker-panel,.appearance-panel,.modal-content,.login-panel,.settings-screen-panel,
+    .team-picker-panel,.appearance-panel,.modal-content,.login-panel,
     .settings-page-tile,.music-player,.team-panel-section,.coin-log-row
 ){
     background-color:var(--bg-mid);

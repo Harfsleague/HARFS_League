@@ -475,14 +475,6 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 .ranking-card.rank-3 .ranking-name { color:#e5e7eb; }
 /* ranking-sublabel removed */
 
-/* points */
-.ranking-pts-block { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
-.ranking-pts-num { font-size:1.45rem; font-weight:900; line-height:1; }
-.ranking-card.rank-1 .ranking-pts-num { color:var(--gold); text-shadow:0 0 10px rgba(251,191,36,0.4); }
-.ranking-card.rank-2 .ranking-pts-num { color:var(--silver); }
-.ranking-card.rank-3 .ranking-pts-num { color:#d97706; }
-.ranking-card.rank-other .ranking-pts-num { color:#9ca3af; font-size:1.2rem; }
-.ranking-pts-lbl { font-size:0.52rem; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
 
 /* Overall screen now ranks by trophies (medal-table style) instead of a
    points number — see computeTrophyCounts()/compareTrophies() in the JS. */
@@ -739,12 +731,6 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);z-index:10;
 }
 .profile-body{padding:50px 20px 20px;}
-.stat-card{
-    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
-    border-radius:16px;padding:12px 8px;text-align:center;
-}
-.stat-card .stat-val{font-size:1.6rem;font-weight:900;line-height:1.1;}
-.stat-card .stat-lbl{font-size:0.6rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
 
 /* =====================================================
    BOTTOM SHEETS (.team-picker-sheet / .team-picker-panel)
@@ -834,15 +820,6 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 .admin-section-bar{height:3px;width:100%;}
 .admin-section-body{padding:14px;}
 .admin-section h3{font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center;}
-#match-preview{
-    background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);
-    border-radius:14px;padding:10px 14px;margin-top:12px;
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-}
-.preview-team{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
-.preview-team img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);}
-.preview-team span{font-size:0.63rem;font-weight:700;text-align:center;color:#d1d5db;}
-.preview-score{font-size:1.3rem;font-weight:900;color:var(--gold);letter-spacing:2px;text-align:center;}
 
 /* =====================================================
    MISC
@@ -940,36 +917,10 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     font-size:0.58rem;font-weight:800;color:#fff;
     background:rgba(0,0,0,0.65);padding:1px 5px;border-radius:999px;
 }
-.weird-card-images{display:flex;gap:8px;}
-.weird-img-thumb{
-    flex:1;border-radius:14px;overflow:hidden;
-    cursor:pointer;position:relative;
-    background:rgba(0,0,0,0.3);
-    border:1px solid rgba(255,255,255,0.08);
-    aspect-ratio:16/9;
-    transition:transform 0.2s;
-}
-.weird-img-thumb:active{transform:scale(0.96);}
-.weird-img-thumb img{
-    width:100%;height:100%;object-fit:cover;display:block;
-}
-.weird-img-thumb::after{
-    content:'\f00e';font-family:'Font Awesome 6 Free';font-weight:900;
-    position:absolute;bottom:6px;right:8px;
-    font-size:0.72rem;color:rgba(255,255,255,0.6);
-    background:rgba(0,0,0,0.45);padding:3px 6px;border-radius:6px;
-}
-.weird-img-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
 .weird-thumb-video::after{content:none;}
 .weird-thumb-placeholder{
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     background:rgba(255,255,255,0.04);color:#4b5563;font-size:1.3rem;
-}
-.weird-video-play-icon{
-    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-    font-size:1.4rem;color:rgba(255,255,255,0.9);
-    background:rgba(0,0,0,0.45);width:34px;height:34px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
 }
 .weird-card-audio-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
 .weird-audio-card{
@@ -1095,14 +1046,6 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     z-index:3;
 }
 
-/* ============ NAV ADMIN → WEIRD EVENTS TRANSITION ============ */
-#nav-admin{transition:all 0.4s ease;}
-#nav-admin.admin-revealed{
-    background:rgba(139,92,246,0.2)!important;
-    color:#c4b5fd!important;
-    border:1px solid rgba(139,92,246,0.4)!important;
-    box-shadow:0 0 14px rgba(139,92,246,0.3)!important;
-}
 
 /* overall hold — no visual ring, silent */
 #nav-main{position:relative;}
@@ -1181,7 +1124,6 @@ body.lite-mode .glass-button,
 body.lite-mode .glass-input,
 body.lite-mode .ranking-card,
 body.lite-mode .team-picker-panel,
-body.lite-mode .stat-card,
 body.lite-mode .toast {
     background-color:var(--bg-mid) !important;
     background-image:none !important;
@@ -1229,9 +1171,7 @@ body.perf-no-blur .glass-button,
 body.perf-no-blur .glass-input,
 body.perf-no-blur .ranking-card,
 body.perf-no-blur .team-picker-panel,
-body.perf-no-blur .stat-card,
 body.perf-no-blur .toast,
-body.perf-no-blur .settings-screen-panel,
 body.perf-no-blur .login-panel{
     background-color:var(--bg-mid) !important;
     background-image:none !important;
@@ -1296,12 +1236,6 @@ body.perf-no-anim .nav-item{ transition:none !important; }
 .perf-toggle.on{ background:var(--primary); border-color:var(--primary); }
 .perf-toggle.on::after{ transform:translateX(18px); }
 
-.settings-close-btn{
-    width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;
-    background:rgba(255,255,255,0.08); color:#e5e7eb; display:flex;align-items:center;justify-content:center;
-    font-size:0.72rem;
-}
-.settings-close-btn:active{ transform:scale(0.9); }
 
 /* =====================================================
    SETTINGS SCREEN — full page (promoted from the old small
@@ -1338,7 +1272,6 @@ body.perf-no-anim .nav-item{ transition:none !important; }
    settings row — margin-left:auto pushes it flush right regardless of
    how long the row's own label is. */
 .settings-row-trailing{ margin-left:auto; display:flex; align-items:center; gap:8px; color:#4b5563; font-size:0.72rem; }
-.settings-row-value{ color:#6b7280; font-size:0.66rem; font-weight:700; }
 .settings-section-label{
     font-size:0.62rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase;
     color:#6b7280; margin:16px 4px 8px;
@@ -1691,10 +1624,6 @@ body.perf-no-shadow .back-to-top-fab{ box-shadow:none; }
     color:#0b1220; font-weight:700;
 }
 .ai-msg .ai-table tr:nth-child(even) td{ background:rgba(255,255,255,0.04); }
-.ai-msg.system-hint{
-    align-self:center; background:rgba(255,255,255,0.03); color:#6b7280;
-    font-size:0.68rem; text-align:center; border-radius:12px; max-width:92%;
-}
 .ai-typing-row{ align-self:flex-end; display:flex; }
 .ai-typing-dots{
     display:flex; gap:4px; padding:14px 16px; background:rgba(255,255,255,0.06);
@@ -2101,7 +2030,7 @@ body.lite-mode .mp-art.playing::after,body.lite-mode .mp-art.playing .mp-eq b{ a
 /* filter chips centred */
 #season-history-filter-bar{ justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
 /* dot + side stripe of the match blocks are gone; the block colour alone shows the result */
-.mcm-dot,.match-card-mini::before{ display:none !important; }
+.match-card-mini::before{ display:none !important; }
 
 /* the match block itself carries the result colour (beats the flat !important
    backgrounds of perf-no-blur / lite-mode by specificity) */
@@ -2119,8 +2048,6 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 .people-info{ flex:1; min-width:0; }
 .people-name{ font-size:0.9rem; font-weight:900; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .people-role{ font-size:0.68rem; font-weight:700; color:var(--pa,#9ca3af); margin-top:2px; }
-.people-teams{ display:flex; gap:4px; flex-shrink:0; }
-.people-team-logo{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15); }
 
 /* ---- Login: second group (President / Owners / Fan) + scroll safety ---- */
 .login-panel{ max-height:90vh; overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; }

@@ -467,15 +467,6 @@ function toggleAiAssistant(){
 }
 syncAiAssistantUI(); // apply the saved choice on startup
 
-function openSettings(){
-    navigate('settings');
-}
-function closeSettings(){ /* Settings is a full page now — nothing to close */ }
-function settingsToggleMusic(){
-    toggleMusic();
-    syncSettingsUI();
-}
-
 // Populates the Settings screen each time it's navigated to: team
 // badge, admin tile visibility (Bayern only), current toggle states.
 function renderSettingsScreen(){

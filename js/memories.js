@@ -717,30 +717,9 @@ function resetWeirdSaveBtn(){
 // under GitHub's real-world PUT size ceiling, regardless of how
 // many or how long the videos are.
 // ============================================================
-function uploadMomentMediaFile(path,dataUrlString,onProgress){
-    return new Promise(resolve=>{
-        const token=ghAuthHeader();
-        if(!token){lastSaveFileError=GH_LOGIN_MSG;resolve(false);return;}
-        const body={message:'Golden Moment media',content:b64Encode(dataUrlString),branch:GITHUB_LEAGUE_BRANCH};
-        const xhr=new XMLHttpRequest();
-        xhr.open('PUT',ghProxyUrl(`${BASE_API}${path}`));
-        xhr.setRequestHeader('Authorization',token);
-        xhr.setRequestHeader('Content-Type','application/json');
-        if(xhr.upload&&typeof onProgress==='function'){
-            xhr.upload.onprogress=e=>{ if(e.lengthComputable)onProgress(e.loaded/e.total); };
-        }
-        xhr.onload=()=>{
-            if(xhr.status>=200&&xhr.status<300){resolve(true);}
-            else{
-                let msg=`GitHub error ${xhr.status}`;
-                try{const d=JSON.parse(xhr.responseText);if(d&&d.message)msg=`${xhr.status}: ${d.message}`;}catch(e){}
-                lastSaveFileError=msg;
-                resolve(false);
-            }
-        };
-        xhr.onerror=()=>{lastSaveFileError='Network error — connection dropped mid-upload';resolve(false);};
-        xhr.send(JSON.stringify(body));
-    });
+async function uploadMomentMediaFile(path,dataUrlString,onProgress){
+    const r = await ghPutContent(path, b64Encode(dataUrlString), 'Golden Moment media', { onProgress });
+    return r.ok;
 }
 const momentMediaCache={}; // path -> data URL string, so re-opening the same item this session doesn't re-download it
 function fetchMomentMediaFile(path){

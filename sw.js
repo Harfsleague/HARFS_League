@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v60';
+const CACHE_VERSION = 'harfs-shell-v61';
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -31,12 +31,7 @@ const CACHE_VERSION = 'harfs-shell-v60';
 // These are effectively immutable once uploaded, so cache-first (with a
 // silent background refresh) is safe and avoids ever re-downloading them.
 const IMAGE_CACHE_VERSION = 'harfs-images-v2';
-// Tailwind + Font Awesome (the two big CDN stylesheets) and Font Awesome's web-font files. They were never cached
-// before — every cold start re-downloaded ~300 KB of CSS from a CDN (slow start, and no styling at all when opened
-// offline). Pinned versions never change, so cache-first is safe.
-const CDN_CACHE_VERSION = 'harfs-cdn-v1';
-const CDN_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
-const IMAGE_CACHE_HOSTS = ['raw.githubusercontent.com', 'media.api-sports.io'];
+const IMAGE_CACHE_HOSTS = ['raw.githubusercontent.com'];
 const APP_SHELL = [
   './',
   './index.html',
@@ -108,7 +103,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  const keep = [CACHE_VERSION, IMAGE_CACHE_VERSION, CDN_CACHE_VERSION];
+  const keep = [CACHE_VERSION, IMAGE_CACHE_VERSION];
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => !keep.includes(k)).map(k => caches.delete(k))))
@@ -145,19 +140,6 @@ self.addEventListener('fetch', event => {
           }).catch(() => cached);
           return cached || network;
         })
-      )
-    );
-    return;
-  }
-
-  // CDN stylesheets / fonts: cache-first (opaque no-cors responses are fine to store and to replay for the same request).
-  if(CDN_HOSTS.includes(url.hostname)){
-    event.respondWith(
-      caches.open(CDN_CACHE_VERSION).then(cache =>
-        cache.match(req).then(cached => cached || fetch(req).then(res => {
-          if(res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
-          return res;
-        }))
       )
     );
     return;

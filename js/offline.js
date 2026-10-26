@@ -106,10 +106,7 @@ async function cacheTeamLogo(team){
 // every session, only the first time (or after a manual re-sync).
 async function ensureTeamLogosCached(){
     if(!navigator.onLine) return;
-    for(const team of TEAM_NAMES){
-        if(teamLogoDataUrls[team]) continue;
-        await cacheTeamLogo(team);
-    }
+    await Promise.all(TEAM_NAMES.filter(t => !teamLogoDataUrls[t]).map(cacheTeamLogo));
 }
 
 // ============================================================

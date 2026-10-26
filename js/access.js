@@ -17,22 +17,39 @@ function canAddMoment(){ return isFullAdmin() || !!harfsPerms.moments; }
 function canEditCards(){ return isFullAdmin() || !!harfsPerms.cards; }
 function hasAnyTool(){ return canManageMusic() || canAddMoment(); }
 
+let _permsInFlight = null;
+let _permsCheckedAt = 0;
+let _permsCheckedTeam = null;
 // Asks the Worker what the logged-in account may do (called on login / app start).
-async function refreshMyPerms(){
-    sessionsLastCheck = Date.now();
-    harfsIsAdmin = false;
-    harfsPerms = { music:false, moments:false, cards:false };
-    if(loggedInTeam && harfsSessionToken){
+// Deduplicated so back-to-back updateHeaderForLogin() calls during boot only hit /me once.
+async function refreshMyPerms(force = false){
+    if(!loggedInTeam || !harfsSessionToken){
+        _permsCheckedTeam = null; _permsCheckedAt = 0;
+        harfsIsAdmin = false;
+        harfsPerms = { music:false, moments:false, cards:false };
+        if(typeof renderSettingsScreen === 'function') renderSettingsScreen();
+        return;
+    }
+    if(!force && _permsCheckedTeam === loggedInTeam && (Date.now() - _permsCheckedAt) < 15000){
+        if(typeof renderSettingsScreen === 'function') renderSettingsScreen();
+        return;
+    }
+    if(!force && _permsInFlight) return _permsInFlight;
+    _permsInFlight = (async()=>{
+        sessionsLastCheck = Date.now();
         try{
             const res = await fetch(`${HARFS_AUTH_API}/me`, { headers:{ Authorization: ghAuthHeader() } });
             const d = await res.json().catch(()=>({}));
             if(res.ok && d.ok){
                 harfsIsAdmin = !!d.isAdmin;
                 harfsPerms = { music: !!d.perms?.music, moments: !!d.perms?.moments, cards: !!d.perms?.cards };
+                _permsCheckedTeam = loggedInTeam;
+                _permsCheckedAt = Date.now();
             }
         }catch(e){ /* offline: keep everything locked, the Worker enforces anyway */ }
-    }
-    if(typeof renderSettingsScreen === 'function') renderSettingsScreen();
+        if(typeof renderSettingsScreen === 'function') renderSettingsScreen();
+    })().finally(()=>{ _permsInFlight = null; });
+    return _permsInFlight;
 }
 
 // Shows only the admin-screen sections this account may use.

@@ -209,12 +209,5 @@ function setupOverallHold(){
     navMain.addEventListener('click',()=>navigate('main-league'));
 }
 
-// Kept as a no-op shim: exitAdmin() and a couple of older call sites
-// still reference this when leaving the admin dashboard.
-function hideAdminButton(){
-    const adminScreen=document.getElementById('admin-screen');
-    if(adminScreen&&adminScreen.classList.contains('active')){
-        navigate('settings');
-    }
-}
+
 

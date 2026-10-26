@@ -128,9 +128,7 @@ body[data-season-view="schedule"] #ssec-history{ display:none; }
 .season-title.t-out{ opacity:0; transform:translateY(-10px); filter:blur(3px); }
 .season-title.t-in{ animation:titleIn .3s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes titleIn{ from{ opacity:0; transform:translateY(10px); filter:blur(3px); } to{ opacity:1; transform:none; filter:none; } }
-#league-table-screen .league-header.hdr-anim{ overflow:hidden; transition:height .4s cubic-bezier(.22,1,.36,1); }
-body.perf-no-anim .season-title,
-body.perf-no-anim #league-table-screen .league-header.hdr-anim{ transition:none !important; animation:none !important; }
+body.perf-no-anim .season-title{ transition:none !important; animation:none !important; }
 
 /* League | Cup bar — built to look exactly like the bottom nav (same glass, rim, sheen, lens, refraction:
    see css/effects.css). It sits in its own row ABOVE the bottom
@@ -154,7 +152,6 @@ body.perf-no-anim #league-table-screen .league-header.hdr-anim{ transition:none 
 .bottom-nav.active + .season-subnav.show{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0) scale(1); transition-delay:.1s, .1s; }
 /* keep the floating extras clear of the bar while it is out */
 body.season-subnav-on .season-fab{ bottom:150px; }
-body.season-subnav-on .mini-player{ bottom:148px; }
 body.season-subnav-on #league-table-screen{ padding-bottom:170px; }
 body.perf-no-anim .season-subnav,
 body.perf-no-anim #season-sections{ transition:none !important; animation:none !important; }
@@ -240,23 +237,10 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .cb-name.cancelled{ text-decoration:line-through; color:#f87171; }
 .cb-note{ font-size:.54rem; font-weight:700; color:#fbbf24; }
 .cb-none{ font-size:.62rem; color:#6b7280; }
-.cb-warn{ font-size:.54rem; color:#fca5a5; font-weight:800; }
-.cb-select{ width:100%; font-size:.6rem; padding:4px 6px; border-radius:8px; background:rgba(15,23,42,.85); color:#e2e8f0; border:1px solid rgba(255,255,255,.12); }
 #mba-result-cards{ width:100%; }
 #mba-result-cards .cd-match{ margin:6px 0 4px; }
 
 /* admin: Cards section */
-.ca-team{ background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:8px 10px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px; }
-.ca-team-head{ display:flex; align-items:center; gap:8px; font-size:.78rem; color:#f1f5f9; }
-.ca-team-head img{ width:22px; height:22px; border-radius:50%; object-fit:cover; }
-.ca-team-head span{ font-size:.66rem; color:#9ca3af; }
-.ca-team-head em{ font-style:normal; font-size:.62rem; color:#fca5a5; font-weight:800; margin-inline-start:auto; }
-.ca-card{ display:flex; align-items:center; gap:8px; padding:4px; border-radius:10px; }
-.ca-card.active{ background:rgba(34,197,94,.08); }
-.ca-card img{ width:30px; aspect-ratio:5/7; object-fit:cover; border-radius:5px; cursor:zoom-in; }
-.ca-nm{ flex:1; min-width:0; font-size:.72rem; font-weight:800; color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.ca-b{ font-size:.58rem; font-weight:800; padding:5px 8px; border-radius:9px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#e2e8f0; cursor:pointer; }
-.ca-x{ color:#f87171; }
 .ca-deck{ display:grid; grid-template-columns:repeat(auto-fill,minmax(74px,1fr)); gap:8px; }
 .ca-deck-item{ position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; }
 .ca-deck-item img{ width:100%; aspect-ratio:5/7; object-fit:cover; border-radius:10px; border:1px solid rgba(255,255,255,.12); }
@@ -289,8 +273,6 @@ body.ai-disabled .ov-tile-ai{ display:none !important; }
 .cd-lock{ display:flex; align-items:center; justify-content:center; gap:6px; font-size:.58rem; font-weight:700; color:#94a3b8; margin:0 0 10px; }
 .cd-lock button{ background:none; border:none; color:#93c5fd; font-size:.7rem; padding:2px 6px; cursor:pointer; }
 .cd-lock.cd-nocards{ color:#fbbf24; background:rgba(251,191,36,.08); border:1px dashed rgba(251,191,36,.35); border-radius:10px; padding:7px 10px; margin:6px 0 10px; }
-.cd-free{ display:inline-block; margin-inline-start:5px; font-size:.48rem; font-weight:900; letter-spacing:.4px; text-transform:uppercase; color:#86efac; background:rgba(34,197,94,.14); border-radius:999px; padding:1px 5px; vertical-align:middle; }
-.cards-team .cards-no-count{ color:#86efac; }
 .game-cards{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-top:6px; }
 .gc-chip{ display:inline-flex; align-items:center; gap:4px; font-size:.56rem; color:#e9d5ff; background:rgba(167,139,250,.12); border:1px solid rgba(167,139,250,.35); border-radius:999px; padding:2px 8px 2px 3px; max-width:100%; }
 .gc-chip img{ width:13px; aspect-ratio:5/7; object-fit:cover; border-radius:3px; }
