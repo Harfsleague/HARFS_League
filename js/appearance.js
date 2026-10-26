@@ -478,7 +478,7 @@ function renderSettingsScreen(){
     const badgeName=document.getElementById('settings-team-badge-name');
     const subtitle=document.getElementById('settings-account-subtitle');
     const logoutTile=document.getElementById('settings-logout-tile');
-    const verEl=document.getElementById('settings-app-version'); if(verEl) verEl.textContent='HARFS '+APP_VERSION;
+    const verEl=document.getElementById('settings-app-version'); if(verEl) verEl.textContent='HARFS '+String(APP_VERSION).replace(/^v?(\d+)$/i,(_,n)=>'v'+(Number(n)/10).toFixed(1));
     const signinTile=document.getElementById('settings-signin-tile');
     if(loggedInTeam){
         if(badgeLogo) badgeLogo.src=`${teamLogoUrl(loggedInTeam)}`;
