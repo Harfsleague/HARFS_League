@@ -164,121 +164,113 @@ body {
 }
 
 /* =====================================================
-   HERO LOGO
+   HERO LOGO — Continuous 120fps GPU-composited intro
    ===================================================== */
-/* Hero logo block is now clickable to toggle theme */
 #hero-logo-container {
-    position:fixed; top:50%; left:50%;
-    transform:translate(-50%,-50%);
-    z-index:200;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    pointer-events:none;
-    /* Initial state — invisible, no box yet */
-    opacity:0;
+    --intro-y: calc(50vh - 55.5px);
+    position: fixed;
+    top: 22px;
+    left: 50%;
+    transform: translate3d(-50%, var(--intro-y), 0) scale(1.12);
+    z-index: 200;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: none;
+    opacity: 0;
     background: transparent;
     border-radius: 28px;
-    padding: 8px 30px;
+    padding: 9px 30px;
     border: 1px solid transparent;
     box-shadow: none;
     min-width: 220px;
-    /* No transition yet — JS will add class to trigger animations */
+    min-height: 67px;
+    overflow: hidden;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+@supports (height: 100dvh) {
+    #hero-logo-container { --intro-y: calc(50dvh - 55.5px); }
 }
 
-/* Phase 1: Box forms in place (JS adds .box-forming) */
+/* Phase 1: Capsule blooms smoothly in the center of the screen */
 #hero-logo-container.box-forming {
     opacity: 1;
+    transform: translate3d(-50%, var(--intro-y), 0) scale(1.36);
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.12);
     border-top: 1px solid rgba(255,255,255,0.22);
     border-left: 1px solid rgba(255,255,255,0.22);
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 12px rgba(255,255,255,0.03);
     transition:
-        opacity 0.5s ease,
-        background 0.6s ease,
-        border-color 0.5s ease,
-        box-shadow 0.7s ease;
+        opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 0.55s ease,
+        border-color 0.55s ease,
+        box-shadow 0.6s ease;
 }
-/* Phase 2: Move to header (JS adds .in-header) */
+/* Phase 2: Glides continuously to the top header on a single GPU transform curve */
 #hero-logo-container.in-header {
-    pointer-events:auto; cursor:pointer;
-    top:22px; 
-    transform:translate(-50%,0);
+    pointer-events: auto; cursor: pointer;
     opacity: 1;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.1);
-    border-top:1px solid rgba(255,255,255,0.22);
-    border-left:1px solid rgba(255,255,255,0.22);
-    border-radius:28px; padding:9px 30px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 0 12px rgba(255,255,255,0.03);
-    min-width:220px;
-    transition: top 0.9s cubic-bezier(0.25,0.46,0.45,0.94),
-                transform 0.9s cubic-bezier(0.25,0.46,0.45,0.94),
-                border-radius 0.6s ease,
-                padding 0.6s ease,
-                min-width 0.35s ease,
-                box-shadow 0.6s ease,
-                opacity 0.4s ease;
+    transform: translate3d(-50%, 0, 0) scale(1);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-top: 1px solid rgba(255,255,255,0.22);
+    border-left: 1px solid rgba(255,255,255,0.22);
+    border-radius: 28px; padding: 9px 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 12px rgba(255,255,255,0.03);
+    min-width: 220px;
+    min-height: 67px;
+    transition:
+        transform 0.95s cubic-bezier(0.22, 1, 0.36, 1),
+        min-width 0.35s ease,
+        box-shadow 0.6s ease,
+        background-color 0.5s ease,
+        border-color 0.5s ease,
+        opacity 0.4s ease;
 }
 
-/* hero/subtext styles shared */
+/* hero/subtext styles — constant geometry so zero snap occurs between Phase 1 & Phase 2 */
 .hero-text {
-    font-size:4rem; font-weight:800; letter-spacing:10px;
+    font-size: 1.8rem; font-weight: 800; letter-spacing: 4px;
+    display: inline-block;
     background: var(--hero-grad);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    animation:glowPulse 5s infinite ease-in-out;
-    opacity:0;
-    transform: translateY(12px);
-    transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+    transition: opacity 0.45s ease 0.06s, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.06s;
 }
 #hero-logo-container.box-forming .hero-text,
 #hero-logo-container.in-header .hero-text {
-    opacity:1; transform:translateY(0);
+    opacity: 1; transform: translate3d(0, 0, 0);
 }
-@keyframes glowPulse {
-    0%,100%{filter:drop-shadow(0 0 8px var(--primary-glow)); transform:scale(1);}
-    50%{filter:drop-shadow(0 0 20px var(--primary-glow)); transform:scale(1.03);}
-}
-.hero-subtext {
-    font-size:0.85rem; color:var(--hero-sub); opacity:0;
-    margin-top:-8px; letter-spacing:4px; text-transform:uppercase;
-    transform:translateY(12px);
-    transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
-}
-#hero-logo-container.box-forming .hero-subtext,
-#hero-logo-container.in-header .hero-subtext {
-    opacity:1; transform:translateY(0);
-}
-#hero-logo-container.in-header .hero-text{
-    font-size:1.8rem;letter-spacing:4px;
-    display:inline-block;
-    animation:harfsBreathe 6s ease-in-out infinite;
+#hero-logo-container.in-header .hero-text {
+    animation: harfsBreathe 6s ease-in-out infinite;
 }
 @keyframes harfsBreathe{
     0%,100%{ transform:scale(1); }
     50%{ transform:scale(1.04); }
 }
 body.perf-no-anim #hero-logo-container.in-header .hero-text{ animation:none; }
-#hero-logo-container.in-header .hero-subtext{font-size:0.65rem;margin-top:-2px;}
+.hero-subtext {
+    font-size: 0.65rem; color: var(--hero-sub); opacity: 0;
+    margin-top: -2px; letter-spacing: 4px; text-transform: uppercase;
+    transform: translate3d(0, 6px, 0);
+    transition: opacity 0.45s ease 0.16s, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.16s;
+}
+#hero-logo-container.box-forming .hero-subtext,
+#hero-logo-container.in-header .hero-subtext {
+    opacity: 1; transform: translate3d(0, 0, 0);
+}
 
 /* =====================================================
    HARFS CAPSULE — notification face
-   The capsule (#hero-logo-container) doubles as the app's in-app
-   notification surface: .hero-capsule-brand (the wordmark) and
-   .hero-capsule-notif (one message at a time) are stacked on top of
-   each other and crossfade via the .showing-notif class, which
-   showToast() (js/ui-common.js) toggles. Both are absolutely
-   positioned within the capsule so swapping between them never
-   changes the pill's own size — only .in-header gets a fixed height,
-   since that's the only state either face is ever shown in.
    ===================================================== */
-#hero-logo-container.in-header{ min-height:67px; }
 #hero-logo-container.in-header.showing-notif{ min-width:260px; }
 .hero-capsule-face{
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     transition:opacity 0.32s ease, transform 0.32s ease;
 }
-#hero-logo-container:not(.in-header) .hero-capsule-brand{ position:static; inset:auto; }
 #hero-logo-container:not(.in-header) .hero-capsule-notif{ display:none; }
 .hero-capsule-brand{ flex-direction:column; }
 /* Hidden by default; only .in-header.showing-notif reveals it — this
@@ -1055,17 +1047,8 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 /* =====================================================
    HERO HEADER CLICKABLE HINT
    ===================================================== */
-/* Hero header clickable hint */
-#hero-logo-container.in-header:hover {
-    background:rgba(255,255,255,0.07) !important;
-}
-/* hover shadow only when no sync halo is showing — otherwise it would
-   wipe the halo (see SYNC STATUS block near the end of this file) */
-#hero-logo-container.in-header:not([class*="sync-"]):hover {
-    box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 0 12px rgba(255,255,255,0.05) !important;
-}
 #hero-logo-container.in-header:active {
-    transform:translate(-50%,0) scale(0.97);
+    transform:translate3d(-50%,0,0) scale(0.97);
 }
 /* =====================================================
    LIQUID GLASS — structural bits only. The old looping "sheen"
@@ -1770,23 +1753,12 @@ body.perf-no-anim #hero-logo-container.in-header.sync-syncing{
     width:95%;margin:0 auto 12px;padding:13px 15px 11px;
     position:sticky;top:6px;z-index:15;
     border-radius:22px;
-    background-color:color-mix(in srgb,var(--bg-mid) 74%,rgba(6,10,18,0.65));
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0) 32%),
-        linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 45%,color-mix(in srgb,var(--primary) 8%,transparent) 100%);
-    border:1px solid rgba(255,255,255,0.09);
-    border-top-color:rgba(255,255,255,0.22);
-    border-bottom-color:rgba(0,0,0,0.5);
-    box-shadow:0 12px 28px -6px rgba(0,0,0,0.55),inset 0 1px 0 0 rgba(255,255,255,0.18),inset 0 -1px 0 0 rgba(0,0,0,0.4);
-    backdrop-filter:blur(14px) saturate(140%);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    background-color:var(--bg-mid);
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
 }
 .magazine-panel-header-row{display:flex;align-items:center;gap:10px;}
-.magazine-panel-header::after{
-    content:'';position:absolute;top:0;left:16px;right:16px;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.38),transparent);
-    pointer-events:none;
-}
+.magazine-panel-header::after{ display:none; }
 .magazine-issue-nav{
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;
 }

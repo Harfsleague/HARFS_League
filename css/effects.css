@@ -1,33 +1,16 @@
 /* =====================================================================
-   DARK CRYSTAL GLASS & DYNAMIC EFFECTS ENGINE (pairs with js/match-history-fx.js)
+   EFFECTS & CAPSULE LIQUID GLASS (pairs with js/match-history-fx.js)
    ---------------------------------------------------------------------
-   Designed for 120fps mobile smoothness + deep, high-contrast dark theme:
-   1. Zero-jank performance:
-      - `backdrop-filter: blur(14px)` is applied ONLY to the 4 fixed/sticky
-        floating bars that content actually scrolls underneath (#hero-logo-container,
-        .bottom-nav, .season-subnav, #season-history-filter-bar).
-      - Scrolling blocks and cards NEVER use expensive per-card backdrop-filter.
-   2. 3D Dark Smoked Glass Blocks:
-      - Deep obsidian theme-tinted base (keeps the theme dark, rich, and sharp)
-      - Crisp 1px cut-glass top bevel highlight + dark bottom thickness edge
-      - Subtle angled glass-pane reflection across the top-left surface
+   1. Background Orbs
+   2. Permanent Liquid Glass ONLY on the two main capsules:
+      - Top HARFS Capsule (#hero-logo-container)
+      - Bottom 4-Tab Navigation Capsule (#bottom-navigation / .bottom-nav)
+      All other blocks, cards, headers, and modals use clean, fast, flat
+      dark surfaces (--bg-mid) with zero glass overhead.
    3. Match History Dynamic Aurora, Winner Glow & Row Reveal
    ===================================================================== */
 
-:root{
-    --lg-ease:cubic-bezier(.22,1,.36,1);
-    /* 3D cut-glass bevel shadows (zero GPU blur cost) */
-    --lg-block-bevel:
-        inset 0 1px 0 0 rgba(255,255,255,0.18),
-        inset 1px 0 0 0 rgba(255,255,255,0.06),
-        inset 0 -1px 0 0 rgba(0,0,0,0.50),
-        inset 0 12px 22px -12px rgba(255,255,255,0.06);
-    --lg-tile-bevel:
-        inset 0 1px 0 0 rgba(255,255,255,0.15),
-        inset 1px 0 0 0 rgba(255,255,255,0.05),
-        inset 0 -1px 0 0 rgba(0,0,0,0.42),
-        inset 0 8px 16px -10px rgba(255,255,255,0.05);
-}
+:root{ --lg-ease:cubic-bezier(.22,1,.36,1); }
 
 /* 1. BACKGROUND ORBS -------------------------------------------------- */
 .ambient-orb{
@@ -44,274 +27,79 @@
 body.fx-paused .ambient-orb{ animation-play-state:paused; }
 @media (prefers-reduced-motion:reduce){ .ambient-orb{ animation:none !important; } }
 
-/* 2. DARK SMOKED CRYSTAL GLASS BLOCKS --------------------------------- */
+/* 2. SURFACES --------------------------------------------------------- */
 
-/* Keep all header capsules at their full natural height inside flex-column screens */
+/* 2a. Flat, solid dark surfaces for all blocks, cards, headers, and sheets */
 .league-header{
     position:relative;
     flex-shrink:0 !important;
 }
+:is(
+    .league-header,.table-wrap,.season-history-card,.weird-card,.admin-section,
+    .ranking-card,.glass-button,.glass-input,.ai-panel,
+    .season-subnav,.back-to-top-fab,
+    .team-picker-panel,.appearance-panel,.modal-content,.login-panel,
+    .settings-page-tile,.music-player,.team-panel-section,.coin-log-row
+){
+    background-color:var(--bg-mid);
+    background-image:none;
+}
+.glass-button,.chip{ position:relative; overflow:hidden; }
 
-/* 2a. Floating Overlay Bars ONLY (the only elements with backdrop-filter):
-   HARFS Capsule, Bottom Nav, Season Subnav, Back-to-Top FAB */
+/* 2b. PERMANENT LIQUID GLASS — ONLY on #hero-logo-container and #bottom-navigation (.bottom-nav) */
 body:not(.lite-mode):not(.perf-no-blur) :is(
-    #hero-logo-container.in-header,
     #hero-logo-container.box-forming,
-    .bottom-nav,
-    .season-subnav,
-    .back-to-top-fab
+    #hero-logo-container.in-header,
+    #bottom-navigation.bottom-nav
 ){
-    background-color:color-mix(in srgb,var(--bg-mid) 72%,rgba(4,8,16,0.68));
+    background-color:color-mix(in srgb,var(--bg-mid) 34%,rgba(255,255,255,0.08)) !important;
     background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.09) 0%,rgba(255,255,255,0) 38%),
-        linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 48%,color-mix(in srgb,var(--primary) 8%,transparent) 100%);
-    backdrop-filter:blur(14px) saturate(140%);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
-    border:1px solid rgba(255,255,255,0.09);
-    border-top-color:rgba(255,255,255,0.22);
-    border-bottom-color:rgba(0,0,0,0.55);
+        radial-gradient(120% 95% at 18% 0%,rgba(255,255,255,0.26) 0%,rgba(255,255,255,0.05) 42%,transparent 72%),
+        linear-gradient(135deg,rgba(255,255,255,0.16) 0%,rgba(255,255,255,0.03) 48%,color-mix(in srgb,var(--primary) 16%,transparent) 100%) !important;
+    backdrop-filter:blur(22px) saturate(190%) brightness(1.05) !important;
+    -webkit-backdrop-filter:blur(22px) saturate(190%) brightness(1.05) !important;
+    border:1px solid rgba(255,255,255,0.18) !important;
+    border-top-color:rgba(255,255,255,0.46) !important;
+    border-left-color:rgba(255,255,255,0.30) !important;
 }
-body:not(.lite-mode):not(.perf-no-shadow) :is(
-    .bottom-nav,
-    .season-subnav,
-    .back-to-top-fab
-){
+body:not(.lite-mode):not(.perf-no-shadow) #bottom-navigation.bottom-nav,
+body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.box-forming,
+body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.in-header:not([class*="sync-"]){
     box-shadow:
-        0 14px 34px -4px rgba(0,0,0,0.62),
-        var(--lg-block-bevel);
-}
-body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.in-header:not([class*="sync-"]),
-body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.box-forming{
-    box-shadow:
-        0 12px 30px -4px rgba(0,0,0,0.58),
-        var(--lg-block-bevel);
+        0 14px 36px -4px rgba(0,0,0,0.48),
+        inset 0 1.5px 1px 0 rgba(255,255,255,0.42),
+        inset 1px 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 1px 0 rgba(255,255,255,0.10),
+        inset 0 0 20px 0 color-mix(in srgb,var(--primary) 12%,rgba(255,255,255,0.04)) !important;
 }
 
-/* Subtle glass reflection sweep across the HARFS header capsule */
-#hero-logo-container.in-header::after{
-    content:'';
-    position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-    background:linear-gradient(
-        115deg,
-        transparent 28%,
-        rgba(255,255,255,0.09) 48%,
-        color-mix(in srgb,var(--primary) 12%,transparent) 52%,
-        transparent 72%
-    );
-    background-size:240% 100%;
-    animation:lgCapsuleSheen 10s ease-in-out infinite;
-}
-@keyframes lgCapsuleSheen{
-    0%,100%{ background-position:130% 0; }
-    50%{ background-position:-30% 0; }
-}
-body.fx-paused #hero-logo-container.in-header::after{ animation-play-state:paused; }
-
-/* Dark Glass Lens on Active Navigation Pill */
+/* Liquid Glass active droplet lens inside the bottom 4-tab capsule */
 .nav-item{ z-index:1; color:#94a3b8; }
-.nav-item.active{
-    color:var(--nav-active-color);
+.nav-item.active{ color:var(--nav-active-color); }
+body:not(.lite-mode):not(.perf-no-blur) #bottom-navigation .nav-item.active{
     background:
-        linear-gradient(180deg,rgba(255,255,255,0.13) 0%,rgba(255,255,255,0.01) 55%,rgba(0,0,0,0.20) 100%),
+        radial-gradient(100% 85% at 50% 0%,rgba(255,255,255,0.34) 0%,rgba(255,255,255,0.04) 65%),
         var(--nav-active-bg);
     border:1px solid var(--nav-active-border);
-    border-top-color:color-mix(in srgb,var(--primary) 65%,rgba(255,255,255,0.45));
-}
-body:not(.lite-mode):not(.perf-no-shadow) .nav-item.active{
+    border-top-color:rgba(255,255,255,0.62);
+    border-left-color:rgba(255,255,255,0.34);
     box-shadow:
-        0 4px 14px var(--primary-glow),
-        inset 0 1px 0 rgba(255,255,255,0.25),
-        inset 0 -1px 1px rgba(0,0,0,0.35);
+        0 4px 18px var(--primary-glow),
+        inset 0 1.5px 1px rgba(255,255,255,0.48),
+        inset 0 -1px 2px rgba(0,0,0,0.20);
 }
 
-/* 2b. Major Glass Blocks (Headers, Tables, Match History, Golden Moments, Admin, AI, Music Player)
-   NO backdrop-filter here -> 120fps scrolling + crisp dark obsidian glass block look */
-body:not(.lite-mode):not(.perf-no-blur) :is(
-    .league-header,
-    .table-wrap,
-    .season-history-card,
-    .weird-card,
-    .admin-section,
-    .ai-panel,
-    .music-player
-){
-    background-color:color-mix(in srgb,var(--bg-mid) 76%,rgba(5,9,18,0.82));
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.065) 0%,rgba(255,255,255,0) 28%),
-        linear-gradient(135deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.01) 36%,rgba(0,0,0,0.22) 70%,color-mix(in srgb,var(--primary) 6%,transparent) 100%);
-    border:1px solid rgba(255,255,255,0.08);
-    border-top-color:rgba(255,255,255,0.19);
-    border-bottom-color:rgba(0,0,0,0.52);
-}
-/* Crisp hairline specular reflection on the top edge of headers */
-body:not(.lite-mode):not(.perf-no-sheen) .league-header::before{
-    content:'';
-    position:absolute; top:0; left:22px; right:22px; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),color-mix(in srgb,var(--primary) 55%,#fff),rgba(255,255,255,0.35),transparent);
-    opacity:0.75; pointer-events:none;
-}
-body:not(.lite-mode):not(.perf-no-shadow) :is(
-    .league-header,
-    .table-wrap,
-    .season-history-card,
-    .weird-card,
-    .admin-section,
-    .ai-panel,
-    .music-player
-){
-    box-shadow:
-        0 10px 26px -6px rgba(0,0,0,0.55),
-        0 2px 6px 0 rgba(0,0,0,0.28),
-        var(--lg-block-bevel);
+/* Fallback when Liquid Glass is switched OFF in Settings (perf-no-blur) or Lite mode */
+body.perf-no-blur #hero-logo-container.box-forming,
+body.perf-no-blur #hero-logo-container.in-header,
+body.perf-no-blur #bottom-navigation.bottom-nav{
+    background-color:var(--bg-mid) !important;
+    background-image:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
 }
 
-/* 2c. Podium Ranking Blocks (Rank 1 / 2 / 3) — Dark Smoked Glass with Metallic Bevel */
-body:not(.lite-mode):not(.perf-no-blur) .ranking-card.rank-1{
-    background-color:color-mix(in srgb,var(--bg-mid) 78%,#050811);
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0) 32%),
-        linear-gradient(135deg,rgba(251,191,36,0.15) 0%,rgba(251,191,36,0.04) 45%,rgba(0,0,0,0.25) 100%);
-    border-color:rgba(251,191,36,0.28);
-    border-top-color:rgba(253,224,71,0.42);
-    border-bottom-color:rgba(0,0,0,0.55);
-}
-body:not(.lite-mode):not(.perf-no-blur) .ranking-card.rank-2{
-    background-color:color-mix(in srgb,var(--bg-mid) 78%,#050811);
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.075) 0%,rgba(255,255,255,0) 32%),
-        linear-gradient(135deg,rgba(203,213,225,0.12) 0%,rgba(203,213,225,0.03) 45%,rgba(0,0,0,0.25) 100%);
-    border-color:rgba(203,213,225,0.20);
-    border-top-color:rgba(241,245,249,0.34);
-    border-bottom-color:rgba(0,0,0,0.55);
-}
-body:not(.lite-mode):not(.perf-no-blur) .ranking-card.rank-3{
-    background-color:color-mix(in srgb,var(--bg-mid) 78%,#050811);
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0) 32%),
-        linear-gradient(135deg,rgba(180,83,9,0.14) 0%,rgba(180,83,9,0.03) 45%,rgba(0,0,0,0.25) 100%);
-    border-color:rgba(180,83,9,0.24);
-    border-top-color:rgba(251,146,60,0.34);
-    border-bottom-color:rgba(0,0,0,0.55);
-}
-
-/* 2d. Inner Glass Blocks, Tiles & Sub-Cards (Zero backdrop-filter -> ultra-fast & dark) */
-body:not(.lite-mode):not(.perf-no-blur) :is(
-    .ranking-card:not(.rank-1):not(.rank-2):not(.rank-3),
-    .settings-page-tile,
-    .account-card,
-    .team-panel-section,
-    .coin-log-row,
-    .ov-tile,
-    .flow-block,
-    .flow-scorer,
-    .flow-summary,
-    .flow-fixture,
-    .mba-block:not(.mba-final):not(.mba-third):not(.mba-super),
-    .mba-history-card,
-    .magazine-alltime-card,
-    .magazine-stat-card,
-    .magazine-spotlight-card,
-    .magazine-cup-card,
-    .mag-thread,
-    .notif-master,
-    .notif-row,
-    .sess-row,
-    .sess-acc,
-    .lite-card,
-    .lite-stat
-){
-    background-color:color-mix(in srgb,var(--bg-mid) 68%,rgba(8,12,22,0.72));
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0) 35%),
-        linear-gradient(135deg,rgba(255,255,255,0.045) 0%,transparent 42%,rgba(0,0,0,0.20) 100%);
-    border-color:rgba(255,255,255,0.08);
-    border-top-color:rgba(255,255,255,0.17);
-    border-bottom-color:rgba(0,0,0,0.48);
-}
-body:not(.lite-mode):not(.perf-no-shadow) :is(
-    .ranking-card,
-    .settings-page-tile,
-    .account-card,
-    .team-panel-section,
-    .ov-tile,
-    .flow-block,
-    .flow-scorer,
-    .flow-summary,
-    .mba-block,
-    .mba-history-card,
-    .magazine-alltime-card,
-    .magazine-stat-card,
-    .magazine-spotlight-card,
-    .magazine-cup-card,
-    .mag-thread,
-    .notif-master,
-    .notif-row,
-    .sess-row
-){
-    box-shadow:
-        0 8px 20px -5px rgba(0,0,0,0.48),
-        var(--lg-tile-bevel);
-}
-
-/* 2e. Modals, Bottom Sheets & Login Panel (Deep Obsidian Glass Sheet) */
-body:not(.lite-mode):not(.perf-no-blur) :is(
-    .team-picker-panel,
-    .appearance-panel,
-    .modal-content,
-    .login-panel
-){
-    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
-    background-image:
-        linear-gradient(180deg,rgba(255,255,255,0.075) 0%,rgba(255,255,255,0) 22%),
-        linear-gradient(155deg,color-mix(in srgb,var(--primary) 8%,rgba(255,255,255,0.04)) 0%,transparent 45%,rgba(0,0,0,0.35) 100%);
-    border-color:rgba(255,255,255,0.10);
-    border-top-color:rgba(255,255,255,0.22);
-    border-bottom-color:rgba(0,0,0,0.60);
-}
-body:not(.lite-mode):not(.perf-no-shadow) :is(
-    .team-picker-panel,
-    .modal-content,
-    .login-panel
-){
-    box-shadow:
-        0 24px 60px rgba(0,0,0,0.72),
-        var(--lg-block-bevel);
-}
-
-/* 2f. Glass Buttons, Inputs & Filter Chips (Zero backdrop-filter, crisp 3D bevel) */
-.glass-button,.chip{ position:relative; overflow:hidden; }
-body:not(.lite-mode):not(.perf-no-blur) .glass-button{
-    background-color:color-mix(in srgb,var(--bg-mid) 60%,rgba(255,255,255,0.06));
-    background-image:linear-gradient(180deg,rgba(255,255,255,0.09) 0%,rgba(255,255,255,0.01) 55%,rgba(0,0,0,0.18) 100%);
-    border:1px solid rgba(255,255,255,0.11);
-    border-top-color:rgba(255,255,255,0.22);
-    border-bottom-color:rgba(0,0,0,0.45);
-    box-shadow:0 6px 16px -3px rgba(0,0,0,0.42),inset 0 1px 0 rgba(255,255,255,0.18);
-}
-body:not(.lite-mode):not(.perf-no-blur) .glass-button:active{
-    background-color:color-mix(in srgb,var(--primary) 16%,var(--bg-mid));
-    border-color:var(--nav-active-border);
-}
-body:not(.lite-mode):not(.perf-no-blur) .glass-input{
-    background:color-mix(in srgb,var(--bg-to) 65%,rgba(0,0,0,0.35));
-    border:1px solid rgba(255,255,255,0.09);
-    border-top-color:rgba(0,0,0,0.45);
-    border-bottom-color:rgba(255,255,255,0.14);
-    box-shadow:inset 0 2px 5px rgba(0,0,0,0.45);
-}
-body:not(.lite-mode):not(.perf-no-blur) .glass-input:focus{
-    border-color:var(--primary);
-    box-shadow:0 0 12px var(--primary-glow),inset 0 2px 4px rgba(0,0,0,0.35);
-}
-body:not(.lite-mode):not(.perf-no-blur) .chip.active{
-    background:
-        linear-gradient(180deg,rgba(255,255,255,0.14) 0%,rgba(255,255,255,0.01) 60%),
-        var(--nav-active-bg);
-    border-top-color:color-mix(in srgb,var(--primary) 65%,rgba(255,255,255,0.4));
-    box-shadow:0 3px 12px var(--primary-glow),inset 0 1px 0 rgba(255,255,255,0.24);
-}
-
-/* 3. MATCH HISTORY DYNAMIC AURORA & ROWS ------------------------------ */
+/* 3. MATCH HISTORY ---------------------------------------------------- */
 body:not(.lite-mode) .season-history-card{
     overflow:hidden; overflow:clip;
     isolation:isolate;
@@ -334,13 +122,8 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
     position:sticky; z-index:5;
     top:0;
     margin:0 -6px 6px; padding:6px 6px; border-radius:16px;
-    background-color:color-mix(in srgb,var(--bg-mid) 78%,rgba(4,8,16,0.75));
-    background-image:linear-gradient(180deg,rgba(255,255,255,0.07) 0%,transparent 50%);
-    backdrop-filter:blur(12px) saturate(135%);
-    -webkit-backdrop-filter:blur(12px) saturate(135%);
-    border:1px solid rgba(255,255,255,0.08);
-    border-top-color:rgba(255,255,255,0.18);
-    box-shadow:0 6px 18px rgba(0,0,0,0.38),inset 0 1px 0 rgba(255,255,255,0.14);
+    background:color-mix(in srgb,var(--bg-mid) 92%,#000);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
 }
 .lg-hist-summary{
     display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
@@ -355,31 +138,26 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
 .lg-form i.w{ background:#22c55e; } .lg-form i.l{ background:#ef4444; }
 
 .match-card-mini{
-    --hc:var(--particle-color,96,165,250); --ac:var(--particle-color,129,140,248); --res:transparent;
+    --hc:96,165,250; --ac:129,140,248; --res:transparent;
     position:relative; animation:none;
     opacity:0; transform:translateY(12px);
     transition:opacity .5s var(--lg-ease),transform .5s var(--lg-ease),box-shadow .3s ease;
     content-visibility:auto; contain-intrinsic-size:auto 66px;
-    background-color:rgba(10,16,28,.55);
+    background-color:rgba(255,255,255,.028);
     background-image:
-        linear-gradient(180deg,rgba(255,255,255,.045) 0%,transparent 45%),
-        linear-gradient(90deg,rgba(var(--hc),.07),rgba(var(--hc),0) 42%),
-        linear-gradient(270deg,rgba(var(--ac),.07),rgba(var(--ac),0) 42%);
-    border-color:rgba(255,255,255,.07);
-    border-top-color:rgba(255,255,255,.15);
-    border-bottom-color:rgba(0,0,0,.45);
-    box-shadow:0 4px 12px -2px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);
+        linear-gradient(90deg,rgba(var(--hc),.05),rgba(var(--hc),0) 42%),
+        linear-gradient(270deg,rgba(var(--ac),.05),rgba(var(--ac),0) 42%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
 }
 .match-card-mini.in-view{ opacity:1; transform:none; }
 .match-card-mini.hidden-by-filter{ display:none; }
-.match-card-mini[data-w="h"]{ background-image:linear-gradient(180deg,rgba(255,255,255,.045) 0%,transparent 45%),linear-gradient(90deg,rgba(var(--hc),.15),rgba(var(--hc),0) 55%),linear-gradient(270deg,rgba(var(--ac),.02),rgba(var(--ac),0) 36%); }
-.match-card-mini[data-w="a"]{ background-image:linear-gradient(180deg,rgba(255,255,255,.045) 0%,transparent 45%),linear-gradient(270deg,rgba(var(--ac),.15),rgba(var(--ac),0) 55%),linear-gradient(90deg,rgba(var(--hc),.02),rgba(var(--hc),0) 36%); }
+.match-card-mini[data-w="h"]{ background-image:linear-gradient(90deg,rgba(var(--hc),.13),rgba(var(--hc),0) 55%),linear-gradient(270deg,rgba(var(--ac),.02),rgba(var(--ac),0) 36%); }
+.match-card-mini[data-w="a"]{ background-image:linear-gradient(270deg,rgba(var(--ac),.13),rgba(var(--ac),0) 55%),linear-gradient(90deg,rgba(var(--hc),.02),rgba(var(--hc),0) 36%); }
 .match-card-mini::before{
     content:''; position:absolute; left:0; top:12px; bottom:12px; width:2px; border-radius:2px;
     background:var(--res); opacity:0; transform:scaleY(.3);
     transition:opacity .35s ease,transform .45s var(--lg-ease);
 }
-/* team filter: result colours take over (selected team is always on the left) */
 .match-card-mini[data-res]::before{ opacity:.85; transform:none; }
 .match-card-mini[data-res="win"]{  --res:#22c55e; background-image:linear-gradient(90deg,rgba(34,197,94,.09),rgba(34,197,94,0) 50%); }
 .match-card-mini[data-res="loss"]{ --res:#ef4444; background-image:linear-gradient(90deg,rgba(239,68,68,.08),rgba(239,68,68,0) 50%); }
@@ -394,5 +172,4 @@ body.lite-mode .lg-aurora,body.perf-no-orbs .lg-aurora{ display:none; }
 @media (prefers-reduced-motion:reduce){
     .match-card-mini{ opacity:1; transform:none; transition:none; }
 }
-/* Lite mode keeps winning over everything here */
 body.lite-mode .match-card-mini{ opacity:1; transform:none; transition:none; content-visibility:visible; }

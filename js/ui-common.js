@@ -168,17 +168,15 @@ function startApp(cacheReady){
     const logo = document.getElementById('hero-logo-container');
     updateHeaderForLogin();
 
-    // Phase 1 — box + text fade in at center (starts at once — never waits for data)
-    setTimeout(()=>{
+    // Phase 1 — capsule fades & scales in smoothly at the exact center
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
         logo.classList.add('box-forming');
-    }, 120);
+    }));
 
-    // Phase 2 — glide smoothly to header
+    // Phase 2 — glides continuously upward into the header dock without a dead stop
     setTimeout(()=>{
         logo.classList.remove('box-forming');
         logo.classList.add('in-header');
-        // Phase 3 — only now do we need the (local, cached) league data: wait for it,
-        // but never longer than 4 s so a dead network can't freeze the intro.
         const ready = cacheReady ? Promise.race([cacheReady, new Promise(r=>setTimeout(r,4000))]) : Promise.resolve();
         setTimeout(async()=>{
             await ready;
@@ -189,8 +187,8 @@ function startApp(cacheReady){
                 navigate('main-league');
                 if(typeof harfsConsumePendingOpen==='function') harfsConsumePendingOpen();   // opened from a notification
             }
-        }, 750);
-    }, 1500);
+        }, 620);
+    }, 820);
 }
 
 // (Swiping left/right between pages was removed on purpose — pages change only through the bottom navigation.)
