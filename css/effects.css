@@ -46,31 +46,71 @@ body.fx-paused .ambient-orb{ animation-play-state:paused; }
 }
 .glass-button,.chip{ position:relative; overflow:hidden; }
 
-/* 2b. PERMANENT LIQUID GLASS — ONLY on #hero-logo-container and #bottom-navigation (.bottom-nav) */
+/* 2b. PERMANENT APPLE DARK LIQUID GLASS — ONLY on #hero-logo-container and #bottom-navigation (.bottom-nav)
+   - Darker smoked tint with higher optical transparency (no milky white wash in the center)
+   - Apple glass refraction pattern: curved top/bottom meniscus caustics + diagonal specular glass bands
+   - Crisp 12px optical blur + saturation/contrast boost so scrolling content visibly refracts through the capsule */
 body:not(.lite-mode):not(.perf-no-blur) :is(
     #hero-logo-container.box-forming,
     #hero-logo-container.in-header,
     #bottom-navigation.bottom-nav
 ){
-    background-color:color-mix(in srgb,var(--bg-mid) 34%,rgba(255,255,255,0.08)) !important;
+    background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.24)) !important;
     background-image:
-        radial-gradient(120% 95% at 18% 0%,rgba(255,255,255,0.26) 0%,rgba(255,255,255,0.05) 42%,transparent 72%),
-        linear-gradient(135deg,rgba(255,255,255,0.16) 0%,rgba(255,255,255,0.03) 48%,color-mix(in srgb,var(--primary) 16%,transparent) 100%) !important;
-    backdrop-filter:blur(22px) saturate(190%) brightness(1.05) !important;
-    -webkit-backdrop-filter:blur(22px) saturate(190%) brightness(1.05) !important;
-    border:1px solid rgba(255,255,255,0.18) !important;
-    border-top-color:rgba(255,255,255,0.46) !important;
-    border-left-color:rgba(255,255,255,0.30) !important;
+        /* Layer 1: Curved top-left & bottom-right lens meniscus reflection */
+        radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%),
+        radial-gradient(120% 85% at 88% 100%,color-mix(in srgb,var(--primary) 18%,rgba(255,255,255,0.08)) 0%,transparent 52%),
+        /* Layer 2: Apple diagonal glass refraction bands (clear dark center, crisp specular streaks) */
+        linear-gradient(
+            125deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.02) 18%,
+            rgba(0,0,0,0.14) 38%,
+            rgba(255,255,255,0.06) 49%,
+            rgba(255,255,255,0.01) 54%,
+            rgba(0,0,0,0.18) 74%,
+            color-mix(in srgb,var(--primary) 14%,transparent) 92%,
+            rgba(255,255,255,0.12) 100%
+        ),
+        /* Layer 3: Vertical glass thickness gradient */
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.14) 0%,
+            rgba(255,255,255,0.01) 16%,
+            rgba(0,0,0,0.16) 55%,
+            rgba(0,0,0,0.26) 88%,
+            rgba(255,255,255,0.08) 100%
+        ) !important;
+    backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94) !important;
+    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94) !important;
+    border:1px solid rgba(255,255,255,0.16) !important;
+    border-top-color:rgba(255,255,255,0.44) !important;
+    border-left-color:rgba(255,255,255,0.28) !important;
+    border-bottom-color:rgba(255,255,255,0.12) !important;
 }
 body:not(.lite-mode):not(.perf-no-shadow) #bottom-navigation.bottom-nav,
 body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.box-forming,
 body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.in-header:not([class*="sync-"]){
     box-shadow:
-        0 14px 36px -4px rgba(0,0,0,0.48),
-        inset 0 1.5px 1px 0 rgba(255,255,255,0.42),
-        inset 1px 0 1px 0 rgba(255,255,255,0.22),
-        inset 0 -1px 1px 0 rgba(255,255,255,0.10),
-        inset 0 0 20px 0 color-mix(in srgb,var(--primary) 12%,rgba(255,255,255,0.04)) !important;
+        0 14px 36px -4px rgba(0,0,0,0.58),
+        inset 0 1.5px 1px 0 rgba(255,255,255,0.46),
+        inset 0 -1.5px 1.5px 0 rgba(255,255,255,0.14),
+        inset 1.5px 0 1.5px 0 rgba(255,255,255,0.20),
+        inset -1.5px 0 1.5px 0 color-mix(in srgb,var(--primary) 22%,rgba(255,255,255,0.10)),
+        inset 0 0 16px 0 rgba(0,0,0,0.38) !important;
+}
+
+/* Subtle diagonal glass lens sheen on both capsules */
+body:not(.lite-mode):not(.perf-no-blur) #bottom-navigation.bottom-nav::before{
+    content:'';
+    position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:linear-gradient(
+        112deg,
+        transparent 24%,
+        rgba(255,255,255,0.07) 44%,
+        rgba(255,255,255,0.01) 50%,
+        transparent 70%
+    );
 }
 
 /* Liquid Glass active droplet lens inside the bottom 4-tab capsule */
@@ -78,15 +118,17 @@ body:not(.lite-mode):not(.perf-no-shadow) #hero-logo-container.in-header:not([cl
 .nav-item.active{ color:var(--nav-active-color); }
 body:not(.lite-mode):not(.perf-no-blur) #bottom-navigation .nav-item.active{
     background:
-        radial-gradient(100% 85% at 50% 0%,rgba(255,255,255,0.34) 0%,rgba(255,255,255,0.04) 65%),
-        var(--nav-active-bg);
+        radial-gradient(110% 80% at 50% 0%,rgba(255,255,255,0.24) 0%,rgba(255,255,255,0.02) 55%),
+        linear-gradient(135deg,rgba(255,255,255,0.12) 0%,transparent 45%,rgba(0,0,0,0.22) 100%),
+        color-mix(in srgb,var(--primary) 18%,rgba(4,8,18,0.28));
     border:1px solid var(--nav-active-border);
-    border-top-color:rgba(255,255,255,0.62);
-    border-left-color:rgba(255,255,255,0.34);
+    border-top-color:rgba(255,255,255,0.56);
+    border-left-color:rgba(255,255,255,0.30);
     box-shadow:
-        0 4px 18px var(--primary-glow),
-        inset 0 1.5px 1px rgba(255,255,255,0.48),
-        inset 0 -1px 2px rgba(0,0,0,0.20);
+        0 4px 16px var(--primary-glow),
+        inset 0 1.5px 1px rgba(255,255,255,0.44),
+        inset 0 -1px 1.5px rgba(255,255,255,0.14),
+        inset 0 0 10px rgba(0,0,0,0.28);
 }
 
 /* Fallback when Liquid Glass is switched OFF in Settings (perf-no-blur) or Lite mode */

@@ -168,12 +168,13 @@ function startApp(cacheReady){
     const logo = document.getElementById('hero-logo-container');
     updateHeaderForLogin();
 
-    // Phase 1 — capsule fades & scales in smoothly at the exact center
+    // Phase 1 — capsule fades & scales in smoothly at the exact center (takes ~550ms),
+    // then stays paused in the center for a full 1 second (1000ms) before gliding up.
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
         logo.classList.add('box-forming');
     }));
 
-    // Phase 2 — glides continuously upward into the header dock without a dead stop
+    // Phase 2 — after 550ms entrance + 1000ms center pause = 1550ms, glide smoothly to header
     setTimeout(()=>{
         logo.classList.remove('box-forming');
         logo.classList.add('in-header');
@@ -187,8 +188,8 @@ function startApp(cacheReady){
                 navigate('main-league');
                 if(typeof harfsConsumePendingOpen==='function') harfsConsumePendingOpen();   // opened from a notification
             }
-        }, 620);
-    }, 820);
+        }, 700);
+    }, 1550);
 }
 
 // (Swiping left/right between pages was removed on purpose — pages change only through the bottom navigation.)
