@@ -309,14 +309,16 @@
         <section id="ssec-league" data-sec="league">
         <div id="ssec-league-nav" class="ssec-slot">
             <!-- Season Navigation Pills -->
-            <div id="season-nav-wrapper" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-                <button id="season-prev-btn" onclick="navigateSeason(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+            <div id="season-nav-wrapper" class="season-nav-bar">
+                <button id="season-prev-btn" class="season-nav-arrow" onclick="navigateSeason(-1)" aria-label="Previous season">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <div id="season-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;min-width:130px;" onclick="openSeasonPicker()">
-                    <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="season-pill-label">Current Season</span>
+                <div id="season-pill-display" class="season-nav-pill" onclick="openSeasonPicker()">
+                    <i class="fas fa-calendar-alt season-nav-pill-ic"></i>
+                    <span id="season-pill-label">Current Season</span>
+                    <i class="fas fa-chevron-down season-nav-pill-caret"></i>
                 </div>
-                <button id="season-next-btn" onclick="navigateSeason(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)'">
+                <button id="season-next-btn" class="season-nav-arrow" onclick="navigateSeason(1)" aria-label="Next season">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
@@ -366,14 +368,16 @@
         <section id="ssec-mba" data-sec="mba">
         <div id="ssec-mba-nav" class="ssec-slot">
             <!-- CUP edition navigation — independent from the League season pills above -->
-            <div id="mba-nav-wrapper" style="align-items:center;gap:8px;margin-top:8px;">
-                <button id="mba-prev-btn" onclick="navigateMbaEdition(-1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
+            <div id="mba-nav-wrapper" class="season-nav-bar">
+                <button id="mba-prev-btn" class="season-nav-arrow" onclick="navigateMbaEdition(-1)" aria-label="Previous edition">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <div id="mba-pill-display" style="flex:1;background:rgba(10,18,30,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 16px;text-align:center;font-size:0.75rem;font-weight:800;color:var(--primary);letter-spacing:0.5px;cursor:pointer;min-width:130px;" onclick="openMbaPicker()">
-                    <i class="fas fa-trophy" style="margin-right:6px;opacity:0.6;font-size:0.65rem;"></i><span id="mba-pill-label">—</span>
+                <div id="mba-pill-display" class="season-nav-pill" onclick="openMbaPicker()">
+                    <i class="fas fa-trophy season-nav-pill-ic"></i>
+                    <span id="mba-pill-label">—</span>
+                    <i class="fas fa-chevron-down season-nav-pill-caret"></i>
                 </div>
-                <button id="mba-next-btn" onclick="navigateMbaEdition(1)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">
+                <button id="mba-next-btn" class="season-nav-arrow" onclick="navigateMbaEdition(1)" aria-label="Next edition">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>

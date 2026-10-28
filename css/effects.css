@@ -218,134 +218,392 @@ body.lite-mode .match-card-mini{ opacity:1; transform:none; transition:none; con
 
 
 /* =====================================================================
-   4. CREATIVE UI OVERHAUL — "BROADCAST ARENA & BENTO NEO-LUXURY" (v6.8)
+   4. COMPLETE PROFESSIONAL UI/UX REDESIGN — "NEO-STADIUM & BENTO CLUB" (v6.9)
    ---------------------------------------------------------------------
-   - Zero backdrop-filter on any scrolling card/block (locked 120fps)
-   - Permanent Apple Dark Liquid Glass stays STRICTLY on #hero-logo-container
-     and #bottom-navigation.bottom-nav (Section 2b above)
-   - Transforms headers, Hall of Fame podiums, Bento launchpad, standings table,
-     TV scorebug match cards, Golden Moments, Magazine editorial cards, and
-     Profile/Music cyber-deck into a cohesive next-gen sports broadcast UI.
+   Critical Product Design Overhaul:
+   - True 3-Column Olympic/UEFA Champions Podium Stage in Hall of Fame
+   - Full-width Bento Command Deck with glowing icon orbs
+   - Symmetrical Broadcast HUD Headers & Season Selector Capsules
+   - Premier League / UCL Standings Table with Rank Pills, GD semantics & Points Badges
+   - FotMob / Broadcast Matchday Scorebugs with Winner/Loser hierarchy
+   - Editorial Golden Moments, Magazine Story Modules & VIP Profile Pass
+   - Zero backdrop-filter on scrolling cards (locked 120fps); Liquid Glass on
+     #hero-logo-container, #bottom-navigation, and .season-subnav
    ===================================================================== */
 
-/* 4a. Stadium Broadcast Scorebug Headers (.league-header, .magazine-panel-header) */
+/* 4a. Atmospheric Stadium Pitch Backdrop & App Frame */
+body:not(.lite-mode) .app-container{
+    background:
+        radial-gradient(110% 55% at 50% 0%,color-mix(in srgb,var(--primary) 14%,transparent) 0%,transparent 70%),
+        radial-gradient(90% 45% at 50% 100%,color-mix(in srgb,var(--accent) 12%,transparent) 0%,transparent 70%),
+        rgba(8,13,26,0.22);
+}
+
+/* Also give .season-subnav the same dark Apple Liquid Glass as the bottom nav */
+body:not(.lite-mode):not(.perf-no-blur) .season-subnav{
+    background-color:color-mix(in srgb,var(--bg-to) 32%,rgba(4,8,18,0.32)) !important;
+    background-image:
+        radial-gradient(120% 90% at 20% 0%,rgba(255,255,255,0.18) 0%,transparent 55%),
+        linear-gradient(135deg,rgba(255,255,255,0.12) 0%,rgba(0,0,0,0.22) 55%,color-mix(in srgb,var(--primary) 14%,transparent) 100%) !important;
+    backdrop-filter:blur(13px) saturate(185%) contrast(1.08) !important;
+    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) !important;
+    border:1px solid rgba(255,255,255,0.16) !important;
+    border-top-color:rgba(255,255,255,0.40) !important;
+    box-shadow:0 12px 30px -4px rgba(0,0,0,0.58),inset 0 1px 1px rgba(255,255,255,0.38) !important;
+}
+
+/* 4b. Symmetrical Stadium Broadcast HUD Headers (.league-header, .magazine-panel-header) */
 body:not(.lite-mode) .league-header,
 body:not(.lite-mode) .magazine-panel-header{
     position:relative;
     flex-shrink:0 !important;
+    width:calc(100% - 24px);
+    margin:0 auto 14px;
+    padding:15px 18px;
     border-radius:24px;
     background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
     background-image:
-        radial-gradient(60% 100% at 50% 0%,color-mix(in srgb,var(--primary) 16%,transparent) 0%,transparent 75%),
-        radial-gradient(rgba(255,255,255,0.045) 1px,transparent 1px),
-        linear-gradient(170deg,color-mix(in srgb,var(--bg-from) 28%,#080d1a) 0%,color-mix(in srgb,var(--bg-mid) 94%,#03060c) 100%);
+        radial-gradient(65% 110% at 50% 0%,color-mix(in srgb,var(--primary) 20%,transparent) 0%,transparent 74%),
+        radial-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),
+        linear-gradient(175deg,color-mix(in srgb,var(--bg-from) 32%,#080d1a) 0%,color-mix(in srgb,var(--bg-mid) 95%,#03060c) 100%);
     background-size:100% 100%, 12px 12px, 100% 100%;
     border:1px solid rgba(255,255,255,0.08);
-    border-top-color:color-mix(in srgb,var(--primary) 38%,rgba(255,255,255,0.18));
-    border-bottom-color:rgba(0,0,0,0.6);
+    border-top-color:color-mix(in srgb,var(--primary) 44%,rgba(255,255,255,0.22));
+    border-bottom-color:rgba(0,0,0,0.65);
     box-shadow:
-        0 14px 32px -8px rgba(0,0,0,0.62),
-        inset 0 1px 0 rgba(255,255,255,0.14),
+        0 14px 32px -8px rgba(0,0,0,0.65),
+        inset 0 1px 0 rgba(255,255,255,0.16),
         inset 0 -1px 0 rgba(0,0,0,0.45);
 }
 body:not(.lite-mode):not(.perf-no-sheen) .league-header::before,
 body:not(.lite-mode):not(.perf-no-sheen) .magazine-panel-header::before{
     content:'';
-    position:absolute; top:0; left:18%; right:18%; height:2px; border-radius:2px;
+    position:absolute; top:0; left:16%; right:16%; height:2px; border-radius:2px;
     background:linear-gradient(90deg,transparent,var(--primary),var(--accent),var(--primary),transparent);
-    box-shadow:0 2px 12px var(--primary-glow);
-    opacity:0.85; pointer-events:none;
+    box-shadow:0 2px 14px var(--primary-glow);
+    opacity:0.9; pointer-events:none;
 }
 
-/* 4b. Hall of Fame — 3D Broadcast Championship Podium Pods (.ranking-card) */
-.ranking-top3-wrapper{ gap:10px; }
-body:not(.lite-mode) .ranking-card{
-    border-radius:20px;
-    padding:14px 16px;
-    background-color:color-mix(in srgb,var(--bg-mid) 88%,#050811);
-    background-image:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 45%,rgba(0,0,0,0.28) 100%);
-    border:1px solid rgba(255,255,255,0.075);
-    border-top-color:rgba(255,255,255,0.14);
-    border-bottom-color:rgba(0,0,0,0.55);
-    box-shadow:0 10px 24px -6px rgba(0,0,0,0.52),inset 0 1px 0 rgba(255,255,255,0.10);
+/* Fix Season Header symmetry: pin Schedule action button vertically centered on the right, matching Back button on the left */
+#league-table-screen > .league-header{
+    min-height:66px;
+    padding:12px 54px;
+    justify-content:center;
+}
+#league-table-screen .season-title{
+    font-size:1.25rem;
+    font-weight:900;
+    letter-spacing:3.5px;
+    margin:0;
+    background:linear-gradient(180deg,#ffffff 0%,var(--header-text) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+#league-table-screen .season-date{
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.6px;
+    color:#94a3b8;
+    margin:3px 0 0;
+}
+#league-table-screen .season-back-btn{
+    position:absolute;
+    left:14px;
+    top:50%;
+    transform:translateY(-50%);
+    margin:0;
+}
+#league-table-screen .season-back-btn:active{
+    transform:translateY(-50%) scale(0.9);
+}
+#league-table-screen .season-header-actions{
+    position:absolute;
+    right:14px;
+    top:50%;
+    transform:translateY(-50%);
+    margin:0 !important;
+    align-self:auto;
+}
+#league-table-screen .season-icon-btn{
+    width:38px; height:38px; border-radius:13px;
+    background:color-mix(in srgb,var(--primary) 12%,rgba(255,255,255,0.05));
+    border:1px solid color-mix(in srgb,var(--primary) 30%,rgba(255,255,255,0.14));
+    border-top-color:rgba(255,255,255,0.26);
+    color:var(--header-text);
+    box-shadow:0 4px 12px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.14);
+}
+
+/* 4c. Hall of Fame — 3-Column Olympic / UEFA Champions Podium Stage */
+#podium-container{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    width:100%;
+    margin-bottom:4px;
+}
+.hof-podium-stage{
+    display:grid;
+    grid-template-columns:1fr 1.14fr 1fr;
+    align-items:end;
+    gap:8px;
+    width:100%;
+    padding-top:10px;
+}
+.hof-podium-col{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    border-radius:22px;
+    padding:14px 6px 10px;
+    cursor:pointer;
+    overflow:hidden;
+    background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
+    border:1px solid rgba(255,255,255,0.08);
+    border-top-color:rgba(255,255,255,0.18);
+    border-bottom-color:rgba(0,0,0,0.65);
+    box-shadow:0 12px 26px -6px rgba(0,0,0,0.58),inset 0 1px 0 rgba(255,255,255,0.12);
+    animation:rankCardIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
     transition:transform 0.18s var(--lg-ease),box-shadow 0.2s ease;
 }
+.hof-podium-col:active{ transform:scale(0.96); }
+
+/* Center #1 Champion Pedestal — Taller, radial golden spotlight & crown */
+.hof-podium-col.pod-slot-1{
+    padding:18px 8px 12px;
+    margin-bottom:4px;
+}
+.hof-podium-col.rank-1{
+    background-image:
+        radial-gradient(90% 65% at 50% 0%,rgba(251,191,36,0.24) 0%,rgba(251,191,36,0.04) 60%,transparent 100%),
+        linear-gradient(180deg,rgba(251,191,36,0.10) 0%,rgba(0,0,0,0.38) 100%);
+    border-color:rgba(251,191,36,0.38);
+    border-top-color:rgba(253,224,71,0.65);
+    box-shadow:
+        0 16px 34px -6px rgba(0,0,0,0.68),
+        0 0 26px -6px rgba(251,191,36,0.28),
+        inset 0 1px 0 rgba(254,240,138,0.35);
+}
+.hof-podium-col.rank-2{
+    background-image:
+        radial-gradient(85% 60% at 50% 0%,rgba(203,213,225,0.18) 0%,transparent 70%),
+        linear-gradient(180deg,rgba(203,213,225,0.06) 0%,rgba(0,0,0,0.36) 100%);
+    border-color:rgba(203,213,225,0.26);
+    border-top-color:rgba(241,245,249,0.45);
+}
+.hof-podium-col.rank-3{
+    background-image:
+        radial-gradient(85% 60% at 50% 0%,rgba(217,119,6,0.20) 0%,transparent 70%),
+        linear-gradient(180deg,rgba(180,83,9,0.07) 0%,rgba(0,0,0,0.36) 100%);
+    border-color:rgba(217,119,6,0.30);
+    border-top-color:rgba(251,146,60,0.45);
+}
+
+.pod-avatar-stage{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:8px;
+}
+.pod-rank-pill{
+    position:absolute;
+    top:-8px;
+    z-index:3;
+    min-width:26px;
+    height:20px;
+    padding:0 7px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.64rem;
+    font-weight:900;
+    letter-spacing:0.3px;
+    background:#1e293b;
+    color:#e2e8f0;
+    border:1px solid rgba(255,255,255,0.2);
+    box-shadow:0 4px 10px rgba(0,0,0,0.5);
+}
+.hof-podium-col.rank-1 .pod-rank-pill{
+    top:-10px;
+    height:22px;
+    padding:0 9px;
+    font-size:0.72rem;
+    background:linear-gradient(135deg,#fde047,#f59e0b);
+    color:#090d16;
+    border-color:#fef08a;
+    box-shadow:0 4px 14px rgba(251,191,36,0.55);
+}
+.hof-podium-col.rank-2 .pod-rank-pill{
+    background:linear-gradient(135deg,#f1f5f9,#94a3b8);
+    color:#090d16;
+    border-color:#f8fafc;
+}
+.hof-podium-col.rank-3 .pod-rank-pill{
+    background:linear-gradient(135deg,#fdba74,#b45309);
+    color:#090d16;
+    border-color:#fed7aa;
+}
+
+.pod-avatar-ring{
+    padding:3px;
+    border-radius:50%;
+    background:linear-gradient(180deg,rgba(255,255,255,0.25),rgba(255,255,255,0.05));
+    box-shadow:0 8px 18px rgba(0,0,0,0.5);
+}
+.hof-podium-col.rank-1 .pod-avatar-ring{
+    padding:3.5px;
+    background:linear-gradient(135deg,#fef08a,#f59e0b,#b45309);
+    box-shadow:0 8px 22px rgba(251,191,36,0.35);
+}
+.hof-podium-col.rank-2 .pod-avatar-ring{
+    background:linear-gradient(135deg,#f8fafc,#94a3b8,#475569);
+}
+.hof-podium-col.rank-3 .pod-avatar-ring{
+    background:linear-gradient(135deg,#fed7aa,#d97706,#78350f);
+}
+
+.pod-avatar{
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    object-fit:cover;
+    display:block;
+    background:#0f172a;
+}
+.hof-podium-col.pod-slot-1 .pod-avatar{
+    width:62px;
+    height:62px;
+}
+
+.pod-team-name{
+    font-size:0.78rem;
+    font-weight:900;
+    color:#f1f5f9;
+    text-align:center;
+    max-width:100%;
+    padding:0 4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-bottom:8px;
+}
+.hof-podium-col.rank-1 .pod-team-name{
+    font-size:0.88rem;
+    color:#fef3c7;
+    text-shadow:0 2px 10px rgba(251,191,36,0.3);
+}
+
+.pod-pedestal{
+    width:100%;
+    background:rgba(0,0,0,0.36);
+    border:1px solid rgba(255,255,255,0.06);
+    border-top-color:rgba(255,255,255,0.12);
+    border-radius:14px;
+    padding:6px 4px;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,0.6);
+}
+.pod-medals{
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    gap:2px;
+}
+.pod-medal{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:1px;
+}
+.pod-medal span{ font-size:0.78rem; line-height:1; }
+.pod-medal b{
+    font-size:0.7rem;
+    font-weight:900;
+    color:#e2e8f0;
+    font-variant-numeric:tabular-nums;
+}
+.hof-podium-col.rank-1 .pod-medal.gold b{ color:#fde047; }
+
+/* Tier 2: Sleek Contender Card below the 3D Podium (.hof-rest-list & .ranking-card) */
+.hof-rest-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    width:100%;
+}
+body:not(.lite-mode) .ranking-card{
+    border-radius:20px;
+    padding:12px 14px;
+    background-color:color-mix(in srgb,var(--bg-mid) 90%,#050811);
+    background-image:
+        radial-gradient(70% 100% at 0% 50%,color-mix(in srgb,var(--primary) 12%,transparent) 0%,transparent 65%),
+        linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 48%,rgba(0,0,0,0.30) 100%);
+    border:1px solid rgba(255,255,255,0.08);
+    border-top-color:rgba(255,255,255,0.16);
+    border-bottom-color:rgba(0,0,0,0.55);
+    box-shadow:0 10px 24px -6px rgba(0,0,0,0.52),inset 0 1px 0 rgba(255,255,255,0.10);
+}
 body:not(.lite-mode) .ranking-card::before{
-    width:4px; top:8px; bottom:8px; border-radius:0 4px 4px 0;
+    width:4px; top:10px; bottom:10px; border-radius:0 4px 4px 0;
+    background:color-mix(in srgb,var(--primary) 55%,rgba(255,255,255,0.18));
 }
-body:not(.lite-mode) .ranking-card.rank-1{
-    background-image:
-        radial-gradient(75% 120% at 0% 50%,rgba(251,191,36,0.16) 0%,transparent 70%),
-        linear-gradient(135deg,rgba(251,191,36,0.10) 0%,rgba(251,191,36,0.02) 48%,rgba(0,0,0,0.32) 100%);
-    border-color:rgba(251,191,36,0.32);
-    border-top-color:rgba(253,224,71,0.45);
-    box-shadow:0 12px 28px -6px rgba(0,0,0,0.58),0 0 22px -8px rgba(251,191,36,0.22),inset 0 1px 0 rgba(253,224,71,0.22);
+.ranking-card .ranking-badge{
+    width:36px; height:36px; border-radius:11px;
+    background:rgba(0,0,0,0.35);
+    border:1px solid rgba(255,255,255,0.10);
+    color:#94a3b8;
+    font-size:0.82rem; font-weight:900;
 }
-body:not(.lite-mode) .ranking-card.rank-1::before{
-    background:linear-gradient(180deg,#fde68a,#fbbf24,#d97706);
-    box-shadow:0 0 12px rgba(251,191,36,0.75);
+.ranking-card .ranking-avatar{
+    width:44px; height:44px;
+    border:2px solid rgba(255,255,255,0.16);
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
 }
-body:not(.lite-mode) .ranking-card.rank-1 .ranking-avatar{
-    border:2px solid rgba(251,191,36,0.65);
-    box-shadow:0 0 0 3px rgba(251,191,36,0.14),0 6px 14px rgba(0,0,0,0.5);
+.ranking-sub{
+    font-size:0.58rem;
+    font-weight:700;
+    color:#64748b;
+    margin-top:2px;
+    letter-spacing:0.2px;
 }
-body:not(.lite-mode) .ranking-card.rank-2{
-    background-image:
-        radial-gradient(70% 110% at 0% 50%,rgba(203,213,225,0.12) 0%,transparent 68%),
-        linear-gradient(135deg,rgba(203,213,225,0.07) 0%,transparent 50%,rgba(0,0,0,0.30) 100%);
-    border-color:rgba(203,213,225,0.22);
-    border-top-color:rgba(241,245,249,0.32);
-}
-body:not(.lite-mode) .ranking-card.rank-2::before{
-    background:linear-gradient(180deg,#f8fafc,#cbd5e1,#64748b);
-    box-shadow:0 0 10px rgba(203,213,225,0.45);
-}
-body:not(.lite-mode) .ranking-card.rank-3{
-    background-image:
-        radial-gradient(70% 110% at 0% 50%,rgba(217,119,6,0.13) 0%,transparent 68%),
-        linear-gradient(135deg,rgba(180,83,9,0.08) 0%,transparent 50%,rgba(0,0,0,0.30) 100%);
-    border-color:rgba(217,119,6,0.25);
-    border-top-color:rgba(251,146,60,0.34);
-}
-body:not(.lite-mode) .ranking-card.rank-3::before{
-    background:linear-gradient(180deg,#fdba74,#d97706,#92400e);
-    box-shadow:0 0 10px rgba(217,119,6,0.45);
-}
-/* Individual 3D Trophy Counter Pills inside Ranking Cards */
 .ranking-trophy-block{ gap:6px; }
 .ranking-trophy-item{
     min-width:34px; padding:5px 7px; border-radius:11px;
-    background:rgba(0,0,0,0.32);
+    background:rgba(0,0,0,0.34);
     border:1px solid rgba(255,255,255,0.07);
-    box-shadow:inset 0 1px 2px rgba(0,0,0,0.55);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,0.58);
     gap:2px;
 }
-.ranking-trophy-item .trophy-emoji{ font-size:0.92rem; }
-.ranking-trophy-item b{ font-size:0.76rem; font-variant-numeric:tabular-nums; }
+.ranking-trophy-item .trophy-emoji{ font-size:0.88rem; }
+.ranking-trophy-item b{ font-size:0.74rem; font-variant-numeric:tabular-nums; }
 
-/* 4c. Home Bento Launchpad Grid (.ov-tiles & .ov-tile) */
+/* 4d. Full-Width Bento Launchpad Deck (.ov-tiles & .ov-tile) */
 .ov-tiles{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:10px;
-    width:100%; max-width:370px;
-    margin:18px auto 4px;
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:10px !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:14px 0 4px !important;
 }
 body:not(.lite-mode) .ov-tile{
     --tile-accent:var(--primary);
-    aspect-ratio:1 / 0.92;
-    border-radius:20px;
-    padding:10px 6px 8px;
-    gap:7px;
-    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
+    aspect-ratio:1 / 0.86;
+    border-radius:22px;
+    padding:12px 8px 10px;
+    gap:8px;
+    background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
     background-image:
-        radial-gradient(85% 75% at 50% 0%,color-mix(in srgb,var(--tile-accent) 20%,transparent) 0%,transparent 72%),
-        linear-gradient(160deg,rgba(255,255,255,0.05) 0%,transparent 50%,rgba(0,0,0,0.32) 100%);
+        radial-gradient(85% 75% at 50% 0%,color-mix(in srgb,var(--tile-accent) 24%,transparent) 0%,transparent 72%),
+        linear-gradient(165deg,rgba(255,255,255,0.05) 0%,transparent 50%,rgba(0,0,0,0.36) 100%);
     border:1px solid rgba(255,255,255,0.08);
-    border-top-color:color-mix(in srgb,var(--tile-accent) 42%,rgba(255,255,255,0.16));
-    border-bottom-color:rgba(0,0,0,0.55);
-    box-shadow:0 10px 22px -6px rgba(0,0,0,0.52),inset 0 1px 0 rgba(255,255,255,0.12);
-    transition:transform 0.18s var(--lg-ease),border-color 0.2s ease,box-shadow 0.2s ease;
+    border-top-color:color-mix(in srgb,var(--tile-accent) 48%,rgba(255,255,255,0.18));
+    border-bottom-color:rgba(0,0,0,0.6);
+    box-shadow:
+        0 10px 24px -6px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.14);
+    transition:transform 0.18s var(--lg-ease),box-shadow 0.2s ease;
 }
 .ov-tile:nth-child(1){ --tile-accent:#fbbf24; color:#fbbf24; }
 .ov-tile:nth-child(2){ --tile-accent:var(--primary); color:var(--primary); }
@@ -353,122 +611,248 @@ body:not(.lite-mode) .ov-tile{
 .ov-tile:nth-child(4){ --tile-accent:#f87171; color:#f87171; }
 .ov-tile:nth-child(5){ --tile-accent:#34d399; color:#34d399; }
 .ov-tile:nth-child(6){ --tile-accent:#fb923c; color:#fb923c; }
-.ov-tile i{
-    font-size:1.35rem;
-    filter:drop-shadow(0 3px 8px color-mix(in srgb,var(--tile-accent) 40%,transparent));
+.ov-tile i,
+.ov-tile svg{
+    font-size:1.38rem;
+    filter:drop-shadow(0 4px 10px color-mix(in srgb,var(--tile-accent) 45%,transparent));
     transition:transform 0.2s var(--lg-ease);
 }
 .ov-tile span{
-    font-size:0.6rem; font-weight:800; letter-spacing:0.5px; color:#e2e8f0;
-    background:rgba(0,0,0,0.28); padding:2px 8px; border-radius:999px;
-    border:1px solid rgba(255,255,255,0.05);
+    font-size:0.62rem; font-weight:800; letter-spacing:0.4px; color:#e2e8f0;
+    background:rgba(0,0,0,0.34); padding:2.5px 9px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.06);
 }
 .ov-tile:active{ transform:scale(0.93); }
-.ov-tile:active i{ transform:scale(1.1); }
+.ov-tile:active i,.ov-tile:active svg{ transform:scale(1.12); }
 
-/* 4d. Season Broadcast Standings Table (.table-wrap & .season-table) */
+/* 4e. Broadcast Season & CUP Selector Bar (.season-nav-bar) */
+.season-nav-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:0 0 10px;
+    width:100%;
+}
+.season-nav-arrow{
+    width:36px; height:36px; border-radius:13px; flex-shrink:0;
+    background:color-mix(in srgb,var(--bg-mid) 90%,#040710);
+    border:1px solid rgba(255,255,255,0.10);
+    border-top-color:rgba(255,255,255,0.20);
+    color:var(--header-text);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.78rem;
+    box-shadow:0 6px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.10);
+    transition:transform 0.15s ease,background 0.2s ease;
+}
+.season-nav-arrow:active{ transform:scale(0.9); }
+.season-nav-pill{
+    flex:1;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:
+        radial-gradient(80% 100% at 50% 0%,color-mix(in srgb,var(--primary) 18%,transparent) 0%,transparent 70%),
+        color-mix(in srgb,var(--bg-mid) 90%,#040710);
+    border:1px solid color-mix(in srgb,var(--primary) 32%,rgba(255,255,255,0.10));
+    border-top-color:color-mix(in srgb,var(--primary) 50%,rgba(255,255,255,0.24));
+    border-radius:15px;
+    padding:9px 16px;
+    font-size:0.76rem; font-weight:900; color:var(--header-text);
+    letter-spacing:0.5px; cursor:pointer;
+    box-shadow:0 8px 20px -4px rgba(0,0,0,0.48),inset 0 1px 0 rgba(255,255,255,0.14);
+    transition:transform 0.15s ease;
+}
+.season-nav-pill:active{ transform:scale(0.97); }
+.season-nav-pill-ic{ color:var(--primary); font-size:0.72rem; }
+.season-nav-pill-caret{ font-size:0.6rem; opacity:0.6; margin-left:2px; }
+
+/* 4f. Premier League / UCL Broadcast Standings Table (.table-wrap & .season-table) */
 body:not(.lite-mode) .table-wrap{
     border-radius:22px;
     background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
-    background-image:linear-gradient(170deg,rgba(255,255,255,0.035) 0%,transparent 35%,rgba(0,0,0,0.32) 100%);
-    border:1px solid rgba(255,255,255,0.08);
-    border-top-color:rgba(255,255,255,0.16);
-    border-bottom-color:rgba(0,0,0,0.55);
-    box-shadow:0 12px 30px -6px rgba(0,0,0,0.56),inset 0 1px 0 rgba(255,255,255,0.10);
+    background-image:linear-gradient(170deg,rgba(255,255,255,0.035) 0%,transparent 35%,rgba(0,0,0,0.34) 100%);
+    border:1px solid rgba(255,255,255,0.085);
+    border-top-color:rgba(255,255,255,0.18);
+    border-bottom-color:rgba(0,0,0,0.6);
+    box-shadow:0 14px 32px -6px rgba(0,0,0,0.58),inset 0 1px 0 rgba(255,255,255,0.10);
 }
+.season-table col.c-rank{ width:32px; }
+.season-table col.c-pts{ width:42px; }
 .season-table thead tr{
-    background:rgba(0,0,0,0.32);
+    background:rgba(0,0,0,0.36);
     border-bottom:1px solid color-mix(in srgb,var(--primary) 32%,rgba(255,255,255,0.08));
 }
+.season-table thead th{
+    padding:12px 0;
+    font-size:0.64rem;
+    font-weight:900;
+    letter-spacing:0.8px;
+}
 .season-table tbody tr{
-    transition:background 0.15s ease;
+    border-bottom:1px solid rgba(255,255,255,0.045);
 }
 .season-table tbody tr.rank-1-row{
-    background:linear-gradient(90deg,rgba(251,191,36,0.14) 0%,rgba(251,191,36,0.03) 55%,transparent 100%);
+    background:linear-gradient(90deg,rgba(251,191,36,0.15) 0%,rgba(251,191,36,0.03) 55%,transparent 100%);
     box-shadow:inset 3px 0 0 #fbbf24;
 }
+.season-table tbody tr.rank-2-row{
+    background:linear-gradient(90deg,rgba(203,213,225,0.07) 0%,transparent 45%);
+    box-shadow:inset 3px 0 0 #94a3b8;
+}
+.season-table tbody tr.rank-3-row{
+    background:linear-gradient(90deg,rgba(217,119,6,0.07) 0%,transparent 45%);
+    box-shadow:inset 3px 0 0 #d97706;
+}
+.rk-pill{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:7px;
+    font-size:0.7rem; font-weight:900; font-family:inherit;
+    background:rgba(255,255,255,0.05); color:#64748b;
+    border:1px solid rgba(255,255,255,0.08);
+}
+.rk-pill.rk-1{
+    background:linear-gradient(135deg,rgba(251,191,36,0.28),rgba(217,119,6,0.12));
+    color:#fde047; border-color:rgba(251,191,36,0.55);
+    box-shadow:0 2px 8px rgba(251,191,36,0.22);
+}
+.rk-pill.rk-2{
+    background:rgba(203,213,225,0.14); color:#f1f5f9; border-color:rgba(203,213,225,0.35);
+}
+.rk-pill.rk-3{
+    background:rgba(217,119,6,0.16); color:#fdba74; border-color:rgba(217,119,6,0.38);
+}
+.td-gd.gd-pos{ color:#4ade80; font-weight:800; }
+.td-gd.gd-neg{ color:#f87171; font-weight:700; }
+.td-gd.gd-zero{ color:#64748b; }
 .season-table td.td-pts{
-    text-shadow:0 0 10px rgba(251,191,36,0.32);
+    padding-right:6px !important;
+    text-align:right !important;
+}
+.pts-pill{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:30px; padding:3px 7px; border-radius:8px;
+    background:rgba(251,191,36,0.12);
+    border:1px solid rgba(251,191,36,0.32);
+    color:#fde047; font-size:0.84rem; font-weight:900;
     font-variant-numeric:tabular-nums;
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);
 }
 
-/* 4e. TV Broadcast Scorebug Match History Cards (.season-history-card & .match-card-mini) */
+/* 4g. FotMob / Broadcast Matchday Scorebugs (.season-history-card & .match-card-mini) */
 body:not(.lite-mode) .season-history-card{
-    border-radius:22px;
+    border-radius:24px;
+    padding:16px 14px;
     background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
-    border:1px solid rgba(255,255,255,0.08);
-    border-top-color:rgba(255,255,255,0.16);
-    box-shadow:0 12px 30px -6px rgba(0,0,0,0.56),inset 0 1px 0 rgba(255,255,255,0.10);
+    border:1px solid rgba(255,255,255,0.085);
+    border-top-color:rgba(255,255,255,0.18);
+    box-shadow:0 14px 32px -6px rgba(0,0,0,0.58),inset 0 1px 0 rgba(255,255,255,0.10);
+}
+.season-history-title{
+    font-size:0.74rem;
+    font-weight:900;
+    letter-spacing:1.6px;
+    color:var(--header-text);
+    margin-bottom:12px;
 }
 .match-card-mini{
-    border-radius:16px;
-    padding:9px 12px;
-    margin-bottom:8px;
-    border:1px solid rgba(255,255,255,0.075);
-    border-top-color:rgba(255,255,255,0.13);
+    border-radius:18px;
+    padding:10px 12px;
+    margin-bottom:9px;
+    border:1px solid rgba(255,255,255,0.08);
+    border-top-color:rgba(255,255,255,0.14);
 }
 .mcm-date{
-    width:max-content; margin:0 auto 7px; padding:2px 10px;
-    border-radius:999px; background:rgba(0,0,0,0.32);
-    border:1px solid rgba(255,255,255,0.05);
-    font-size:0.56rem; font-weight:700; letter-spacing:0.6px; color:#94a3b8;
+    width:max-content; margin:0 auto 8px; padding:2px 10px;
+    border-radius:999px; background:rgba(0,0,0,0.36);
+    border:1px solid rgba(255,255,255,0.06);
+    font-size:0.56rem; font-weight:700; letter-spacing:0.5px; color:#94a3b8;
+    display:flex; align-items:center; gap:6px;
 }
+.mcm-mw{
+    color:var(--primary);
+    font-weight:900;
+    padding-right:6px;
+    border-right:1px solid rgba(255,255,255,0.12);
+}
+.mcm-team{ gap:8px; }
 .mcm-team img{
-    width:26px; height:26px;
-    border:1.5px solid rgba(255,255,255,0.16);
-    box-shadow:0 2px 6px rgba(0,0,0,0.4);
+    width:28px; height:28px;
+    border:1.5px solid rgba(255,255,255,0.18);
+    box-shadow:0 3px 8px rgba(0,0,0,0.45);
 }
-.mcm-team span{ font-size:0.72rem; font-weight:800; letter-spacing:0.2px; }
+.mcm-team span{
+    font-size:0.75rem; font-weight:800; letter-spacing:0.2px; color:#cbd5e1;
+}
+.mcm-team.is-winner span{
+    color:#ffffff; font-weight:900;
+}
+.mcm-team.is-winner img{
+    border-color:rgba(251,191,36,0.6);
+    box-shadow:0 0 10px rgba(251,191,36,0.25);
+}
+.mcm-team.is-loser{
+    opacity:0.68;
+}
 .mcm-score{
-    font-size:0.88rem; font-weight:900; font-variant-numeric:tabular-nums;
-    color:#fbbf24;
-    background:linear-gradient(180deg,#080c16 0%,#04060b 100%);
-    border:1px solid rgba(251,191,36,0.28);
-    border-radius:10px; padding:4px 12px;
-    box-shadow:inset 0 1px 3px rgba(0,0,0,0.85),0 2px 8px rgba(0,0,0,0.35);
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
+    min-width:62px;
+    font-size:0.92rem; font-weight:900; font-variant-numeric:tabular-nums;
+    color:#cbd5e1;
+    background:linear-gradient(180deg,#070b14 0%,#03050a 100%);
+    border:1px solid rgba(255,255,255,0.14);
+    border-top-color:rgba(255,255,255,0.22);
+    border-radius:12px; padding:4px 12px;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,0.85),0 3px 10px rgba(0,0,0,0.4);
+    letter-spacing:0;
 }
+.mcm-score b{ font-weight:900; }
+.mcm-score b.sc-w{ color:#fde047; text-shadow:0 0 8px rgba(251,191,36,0.4); }
+.mcm-score i{ font-style:normal; opacity:0.45; font-size:0.75rem; }
 
-/* 4f. Golden Moments Social Highlight Cards (.weird-card) */
+/* 4h. Golden Moments Social Highlight Cards (.weird-card) */
 body:not(.lite-mode) .weird-card{
     border-radius:22px;
     background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
-    background-image:linear-gradient(165deg,rgba(255,255,255,0.04) 0%,transparent 42%,rgba(0,0,0,0.32) 100%);
-    border:1px solid rgba(255,255,255,0.08);
-    border-top-color:rgba(255,255,255,0.15);
+    background-image:linear-gradient(165deg,rgba(255,255,255,0.045) 0%,transparent 42%,rgba(0,0,0,0.34) 100%);
+    border:1px solid rgba(255,255,255,0.085);
+    border-top-color:rgba(255,255,255,0.16);
     box-shadow:0 12px 28px -6px rgba(0,0,0,0.55);
 }
 .weird-card-pinned{
-    border-color:rgba(251,191,36,0.42) !important;
-    box-shadow:0 12px 28px -6px rgba(0,0,0,0.55),0 0 22px -6px rgba(251,191,36,0.22) !important;
+    border-color:rgba(251,191,36,0.45) !important;
+    box-shadow:0 14px 30px -6px rgba(0,0,0,0.6),0 0 24px -6px rgba(251,191,36,0.24) !important;
 }
 .weird-card-date{
-    background:rgba(0,0,0,0.32); padding:3px 10px; border-radius:999px;
-    border:1px solid rgba(255,255,255,0.06); font-weight:700;
+    background:rgba(0,0,0,0.35); padding:3px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.07); font-weight:700;
 }
 .weird-img-thumb-sm{
-    border-radius:14px;
+    border-radius:15px;
     border:1px solid rgba(255,255,255,0.14);
-    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    box-shadow:0 6px 14px rgba(0,0,0,0.45);
 }
 
-/* 4g. Profile / Settings VIP Pass, Bento Rows & Hi-Fi Turntable Music Player */
+/* 4i. Profile VIP Pass, Bento Settings & Hi-Fi Turntable Music Player */
 .account-card{
+    width:100%;
+    max-width:340px;
+    border-radius:20px;
+    padding:10px 16px 10px 10px;
     background:
-        radial-gradient(90% 120% at 0% 50%,color-mix(in srgb,var(--primary) 18%,transparent) 0%,transparent 70%),
-        rgba(0,0,0,0.32);
-    border:1px solid rgba(255,255,255,0.11);
-    border-top-color:rgba(255,255,255,0.20);
-    box-shadow:0 8px 22px -4px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.10);
+        radial-gradient(90% 120% at 0% 50%,color-mix(in srgb,var(--primary) 22%,transparent) 0%,transparent 70%),
+        rgba(0,0,0,0.36);
+    border:1px solid rgba(255,255,255,0.12);
+    border-top-color:rgba(255,255,255,0.22);
+    box-shadow:0 8px 22px -4px rgba(0,0,0,0.48),inset 0 1px 0 rgba(255,255,255,0.12);
 }
 .account-avatar{
     border:2px solid var(--primary);
-    box-shadow:0 0 0 3px var(--nav-active-bg),0 6px 16px rgba(0,0,0,0.45);
+    box-shadow:0 0 0 3px var(--nav-active-bg),0 6px 16px rgba(0,0,0,0.48);
 }
 body:not(.lite-mode) .music-player{
     border-radius:24px;
     background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
     background-image:
-        radial-gradient(85% 95% at 12% 15%,color-mix(in srgb,var(--primary) 20%,transparent) 0%,transparent 65%),
+        radial-gradient(85% 95% at 12% 15%,color-mix(in srgb,var(--primary) 22%,transparent) 0%,transparent 65%),
         linear-gradient(165deg,rgba(255,255,255,0.05) 0%,transparent 45%,rgba(0,0,0,0.38) 100%);
     border:1px solid rgba(255,255,255,0.09);
     border-top-color:rgba(255,255,255,0.18);
@@ -503,7 +887,7 @@ body:not(.lite-mode) .settings-page-tile{
     color:#c4b5fd;
 }
 
-/* 4h. Weekly Magazine Editorial Story Cards (#magazine-screen) */
+/* 4j. Weekly Magazine Editorial Story Modules (#magazine-screen) */
 #magazine-screen .magazine-hero-meta{
     margin:10px 12px 0; padding:14px 16px;
     border-radius:20px;
@@ -526,7 +910,7 @@ body:not(.lite-mode) .settings-page-tile{
     padding-inline-start:10px;
 }
 
-/* 4i. CUP Bracket Pods & Schedule Blocks (.mba-block, .flow-block) */
+/* 4k. CUP Bracket Pods & Schedule Blocks (.mba-block, .flow-block) */
 body:not(.lite-mode) .mba-block,
 body:not(.lite-mode) .flow-block{
     border-radius:18px;

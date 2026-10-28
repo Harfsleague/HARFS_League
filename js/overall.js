@@ -23,9 +23,7 @@ function renderMainLeagueTable(){
 
     const rankClasses=['rank-1','rank-2','rank-3'];
 
-    // Teams tied on gold/silver/bronze share the same rank number (e.g. two
-    // teams both on 2 golds are both "#1" — the next distinct team is "#3",
-    // not "#2"), mirroring standard sports "equal rank" conventions.
+    // Tie-aware rank numbers
     const ranks=[];
     table.forEach((t,i)=>{
         if(i>0){
@@ -37,24 +35,50 @@ function renderMainLeagueTable(){
         }
     });
 
-    pod.innerHTML=table.map((t,i)=>{
-        const rankNum   = ranks[i];
-        const rankClass = rankNum <= 3 ? rankClasses[rankNum-1] : 'rank-other';
-        const delay     = i * 55;
+    const top3 = table.slice(0, 3).map((t, i) => ({ ...t, rankNum: ranks[i], slot: i + 1 }));
+    const rest = table.slice(3).map((t, i) => ({ ...t, rankNum: ranks[i + 3] }));
 
-        // Modern rank badge: icons for top3, number for rest — driven by the
-        // tie-aware rankNum, not the array index, so tied teams get matching badges.
+    // Podium visual order: 2nd (left), 1st (center elevated), 3rd (right)
+    const podiumOrder = top3.length === 3 ? [top3[1], top3[0], top3[2]] : top3;
+
+    const podiumHtml = `<div class="hof-podium-stage">${podiumOrder.map((t, idx) => {
+        const rNum = t.rankNum;
+        const rClass = rNum <= 3 ? rankClasses[rNum - 1] : 'rank-other';
+        const slotClass = 'pod-slot-' + t.slot;
+        const badgeIcon = rNum === 1 ? '<i class="fas fa-crown"></i>' : `<span>#${rNum}</span>`;
+        const delay = idx * 65;
+        return `
+            <div class="hof-podium-col ${rClass} ${slotClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
+                <div class="pod-avatar-stage">
+                    <div class="pod-rank-pill">${badgeIcon}</div>
+                    <div class="pod-avatar-ring">
+                        <img src="${teamLogoUrl(t.name)}" class="pod-avatar" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                    </div>
+                </div>
+                <div class="pod-team-name">${TEAM_DISPLAY_NAMES[t.name]}</div>
+                <div class="pod-pedestal">
+                    <div class="pod-medals">
+                        <div class="pod-medal gold" title="Gold"><span>🏆</span><b>${t.gold}</b></div>
+                        <div class="pod-medal silver" title="Silver"><span>🥈</span><b>${t.silver}</b></div>
+                        <div class="pod-medal bronze" title="Bronze"><span>🥉</span><b>${t.bronze}</b></div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('')}</div>`;
+
+    const restHtml = rest.map((t, i) => {
+        const rankNum = t.rankNum;
+        const rankClass = rankNum <= 3 ? rankClasses[rankNum - 1] : 'rank-other';
+        const delay = (i + 3) * 60;
         const rankBadgeContent = rankNum === 1 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
-                                : rankNum === 2 ? '<span style="font-size:1rem;font-weight:900;">2</span>'
-                                : rankNum === 3 ? '<span style="font-size:1rem;font-weight:900;">3</span>'
-                                : `<span>${rankNum}</span>`;
-
+                                : `<span>#${rankNum}</span>`;
         return `
             <div class="ranking-card ${rankClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
                 <div class="ranking-badge">${rankBadgeContent}</div>
-                <img src="${teamLogoUrl(t.name)}" class="ranking-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <img src="${teamLogoUrl(t.name)}" class="ranking-avatar" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 <div class="ranking-info">
-                    <div class="ranking-name" style="font-size:1.05rem;font-weight:900;letter-spacing:0.3px;">${TEAM_DISPLAY_NAMES[t.name]}</div>
+                    <div class="ranking-name">${TEAM_DISPLAY_NAMES[t.name]}</div>
+                    <div class="ranking-sub">Tap for Trophy Cabinet &amp; Record</div>
                 </div>
                 <div class="ranking-trophy-block">
                     <div class="ranking-trophy-item"><span class="trophy-emoji">🏆</span><b>${t.gold}</b></div>
@@ -64,10 +88,7 @@ function renderMainLeagueTable(){
             </div>`;
     }).join('');
 
-
-    // (Federation & Owners, Magazine, Assistant and Cards are the icon tiles under the ranking — see index.html)
-
-    // clear the old separate body — all cards go inside pod now
+    pod.innerHTML = podiumHtml + (restHtml ? `<div class="hof-rest-list">${restHtml}</div>` : '');
     document.getElementById('main-league-body').innerHTML='';
 }
 

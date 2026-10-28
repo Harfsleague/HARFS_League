@@ -16,12 +16,16 @@ function renderLeagueTable(dataToRender, historyForForm){
     const tbody=document.getElementById('league-table-body');
     tbody.innerHTML=table.map((t,i)=>{
         const isFirst=i===0;
+        const rowClass=i===0?'rank-1-row':(i===1?'rank-2-row':(i===2?'rank-3-row':'rank-4-row'));
+        const gd=t.GF-t.GA;
+        const gdStr=gd>0?`+${gd}`:String(gd);
+        const gdClass=gd>0?'gd-pos':(gd<0?'gd-neg':'gd-zero');
         const delay=i*55;
-        return`<tr class="${isFirst?'rank-1-row':''}" style="animation-delay:${delay}ms">
-            <td class="td-rank" style="${isFirst?'color:#fbbf24;':''}">${i+1}</td>
+        return`<tr class="${rowClass}" style="animation-delay:${delay}ms">
+            <td class="td-rank"><span class="rk-pill rk-${i+1}">${i+1}</span></td>
             <td class="td-team">
                 <div class="td-team-inner">
-                    <img src="${teamLogoUrl(t.name)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                    <img src="${teamLogoUrl(t.name)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                     <span style="${isFirst?'color:#fef3c7;':''}">${teamShort(t.name)}</span>
                 </div>
             </td>
@@ -32,8 +36,8 @@ function renderLeagueTable(dataToRender, historyForForm){
             <td class="td-l">${t.L}</td>
             <td class="td-gf">${t.GF}</td>
             <td class="td-ga">${t.GA}</td>
-            <td class="td-gd">${t.GF-t.GA}</td>
-            <td class="td-pts">${t.Pts}</td>
+            <td class="td-gd ${gdClass}">${gdStr}</td>
+            <td class="td-pts"><span class="pts-pill">${t.Pts}</span></td>
         </tr>`;
     }).join('');
 }
@@ -97,15 +101,17 @@ function updateHistoryLayout(filter){
         if(filter!=='all'&&away===filter&&home!==filter){
             leftTeam=away;leftScore=as;rightTeam=home;rightScore=hs;
         }
+        const lCls=leftScore>rightScore?'is-winner':(leftScore<rightScore?'is-loser':'');
+        const rCls=rightScore>leftScore?'is-winner':(rightScore<leftScore?'is-loser':'');
         row.innerHTML=`
-            <div class="mcm-team">
-                <img src="${teamLogoUrl(leftTeam)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+            <div class="mcm-team ${lCls}">
+                <img src="${teamLogoUrl(leftTeam)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 <span>${teamShort(leftTeam)}</span>
             </div>
-            <div class="mcm-score">${leftScore}-${rightScore}</div>
-            <div class="mcm-team mcm-team-away">
+            <div class="mcm-score"><b class="${leftScore>rightScore?'sc-w':''}">${leftScore}</b><i>:</i><b class="${rightScore>leftScore?'sc-w':''}">${rightScore}</b></div>
+            <div class="mcm-team mcm-team-away ${rCls}">
                 <span>${teamShort(rightTeam)}</span>
-                <img src="${teamLogoUrl(rightTeam)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <img src="${teamLogoUrl(rightTeam)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
             </div>`;
     });
 }
@@ -149,17 +155,19 @@ function renderSeasonHistoryList(history){
         const dt=formatShamsiDateTime(m.timestamp);
         const parts=m.score.split('-');
         const hs=parseInt(parts[0]),as=parseInt(parts[1]);
+        const hCls=hs>as?'is-winner':(hs<as?'is-loser':'');
+        const aCls=as>hs?'is-winner':(as<hs?'is-loser':'');
         return`<div class="match-card-mini" data-home="${m.home}" data-away="${m.away}" data-hs="${hs}" data-as="${as}">
-            <div class="mcm-date">${dt.date} · ${dt.time}${m.round?` · MW${m.round}`:''}</div>
+            <div class="mcm-date">${m.round?`<span class="mcm-mw">MW${m.round}</span>`:''}<span>${dt.date} · ${dt.time}</span></div>
             <div class="mcm-row">
-                <div class="mcm-team">
-                    <img src="${teamLogoUrl(m.home)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                <div class="mcm-team ${hCls}">
+                    <img src="${teamLogoUrl(m.home)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                     <span>${teamShort(m.home)}</span>
                 </div>
-                <div class="mcm-score">${m.score}</div>
-                <div class="mcm-team mcm-team-away">
+                <div class="mcm-score"><b class="${hs>as?'sc-w':''}">${hs}</b><i>:</i><b class="${as>hs?'sc-w':''}">${as}</b></div>
+                <div class="mcm-team mcm-team-away ${aCls}">
                     <span>${teamShort(m.away)}</span>
-                    <img src="${teamLogoUrl(m.away)}" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
+                    <img src="${teamLogoUrl(m.away)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
                 </div>
             </div>
             ${typeof cardsGameHtml==='function' ? cardsGameHtml(m.cards) : ''}
