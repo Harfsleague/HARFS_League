@@ -401,3 +401,35 @@ body.ai-disabled #nav-admin{ display:none !important; }   /* Assistant switched 
 .mag-gif-status{ display:flex; flex-direction:column; gap:6px; margin-top:10px; font-size:.68rem; color:#d1d5db; text-align:center; }
 .mag-gif-bar{ height:6px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; }
 .mag-gif-bar span{ display:block; height:100%; width:0; background:var(--primary); border-radius:99px; transition:width .2s; }
+
+/* =====================================================
+   ASSISTANT page — same look as the Season page (header card + one glass card below)
+   ===================================================== */
+#ai-chat-screen > .league-header{ min-height:66px; padding:12px 54px; justify-content:center; }
+#ai-chat-screen .season-title{
+    font-size:1.25rem; font-weight:900; letter-spacing:3.5px; margin:0;
+    background:linear-gradient(180deg,#ffffff 0%,var(--header-text) 100%);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+#ai-chat-screen .season-date{ font-size:0.68rem; font-weight:700; letter-spacing:0.6px; color:#94a3b8; margin:3px 0 0; }
+#ai-chat-screen .season-header-actions{ position:absolute; right:14px; top:50%; transform:translateY(-50%); margin:0 !important; align-self:auto; }
+#ai-chat-screen .season-icon-btn{
+    width:38px; height:38px; border-radius:13px;
+    background:color-mix(in srgb,var(--primary) 12%,rgba(255,255,255,0.05));
+    border:1px solid color-mix(in srgb,var(--primary) 30%,rgba(255,255,255,0.14));
+    border-top-color:rgba(255,255,255,0.26); color:var(--header-text);
+    box-shadow:0 4px 12px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.14);
+}
+#ai-chat-screen .ai-chat-inner{ flex:1 1 0; min-height:0; height:auto; padding:0 12px; }
+#ai-chat-screen .ai-panel{
+    border-radius:24px;
+    background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
+    background-image:linear-gradient(175deg,color-mix(in srgb,var(--bg-from) 20%,transparent) 0%,transparent 40%);
+    border:1px solid rgba(255,255,255,0.08);
+    border-top-color:color-mix(in srgb,var(--primary) 32%,rgba(255,255,255,0.18));
+    border-bottom-color:rgba(0,0,0,0.65);
+    box-shadow:0 14px 32px -8px rgba(0,0,0,0.65),inset 0 1px 0 rgba(255,255,255,0.12);
+}
+#ai-chat-screen .ai-input-bar{ border-top:1px solid rgba(255,255,255,0.07); }
+#ai-chat-screen #ai-chat-input{ border-radius:999px; }
+#ai-chat-screen .ai-send-btn{ border-radius:50%; }

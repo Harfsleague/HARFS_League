@@ -28,7 +28,7 @@ function renderMainLeagueTable(){
     table.forEach((t,i)=>{
         if(i>0){
             const prev=table[i-1];
-            const tied = t.gold===prev.gold && t.silver===prev.silver && t.bronze===prev.bronze;
+            const tied = t.gold===prev.gold;   // rank = number of league + CUP titles only
             ranks.push(tied ? ranks[i-1] : i+1);
         } else {
             ranks.push(1);
@@ -53,7 +53,7 @@ function renderMainLeagueTable(){
         const slotClass = 'pod-slot-' + t.slot;
         const badgeIcon = rNum === 1 ? '<i class="fas fa-crown"></i>' : `<span>#${rNum}</span>`;
         const delay = idx * 65;
-        const podMedals = hofMedals(t).map(m=>`<div class="pod-medal ${m.key}" title="${m.title}"><span>${m.icon}</span><b>${m.n}</b></div>`).join('') || '<span class="pod-none">—</span>';
+        const podMedals = hofMedals(t).map(m=>`<div class="pod-medal ${m.key}${m.isTitle?' is-title':''}" title="${m.title}"><span>${m.icon}</span><b>${m.n}</b></div>`).join('') || '<span class="pod-none">—</span>';
         return `
             <div class="hof-podium-col ${rClass} ${slotClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
                 <div class="pod-avatar-stage">
@@ -73,7 +73,7 @@ function renderMainLeagueTable(){
         const rankNum = t.rankNum;
         const rankClass = rankNum <= 3 ? rankClasses[rankNum - 1] : 'rank-other';
         const delay = (i + 4) * 60;
-        const restMedals = hofMedals(t).map(m=>`<div class="ranking-trophy-item" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><b>${m.n}</b></div>`).join('');
+        const restMedals = hofMedals(t).map(m=>`<div class="ranking-trophy-item${m.isTitle?' is-title':''}" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><b>${m.n}</b></div>`).join('');
         const rankBadgeContent = rankNum === 1 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
                                 : `<span>#${rankNum}</span>`;
         return `

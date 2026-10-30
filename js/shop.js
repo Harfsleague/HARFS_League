@@ -37,20 +37,36 @@ function computeTrophyCounts(){
 }
 // The honours a team has actually won, for display — anything it has not won is simply left out
 // (no "🏆 0"). Icons live here so they can be changed in one place:
-//   🏆 league title · 🏅 CUP title · ⚡ Super Cup title · 🥈 / 🥉 silver / bronze (league + CUP)
-const HOF_ICONS = { league:'🏆', cup:'🏅', superCup:'⚡', silver:'🥈', bronze:'🥉' };
+//   🏆 league title · (drawn cup) CUP title · ⚡ Super Cup title · 🥈 / 🥉 silver / bronze (league + CUP)
+// The CUP icon is drawn here (an emoji would be a medal, and a CUP is a cup): a silver cup with gold
+// rim, big gold handles, a blue emblem and a bronze base — different from the league 🏆 at a glance.
+const CUP_ICON_SVG = '<svg class="hof-cup-svg" viewBox="0 0 32 32" aria-hidden="true">'
+    + '<path d="M9.6 11.2C3.6 10 2.6 18.2 8.6 19.4" fill="none" stroke="#f59e0b" stroke-width="1.9" stroke-linecap="round"/>'
+    + '<path d="M22.4 11.2C28.4 10 29.4 18.2 23.4 19.4" fill="none" stroke="#f59e0b" stroke-width="1.9" stroke-linecap="round"/>'
+    + '<rect x="14.4" y="21.6" width="3.2" height="5.2" fill="#d97706"/>'
+    + '<rect x="10.4" y="26.6" width="11.2" height="3.4" rx="1.1" fill="#b45309"/>'
+    + '<path d="M8.8 9.6h14.4v4.6c0 4.6-3.1 7.8-7.2 8.2-4.1-.4-7.2-3.6-7.2-8.2z" fill="#e2e8f0"/>'
+    + '<path d="M16 9.6h7.2v4.6c0 4.6-3.1 7.8-7.2 8.2z" fill="#b6c2d2"/>'
+    + '<path d="M10.2 9.6C10.2 6.4 12.6 4.4 16 4.4s5.8 2 5.8 5.2z" fill="#f8fafc"/>'
+    + '<rect x="8" y="8.8" width="16" height="1.8" rx=".9" fill="#fbbf24"/>'
+    + '<circle cx="16" cy="3.4" r="1.5" fill="#fbbf24"/>'
+    + '<circle cx="16" cy="15.2" r="2.7" fill="#3b82f6"/>'
+    + '<path d="M16 13.3l.62 1.28 1.4.2-1.02.98.25 1.4L16 16.5l-1.25.66.25-1.4-1.02-.98 1.4-.2z" fill="#fef3c7"/>'
+    + '</svg>';
+const HOF_ICONS = { league:'🏆', cup:CUP_ICON_SVG, superCup:'⚡', silver:'🥈', bronze:'🥉' };
 function hofMedals(t){
     return [
-        { key:'gold',   icon:HOF_ICONS.league,   n:t.leagueGold||0, title:'League titles' },
-        { key:'cup',    icon:HOF_ICONS.cup,      n:t.cup||0,        title:'CUP titles' },
+        { key:'gold',   icon:HOF_ICONS.league,   n:t.leagueGold||0, title:'League titles', isTitle:true },
+        { key:'cup',    icon:HOF_ICONS.cup,      n:t.cup||0,        title:'CUP titles', isTitle:true },
         { key:'super',  icon:HOF_ICONS.superCup, n:t.superCup||0,   title:'Super Cup titles' },
         { key:'silver', icon:HOF_ICONS.silver,   n:t.silver||0,     title:'Silver' },
         { key:'bronze', icon:HOF_ICONS.bronze,   n:t.bronze||0,     title:'Bronze' },
     ].filter(m=>m.n>0);
 }
-// True medal-table ranking: most gold wins outright; silver is the first
-// tie-break, bronze the second; total trophy count breaks any further tie,
-// then alphabetical for full stability. Expects {name,gold,silver,bronze}.
+// RANKING (Hall of Fame): by the number of titles = league titles + CUP titles (that is `gold`).
+// Super Cup, silver and bronze never change a team's rank — teams with the same number of titles
+// SHARE the rank (see renderMainLeagueTable). Silver → bronze → total → name below only decide the
+// order the tied teams are listed in. Expects {name,gold,silver,bronze}.
 function compareTrophies(a,b){
     if(b.gold!==a.gold) return b.gold-a.gold;
     if(b.silver!==a.silver) return b.silver-a.silver;

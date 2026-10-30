@@ -97,7 +97,7 @@ function openTeamPanel(team){
 
     document.getElementById('team-panel-trophies').innerHTML = isSymbolicTeam(team)
         ? `<div class="trophy-cabinet-item"><span class="trophy-emoji ps-medal-big">${PURPLE_MEDAL_SVG}</span></div>`
-        : (hofMedals(trophies).map(m=>`<div class="trophy-cabinet-item" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><div class="trophy-count">${m.n}</div></div>`).join('')
+        : (hofMedals(trophies).map(m=>`<div class="trophy-cabinet-item${m.isTitle?' is-title':''}" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><div class="trophy-count">${m.n}</div></div>`).join('')
             || '<div class="team-panel-empty">No trophies yet</div>');
 
     document.getElementById('team-panel-records').innerHTML = renderRecordBadgesFor(team);
