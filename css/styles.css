@@ -2301,3 +2301,7 @@ body.perf-no-anim #photo-viewer, body.perf-no-anim .pv-track{ transition:none; s
         scroll-behavior:auto !important;
     }
 }
+
+/* Bottom nav: Assistant tab uses an inline sparkle (same size/behaviour as the Font Awesome icons next to it) */
+.nav-item svg.nav-ai-ic{ width:1.1rem; height:1.1rem; margin-bottom:3px; transition:transform 0.3s ease; }
+.nav-item.active svg.nav-ai-ic{ transform:translateY(-2px); }

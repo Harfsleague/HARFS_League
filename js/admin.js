@@ -100,9 +100,9 @@ function navigate(route){
 
     currentRouteIndex=ROUTES.indexOf(route);
     const navMap={
-        'main-league':'nav-main','league':'nav-season','weird':'nav-admin',
+        'main-league':'nav-main','league':'nav-season','weird':'nav-main',
         'settings':'nav-settings','admin':'nav-settings',
-        'magazine':'nav-main','ai-chat':'nav-main','chat':'nav-main','game':'nav-main'
+        'magazine':'nav-main','ai-chat':'nav-admin','chat':'nav-main','game':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');

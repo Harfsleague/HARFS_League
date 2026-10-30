@@ -228,8 +228,8 @@
         <div class="nav-item active" onclick="navigate('league')" id="nav-season">
             <i class="fas fa-futbol"></i><span>Season</span>
         </div>
-        <div class="nav-item" onclick="navigate('weird')" id="nav-admin">
-            <i class="fas fa-star" id="nav-admin-icon"></i><span id="nav-admin-label">Memories</span>
+        <div class="nav-item" onclick="openAiPanel()" id="nav-admin">
+            <svg class="nav-ai-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z"/><path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z"/></svg><span id="nav-admin-label">Assistant</span>
         </div>
         <div class="nav-item" onclick="navigate('settings')" id="nav-settings">
             <i class="fas fa-gear" id="nav-settings-icon"></i>
@@ -275,11 +275,8 @@
                 <button class="ov-tile ov-tile-fed" onclick="openPeopleSheet()" aria-label="Federation and Owners">
                     <i class="fas fa-crown"></i><span>Federation</span>
                 </button>
-                <button class="ov-tile ov-tile-ai" onclick="openAiPanel()" aria-label="HARFS Assistant">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                        <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
-                        <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
-                    </svg><span>Assistant</span>
+                <button class="ov-tile ov-tile-moments" onclick="navigate('weird')" aria-label="Golden Moments">
+                    <i class="fas fa-star"></i><span>Moments</span>
                 </button>
             </div>
         </div>
@@ -570,7 +567,8 @@
 
     <!-- ============ GOLDEN MOMENTS ============ -->
     <div id="weird-screen" class="page-screen">
-        <div class="league-header">
+        <div class="league-header" style="position:relative;">
+            <button class="season-icon-btn season-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-chevron-left"></i></button>
             <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ Golden Moments ⭐</h2>
         </div>
         <div class="w-full px-4">

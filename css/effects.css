@@ -649,7 +649,7 @@ body:not(.lite-mode) .ov-tile{
 .ov-tile-cards{ --tile-accent:#f87171; color:#f87171; }
 .ov-tile-game{  --tile-accent:#fb923c; color:#fb923c; }
 .ov-tile-fed{   --tile-accent:#c084fc; color:#c084fc; }
-.ov-tile-ai{    --tile-accent:var(--primary); color:var(--primary); }
+.ov-tile-moments{ --tile-accent:#f472b6; color:#f472b6; }
 .ov-tile i,
 .ov-tile svg{
     font-size:1.38rem;

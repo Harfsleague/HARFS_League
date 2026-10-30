@@ -196,7 +196,8 @@ body.perf-no-anim #season-sections{ transition:none !important; animation:none !
 .ov-tile-cards{ color:#f87171; }
 .ov-tile-chat{ color:#34d399; }
 .ov-tile-game{ color:#fb923c; }
-body.ai-disabled .ov-tile-ai{ display:none !important; }
+body.ai-disabled #nav-admin{ display:none !important; }   /* Assistant switched off in Settings → its bottom tab disappears */
+.ov-tile-moments{ color:#f472b6; }
 
 /* =====================================================
    CARDS

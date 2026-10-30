@@ -157,7 +157,7 @@ function formatShamsiDateTime(ts){
 // ============================================================
 // SWIPE + ROUTES
 // ============================================================
-const ROUTES=['main-league','league','weird','settings'];
+const ROUTES=['main-league','league','ai-chat','settings'];   // the 3rd bottom tab is the Assistant; Moments is a Hall of Fame shortcut (route 'weird')
 let currentRouteIndex=1;
 
 // ============================================================
@@ -199,8 +199,8 @@ function startApp(cacheReady){
 // ------------------------------------------------------------
 // Admin is no longer a secret hold-gesture on this tab — it now
 // lives inside Settings, and only for the Bayern account (see
-// renderSettingsScreen() / TEAM login system below). Memories
-// (formerly "Moments") is a plain nav item like any other.
+// renderSettingsScreen() / TEAM login system below). The Assistant is the 3rd nav item;
+// Moments (route 'weird') opens from the Hall of Fame shortcut row.
 // ============================================================
 function setupOverallHold(){
     const navMain=document.getElementById('nav-main');
