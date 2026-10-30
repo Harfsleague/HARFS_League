@@ -35,6 +35,7 @@ let chatUnread = 0;
 let chatReadTs = 0;               // newest ts we told the server we have read
 let chatNodes = new Map();        // id -> DOM node
 let chatRec = null;               // { rec, stream, chunks, t0, timer, cancelled }
+let chatRenderedOnce = false;     // false until the first full render → later (new) bubbles spring in, the first screenful fades up
 
 function chatEl(id){ return document.getElementById(id); }
 const chatApi = workerApi;
@@ -126,7 +127,7 @@ async function chatPoll(){
 function chatReset(){
     if(!chatLoaded && !chatUnread && !chatSeenVersion) return;
     chatMsgs = []; chatLoaded = false; chatSeenVersion = ''; chatReadTs = 0; chatReply = null;
-    chatNodes.clear(); const box = chatEl('chat-messages'); if(box) box.innerHTML = '';
+    chatNodes.clear(); chatRenderedOnce = false; const box = chatEl('chat-messages'); if(box) box.innerHTML = '';
     chatBlobsForget(); chatReacts = {}; chatReadAtOpen = null;
     chatSetUnread(0);
 }
@@ -254,7 +255,11 @@ function chatRender(){
     let prev = null;
     chatMsgs.forEach((m,i)=>{
         let node = chatNodes.get(m.id);
-        if(!node){ node = chatBuildNode(m); chatNodes.set(m.id,node); if(m.k==='image' && m.mi && (m.ms||0) <= 6*1048576) setTimeout(()=>chatMediaTap(m.id),0); }
+        if(!node){
+            node = chatBuildNode(m); chatNodes.set(m.id,node);
+            if(chatRenderedOnce){ node.classList.add('chat-fresh'); setTimeout(()=>node.classList.remove('chat-fresh'), 700); }
+            else if(i >= chatMsgs.length - 12){ node.style.setProperty('--d', ((i - (chatMsgs.length - 12)) * 28) + 'ms'); node.classList.add('chat-intro'); setTimeout(()=>node.classList.remove('chat-intro'), 900); }
+            if(m.k==='image' && m.mi && (m.ms||0) <= 6*1048576) setTimeout(()=>chatMediaTap(m.id),0); }
         if(node.parentNode !== box || node.previousElementSibling !== prev) box.insertBefore(node, prev ? prev.nextSibling : box.firstChild);
         const p = chatMsgs[i-1], n = chatMsgs[i+1];
         const newDay = i === 0 || chatDayKey(m.ts) !== chatDayKey(p.ts);
@@ -279,6 +284,7 @@ function chatRender(){
         prev = node;
     });
     const sn = chatEl('chat-search-n'); if(sn) sn.textContent = q ? `${hits}` : '';
+    chatRenderedOnce = true;
     chatUpdateSub();
 }
 function chatUpdateSub(){
@@ -573,11 +579,19 @@ async function chatSend(){
             }
         }
         input.value = ''; chatAutoGrow(input); chatCancelReply(); chatToggleEmoji(false);
+        chatSentFx();
     }catch(e){
         showToast(e.message || 'Could not send','error',3200);
     }
     chatSetProgress(null);
     chatSending = false; chatEl('chat-send').disabled = false;
+}
+
+// little "sent" animation on the composer (CSS: .chat-row.sent)
+function chatSentFx(){
+    const row = chatEl('chat-row'); if(!row) return;
+    row.classList.remove('sent'); void row.offsetWidth; row.classList.add('sent');
+    setTimeout(()=>row.classList.remove('sent'), 600);
 }
 
 // ---------------- voice messages ----------------

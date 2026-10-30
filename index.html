@@ -259,27 +259,27 @@
             </div>
             <!-- Overall shortcuts: rounded-square icons in one row -->
             <div class="ov-tiles">
-                <button class="ov-tile" onclick="openMagazinePanel()" aria-label="HARFS Weekly Magazine">
+                <button class="ov-tile ov-tile-mag" onclick="openMagazinePanel()" aria-label="HARFS Weekly Magazine">
                     <i class="fas fa-newspaper"></i><span>Magazine</span>
+                </button>
+                <button class="ov-tile ov-tile-chat" onclick="openChatPage()" aria-label="Chat">
+                    <i class="fas fa-comments"></i><span>Chat</span>
+                    <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
+                </button>
+                <button class="ov-tile ov-tile-cards" onclick="openCardsSheet()" aria-label="Cards">
+                    <i class="fas fa-clone"></i><span>Cards</span>
+                </button>
+                <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
+                    <i class="fas fa-gamepad"></i><span>Game</span>
+                </button>
+                <button class="ov-tile ov-tile-fed" onclick="openPeopleSheet()" aria-label="Federation and Owners">
+                    <i class="fas fa-crown"></i><span>Federation</span>
                 </button>
                 <button class="ov-tile ov-tile-ai" onclick="openAiPanel()" aria-label="HARFS Assistant">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                         <path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
                         <path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z" />
                     </svg><span>Assistant</span>
-                </button>
-                <button class="ov-tile" onclick="openPeopleSheet()" aria-label="Federation and Owners">
-                    <i class="fas fa-crown"></i><span>Federation</span>
-                </button>
-                <button class="ov-tile" onclick="openCardsSheet()" aria-label="Cards">
-                    <i class="fas fa-clone"></i><span>Cards</span>
-                </button>
-                <button class="ov-tile ov-tile-chat" onclick="openChatPage()" aria-label="Chat">
-                    <i class="fas fa-comments"></i><span>Chat</span>
-                    <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
-                </button>
-                <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
-                    <i class="fas fa-gamepad"></i><span>Game</span>
                 </button>
             </div>
         </div>

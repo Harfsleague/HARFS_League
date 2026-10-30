@@ -525,6 +525,44 @@ body:not(.lite-mode):not(.perf-no-sheen) .magazine-panel-header::before{
 }
 .hof-podium-col.rank-1 .pod-medal.gold b{ color:#fde047; }
 
+/* 4th place — a small step on the same stage (right of 3rd). Only used when four teams are shown. */
+.hof-podium-stage.pod-four{
+    grid-template-columns:1fr 1.12fr 1fr .86fr;
+    gap:6px;
+}
+.hof-podium-stage.pod-four .hof-podium-col{ padding:12px 3px 8px; border-radius:18px; }
+.hof-podium-stage.pod-four .hof-podium-col.pod-slot-1{ padding:16px 4px 10px; }
+.hof-podium-stage.pod-four .pod-avatar{ width:42px; height:42px; }
+.hof-podium-stage.pod-four .hof-podium-col.pod-slot-1 .pod-avatar{ width:54px; height:54px; }
+.hof-podium-stage.pod-four .pod-team-name{ font-size:0.68rem; padding:0 2px; }
+.hof-podium-stage.pod-four .hof-podium-col.rank-1 .pod-team-name{ font-size:0.76rem; }
+.hof-podium-stage.pod-four .pod-pedestal{ padding:5px 2px; border-radius:12px; }
+.hof-podium-stage.pod-four .pod-medal span{ font-size:0.68rem; }
+.hof-podium-stage.pod-four .pod-medal b{ font-size:0.62rem; }
+.hof-podium-col.pod-slot-4{
+    padding:9px 3px 7px;
+    border-radius:16px;
+    background-image:
+        radial-gradient(85% 60% at 50% 0%,color-mix(in srgb,var(--primary) 16%,transparent) 0%,transparent 70%),
+        linear-gradient(180deg,rgba(255,255,255,0.04) 0%,rgba(0,0,0,0.36) 100%);
+    border-color:color-mix(in srgb,var(--primary) 26%,rgba(255,255,255,0.10));
+    border-top-color:color-mix(in srgb,var(--primary) 50%,rgba(255,255,255,0.18));
+}
+.hof-podium-stage.pod-four .hof-podium-col.pod-slot-4{ padding:9px 2px 7px; }
+.hof-podium-col.pod-slot-4 .pod-avatar{ width:36px; height:36px; }
+.hof-podium-stage.pod-four .hof-podium-col.pod-slot-4 .pod-avatar{ width:36px; height:36px; }
+.hof-podium-col.pod-slot-4 .pod-avatar-stage{ margin-bottom:6px; }
+.hof-podium-col.pod-slot-4 .pod-rank-pill{
+    top:-7px; height:18px; min-width:22px; font-size:0.58rem;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 70%,#fff),color-mix(in srgb,var(--primary) 70%,#000));
+    color:#090d16; border-color:rgba(255,255,255,0.45);
+}
+.hof-podium-col.pod-slot-4 .pod-avatar-ring{
+    padding:2.5px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 75%,#fff),var(--primary),color-mix(in srgb,var(--primary) 45%,#000));
+}
+.hof-podium-col.pod-slot-4 .pod-team-name{ font-size:0.66rem; margin-bottom:6px; }
+
 /* Tier 2: Sleek Contender Card below the 3D Podium (.hof-rest-list & .ranking-card) */
 .hof-rest-list{
     display:flex;
@@ -605,12 +643,13 @@ body:not(.lite-mode) .ov-tile{
         inset 0 1px 0 rgba(255,255,255,0.14);
     transition:transform 0.18s var(--lg-ease),box-shadow 0.2s ease;
 }
-.ov-tile:nth-child(1){ --tile-accent:#fbbf24; color:#fbbf24; }
-.ov-tile:nth-child(2){ --tile-accent:var(--primary); color:var(--primary); }
-.ov-tile:nth-child(3){ --tile-accent:#c084fc; color:#c084fc; }
-.ov-tile:nth-child(4){ --tile-accent:#f87171; color:#f87171; }
-.ov-tile:nth-child(5){ --tile-accent:#34d399; color:#34d399; }
-.ov-tile:nth-child(6){ --tile-accent:#fb923c; color:#fb923c; }
+/* colours follow the tile (not its position) so the row can be re-ordered freely */
+.ov-tile-mag{   --tile-accent:#fbbf24; color:#fbbf24; }
+.ov-tile-chat{  --tile-accent:#34d399; color:#34d399; }
+.ov-tile-cards{ --tile-accent:#f87171; color:#f87171; }
+.ov-tile-game{  --tile-accent:#fb923c; color:#fb923c; }
+.ov-tile-fed{   --tile-accent:#c084fc; color:#c084fc; }
+.ov-tile-ai{    --tile-accent:var(--primary); color:var(--primary); }
 .ov-tile i,
 .ov-tile svg{
     font-size:1.38rem;

@@ -191,11 +191,11 @@ body.perf-no-anim #season-sections{ transition:none !important; animation:none !
 .ov-tile i{ font-size:1.35rem; }
 .ov-tile span{ font-size:.56rem; font-weight:800; letter-spacing:.4px; color:#cbd5e1; }
 .ov-tile:active{ transform:scale(.94); }
-.ov-tile:nth-child(1){ color:#fbbf24; }
-.ov-tile:nth-child(3){ color:#c084fc; }
-.ov-tile:nth-child(4){ color:#f87171; }
-.ov-tile:nth-child(5){ color:#34d399; }
-.ov-tile:nth-child(6){ color:#fb923c; }
+.ov-tile-mag{ color:#fbbf24; }
+.ov-tile-fed{ color:#c084fc; }
+.ov-tile-cards{ color:#f87171; }
+.ov-tile-chat{ color:#34d399; }
+.ov-tile-game{ color:#fb923c; }
 body.ai-disabled .ov-tile-ai{ display:none !important; }
 
 /* =====================================================

@@ -35,13 +35,19 @@ function renderMainLeagueTable(){
         }
     });
 
-    const top3 = table.slice(0, 3).map((t, i) => ({ ...t, rankNum: ranks[i], slot: i + 1 }));
-    const rest = table.slice(3).map((t, i) => ({ ...t, rankNum: ranks[i + 3] }));
+    const top4 = table.slice(0, 4).map((t, i) => ({ ...t, rankNum: ranks[i], slot: i + 1 }));
+    const rest = table.slice(4).map((t, i) => ({ ...t, rankNum: ranks[i + 4] }));
 
-    // Podium visual order: 2nd (left), 1st (center elevated), 3rd (right)
-    const podiumOrder = top3.length === 3 ? [top3[1], top3[0], top3[2]] : top3;
+    // Podium visual order: 2nd (left), 1st (centre, elevated), 3rd, then a small 4th step on the right
+    // (all four stand on the same stage — 4th is a lower step, not a separate card below it)
+    let podiumOrder = top4;
+    if(top4.length >= 3){
+        podiumOrder = [top4[1], top4[0], top4[2]];
+        if(top4[3]) podiumOrder.push(top4[3]);
+    }
+    const podiumCols = podiumOrder.length >= 4 ? ' pod-four' : '';
 
-    const podiumHtml = `<div class="hof-podium-stage">${podiumOrder.map((t, idx) => {
+    const podiumHtml = `<div class="hof-podium-stage${podiumCols}">${podiumOrder.map((t, idx) => {
         const rNum = t.rankNum;
         const rClass = rNum <= 3 ? rankClasses[rNum - 1] : 'rank-other';
         const slotClass = 'pod-slot-' + t.slot;
@@ -69,7 +75,7 @@ function renderMainLeagueTable(){
     const restHtml = rest.map((t, i) => {
         const rankNum = t.rankNum;
         const rankClass = rankNum <= 3 ? rankClasses[rankNum - 1] : 'rank-other';
-        const delay = (i + 3) * 60;
+        const delay = (i + 4) * 60;
         const rankBadgeContent = rankNum === 1 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
                                 : `<span>#${rankNum}</span>`;
         return `
