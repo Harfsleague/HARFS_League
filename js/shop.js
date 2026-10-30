@@ -10,10 +10,15 @@
 // ============================================================
 
 // Gold/silver/bronze tally, read straight from the archive — never stored separately.
+// gold / silver / bronze = what the RANKING uses (league + CUP medals together, exactly as before).
+// For DISPLAY the same totals are also split: leagueGold (league titles only), cup (CUP titles),
+// superCup (Super Cup titles). Super Cup never feeds the ranking.
 function computeTrophyCounts(){
-    const counts = {}; TEAM_NAMES.forEach(t=>counts[t]={gold:0,silver:0,bronze:0});
+    const counts = {}; TEAM_NAMES.forEach(t=>counts[t]={gold:0,silver:0,bronze:0,leagueGold:0,cup:0,superCup:0});
     (archivedSeasons||[]).forEach(season=>{
         const table = season.table || [];
+        if(table[0] && counts[table[0].name]) counts[table[0].name].leagueGold++;
+        if(season.superCup && season.superCup.winner && counts[season.superCup.winner]) counts[season.superCup.winner].superCup++;
         if(table[0] && counts[table[0].name]) counts[table[0].name].gold++;
         if(table[1] && counts[table[1].name]) counts[table[1].name].silver++;
         if(table[2] && counts[table[2].name]) counts[table[2].name].bronze++;
@@ -24,11 +29,24 @@ function computeTrophyCounts(){
     // cabinet, and the "Most Decorated" record badge all reflect CUP wins
     // automatically without any of them needing their own CUP-aware logic.
     ((mbaData&&mbaData.completed)||[]).forEach(t=>{
-        if(t.gold && counts[t.gold]) counts[t.gold].gold++;
+        if(t.gold && counts[t.gold]){ counts[t.gold].gold++; counts[t.gold].cup++; }
         if(t.silver && counts[t.silver]) counts[t.silver].silver++;
         if(t.bronze && counts[t.bronze]) counts[t.bronze].bronze++;
     });
     return counts;
+}
+// The honours a team has actually won, for display — anything it has not won is simply left out
+// (no "🏆 0"). Icons live here so they can be changed in one place:
+//   🏆 league title · 🏅 CUP title · ⚡ Super Cup title · 🥈 / 🥉 silver / bronze (league + CUP)
+const HOF_ICONS = { league:'🏆', cup:'🏅', superCup:'⚡', silver:'🥈', bronze:'🥉' };
+function hofMedals(t){
+    return [
+        { key:'gold',   icon:HOF_ICONS.league,   n:t.leagueGold||0, title:'League titles' },
+        { key:'cup',    icon:HOF_ICONS.cup,      n:t.cup||0,        title:'CUP titles' },
+        { key:'super',  icon:HOF_ICONS.superCup, n:t.superCup||0,   title:'Super Cup titles' },
+        { key:'silver', icon:HOF_ICONS.silver,   n:t.silver||0,     title:'Silver' },
+        { key:'bronze', icon:HOF_ICONS.bronze,   n:t.bronze||0,     title:'Bronze' },
+    ].filter(m=>m.n>0);
 }
 // True medal-table ranking: most gold wins outright; silver is the first
 // tie-break, bronze the second; total trophy count breaks any further tie,

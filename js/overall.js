@@ -53,6 +53,7 @@ function renderMainLeagueTable(){
         const slotClass = 'pod-slot-' + t.slot;
         const badgeIcon = rNum === 1 ? '<i class="fas fa-crown"></i>' : `<span>#${rNum}</span>`;
         const delay = idx * 65;
+        const podMedals = hofMedals(t).map(m=>`<div class="pod-medal ${m.key}" title="${m.title}"><span>${m.icon}</span><b>${m.n}</b></div>`).join('') || '<span class="pod-none">—</span>';
         return `
             <div class="hof-podium-col ${rClass} ${slotClass}" style="animation-delay:${delay}ms" onclick="openTeamPanel('${t.name}')">
                 <div class="pod-avatar-stage">
@@ -63,11 +64,7 @@ function renderMainLeagueTable(){
                 </div>
                 <div class="pod-team-name">${TEAM_DISPLAY_NAMES[t.name]}</div>
                 <div class="pod-pedestal">
-                    <div class="pod-medals">
-                        <div class="pod-medal gold" title="Gold"><span>🏆</span><b>${t.gold}</b></div>
-                        <div class="pod-medal silver" title="Silver"><span>🥈</span><b>${t.silver}</b></div>
-                        <div class="pod-medal bronze" title="Bronze"><span>🥉</span><b>${t.bronze}</b></div>
-                    </div>
+                    <div class="pod-medals">${podMedals}</div>
                 </div>
             </div>`;
     }).join('')}</div>`;
@@ -76,6 +73,7 @@ function renderMainLeagueTable(){
         const rankNum = t.rankNum;
         const rankClass = rankNum <= 3 ? rankClasses[rankNum - 1] : 'rank-other';
         const delay = (i + 4) * 60;
+        const restMedals = hofMedals(t).map(m=>`<div class="ranking-trophy-item" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><b>${m.n}</b></div>`).join('');
         const rankBadgeContent = rankNum === 1 ? '<i class="fas fa-crown" style="font-size:1rem;"></i>'
                                 : `<span>#${rankNum}</span>`;
         return `
@@ -86,11 +84,7 @@ function renderMainLeagueTable(){
                     <div class="ranking-name">${TEAM_DISPLAY_NAMES[t.name]}</div>
                     <div class="ranking-sub">Tap for Trophy Cabinet &amp; Record</div>
                 </div>
-                <div class="ranking-trophy-block">
-                    <div class="ranking-trophy-item"><span class="trophy-emoji">🏆</span><b>${t.gold}</b></div>
-                    <div class="ranking-trophy-item"><span class="trophy-emoji">🥈</span><b>${t.silver}</b></div>
-                    <div class="ranking-trophy-item"><span class="trophy-emoji">🥉</span><b>${t.bronze}</b></div>
-                </div>
+                <div class="ranking-trophy-block">${restMedals}</div>
             </div>`;
     }).join('');
 

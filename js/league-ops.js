@@ -73,7 +73,7 @@ function openTeamPanel(team){
     haptic([8]);
     ensureWalletFields(team);
     const w = mainLeagueData[team];
-    const trophies = computeTrophyCounts()[team] || {gold:0,silver:0,bronze:0};
+    const trophies = computeTrophyCounts()[team] || {gold:0,silver:0,bronze:0,leagueGold:0,cup:0,superCup:0};
 
     const teamPanelLogo = document.getElementById('team-panel-logo');
     // Reset opacity to full every time we open this panel — the onerror
@@ -97,10 +97,8 @@ function openTeamPanel(team){
 
     document.getElementById('team-panel-trophies').innerHTML = isSymbolicTeam(team)
         ? `<div class="trophy-cabinet-item"><span class="trophy-emoji ps-medal-big">${PURPLE_MEDAL_SVG}</span></div>`
-        : `
-        <div class="trophy-cabinet-item"><span class="trophy-emoji">🏆</span><div class="trophy-count">${trophies.gold}</div></div>
-        <div class="trophy-cabinet-item"><span class="trophy-emoji">🥈</span><div class="trophy-count">${trophies.silver}</div></div>
-        <div class="trophy-cabinet-item"><span class="trophy-emoji">🥉</span><div class="trophy-count">${trophies.bronze}</div></div>`;
+        : (hofMedals(trophies).map(m=>`<div class="trophy-cabinet-item" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><div class="trophy-count">${m.n}</div></div>`).join('')
+            || '<div class="team-panel-empty">No trophies yet</div>');
 
     document.getElementById('team-panel-records').innerHTML = renderRecordBadgesFor(team);
 

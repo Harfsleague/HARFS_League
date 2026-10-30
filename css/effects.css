@@ -524,6 +524,9 @@ body:not(.lite-mode):not(.perf-no-sheen) .magazine-panel-header::before{
     font-variant-numeric:tabular-nums;
 }
 .hof-podium-col.rank-1 .pod-medal.gold b{ color:#fde047; }
+.pod-medals{ flex-wrap:wrap; row-gap:3px; }
+.pod-none{ font-size:0.7rem; color:#64748b; font-weight:800; line-height:1.6; }
+.ranking-trophy-block{ flex-wrap:wrap; justify-content:flex-end; max-width:132px; }
 
 /* 4th place — a small step on the same stage (right of 3rd). Only used when four teams are shown. */
 .hof-podium-stage.pod-four{
