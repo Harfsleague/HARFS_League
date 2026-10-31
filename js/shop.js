@@ -52,10 +52,9 @@ function hofMedals(t){
         { key:'bronze', icon:HOF_ICONS.bronze,   n:t.bronze||0,     title:'Bronze' },
     ].filter(m=>m.n>0);
 }
-// RANKING (Hall of Fame): by the number of titles = league titles + CUP titles (that is `gold`).
-// Super Cup, silver and bronze never change a team's rank — teams with the same number of titles
-// SHARE the rank (see renderMainLeagueTable). Silver → bronze → total → name below only decide the
-// order the tied teams are listed in. Expects {name,gold,silver,bronze}.
+// RANKING (Hall of Fame): most titles (league + CUP = `gold`) first, then more silver, then more bronze.
+// Teams equal on all three SHARE the rank (see renderMainLeagueTable); total → name below only decide the
+// listing order inside a shared rank. Super Cup never counts. Expects {name,gold,silver,bronze}.
 function compareTrophies(a,b){
     if(b.gold!==a.gold) return b.gold-a.gold;
     if(b.silver!==a.silver) return b.silver-a.silver;

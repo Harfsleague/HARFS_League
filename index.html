@@ -247,12 +247,15 @@
     <!-- ============ MAIN LEAGUE ============ -->
     <div id="main-league-screen" class="page-screen">
 
-        <div class="league-header">
-            <h2 class="text-base font-black uppercase tracking-widest" style="background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 Hall Of Fame 🏆</h2>
-        </div>
-
         <div class="w-full px-4">
             <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
+            <!-- Hall of Fame: the page title, now a wide row under the podium (tile + extension, like Magazine / Cards) -->
+            <div class="ov-wide ov-wide-hof" id="ov-hof-row" role="group" aria-label="Hall of Fame">
+                <button class="ov-tile ov-tile-hof" tabindex="-1" aria-hidden="true">
+                    <i class="fas fa-trophy"></i><span>Hall of Fame</span>
+                </button>
+                <div class="ov-ext ov-ext-hof" id="ov-hof-ext"></div>
+            </div>
             <div id="main-league-body" class="flex flex-col gap-2"></div>
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
@@ -266,7 +269,7 @@
                     </button>
                     <div class="ov-ext ov-ext-mag" id="ov-mag-ext">
                         <div class="ov-ext-poster"><img id="ov-mag-img" alt="" draggable="false"></div>
-                        <div class="ov-ext-intro" id="ov-mag-title" dir="auto">This week’s issue</div>
+                        <div class="ov-ext-intro" id="ov-mag-title" dir="auto"><span class="ov-intro-txt">This week’s issue</span></div>
                     </div>
                 </div>
                 <!-- Row 2: Cards (two options wide: tile + an extension showing a few of your cards) and Chat -->

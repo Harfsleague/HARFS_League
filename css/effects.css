@@ -1011,22 +1011,11 @@ body:not(.lite-mode) .flow-block{
 @keyframes ovExtOut{ from{ opacity:0; transform:translateX(-26px); } to{ opacity:1; transform:none; } }
 
 /* magazine: poster + title under it */
-/* Magazine extension: the WHOLE poster fits inside the tile (object-fit:contain). Space the poster does not cover is filled by
-   a copy of it with only a light blur, and the poster's own edges are feathered a little so they melt into that backdrop.
-   The magazine's intro line sits on a dark panel at the bottom (as many lines as fit, then "…"). */
+/* Magazine extension: the poster is cropped to COVER the whole frame (no blurred backdrop needed). The magazine's intro line sits on a dark
+   panel at the bottom (as many lines as fit, then "…"). */
 .ov-ext-mag{ padding:0; justify-content:flex-start; }
-.ov-ext-mag::before{
-    content:''; position:absolute; inset:-8px; z-index:0;
-    background:var(--mag-bg) center/cover no-repeat; filter:blur(5px) saturate(1.15) brightness(.66);
-    opacity:0; transition:opacity .6s ease;
-}
-.ov-ext-mag.has-bg::before{ opacity:1; }
 .ov-ext-poster{ position:absolute; z-index:1; top:0; bottom:0; left:24px; right:0; }
-.ov-ext-poster img{
-    width:100%; height:100%; object-fit:contain; object-position:center; display:block; opacity:0; transition:opacity .5s ease;
-    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 9px,#000 calc(100% - 9px),transparent 100%),linear-gradient(to bottom,transparent 0,#000 6px,#000 calc(100% - 6px),transparent 100%);
-    -webkit-mask-composite:source-in; mask-image:linear-gradient(to right,transparent 0,#000 9px,#000 calc(100% - 9px),transparent 100%),linear-gradient(to bottom,transparent 0,#000 6px,#000 calc(100% - 6px),transparent 100%); mask-composite:intersect;
-}
+.ov-ext-poster img{ width:100%; height:100%; object-fit:cover; object-position:center 25%; display:block; opacity:0; transition:opacity .5s ease; }
 .ov-ext-poster img.loaded{ opacity:1; }
 .ov-ext-intro{
     position:absolute; z-index:2; left:32px; right:8px; bottom:7px;
@@ -1034,7 +1023,11 @@ body:not(.lite-mode) .flow-block{
     background:rgba(6,10,20,0.78); border:1px solid rgba(255,255,255,0.1);
     -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
     font-size:0.6rem; font-weight:700; line-height:1.4; color:#f1f5f9; text-align:start;
-    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2;   /* number of intro lines shown before the "…" */ overflow:hidden; text-overflow:ellipsis;
+    overflow:hidden;
+}
+.ov-intro-txt{
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2;   /* number of intro lines shown before the "…" */
+    overflow:hidden; text-overflow:ellipsis;
 }
 
 /* cards: a few small cards fanned out, the last one with stacked sheets behind it when there are more */
@@ -1068,3 +1061,20 @@ body:not(.lite-mode) .flow-block{
 body.cards-open #hero-logo-container.in-header{ opacity:0 !important; translate:0 -16px; filter:blur(6px); pointer-events:none; }
 body.perf-no-anim #hero-logo-container.in-header{ transition:opacity .01s !important; translate:none; filter:none; }
 @media (prefers-reduced-motion:reduce){ .ov-ext, .ovc-card{ animation:none !important; } }
+
+/* ---- Hall of Fame row (display only) ---- */
+.ov-wide-hof{ cursor:default; --tile-accent:#fbbf24; margin:0 0 10px; width:100%; }
+.ov-wide-hof:active{ transform:none; }
+.ov-wide-hof .ov-tile{ width:calc((100% - 20px) / 3); aspect-ratio:auto; height:80px; min-height:0; padding:6px 4px; }
+.ov-tile-hof{ --tile-accent:#fbbf24; color:#fbbf24; }
+.ov-ext-hof{ padding:8px 14px 8px 34px; gap:3px; }
+.hof-row-kicker{ font-size:0.56rem; font-weight:800; letter-spacing:0.9px; text-transform:uppercase; color:#a8a29e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hof-row-champ{ display:flex; align-items:center; gap:8px; min-width:0; }
+.hof-row-champ img{ width:28px; height:28px; border-radius:50%; object-fit:cover; flex:none; border:1.5px solid rgba(251,191,36,0.7); background:#0b1220; }
+.hof-row-champ b{ font-size:0.95rem; font-weight:900; background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hof-row-sub{ font-size:0.6rem; font-weight:700; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hof-row-empty{ font-size:0.72rem; font-weight:700; color:#94a3b8; }
+/* podiums a little higher: the title card is gone and the top of the page is tighter, so the Hall of Fame page fits without scrolling */
+#main-league-screen{ padding-top:78px; padding-bottom:92px; }
+#main-league-screen .hof-podium-stage{ padding-top:4px; }
+#main-league-screen .ranking-top3-wrapper{ margin-bottom:10px; }

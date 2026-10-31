@@ -877,15 +877,13 @@ function magTileShow(issue){
     const file = issue.coverImage || DEFAULT_MAGAZINE_COVER;
     const url = `${GITHUB_IMAGE_BASE_URL}${file}?v=${issue.issueDate}`;
     const fallback = `${GITHUB_IMAGE_BASE_URL}${DEFAULT_MAGAZINE_COVER}?v=${issue.issueDate}`;
-    const ext = document.getElementById('ov-mag-ext');
-    if(ext){ ext.style.setProperty('--mag-bg', `url("${url}")`); ext.classList.add('has-bg'); }   // blurred copy fills the free space
     if(img.dataset.src !== url){
         img.dataset.src = url; img.classList.remove('loaded');
         img.onload = ()=>img.classList.add('loaded');
         img.onerror = ()=>{ if(img.src !== fallback){ img.src = fallback; } else { img.style.display = 'none'; } };
         img.src = url;
     }
-    ttl.textContent = issue.coverSubtitle || issue.issueTitle || 'This week’s issue';   // the magazine's intro line (cut with … when it does not fit)
+    (ttl.querySelector('.ov-intro-txt') || ttl).textContent = issue.coverSubtitle || issue.issueTitle || 'This week’s issue';   // the magazine's intro line (cut with … when it does not fit)
 }
 async function magTileInit(){
     if(magTileDone) return; magTileDone = true;
