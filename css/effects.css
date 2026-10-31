@@ -979,3 +979,71 @@ body:not(.lite-mode) .flow-block{
 .hof-podium-stage .hof-podium-col.rank-1 .pod-rank-pill{ top:-6px; }
 .hof-podium-stage .hof-podium-col.pod-slot-4 .pod-avatar-stage{ padding-top:15px; }
 .hof-podium-stage .hof-podium-col.pod-slot-4 .pod-rank-pill{ top:-4px; }
+
+/* =====================================================
+   Hall of Fame shortcuts — wide rows with an extension that slides out from under the tile
+   (Magazine: to the end of the row · Cards: two options wide)
+   ===================================================== */
+.ov-wide{ position:relative; display:flex; align-items:stretch; min-width:0; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .16s ease; }
+.ov-wide:active{ transform:scale(.985); }
+.ov-wide:focus-visible{ outline:2px solid var(--primary); outline-offset:3px; border-radius:22px; }
+.ov-wide-mag{ grid-column:1 / -1; --tile-accent:#fbbf24; }
+.ov-wide-cards{ grid-column:span 2; --tile-accent:#f87171; }
+.ov-wide .ov-tile{ position:relative; z-index:2; flex:none; pointer-events:none; }          /* the whole block is the button */
+.ov-wide-mag .ov-tile{ width:calc((100% - 20px) / 3); }
+.ov-wide-cards .ov-tile{ width:calc((100% - 10px) / 2); }
+.ov-ext{
+    position:relative; z-index:1; flex:1; min-width:0; overflow:hidden;
+    margin-left:-24px; padding:9px 12px 9px 34px;
+    border-radius:0 22px 22px 0;
+    display:flex; flex-direction:column; justify-content:center;
+    background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
+    background-image:
+        radial-gradient(90% 90% at 100% 0%,color-mix(in srgb,var(--tile-accent) 18%,transparent) 0%,transparent 70%),
+        linear-gradient(165deg,rgba(255,255,255,0.05) 0%,transparent 50%,rgba(0,0,0,0.34) 100%);
+    border:1px solid rgba(255,255,255,0.08);
+    border-left:none;
+    border-top-color:color-mix(in srgb,var(--tile-accent) 40%,rgba(255,255,255,0.16));
+    border-bottom-color:rgba(0,0,0,0.6);
+    box-shadow:0 10px 24px -6px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12);
+    animation:ovExtOut .5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes ovExtOut{ from{ opacity:0; transform:translateX(-26px); } to{ opacity:1; transform:none; } }
+
+/* magazine: poster + title under it */
+.ov-ext-poster{ flex:1 1 auto; min-height:0; border-radius:12px; overflow:hidden; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); position:relative; }
+.ov-ext-poster img{ width:100%; height:100%; object-fit:cover; object-position:center 28%; display:block; opacity:0; transition:opacity .5s ease; }
+.ov-ext-poster img.loaded{ opacity:1; }
+.ov-ext-title{ flex:none; margin-top:6px; font-size:0.66rem; font-weight:800; line-height:1.25; color:#e5e7eb; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+
+/* cards: a few small cards fanned out, the last one with stacked sheets behind it when there are more */
+.ov-ext-cards{ padding-left:30px; padding-right:10px; justify-content:center; }
+.ovc-fan{ position:relative; height:100%; min-height:62px; width:100%; display:flex; align-items:center; justify-content:center; }
+.ovc-stack{ position:relative; height:100%; min-height:62px; flex:none; }
+.ovc-card{
+    position:absolute; top:50%; height:min(100%,66px); aspect-ratio:300/420; border-radius:7px; overflow:hidden;
+    transform:translateY(-50%); background:#111827; border:1px solid rgba(255,255,255,0.22);
+    box-shadow:0 5px 12px rgba(0,0,0,0.55);
+    animation:ovcIn .42s cubic-bezier(.2,1.2,.4,1) both;
+}
+.ovc-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+.ovc-card.ghost{ background:linear-gradient(160deg,#64748b,#1e293b); border-color:rgba(255,255,255,0.3); box-shadow:0 3px 8px rgba(0,0,0,0.45); animation:none; }
+@keyframes ovcIn{ from{ opacity:0; transform:translateY(-30%) scale(.85); } to{ opacity:1; transform:translateY(-50%); } }
+.ovc-note{ font-size:0.62rem; font-weight:700; color:#94a3b8; text-align:center; line-height:1.4; padding:0 4px; }
+.ovc-count{ position:absolute; right:-4px; top:-2px; font-size:0.56rem; font-weight:900; color:#fecaca; background:rgba(0,0,0,0.5); border:1px solid rgba(248,113,113,0.35); padding:1px 6px; border-radius:999px; }
+
+/* Cards sheet open → the HARFS capsule fades up and away (it used to sit on the sheet's title); closing brings it back smoothly */
+#hero-logo-container.in-header{
+    transition:
+        transform 0.95s cubic-bezier(0.22, 1, 0.36, 1),
+        min-width 0.35s ease,
+        box-shadow 0.6s ease,
+        background-color 0.5s ease,
+        border-color 0.5s ease,
+        opacity 0.5s ease,
+        translate 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.5s ease;
+}
+body.cards-open #hero-logo-container.in-header{ opacity:0 !important; translate:0 -16px; filter:blur(6px); pointer-events:none; }
+body.perf-no-anim #hero-logo-container.in-header{ transition:opacity .01s !important; translate:none; filter:none; }
+@media (prefers-reduced-motion:reduce){ .ov-ext, .ovc-card{ animation:none !important; } }

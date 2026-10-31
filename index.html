@@ -259,24 +259,36 @@
             </div>
             <!-- Overall shortcuts: rounded-square icons in one row -->
             <div class="ov-tiles">
-                <button class="ov-tile ov-tile-mag" onclick="openMagazinePanel()" aria-label="HARFS Weekly Magazine">
-                    <i class="fas fa-newspaper"></i><span>Magazine</span>
-                </button>
+                <!-- Row 1: Magazine — the tile + an extension that slides out from under it to the end of the row (this week's poster + title). Tapping anywhere on it opens the magazine. -->
+                <div class="ov-wide ov-wide-mag" onclick="openMagazinePanel()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMagazinePanel();}" role="button" tabindex="0" aria-label="HARFS Weekly Magazine">
+                    <button class="ov-tile ov-tile-mag" tabindex="-1" aria-hidden="true">
+                        <i class="fas fa-newspaper"></i><span>Magazine</span>
+                    </button>
+                    <div class="ov-ext ov-ext-mag" id="ov-mag-ext">
+                        <div class="ov-ext-poster"><img id="ov-mag-img" alt="" draggable="false"></div>
+                        <div class="ov-ext-title" id="ov-mag-title" dir="auto">This week’s issue</div>
+                    </div>
+                </div>
+                <!-- Row 2: Cards (two options wide: tile + an extension showing a few of your cards) and Chat -->
+                <div class="ov-wide ov-wide-cards" onclick="openCardsSheet()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCardsSheet();}" role="button" tabindex="0" aria-label="Cards">
+                    <button class="ov-tile ov-tile-cards" tabindex="-1" aria-hidden="true">
+                        <i class="fas fa-clone"></i><span>Cards</span>
+                    </button>
+                    <div class="ov-ext ov-ext-cards" id="ov-cards-ext"></div>
+                </div>
                 <button class="ov-tile ov-tile-chat" onclick="openChatPage()" aria-label="Chat">
                     <i class="fas fa-comments"></i><span>Chat</span>
                     <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
                 </button>
-                <button class="ov-tile ov-tile-cards" onclick="openCardsSheet()" aria-label="Cards">
-                    <i class="fas fa-clone"></i><span>Cards</span>
+                <!-- Row 3 -->
+                <button class="ov-tile ov-tile-moments" onclick="navigate('weird')" aria-label="Golden Moments">
+                    <i class="fas fa-camera"></i><span>Moments</span>
                 </button>
                 <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
                     <i class="fas fa-gamepad"></i><span>Game</span>
                 </button>
                 <button class="ov-tile ov-tile-fed" onclick="openPeopleSheet()" aria-label="Federation and Owners">
                     <i class="fas fa-crown"></i><span>Federation</span>
-                </button>
-                <button class="ov-tile ov-tile-moments" onclick="navigate('weird')" aria-label="Golden Moments">
-                    <i class="fas fa-star"></i><span>Moments</span>
                 </button>
             </div>
         </div>

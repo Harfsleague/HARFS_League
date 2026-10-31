@@ -308,6 +308,7 @@ function cardsToggleInfo(){
 }
 async function openCardsSheet(){
     haptic([8]);
+    document.body.classList.add('cards-open');      // the HARFS capsule fades out while the sheet is open (css/effects.css)
     cardsInfoOpen = false; cardsApplyInfoChrome();
     document.getElementById('cards-sheet').classList.add('open');
     renderCardsSheet();
@@ -315,9 +316,9 @@ async function openCardsSheet(){
     renderCardsSheet();
     if(await cardsSync()) renderCardsAll();         // deals anything that is due (nobody has to press a button)
 }
-function closeCardsSheet(){ document.getElementById('cards-sheet').classList.remove('open'); cardsZoomClose(); }
+function closeCardsSheet(){ document.getElementById('cards-sheet').classList.remove('open'); document.body.classList.remove('cards-open'); cardsZoomClose(); }
 function renderCardsAll(){
-    renderCardsSheet(); renderCardsAdmin();
+    renderCardsSheet(); renderCardsAdmin(); cardsTileRender();
     const mp = document.getElementById('mba-result-cards');
     if(mp && mp.dataset.teams) cardsRenderSheetPanel(mp.dataset.teams.split('|'));
     if(typeof renderFlowViews==='function') renderFlowViews();
@@ -498,3 +499,49 @@ function cardsAdminInit(){
     cardsLoad(true).then(()=>{ renderCardsAdmin(); if(typeof renderFlowViews==='function') renderFlowViews(); });
     cardsSync().then(ok=>{ if(ok) renderCardsAll(); });
 }
+
+
+// ---------------- Hall of Fame → Cards shortcut: a few of your cards, small, next to the tile ----------------
+// Shows up to CARDS_TILE_SHOW cards fanned out; when you hold more, the last one gets stacked sheets behind it.
+const CARDS_TILE_SHOW = 3;
+let cardsTileSig = '', cardsTileLoaded = false, cardsTileLoading = false;
+function cardsTileRender(){
+    const box = document.getElementById('ov-cards-ext'); if(!box) return;
+    const team = (typeof loggedInTeam!=='undefined') ? loggedInTeam : null;
+    let sig, html;
+    if(!team || !TEAM_NAMES.includes(team)){
+        sig = 'out'; html = `<div class="ovc-note">Log in with your team to see your cards</div>`;
+    } else if(!cardsData){
+        sig = 'wait:'+team; html = `<div class="ovc-note">Loading your cards…</div>`;
+    } else {
+        const hand = cardsHand(team);
+        sig = team+'|'+hand.map(h=>h.uid||h.card).join(',');
+        if(!hand.length){ html = `<div class="ovc-note">No cards in your hand</div>`; }
+        else {
+            const shown = hand.slice(0,CARDS_TILE_SHOW), more = hand.length - shown.length;
+            const step = 27, w = 46;                         // px: offset between cards / card width (height follows the 300×420 ratio)
+            const cards = shown.map((h,i)=>{
+                const def = cardDef(h.card), nm = def?def.name:h.card;
+                return `<div class="ovc-card" style="left:${i*step}px;z-index:${10+i};animation-delay:${i*70}ms"><img src="${cardImgUrl(def)}" alt="" draggable="false" onerror="this.onerror=null;this.src='${cardPlaceholderSvg(nm).replace(/'/g,'%27')}'"></div>`;
+            }).join('');
+            const lastLeft = (shown.length-1)*step;
+            const ghosts = more>0 ? [2,1].map(k=>`<div class="ovc-card ghost" style="left:${lastLeft + k*9}px;z-index:${9-k};height:min(${100-k*9}%,${66-k*7}px);opacity:${k===1?0.8:0.5}"></div>`).join('') : '';
+            const stackW = lastLeft + w + (more>0 ? 18 : 0);
+            html = `<div class="ovc-fan"><div class="ovc-stack" style="width:${stackW}px">${ghosts}${cards}</div><span class="ovc-count" title="Cards in your hand">${hand.length}</span></div>`;
+        }
+    }
+    if(sig===cardsTileSig) return;
+    cardsTileSig = sig; box.innerHTML = html;
+}
+async function cardsTileTick(){
+    const team = (typeof loggedInTeam!=='undefined') ? loggedInTeam : null;
+    if(team && TEAM_NAMES.includes(team) && !cardsTileLoaded && !cardsTileLoading){
+        cardsTileLoading = true;
+        try{ await cardsLoad(true); cardsTileLoaded = true; }catch(e){}
+        cardsTileLoading = false;
+    }
+    if(!team) cardsTileLoaded = false;                       // logged out → load again after the next login
+    cardsTileRender();
+}
+setTimeout(cardsTileTick, 400);
+setInterval(cardsTileTick, 4000);

@@ -865,3 +865,41 @@ async function handleMagazineCoverSelect(e) {
         if (statusEl) statusEl.textContent = 'تغییر یا آپلود عکس جلد';
     }
 }
+
+
+// ---------------- Hall of Fame → Magazine shortcut: this week's poster + title ----------------
+// Cheap peek at the newest issue (cached copy first, then the archive file once) — the full magazine still
+// loads only when it is opened.
+let magTileDone = false;
+function magTileShow(issue){
+    const img = document.getElementById('ov-mag-img'), ttl = document.getElementById('ov-mag-title');
+    if(!img || !ttl || !issue) return;
+    const file = issue.coverImage || DEFAULT_MAGAZINE_COVER;
+    const url = `${GITHUB_IMAGE_BASE_URL}${file}?v=${issue.issueDate}`;
+    const fallback = `${GITHUB_IMAGE_BASE_URL}${DEFAULT_MAGAZINE_COVER}?v=${issue.issueDate}`;
+    if(img.dataset.src !== url){
+        img.dataset.src = url; img.classList.remove('loaded');
+        img.onload = ()=>img.classList.add('loaded');
+        img.onerror = ()=>{ if(img.src !== fallback){ img.src = fallback; } else { img.style.display = 'none'; } };
+        img.src = url;
+    }
+    ttl.textContent = issue.issueTitle || 'This week’s issue';
+}
+async function magTileInit(){
+    if(magTileDone) return; magTileDone = true;
+    try{
+        const cached = await idbGet('magazineArchive','v');
+        if(Array.isArray(cached) && cached.length) magTileShow([...cached].sort((a,b)=>(b.issueNumber||0)-(a.issueNumber||0))[0]);
+    }catch(e){}
+    if(!navigator.onLine) return;
+    try{
+        const res = await fetch(`${GITHUB_IMAGE_BASE_URL}${GITHUB_MAGAZINE_FILE}?cachebust=${Date.now()}`);
+        if(!res.ok) return;
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data ? [data] : []);
+        if(!arr.length) return;
+        arr.sort((a,b)=>(b.issueNumber||0)-(a.issueNumber||0));
+        magTileShow(arr[0]);
+    }catch(e){}
+}
+setTimeout(magTileInit, 700);
