@@ -885,7 +885,7 @@ function magTileShow(issue){
         img.onerror = ()=>{ if(img.src !== fallback){ img.src = fallback; } else { img.style.display = 'none'; } };
         img.src = url;
     }
-    ttl.textContent = issue.issueTitle || 'This week’s issue';
+    ttl.textContent = issue.coverSubtitle || issue.issueTitle || 'This week’s issue';   // the magazine's intro line (cut with … when it does not fit)
 }
 async function magTileInit(){
     if(magTileDone) return; magTileDone = true;
