@@ -453,8 +453,21 @@ function syncSettingsUI(){
 // opening the chat) when switched off. Saved on this device.
 // ============================================================
 let aiAssistantEnabled = localStorage.getItem('aiAssistant') !== 'off';
+// Federation button on Home: it can only be switched off while the Assistant is off (the switch is hidden otherwise).
+// Off → Home shows "Records" in its place and Profile gets a Federation button.
+let fedTileHidden = localStorage.getItem('fedTile') === 'off';
+function toggleFedTile(){
+    haptic([8]);
+    fedTileHidden = !fedTileHidden;
+    localStorage.setItem('fedTile', fedTileHidden ? 'off' : 'on');
+    syncAiAssistantUI();
+    showToast(fedTileHidden ? 'Federation button replaced by Records' : 'Federation button back on Home', 'info', 1800);
+}
 function syncAiAssistantUI(){
     document.body.classList.toggle('ai-disabled', !aiAssistantEnabled);
+    document.body.classList.toggle('fed-hidden', !aiAssistantEnabled && fedTileHidden);
+    const ft=document.getElementById('fed-tile-toggle');
+    if(ft) ft.classList.toggle('on', !fedTileHidden);
     const t=document.getElementById('ai-assistant-toggle');
     if(t) t.classList.toggle('on', aiAssistantEnabled);
 }

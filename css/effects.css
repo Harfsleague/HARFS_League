@@ -1062,18 +1062,101 @@ body.cards-open #hero-logo-container.in-header{ opacity:0 !important; translate:
 body.perf-no-anim #hero-logo-container.in-header{ transition:opacity .01s !important; translate:none; filter:none; }
 @media (prefers-reduced-motion:reduce){ .ov-ext, .ovc-card{ animation:none !important; } }
 
-/* ---- Hall of Fame row (display only) ---- */
-.ov-wide-hof{ cursor:default; --tile-accent:#fbbf24; margin:0 0 10px; width:100%; }
-.ov-wide-hof:active{ transform:none; }
-.ov-wide-hof .ov-tile{ width:calc((100% - 20px) / 3); aspect-ratio:auto; height:80px; min-height:0; padding:6px 4px; }
-.ov-tile-hof{ --tile-accent:#fbbf24; color:#fbbf24; }
-.ov-ext-hof{ padding:8px 14px 8px 34px; gap:3px; }
-.hof-row-kicker{ font-size:0.56rem; font-weight:800; letter-spacing:0.9px; text-transform:uppercase; color:#a8a29e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.hof-row-champ{ display:flex; align-items:center; gap:8px; min-width:0; }
-.hof-row-champ img{ width:28px; height:28px; border-radius:50%; object-fit:cover; flex:none; border:1.5px solid rgba(251,191,36,0.7); background:#0b1220; }
-.hof-row-champ b{ font-size:0.95rem; font-weight:900; background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.hof-row-sub{ font-size:0.6rem; font-weight:700; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.hof-row-empty{ font-size:0.72rem; font-weight:700; color:#94a3b8; }
+/* ---- label under the podium ---- */
+.ov-label{ width:100%; display:flex; justify-content:center; margin:2px 0 4px; }
+.ov-label span{
+    display:inline-flex; align-items:center; gap:7px; padding:5px 14px; border-radius:14px;
+    font-size:0.62rem; font-weight:900; letter-spacing:1.1px; text-transform:uppercase; color:#fbbf24;
+    background:linear-gradient(180deg,rgba(251,191,36,0.14),rgba(251,191,36,0.05));
+    border:1px solid rgba(251,191,36,0.32); box-shadow:0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.ov-label i{ font-size:0.62rem; }
+
+/* ---- one dark rounded frame behind the six shortcuts (tiles keep their exact size and position) ---- */
+.ov-tiles{ position:relative; isolation:isolate; margin-top:22px; margin-bottom:6px; }
+.ov-tiles::before{
+    content:''; position:absolute; inset:-12px; z-index:-1; pointer-events:none; border-radius:30px;
+    background-color:rgba(6,10,20,0.62);
+    background-image:radial-gradient(120% 70% at 50% 0%,rgba(255,255,255,0.05),transparent 60%), linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:rgba(255,255,255,0.15); border-bottom-color:rgba(0,0,0,0.6);
+    box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* ---- Records tile ---- */
+.ov-tile-records{ --tile-accent:#22d3ee; color:#22d3ee; }
+#ov-tile-records{ display:none; }
+body.fed-hidden #ov-tile-records{ display:flex; }
+body.fed-hidden #ov-tile-fed{ display:none; }
+
+/* ---- Profile: Federation switch / button ---- */
+body .fed-setting-row, body .fed-open-row{ display:none; }
+body.ai-disabled .fed-setting-row{ display:grid; }
+body.ai-disabled p.fed-setting-row{ display:block; }
+body.fed-hidden .fed-open-row{ display:grid; }
+
+/* ---- Records sheet ---- */
+.records-modal{ max-height:88vh; }
+.rec-banner{
+    position:relative; flex-shrink:0; height:92px; display:flex; align-items:center; justify-content:center; overflow:hidden;
+    background:radial-gradient(90% 140% at 50% 0%,rgba(34,211,238,0.35),transparent 65%), linear-gradient(180deg,rgba(14,116,144,0.4),transparent);
+}
+.rec-banner > i{ font-size:2.1rem; color:#67e8f9; filter:drop-shadow(0 0 14px rgba(34,211,238,0.8)); animation:recFloat 3s ease-in-out infinite; }
+@keyframes recFloat{ 0%,100%{ transform:translateY(0) rotate(-6deg); } 50%{ transform:translateY(-5px) rotate(6deg); } }
+.rec-spark{ position:absolute; width:6px; height:6px; border-radius:50%; background:#fde68a; box-shadow:0 0 10px #fbbf24; opacity:0; animation:recSpark 2.8s ease-in-out infinite; }
+.rec-spark.s1{ left:28%; top:46%; } .rec-spark.s2{ left:68%; top:30%; animation-delay:.9s; } .rec-spark.s3{ left:56%; top:70%; animation-delay:1.7s; }
+@keyframes recSpark{ 0%,100%{ opacity:0; transform:scale(.3); } 50%{ opacity:1; transform:scale(1.2); } }
+#records-list{ display:flex; flex-direction:column; gap:12px; padding:2px 2px 10px; overflow-y:auto; }
+.rec-card{ flex:none;
+    position:relative; overflow:hidden; border-radius:20px; padding:12px 13px 10px;
+    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
+    background-image:radial-gradient(90% 80% at 100% 0%,rgba(251,191,36,0.13),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:rgba(251,191,36,0.4);
+    box-shadow:0 10px 22px -8px rgba(0,0,0,0.6);
+    animation:recIn .55s cubic-bezier(.2,1.1,.4,1) both; animation-delay:var(--d,0ms);
+}
+@keyframes recIn{ from{ opacity:0; transform:translateY(22px) scale(.96); } to{ opacity:1; transform:none; } }
+.rec-card::after{ content:''; position:absolute; top:0; bottom:0; width:40%; left:-60%; background:linear-gradient(100deg,transparent,rgba(255,255,255,0.1),transparent); transform:skewX(-18deg); animation:recShine 5.5s ease-in-out infinite; animation-delay:calc(var(--d,0ms) + 1.2s); pointer-events:none; }
+@keyframes recShine{ 0%,60%{ left:-60%; } 100%{ left:140%; } }
+.rec-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.rec-ico{ font-size:1.5rem; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+.rec-title{ font-size:0.82rem; font-weight:900; color:#f8fafc; }
+.rec-note{ font-size:0.6rem; font-weight:700; color:#94a3b8; margin-top:1px; }
+.rec-hero{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.rec-logos{ display:flex; flex:none; }
+.rec-logo-wrap{ position:relative; width:54px; height:54px; border-radius:50%; padding:2.5px; margin-left:-12px; background:conic-gradient(from 0deg,#fbbf24,#fde68a,#f59e0b,#fbbf24); animation:recSpin 6s linear infinite; box-shadow:0 0 18px rgba(251,191,36,0.45); }
+.rec-logo-wrap:first-child{ margin-left:0; }
+.rec-logo-wrap .rec-logo{ width:100%; height:100%; border-radius:50%; object-fit:cover; background:#0b1220; display:block; animation:recSpinBack 6s linear infinite; }
+@keyframes recSpin{ to{ transform:rotate(360deg); } }
+@keyframes recSpinBack{ to{ transform:rotate(-360deg); } }
+.rec-hero-txt{ min-width:0; }
+.rec-team{ font-size:0.95rem; font-weight:900; background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; line-height:1.2; }
+.rec-team em{ font-style:normal; font-size:0.55rem; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:#94a3b8; -webkit-text-fill-color:#94a3b8; margin-left:4px; }
+.rec-val{ display:flex; align-items:baseline; gap:5px; margin-top:1px; }
+.rec-val .rec-count{ font-size:1.7rem; font-weight:900; color:#fff; line-height:1; font-variant-numeric:tabular-nums; text-shadow:0 0 14px rgba(251,191,36,0.5); }
+.rec-val small{ font-size:0.62rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; }
+.rec-extra{ font-size:0.6rem; font-weight:700; color:#cbd5e1; margin-top:2px; }
+.rec-empty{ font-size:0.7rem; font-weight:700; color:#94a3b8; padding:6px 0 10px; }
+.rec-bars{ display:flex; flex-direction:column; gap:5px; }
+.rec-bar-row{ display:flex; align-items:center; gap:8px; }
+.rec-mini{ width:20px; height:20px; border-radius:50%; object-fit:cover; flex:none; background:#0b1220; border:1px solid rgba(255,255,255,0.15); }
+.rec-bar{ flex:1; height:7px; border-radius:99px; background:rgba(255,255,255,0.07); overflow:hidden; }
+.rec-bar i{ display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,#475569,#94a3b8); animation:recBar 1s cubic-bezier(.2,1,.3,1) both; animation-delay:calc(var(--d,0ms) + .25s); }
+.rec-bar-row.lead .rec-bar i{ background:linear-gradient(90deg,#f59e0b,#fde047); box-shadow:0 0 10px rgba(251,191,36,0.6); }
+@keyframes recBar{ from{ width:0; } to{ width:var(--w); } }
+.rec-bar-row b{ min-width:26px; text-align:right; font-size:0.7rem; font-weight:900; color:#cbd5e1; font-variant-numeric:tabular-nums; }
+.rec-bar-row.lead b{ color:#fbbf24; }
+.rec-scoreline{ display:flex; align-items:center; justify-content:space-between; gap:6px; padding:2px 4px 6px; }
+.rec-side{ display:flex; flex-direction:column; align-items:center; gap:5px; width:84px; font-size:0.66rem; font-weight:800; color:#e2e8f0; text-align:center; }
+.rec-side .rec-logo{ width:46px; height:46px; border-radius:50%; object-fit:cover; background:#0b1220; border:2px solid rgba(255,255,255,0.2); }
+.rec-score{ display:flex; align-items:center; gap:8px; font-size:2.1rem; font-weight:900; color:#fff; text-shadow:0 0 18px rgba(251,191,36,0.55); font-variant-numeric:tabular-nums; }
+.rec-score i{ font-style:normal; color:#64748b; font-size:1.4rem; }
+.rec-match .rec-score .rec-count{ display:inline-block; min-width:.7em; text-align:center; }
+@media (prefers-reduced-motion:reduce){
+    .rec-card, .rec-card::after, .rec-logo-wrap, .rec-logo-wrap .rec-logo, .rec-bar i, .rec-banner > i, .rec-spark{ animation:none !important; }
+    .rec-bar i{ width:var(--w); }
+}
+html.lite-mode .rec-card::after, html.lite-mode .rec-logo-wrap, html.lite-mode .rec-logo-wrap .rec-logo{ animation:none !important; }
+
 /* podiums a little higher: the title card is gone and the top of the page is tighter, so the Hall of Fame page fits without scrolling */
 #main-league-screen{ padding-top:78px; padding-bottom:92px; }
 #main-league-screen .hof-podium-stage{ padding-top:4px; }

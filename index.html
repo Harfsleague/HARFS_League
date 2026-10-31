@@ -249,13 +249,8 @@
 
         <div class="w-full px-4">
             <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
-            <!-- Hall of Fame: the page title, now a wide row under the podium (tile + extension, like Magazine / Cards) -->
-            <div class="ov-wide ov-wide-hof" id="ov-hof-row" role="group" aria-label="Hall of Fame">
-                <button class="ov-tile ov-tile-hof" tabindex="-1" aria-hidden="true">
-                    <i class="fas fa-trophy"></i><span>Hall of Fame</span>
-                </button>
-                <div class="ov-ext ov-ext-hof" id="ov-hof-ext"></div>
-            </div>
+            <!-- Small label under the podium -->
+            <div class="ov-label"><span><i class="fas fa-trophy"></i>Overall Ranking and Trophies</span></div>
             <div id="main-league-body" class="flex flex-col gap-2"></div>
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
@@ -290,8 +285,12 @@
                 <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
                     <i class="fas fa-gamepad"></i><span>Game</span>
                 </button>
-                <button class="ov-tile ov-tile-fed" onclick="openPeopleSheet()" aria-label="Federation and Owners">
+                <button class="ov-tile ov-tile-fed" id="ov-tile-fed" onclick="openPeopleSheet()" aria-label="Federation and Owners">
                     <i class="fas fa-crown"></i><span>Federation</span>
+                </button>
+                <!-- Takes the Federation tile's place when that tile is switched off in Profile (only possible while the Assistant is off) -->
+                <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
+                    <i class="fas fa-medal"></i><span>Records</span>
                 </button>
             </div>
         </div>
@@ -659,6 +658,22 @@
             </div>
             <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to hide the assistant from the Home page.</p>
 
+            <!-- Only shown while the Assistant is off -->
+            <div class="settings-page-grid fed-setting-row" style="margin-top:8px;">
+                <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleFedTile()">
+                    <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-crown"></i>Federation on Home</span>
+                    <div class="perf-toggle on" id="fed-tile-toggle"></div>
+                </div>
+            </div>
+            <p class="fed-setting-row" style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to swap the Federation button on Home for Records.</p>
+            <!-- Only shown once the Federation button has been taken off Home -->
+            <div class="settings-page-grid fed-open-row" style="margin-top:8px;">
+                <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="openPeopleSheet()">
+                    <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-crown"></i>Federation</span>
+                    <i class="fas fa-chevron-right" style="font-size:0.7rem;color:#6b7280;"></i>
+                </div>
+            </div>
+
             <div id="settings-admin-section" style="display:none;">
                 <div class="settings-section-label">Bayern Admin</div>
                 <div class="settings-page-grid">
@@ -911,6 +926,18 @@
             </div>
         </div>
     </div>
+    <!-- ============ RECORDS (Home → Records) ============ -->
+    <div id="records-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeRecordsSheet()">
+        <div class="team-picker-panel hero-modal records-modal">
+            <div class="modal-x-close" onclick="closeRecordsSheet()"><i class="fas fa-times"></i></div>
+            <div class="rec-banner"><i class="fas fa-medal"></i><span class="rec-spark s1"></span><span class="rec-spark s2"></span><span class="rec-spark s3"></span></div>
+            <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+                <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">League Records</h4>
+                <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">The best (and worst) of every team</div>
+                <div id="records-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
+            </div>
+        </div>
+    </div>
     <!-- ============ CARDS (Home → Cards): a team sees only its own hand ============ -->
     <div id="cards-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeCardsSheet()">
         <div class="team-picker-panel hero-modal cards-modal">
@@ -1134,6 +1161,7 @@
 <script src="js/season.js"></script>
 <script src="js/shop.js"></script>
 <script src="js/league-ops.js"></script>
+<script src="js/records.js"></script>
 <script src="js/profile-photos.js"></script>
 <script src="js/access.js"></script>
 <script src="js/reactions.js"></script>

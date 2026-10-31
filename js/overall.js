@@ -17,7 +17,6 @@ function renderMainLeagueTable(){
     const table = TEAM_NAMES.map(t=>({name:t,...trophies[t]})).sort(compareTrophies);
     const pod=document.getElementById('podium-container');
 
-    renderHofRow();
     if(!table.length){ pod.style.display='none'; return; }
 
     pod.style.display='flex';
@@ -138,26 +137,3 @@ function closePeopleSheet(){
 }
 
 
-
-// ---------------- "Hall of Fame" row (the old page title, now a wide row under the podium) ----------------
-// Tile + extension like the Magazine / Cards rows; the extension shows the latest champion. Display only (not a button).
-function renderHofRow(){
-    const ext = document.getElementById('ov-hof-ext'); if(!ext) return;
-    const seasons = (typeof archivedSeasons!=='undefined' && Array.isArray(archivedSeasons)) ? archivedSeasons.filter(s=>s && s.table && s.table[0]) : [];
-    let html, sig;
-    if(!seasons.length){
-        sig = 'none'; html = `<div class="hof-row-kicker">Hall of Fame</div><div class="hof-row-empty">No champions crowned yet</div>`;
-    } else {
-        const last = [...seasons].sort((a,b)=>(b.seasonId||0)-(a.seasonId||0))[0];
-        const champ = last.table[0].name;
-        const shown = (typeof TEAM_DISPLAY_NAMES!=='undefined' && TEAM_DISPLAY_NAMES[champ]) || champ;
-        const crowned = new Set(seasons.map(s=>s.table[0].name)).size;
-        sig = `${last.seasonId}|${champ}|${seasons.length}|${crowned}`;
-        html = `
-            <div class="hof-row-kicker">Latest league champion · Season ${last.seasonId}</div>
-            <div class="hof-row-champ"><img src="${teamLogoUrl(champ)}" alt="" draggable="false" onerror="this.style.visibility='hidden'"><b>${escapeHtml(shown)}</b></div>
-            <div class="hof-row-sub">${seasons.length} seasons played · ${crowned} different champion${crowned===1?'':'s'}</div>`;
-    }
-    if(ext.dataset.sig === sig) return;
-    ext.dataset.sig = sig; ext.innerHTML = html;
-}
