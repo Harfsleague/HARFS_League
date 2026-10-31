@@ -182,3 +182,8 @@
 .mba-sheet-actions .glass-button{ flex:1; padding:11px 8px; font-size:0.78rem; }
 /* same layer as the other bottom sheets */
 #mba-result-sheet, #mba-picker-sheet, #season-picker-sheet{ z-index:600; }
+
+/* CUP / Super Cup pictures in block headings (replace the old 🏆 / ⚡ emoji) */
+.mba-block-head .hof-ico, .flow-section-title .hof-ico{ display:inline-block; height:1.35em; width:auto; vertical-align:middle; margin:-0.2em 5px 0 0; }
+.mba-crown-img{ display:inline-flex; align-items:center; margin-left:6px; }
+.mba-crown-img .hof-ico{ display:block; height:1.15em; width:auto; }

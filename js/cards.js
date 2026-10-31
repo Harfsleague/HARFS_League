@@ -6,7 +6,8 @@
 // take, activate, discard or change anybody's card, and cannot deal.
 //
 // RULES
-//   1. A new season: every team gets 2 "No" cards (a "No" cancels one card of the opponent) + 2 random cards.
+//   1. A new season: every team gets 1 "No" card (a "No" cancels one card of the opponent) + 2 random cards.
+//      (Seasons dealt before this change keep the 2 "No" cards they already got — only new seasons get 1.)
 //   2. After every 2nd matchweek (= every team has played every other team once) every team gets
 //      2 more random cards, automatically. Nothing is dealt after the last matchweek.
 //   3. A team may KEEP at most 5 cards — every card counts, "No" and "Combo point" included.
@@ -35,7 +36,7 @@ const CARDS_MAX_ACTIVE = 2;        // cards a team may play in one game
 const CARD_COMBO_ID = 'combo';
 const COMBO_NEED = 3;
 const COMBO_POINTS = 4;
-const CARDS_START_NO = 2;
+const CARDS_START_NO = 1;
 const CARDS_WEEKLY_DRAW = 2;       // random cards per deal
 const CARDS_DEAL_EVERY = 2;        // matchweeks between two deals
 const CARD_NO_ID = 'no';
@@ -394,7 +395,7 @@ function cardsEnsureLoaded(then){
 // ---------------- admin: Cards section — CREATE / EDIT cards only ----------------
 function cardsNextDealText(){
     const f = (typeof flowCur==='function') ? flowCur() : null;
-    if(!f) return `No season is running. When the next season starts every team automatically gets ${CARDS_START_NO} “No” cards + ${CARDS_WEEKLY_DRAW} random cards.`;
+    if(!f) return `No season is running. When the next season starts every team automatically gets ${CARDS_START_NO} “No” card + ${CARDS_WEEKLY_DRAW} random cards.`;
     const N = flowRounds(f); let done = 0;
     for(let r=1;r<=N;r++){ if(flowRoundDone(f,r)) done = r; else break; }
     const next = Math.floor(done/CARDS_DEAL_EVERY)*CARDS_DEAL_EVERY + CARDS_DEAL_EVERY;

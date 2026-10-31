@@ -265,7 +265,7 @@ async function flowStartSeason(opts){
         if(typeof resetMbaView==='function') resetMbaView();   // CUP page: jump to the new season's (not yet drawn) edition
         if(adopted) await saveMatchHistoryToGitHub(matchHistory, `Season ${sid}: ${adopted} existing match(es) linked to the schedule`);
         await saveFlowToGitHub(`Season ${sid} schedule created`);
-        if(typeof cardsSync==='function'){ try{ await cardsSync(); }catch(e){} }   // the Worker deals the season's starting cards (2 "No" + 2 random) by itself
+        if(typeof cardsSync==='function'){ try{ await cardsSync(); }catch(e){} }   // the Worker deals the season's starting cards (1 "No" + 2 random) by itself
         showToast(`Season ${sid} schedule is ready 📅` + (orphan?` (${orphan} old match${orphan===1?'':'es'} could not be linked)`:''),'success',3200);
     } finally { flowBusy = false; }
     await refreshAllLeagueViews();
@@ -555,7 +555,7 @@ function renderFlowAdmin(){
         }
     } else if(p==='supercup'){
         const want = flowSuperCupTeams(f);
-        html += `<div class="flow-section-title">⚡ Super Cup</div>`;
+        html += `<div class="flow-section-title">${HOF_SUPER_IMG} Super Cup</div>`;
         if(want){
             html += `<p class="flow-note">${want.double?`${escapeHtml(flowName(want.leagueChamp))} won the league <b>and</b> the CUP, so the opponent is the league runner-up.`:`League champion vs CUP champion.`}</p>` + flowSuperScorerHtml(want.teams);
         }

@@ -499,7 +499,7 @@ function mbaSemiBlock(t, i, ctx){
 }
 function mbaSingleBlock(t, kind, ctx){
     const isFinal = kind==='final';
-    const label = isFinal ? '🏆 Final' : '🥉 Third place';
+    const label = isFinal ? `${HOF_CUP_IMG} Final` : '🥉 Third place';
     const teams = isFinal ? mbaFinalists(t) : mbaThirdTeams(t);
     const res = isFinal ? t.final : t.thirdPlace;
     const cls = isFinal ? 'mba-final' : 'mba-third';
@@ -548,7 +548,7 @@ function mbaSuperSeason(edition){
 function mbaSuperHtml(edition){
     const ss = mbaSuperSeason(edition);
     const divider = `<div class="mba-super-divider" aria-hidden="true"></div>`;
-    if(!ss) return divider + `<div class="mba-third-wrap mba-super-wrap"><div class="mba-block mba-super mba-pending"><div class="mba-block-head"><span>⚡ Super Cup</span><span class="mba-block-tag">—</span></div><div class="mba-pending-note">No Super Cup recorded</div></div></div>`;
+    if(!ss) return divider + `<div class="mba-third-wrap mba-super-wrap"><div class="mba-block mba-super mba-pending"><div class="mba-block-head"><span>${HOF_SUPER_IMG} Super Cup</span><span class="mba-block-tag">—</span></div><div class="mba-pending-note">No Super Cup recorded</div></div></div>`;
     const f = ss.f;
     const sc = f.superCup && f.superCup.winner && f.superCup.teams ? f.superCup : null;
     let teams = sc ? sc.teams : null;
@@ -559,7 +559,7 @@ function mbaSuperHtml(edition){
         rows = teams.map(team=>{
             const isW = sc && sc.winner===team;
             const score = sc && sc.scores ? sc.scores[team] : null;
-            return `<div class="mba-team-row${isW?' winner':''}${sc&&!isW?' loser':''}"><span class="mba-team-label">${mbaTeamLabel(team)}${isW?'<i class="fas fa-bolt mba-crown"></i>':''}</span><span class="mba-wins">${sc ? (score!=null?score:(isW?'✓':'')) : '–'}</span></div>`;
+            return `<div class="mba-team-row${isW?' winner':''}${sc&&!isW?' loser':''}"><span class="mba-team-label">${mbaTeamLabel(team)}${isW?`<span class="mba-crown-img">${HOF_SUPER_IMG}</span>`:''}</span><span class="mba-wins">${sc ? (score!=null?score:(isW?'✓':'')) : '–'}</span></div>`;
         }).join('');
         if(!sc) note = `<div class="mba-pending-note">${ss.archived?'Not played':'To be played after the CUP final'}</div>`;
     } else {
@@ -567,7 +567,7 @@ function mbaSuperHtml(edition){
         note = `<div class="mba-pending-note">${ss.archived?'No Super Cup recorded':'League champion vs CUP champion'}</div>`;
     }
     return divider + `<div class="mba-third-wrap mba-super-wrap"><div class="mba-block mba-super${sc?' decided':''}${teams?'':' mba-pending'}">
-        <div class="mba-block-head"><span>⚡ Super Cup</span><span class="mba-block-tag">${sc?'Played':(teams?'To play':'Upcoming')}</span></div>
+        <div class="mba-block-head"><span>${HOF_SUPER_IMG} Super Cup</span><span class="mba-block-tag">${sc?'Played':(teams?'To play':'Upcoming')}</span></div>
         ${rows}${note}
     </div></div>`;
 }
@@ -692,7 +692,7 @@ function mbaPendingHtml(pend){
             <div class="mba-c-link mba-c-link1"><div class="mba-link-out"></div></div>
             <div class="mba-cell mba-c-semi2">${block('mba-semi','Semifinal 2',`First to ${MBA_SEMI_WINS_NEEDED}`,semiNote)}</div>
             <div class="mba-c-link mba-c-link2"></div>
-            <div class="mba-cell mba-c-final">${block('mba-final','🏆 Final','Upcoming','Waiting for the semifinals')}</div>
+            <div class="mba-cell mba-c-final">${block('mba-final',`${HOF_CUP_IMG} Final`,'Upcoming','Waiting for the semifinals')}</div>
         </div>
         <div class="mba-third-wrap">${block('mba-third','🥉 Third place','Upcoming','Waiting for the semifinals')}</div>
         ${mbaSuperHtml(pend.edition)}

@@ -17,7 +17,7 @@ changed by the Worker's own card rules.
 
 ## Rules implemented by the Worker
 
-* **New season** → every team gets 2 “No” cards **+ 2 random cards**.
+* **New season** → every team gets 1 “No” card **+ 2 random cards** (was 2 “No” cards before season 6 — keep the Worker constant in sync with `CARDS_START_NO` in `js/cards.js`).
 * **After every 2nd matchweek** (each team has played each other team once) → 2 random cards for
   every team: after MW 2, 4, 6. Nothing after the last matchweek (only the CUP final + Super Cup
   are left and they allow no cards). Dealing is idempotent — it can never be dealt twice.

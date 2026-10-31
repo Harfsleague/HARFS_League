@@ -783,9 +783,9 @@ body:not(.lite-mode) .table-wrap{
 .pts-pill{
     display:inline-flex; align-items:center; justify-content:center;
     min-width:30px; padding:3px 7px; border-radius:8px;
-    background:rgba(251,191,36,0.12);
-    border:1px solid rgba(251,191,36,0.32);
-    color:#fde047; font-size:0.84rem; font-weight:900;
+    background:linear-gradient(180deg,rgba(37,72,160,0.62),rgba(23,44,110,0.72));
+    border:1px solid rgba(96,150,255,0.45);
+    color:#e6efff; font-size:0.84rem; font-weight:900;
     font-variant-numeric:tabular-nums;
     box-shadow:0 2px 8px rgba(0,0,0,0.25);
 }
@@ -971,3 +971,11 @@ body:not(.lite-mode) .flow-block{
     border-top-color:rgba(255,255,255,0.14);
     box-shadow:0 8px 20px -6px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.08);
 }
+
+/* Rank badge sits ABOVE the logo (it used to cover the top of it): the stage gets room on top, the badge goes into it */
+.hof-podium-stage .pod-avatar-stage{ padding-top:16px; margin-top:-6px; }
+.hof-podium-stage .hof-podium-col .pod-rank-pill{ top:-5px; }
+.hof-podium-stage .hof-podium-col.rank-1 .pod-avatar-stage{ padding-top:17px; }
+.hof-podium-stage .hof-podium-col.rank-1 .pod-rank-pill{ top:-6px; }
+.hof-podium-stage .hof-podium-col.pod-slot-4 .pod-avatar-stage{ padding-top:15px; }
+.hof-podium-stage .hof-podium-col.pod-slot-4 .pod-rank-pill{ top:-4px; }
