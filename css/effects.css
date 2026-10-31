@@ -531,10 +531,11 @@ body:not(.lite-mode):not(.perf-no-sheen) .magazine-panel-header::before{
 .ranking-trophy-item.is-title b,
 .ranking-card.rank-other .ranking-trophy-item.is-title b{ color:#fbbf24; }
 .trophy-cabinet-item.is-title .trophy-count{ color:#fbbf24; }
-.hof-cup-svg{ width:1em; height:1em; display:inline-block; vertical-align:-0.14em; overflow:visible; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)); }
-.pod-medal .hof-cup-svg{ width:1.5em; height:1.5em; vertical-align:middle; }
-.ranking-trophy-item .hof-cup-svg{ width:1.35em; height:1.35em; vertical-align:middle; }
-.trophy-cabinet-item .trophy-emoji .hof-cup-svg{ width:1.05em; height:1.05em; margin:0 auto; }
+.trophy-cabinet-item .trophy-emoji /* every honour icon (emoji or picture) sits in the same fixed-height box, so the numbers under them never move up/down */
+.pod-medal span, .ranking-trophy-item .trophy-emoji, .trophy-cabinet-item .trophy-emoji{
+    display:flex; align-items:center; justify-content:center; height:1.25em; line-height:1; margin-bottom:0;
+}
+.hof-ico{ height:1.1em; width:auto; display:block; max-width:none; pointer-events:none; filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4)); }
 .pod-none{ font-size:0.7rem; color:#64748b; font-weight:800; line-height:1.6; }
 .ranking-trophy-block{ flex-wrap:wrap; justify-content:flex-end; max-width:132px; }
 
