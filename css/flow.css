@@ -434,3 +434,13 @@ body.ai-disabled #nav-admin{ display:none !important; }   /* Assistant switched 
 #ai-chat-screen .ai-input-bar{ border-top:1px solid rgba(255,255,255,0.07); }
 #ai-chat-screen #ai-chat-input{ border-radius:999px; }
 #ai-chat-screen .ai-send-btn{ border-radius:50%; }
+
+/* Cards guide: every card as a small picture with only its name under it, three per row (same look as the deck editor);
+   tap a picture to see it large with its text */
+.cards-info-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 8px; }
+.cards-info-cell{ display:flex; flex-direction:column; align-items:center; gap:5px; cursor:zoom-in; -webkit-tap-highlight-color:transparent; animation:cicIn .4s cubic-bezier(.2,1.1,.4,1) both; animation-delay:calc(var(--i,0) * 35ms); }
+.cards-info-cell img{ width:100%; aspect-ratio:5/7; object-fit:cover; border-radius:10px; border:1px solid rgba(255,255,255,.14); box-shadow:0 4px 10px rgba(0,0,0,.45); transition:transform .15s ease; }
+.cards-info-cell:active img{ transform:scale(.95); }
+.cards-info-cell span{ font-size:.62rem; font-weight:800; color:#cbd5e1; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; }
+@keyframes cicIn{ from{ opacity:0; transform:translateY(12px) scale(.9); } to{ opacity:1; transform:none; } }
+@media (prefers-reduced-motion:reduce){ .cards-info-cell{ animation:none; } }

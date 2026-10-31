@@ -1158,6 +1158,17 @@ body.fed-hidden .fed-open-row{ display:grid; }
 html.lite-mode .rec-card::after, html.lite-mode .rec-logo-wrap, html.lite-mode .rec-logo-wrap .rec-logo{ animation:none !important; }
 
 /* podiums a little higher: the title card is gone and the top of the page is tighter, so the Hall of Fame page fits without scrolling */
-#main-league-screen{ padding-top:78px; padding-bottom:92px; }
+#main-league-screen{ padding-top:104px; padding-bottom:92px; }
 #main-league-screen .hof-podium-stage{ padding-top:4px; }
 #main-league-screen .ranking-top3-wrapper{ margin-bottom:10px; }
+
+/* podium + label frame: same dark rounded frame as the shortcuts, sized to its content */
+.ov-podium-frame{ position:relative; isolation:isolate; width:100%; margin:0 0 22px; }
+.ov-podium-frame::before{
+    content:''; position:absolute; inset:-12px -10px -12px; z-index:-1; pointer-events:none; border-radius:30px;
+    background-color:rgba(6,10,20,0.62);
+    background-image:radial-gradient(120% 70% at 50% 0%,rgba(255,255,255,0.05),transparent 60%), linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:rgba(255,255,255,0.15); border-bottom-color:rgba(0,0,0,0.6);
+    box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.ov-podium-frame .ranking-top3-wrapper{ margin-bottom:6px; }

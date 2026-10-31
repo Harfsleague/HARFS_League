@@ -37,6 +37,25 @@ function recordsCompute(){
         if(run && run.team===t){ run.len++; run.to=s.seasonId; } else run = { team:t, len:1, from:s.seasonId, to:s.seasonId };
         if(reign[t] && run.len>reign[t].len) reign[t] = { len:run.len, from:run.from, to:run.to };
     });
+    // Streaks (from the games on record, oldest first): wins in a row / games without a defeat
+    const winRun = {}, unbRun = {}; TEAM_NAMES.forEach(t=>{ winRun[t]={cur:0,best:0}; unbRun[t]={cur:0,best:0}; });
+    [...logs].filter(m=>recordsParseScore(m)).sort((x,y)=>String(x.timestamp||'').localeCompare(String(y.timestamp||''))).forEach(m=>{
+        const sc = recordsParseScore(m);
+        [[m.home,sc.a,sc.b],[m.away,sc.b,sc.a]].forEach(([t,gf,ga])=>{
+            if(!winRun[t]) return;
+            winRun[t].cur = gf>ga ? winRun[t].cur+1 : 0;  winRun[t].best = Math.max(winRun[t].best, winRun[t].cur);
+            unbRun[t].cur = gf>=ga ? unbRun[t].cur+1 : 0; unbRun[t].best = Math.max(unbRun[t].best, unbRun[t].cur);
+        });
+    });
+    // Best single season (points / goals scored): every archived final table + the season in progress
+    const seasonBest = { pts:{}, gf:{} }; TEAM_NAMES.forEach(t=>{ seasonBest.pts[t]={v:0,s:''}; seasonBest.gf[t]={v:0,s:''}; });
+    const seasonRow = (t,row,label)=>{
+        if(!row) return;
+        if((row.Pts||0)>seasonBest.pts[t].v) seasonBest.pts[t]={ v:row.Pts, s:label };
+        if((row.GF||0)>seasonBest.gf[t].v)   seasonBest.gf[t]={ v:row.GF, s:label };
+    };
+    (archivedSeasons||[]).forEach(s=>(s.table||[]).forEach(r=>{ if(r && seasonBest.pts[r.name]) seasonRow(r.name,r,`Season ${s.seasonId}`); }));
+    TEAM_NAMES.forEach(t=>{ const r = leagueData && leagueData[t]; if(r) seasonRow(t,r,'This season'); });
     const bars = (fn)=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
     const cards = [
         { id:'goals',   icon:'⚽', title:'Most Goals Scored',     note:'All-time, every season',            list:bars(t=>stats[t].GF), unit:'goals' },
@@ -44,6 +63,18 @@ function recordsCompute(){
         { id:'clean',   icon:'🧤', title:'Most Clean Sheets',     note:`From the ${logs.length} games on record`, list:bars(t=>clean[t]), unit:'clean sheets' },
         { id:'reign',   icon:'👑', title:'Longest Reign at the Top', note:'League titles won in a row',     list:bars(t=>reign[t].len), unit:'in a row',
           extra:t=> reign[t].len>1 ? `Seasons ${reign[t].from}–${reign[t].to}` : '' },
+        { id:'wins',    icon:'🔥', title:'Most Wins',             note:'All-time, every season',            list:bars(t=>stats[t].W), unit:'wins' },
+        { id:'wrate',   icon:'📈', title:'Best Win Rate',         note:'Share of games won (5+ games played)', list:bars(t=>stats[t].P>=5 ? Math.round(stats[t].W/stats[t].P*100) : 0), unit:'of games won', fmt:v=>v+'%',
+          extra:t=>`${stats[t].W} wins from ${stats[t].P} games` },
+        { id:'gd',      icon:'⚖️', title:'Best Goal Difference',  note:'Goals scored minus goals conceded, all-time', list:bars(t=>stats[t].GF-stats[t].GA), unit:'goal diff', fmt:v=>(v>0?'+':'')+v,
+          extra:t=>`${stats[t].GF} for · ${stats[t].GA} against` },
+        { id:'wstreak', icon:'🚀', title:'Longest Winning Streak', note:`Wins in a row, from the ${logs.length} games on record`, list:bars(t=>winRun[t].best), unit:'in a row' },
+        { id:'unb',     icon:'🛡️', title:'Longest Unbeaten Run',  note:'Games without a defeat, from the games on record', list:bars(t=>unbRun[t].best), unit:'games' },
+        { id:'bpts',    icon:'⭐', title:'Best Season — Points',  note:'Most league points in one season',  list:bars(t=>seasonBest.pts[t].v), unit:'points', extra:t=>seasonBest.pts[t].s },
+        { id:'bgf',     icon:'💫', title:'Best Season — Goals',   note:'Most goals scored in one season',   list:bars(t=>seasonBest.gf[t].v), unit:'goals', extra:t=>seasonBest.gf[t].s },
+        { id:'defeats', icon:'💔', title:'Most Defeats',          note:'All-time — the hard-luck record',   list:bars(t=>stats[t].L), unit:'defeats' },
+        { id:'silver',  icon:'🥈', title:'Most Silver Medals',    note:'Always the bridesmaid (league + CUP)', list:bars(t=>trophies[t].silver||0), unit:'silvers' },
+        { id:'played',  icon:'🏟️', title:'Most Games Played',     note:'The league’s veteran',              list:bars(t=>stats[t].P), unit:'games' },
         { id:'decor',   icon:'🏆', title:'Most Decorated',        note:'League + CUP + Super Cup titles',   list:bars(t=>(trophies[t].leagueGold||0)+(trophies[t].cup||0)+(trophies[t].superCup||0)), unit:'titles',
           extra:t=>{ const x=trophies[t]; return [x.leagueGold&&`${x.leagueGold} league`, x.cup&&`${x.cup} CUP`, x.superCup&&`${x.superCup} Super Cup`].filter(Boolean).join(' · '); } },
     ];
@@ -65,8 +96,8 @@ function recordsRender(){
         const bars = c.list.map(x=>`
             <div class="rec-bar-row${L.teams.includes(x.team)?' lead':''}">
                 ${recordsLogo(x.team,'rec-mini')}
-                <div class="rec-bar"><i style="--w:${Math.round(x.value/max*100)}%"></i></div>
-                <b>${x.value}</b>
+                <div class="rec-bar"><i style="--w:${Math.round(Math.max(0,x.value)/max*100)}%"></i></div>
+                <b>${c.fmt ? c.fmt(x.value) : x.value}</b>
             </div>`).join('');
         return `
         <div class="rec-card" style="--d:${(i++)*90}ms">
@@ -76,7 +107,7 @@ function recordsRender(){
                 <div class="rec-logos">${logos}</div>
                 <div class="rec-hero-txt">
                     <div class="rec-team">${names}${L.teams.length>1?' <em>shared</em>':''}</div>
-                    <div class="rec-val"><span class="rec-count" data-to="${L.best}">0</span><small>${c.unit}</small></div>
+                    <div class="rec-val"><span class="rec-count" data-to="${L.best}" data-pre="${c.id==='gd'?'+':''}" data-suf="${c.id==='wrate'?'%':''}">0</span><small>${c.unit}</small></div>
                     ${extra ? `<div class="rec-extra">${escapeHtml(extra)}</div>` : ''}
                 </div>
             </div>` : `<div class="rec-empty">No one has set this record yet</div>`}
@@ -96,12 +127,12 @@ function recordsRender(){
     // count-up
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
     box.querySelectorAll('.rec-count').forEach((el,k)=>{
-        const to = +el.dataset.to; if(reduce || to<=0){ el.textContent = to; return; }
+        const to = +el.dataset.to, pre = el.dataset.pre||'', suf = el.dataset.suf||''; if(reduce || to<=0){ el.textContent = pre+to+suf; return; }
         const t0 = performance.now() + 220 + k*40, dur = 900;
         const tick = now=>{
             if(now<t0){ requestAnimationFrame(tick); return; }
             const p = Math.min(1,(now-t0)/dur), e = 1-Math.pow(1-p,3);
-            el.textContent = Math.round(to*e);
+            el.textContent = pre+Math.round(to*e)+suf;
             if(p<1) requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
@@ -111,7 +142,8 @@ function recordsRender(){
 function openRecordsSheet(){
     haptic([8]);
     const sh = document.getElementById('records-sheet'); if(!sh) return;
+    document.body.classList.add('cards-open');          // same as Cards: the HARFS capsule fades away while the sheet is open and returns when it closes
     recordsRender();
     sh.classList.remove('open'); void sh.offsetWidth; sh.classList.add('open');
 }
-function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); }
+function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); document.body.classList.remove('cards-open'); }

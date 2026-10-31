@@ -248,9 +248,13 @@
     <div id="main-league-screen" class="page-screen">
 
         <div class="w-full px-4">
-            <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
-            <!-- Small label under the podium -->
-            <div class="ov-label"><span><i class="fas fa-trophy"></i>Overall Ranking and Trophies</span></div>
+            <!-- Podium + its label share one dark rounded frame -->
+            <div class="ov-podium-frame">
+                <div class="ranking-top3-wrapper" id="podium-container" style="display:none;"></div>
+                <!-- Small label under the podium -->
+                <div class="ov-label"><span><i class="fas fa-trophy"></i>Overall Ranking and Trophies</span></div>
+
+            </div>
             <div id="main-league-body" class="flex flex-col gap-2"></div>
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...

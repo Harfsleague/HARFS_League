@@ -233,12 +233,14 @@ async function cardsDiscardAsk(team, uid){
     const ok = await showConfirm({icon:'🗑️',title:'Discard this card?',message:`“${def?def.name:h.card}” is removed from your hand for good.`,okLabel:'Discard',okColor:'red'});
     if(ok) cardsAct(team,'discard',uid);
 }
-function cardsZoom(cardId){
+function cardsZoom(cardId, withTag){
     const def = cardDef(cardId); if(!def) return;
     const box = document.getElementById('cards-zoom'); if(!box) return;
     box.querySelector('img').src = cardImgUrl(def);
     box.querySelector('.cz-name').textContent = def.name;
-    box.querySelector('.cz-desc').textContent = def.desc || '';
+    const dz = box.querySelector('.cz-desc');
+    dz.style.whiteSpace = 'pre-line';
+    dz.textContent = [def.desc || '', withTag ? cardsInfoTag(def) : ''].filter(Boolean).join('\n');
     box.classList.add('open');
 }
 function cardsZoomClose(){ const b=document.getElementById('cards-zoom'); if(b) b.classList.remove('open'); }
@@ -285,11 +287,7 @@ function renderCardsInfo(){
     const deck = (cardsData && cardsData.deck) || [];
     box.innerHTML = `<div class="cards-fa" dir="rtl">` + cardsRulesHtml()
         + `<div class="flow-section-title" style="margin:14px 0 8px;text-align:center;">همهٔ کارت‌های بازی</div>`
-        + `<div class="cards-info-list">` + deck.map(c=>`<div class="cards-info-item">
-            <div class="cd-img-wrap" onclick="cardsZoom('${c.id}')"><img class="cd-img" src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"></div>
-            <div class="cards-info-text"><div class="cd-name" dir="auto">${escapeHtml(c.name)}</div>
-            ${c.desc?`<div class="cd-desc" dir="auto">${escapeHtml(c.desc)}</div>`:''}
-            <div class="cards-info-tag">${escapeHtml(cardsInfoTag(c))}</div></div></div>`).join('') + `</div>`
+        + `<div class="cards-info-grid">` + deck.map((c,i)=>`<div class="cards-info-cell" style="--i:${i}" onclick="cardsZoom('${c.id}',true)"><img src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"><span dir="auto">${escapeHtml(c.name)}</span></div>`).join('') + `</div>`
         + ((canEditCards() && !isFullAdmin()) ? `<div class="cards-editor-block"><p class="mba-admin-hint" style="margin-top:14px"><i class="fas fa-pen ml-1"></i> شما می‌توانید کارت بسازید، ویرایش کنید و حذف کنید. پخش، فعال‌سازی و استفاده از کارت‌ها همچنان خودکار است.</p>${cardsDeckEditorHtml(true)}</div>` : '')
         + `</div>`;
 }
@@ -299,12 +297,24 @@ function cardsApplyInfoChrome(){
     if(t) t.textContent = cardsInfoOpen ? 'راهنمای کارت‌ها' : 'Cards';
     if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید' : 'Your hand · tap a card to enlarge it';
 }
+// "i" → the page slides away to the side and the guide (or the hand) slides in; the title, subtitle and button switch with it
 function cardsToggleInfo(){
     haptic([6]);
-    cardsInfoOpen = !cardsInfoOpen;
-    cardsApplyInfoChrome();
-    renderCardsSheet();
-    const sc = document.getElementById('cards-body'); if(sc) sc.scrollTop = 0;
+    const box = document.getElementById('cards-body');
+    const heads = ['cards-title','cards-subtitle'].map(id=>document.getElementById(id)).filter(Boolean);
+    const btn = document.getElementById('cards-info-btn');
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const swap = ()=>{ cardsInfoOpen = !cardsInfoOpen; cardsApplyInfoChrome(); renderCardsSheet(); if(box) box.scrollTop = 0; };
+    if(!box || !box.animate || reduce){ swap(); return; }
+    const dir = cardsInfoOpen ? -1 : 1;                       // opening the guide: current page leaves to the left, guide comes from the right
+    if(btn) btn.animate([{transform:'rotate(0) scale(1)'},{transform:`rotate(${180*dir}deg) scale(.8)`},{transform:`rotate(${360*dir}deg) scale(1)`}],{duration:460,easing:'cubic-bezier(.4,0,.2,1)'});
+    heads.forEach(h=>h.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateY(-6px)`}],{duration:140,fill:'forwards'}));
+    box.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-34*dir}px) scale(.96)`}],{duration:170,easing:'ease-in',fill:'forwards'}).finished.then(()=>{
+        swap();
+        heads.forEach(h=>{ h.getAnimations().forEach(a=>a.cancel()); h.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'}); });
+        box.getAnimations().forEach(a=>a.cancel());
+        box.animate([{opacity:0,transform:`translateX(${34*dir}px) scale(.96)`},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.2,1,.3,1)'});
+    }).catch(swap);
 }
 async function openCardsSheet(){
     haptic([8]);
