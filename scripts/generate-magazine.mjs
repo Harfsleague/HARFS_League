@@ -617,6 +617,61 @@ function computeWeekType(leagueActive, cupActive) {
   return "quiet";
 }
 
+// ---- Rank over the season (drives the rank-arrows in the table and the rank-vs-week chart) ----
+// Works from the league matches' `round` numbers: the table is rebuilt after every matchweek with the app's own
+// tie-break (points, then goal difference; goals scored and team order only to keep it stable). All real arithmetic.
+function computeRankHistory(matches) {
+  const played = (matches || []).filter((m) => Number.isFinite(+m.round) && +m.round > 0 && /^\d+-\d+$/.test(String(m.score || "")));
+  if (!played.length) return null;
+  const rounds = [...new Set(played.map((m) => +m.round))].sort((a, b) => a - b);
+  const tbl = {};
+  TEAM_NAMES.forEach((t) => (tbl[t] = { Pts: 0, GF: 0, GA: 0 }));
+  const ranks = {};
+  TEAM_NAMES.forEach((t) => (ranks[t] = []));
+  for (const r of rounds) {
+    for (const m of played.filter((x) => +x.round === r)) {
+      const [h, a] = String(m.score).split("-").map(Number);
+      if (!tbl[m.home] || !tbl[m.away]) continue;
+      tbl[m.home].GF += h; tbl[m.home].GA += a; tbl[m.away].GF += a; tbl[m.away].GA += h;
+      if (h > a) tbl[m.home].Pts += 3; else if (h < a) tbl[m.away].Pts += 3; else { tbl[m.home].Pts += 1; tbl[m.away].Pts += 1; }
+    }
+    const order = [...TEAM_NAMES].sort(
+      (a, b) =>
+        tbl[b].Pts - tbl[a].Pts ||
+        tbl[b].GF - tbl[b].GA - (tbl[a].GF - tbl[a].GA) ||
+        tbl[b].GF - tbl[a].GF ||
+        TEAM_NAMES.indexOf(a) - TEAM_NAMES.indexOf(b)
+    );
+    order.forEach((t, i) => ranks[t].push(i + 1));
+  }
+  return { weeks: rounds, ranks };
+}
+
+// Rank now vs. one matchweek earlier. delta > 0 = moved UP that many places, < 0 = dropped, 0 = same place.
+function computeRankChanges(history) {
+  if (!history || !history.weeks.length) return null;
+  const last = history.weeks.length - 1;
+  return TEAM_NAMES.map((team) => {
+    const rank = history.ranks[team][last];
+    const prevRank = last > 0 ? history.ranks[team][last - 1] : null;
+    return { team, rank, prevRank, delta: prevRank == null ? null : prevRank - rank };
+  }).sort((a, b) => a.rank - b.rank);
+}
+
+// What happened to the interviewed team this week — decides (here, not by the AI) whether the interview ends with a walk-out.
+//   2+ defeats in the window -> the interviewee gets angry at a tough question and leaves.
+function computeInterviewContext(team, matches, rankChange) {
+  const mine = (matches || [])
+    .filter((m) => m.home === team || m.away === team)
+    .map((m) => ({ opponent: m.home === team ? m.away : m.home, home: m.home === team, score: m.score, result: resultForTeam(team, m) }))
+    .filter((r) => r.result);
+  const count = (x) => mine.filter((r) => r.result === x).length;
+  const wins = count("W"), draws = count("D"), losses = count("L");
+  const walkout = losses >= 2;
+  const mood = walkout ? "furious_after_defeats" : losses === 0 && wins >= 2 ? "cocky_after_wins" : mine.length ? "mixed" : "quiet_week";
+  return { team, gamesThisWeek: mine, wins, draws, losses, walkout, mood, rankChange: rankChange || null };
+}
+
 async function gatherData(lastIssue) {
   const [leagueData, mainLeagueData, matchHistory, seasonsArchive, mbaData, flowFile] = await Promise.all([
     fetchJson(`${RAW_BASE}league_data.json`, {}),
@@ -670,8 +725,9 @@ async function gatherData(lastIssue) {
   const formGuide = computeFormGuide(focusHistory);
   const weeklyRecords = computeWeeklyRecords(recentMatches);
   const titleRace = computeTitleRace(currentSeasonTable);
-  // all-time totals always use the LIVE table (an ended season is already inside the archive)
-  const allTimeStats = computeAllTimeStats(seasonsArchive, ctx.liveTable, mainLeagueData);
+  // rank per matchweek (only for the live season: an ended season's archived log has no round numbers)
+  const rankHistory = ctx.focusIsEnded ? null : computeRankHistory(matchHistory);
+  const rankChanges = computeRankChanges(rankHistory);
 
   return {
     weekType,
@@ -690,7 +746,8 @@ async function gatherData(lastIssue) {
     formGuide,
     weeklyRecords,
     titleRace,
-    allTimeStats,
+    rankHistory,
+    rankChanges,
   };
 }
 
@@ -731,11 +788,20 @@ const MAGAZINE_SCHEMA = {
   properties: {
     issueTitle: { type: "string", description: "عنوان جذاب و کمی طنز برای این شماره مجله" },
     coverSubtitle: { type: "string", description: "یک زیرعنوان کوتاه و بامزه برای جلد" },
-    standingsCommentary: { type: "string", description: "تحلیل جدول رده‌بندی فعلی، با لحن یک گزارشگر ورزشی که کمی طنازی هم دارد" },
+    standingsCommentary: { type: "string", description: "تحلیل جدول رده‌بندی فعلی، با لحن یک گزارشگر ورزشی که کمی طنازی هم دارد. حتماً به جابه‌جایی رتبه‌ها نسبت به هفتهٔ قبل (rankChanges) اشاره کن: چه کسی بالا آمده، چه کسی پایین رفته و چه کسی همان‌جا مانده — دقیقاً مطابق delta، بدون ساختن جابه‌جایی. اگر rankChanges خالی است، چیزی دربارهٔ تغییر رتبه نگو." },
     matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط از بازی‌های «لیگ» این هفته (recentMatches). بازی‌های CUP هرگز اینجا نمی‌آید — برای آن‌ها cupReport هست. اگر این هفته بازی لیگ نبوده، کوتاه و صادقانه بگو لیگ استراحت داشته (۱ تا ۲ جمله)." },
     cupReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط دربارهٔ بازی‌های «CUP» این هفته (cup.gamesThisWeek، cup.bracket، cup.medals، cup.recordsThisWeek). اگر cup.hasActivity برابر false است، رشتهٔ خالی \"\" برگردان." },
     superCupReport: { type: "string", description: "گزارش کوتاه دربارهٔ سوپرکاپ (فقط وقتی superCup.hasActivity برابر true است: تیم‌ها، نتیجه و برنده از superCup.result). در غیر این صورت رشتهٔ خالی \"\" برگردان." },
-    scheduleOutlook: { type: "string", description: "۲ تا ۴ جمله دربارهٔ جایگاه فعلی در برنامهٔ فصل و مرحلهٔ بعدی، فقط بر اساس schedule (phaseLabelFa، nextStepFa، nextLeagueFixtures، stages). هیچ بازی، تاریخ یا مرحله‌ای که در schedule نیست نساز. اگر schedule.status برابر no_schedule بود فقط یک جملهٔ کوتاه بنویس." },
+    scheduleOutlook: { type: "string", description: "پیش‌نمایش بازی‌های هفتهٔ آینده لیگ (۲ تا ۳ پاراگراف کوتاه): تمرکز اصلی روی بازی‌های schedule.nextLeagueFixtures — هر بازی را با توجه به رتبه و فرم دو تیم (formGuide، currentSeasonTable، rankChanges) تحلیل کن، حساسیت‌ها و ماجراهای بالقوه را بگو. مرحله‌های برنامهٔ فصل را شرح نده. هیچ بازی، تاریخ یا حریفی که در schedule نیست نساز و نتیجه را پیش‌بینی نکن. اگر schedule.nextLeagueFixtures خالی بود (مثلاً نوبت CUP یا سوپرکاپ است) فقط ۱ تا ۲ جمله بگو بعدی چیست (nextStepFa). اگر schedule.status برابر no_schedule بود فقط یک جملهٔ کوتاه بنویس." },
+    fixturePreviews: {
+      type: "array",
+      description: "برای هر بازی در schedule.nextLeagueFixtures دقیقاً یک آیتم: home و away همان نام‌های لاتین دیتا، و take یک تحلیل کوتاه ۱ تا ۲ جمله‌ای و بامزه دربارهٔ آن بازی. اگر nextLeagueFixtures خالی است، آرایهٔ خالی برگردان.",
+      items: {
+        type: "object",
+        properties: { home: { type: "string" }, away: { type: "string" }, take: { type: "string" } },
+        required: ["home", "away", "take"],
+      },
+    },
     playerSpotlights: {
       type: "array",
       description: "۲ تا ۴ نکته دربارهٔ تیم‌ها یا عملکردهای برجسته این هفته",
@@ -756,7 +822,7 @@ const MAGAZINE_SCHEMA = {
     },
     titleRaceCommentary: {
       type: "string",
-      description: "تحلیل کوتاه دربارهٔ وضعیت قهرمانی: فاصلهٔ امتیازی تیم‌ها تا صدرنشین، و اینکه با این روند چه کسی شانس بیشتری برای قهرمانی این فصل دارد. فقط بر اساس عدد‌های titleRace استدلال کن، هیچ درصد شانسی از خودت نساز.",
+      description: "تحلیل کوتاه دربارهٔ وضعیت قهرمانی (کنار نمودار رتبهٔ هر تیم در طول فصل — rankHistory — که اپ نشان می‌دهد؛ می‌توانی به صعود و سقوط‌های نمودار اشاره کنی): فاصلهٔ امتیازی تیم‌ها تا صدرنشین، و اینکه با این روند چه کسی شانس بیشتری برای قهرمانی این فصل دارد. فقط بر اساس عدد‌های titleRace استدلال کن، هیچ درصد شانسی از خودت نساز.",
     },
     recordsAndOddities: {
       type: "string",
@@ -771,17 +837,23 @@ const MAGAZINE_SCHEMA = {
         intervieweeRole: { type: "string", description: "نقش شخصیت مصاحبه‌شونده: مثلاً «بازیکن»، «کاپیتان» یا «سرمربی» — خودت انتخاب کن" },
         intervieweeName: { type: "string", description: "یک نام خیالی و بامزه برای این شخصیت (چون بازیکن‌های واقعی و اسم‌هایشان در دیتا نیست، این کاملاً از خودت است)" },
         headline: { type: "string", description: "یک تیتر کوتاه و بامزه برای این مصاحبه" },
+        scene: { type: "string", description: "یک یا دو جملهٔ صحنه‌چینی کوتاه و سینمایی: کجا، چه حال‌وهوایی، شخصیت با چه قیافه‌ای پشت میز نشسته (مثلاً «مصاحبه در راهروی باشگاه، بعد از تمرین عصر»)" },
         qAndA: {
           type: "array",
-          description: "۳ تا ۵ جفت پرسش و پاسخ خیالی و طنزآمیز، اما با اشاره‌های ظریف به وضعیت واقعی تیم (جدول، فرم اخیر) تا کاملاً بی‌ربط به دیتا نباشد",
+          description: "۴ تا ۶ دیالوگ پرسش و پاسخ خیالی و طنزآمیز، با اشاره‌های ظریف به وضعیت واقعی تیم (نتایج این هفته در interviewContext، جدول، فرم اخیر، تغییر رتبه). مصاحبه باید مثل یک صحنهٔ زنده باشد: حالت و واکنش شخصیت در stage بیاید. اگر interviewContext.walkout برابر true است، اولین دیالوگ‌ها آرام‌اند و بعد یک سؤال چالشی دربارهٔ دو باخت می‌آید که او را عصبانی می‌کند؛ پاسخ آخر نیمه‌تمام و پرخاشگرانه است و او جلسه را ترک می‌کند.",
           items: {
             type: "object",
-            properties: { question: { type: "string" }, answer: { type: "string" } },
+            properties: {
+              question: { type: "string", description: "پرسش خبرنگار" },
+              stage: { type: "string", description: "حالت یا واکنش کوتاه مصاحبه‌شونده پیش از پاسخ، داخل پرانتز و بدون علامت پرانتز نوشته شود؛ مثل «لبخند عصبی»، «به صندلی تکیه می‌دهد»، «صدایش بالا می‌رود». می‌تواند خالی باشد." },
+              answer: { type: "string", description: "پاسخ مصاحبه‌شونده" },
+            },
             required: ["question", "answer"],
           },
         },
+        exitNote: { type: "string", description: "فقط وقتی interviewContext.walkout برابر true است: یک جملهٔ توصیفی دربارهٔ ترک جلسه (مثلاً «او میکروفون را روی میز می‌کوبد و از در بیرون می‌رود»). در غیر این صورت رشتهٔ خالی." },
       },
-      required: ["team", "intervieweeRole", "intervieweeName", "headline", "qAndA"],
+      required: ["team", "intervieweeRole", "intervieweeName", "headline", "scene", "qAndA"],
     },
   },
   required: [
@@ -792,6 +864,7 @@ const MAGAZINE_SCHEMA = {
     "cupReport",
     "superCupReport",
     "scheduleOutlook",
+    "fixturePreviews",
     "playerSpotlights",
     "recommendations",
     "titleRaceCommentary",
@@ -804,7 +877,7 @@ const MAGAZINE_SCHEMA = {
 const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — یک لیگ خصوصی فوتبال بین چهار تیم: HOSI، Sezar، Bayern و Yellow. همیشه کلمهٔ HARFS را دقیقاً به همین شکل لاتین بنویس.
 لحن تو باید مثل یک روزنامه‌نگار ورزشی باتجربه باشد که کمی هم شوخ‌طبع است — نه کمدین محض، بلکه تحلیل‌گر دقیقی که می‌داند کی باید بخنداند و کی باید جدی باشد. همیشه به فارسی بنویس (نام تیم‌ها و HARFS را به لاتین نگه دار).
 تمام اعداد، نتایج و آماری که ارائه می‌دهی باید دقیقاً از دیتای JSON داده‌شده باشد — هرگز عددی را حدس نزن یا نسازی. اگر داده‌ای برای بخشی کافی نیست، آن بخش را کوتاه و صادقانه بنویس (مثلاً بگو این هفته اتفاق خاصی ثبت نشده) به‌جای این‌که چیزی بسازی.
-دیتای ورودی شامل چند بخش آمار حساب‌شده هم هست: formGuide (فرم ۵ بازی اخیر و روند برد/باخت هر تیم)، weeklyRecords (پرگل‌ترین بازی و بزرگ‌ترین اختلاف نتیجهٔ این هفته)، titleRace (فاصلهٔ امتیازی تیم‌ها تا صدرنشین)، و allTimeStats (مجموع کل فصل‌ها: تعداد قهرمانی لیگ، تعداد مدال CUP (کلید mbaMedals؛ نام تورنمنت در برنامه CUP است)، و آمار کلی بازی‌ها و گل‌ها). این اعداد از قبل محاسبه شده‌اند و درست هستند؛ کارِ تو فقط روایت و تحلیلِ آن‌ها به فارسی است، نه بازمحاسبه یا حدس زدن درصد شانس.
+دیتای ورودی شامل چند بخش آمار حساب‌شده هم هست: formGuide (فرم ۵ بازی اخیر و روند برد/باخت هر تیم)، weeklyRecords (پرگل‌ترین بازی و بزرگ‌ترین اختلاف نتیجهٔ این هفته)، titleRace (فاصلهٔ امتیازی تیم‌ها تا صدرنشین)، و rankChanges (رتبهٔ فعلی هر تیم، رتبهٔ هفتهٔ قبل و delta: مثبت یعنی بالا آمده، منفی یعنی پایین رفته، صفر یعنی ثابت) و rankHistory (رتبهٔ هر تیم در پایان هر هفتهٔ لیگ). این اعداد از قبل محاسبه شده‌اند و درست هستند؛ کارِ تو فقط روایت و تحلیلِ آن‌ها به فارسی است، نه بازمحاسبه یا حدس زدن درصد شانس.
 
 خاطره‌ها و «لحظات طلایی» ثبت‌شده توسط کاربران جزو دادهٔ این مجله نیستند؛ هرگز به آن‌ها اشاره نکن و رویدادی از خودت نساز.
 
@@ -831,10 +904,14 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 • اگر schedule.leagueIdleByDesign برابر true است، یعنی لیگ عمداً متوقف است چون نوبت CUP یا سوپرکاپ است. این «استراحت»، «افت» یا «بحران» لیگ نیست؛ در matchReport بگو لیگ طبق برنامه منتظر پایان مرحلهٔ CUP است و بازی لیگ از آن‌جا ادامه پیدا می‌کند که schedule می‌گوید. هرگز دلیل دیگری برای نبودن بازی لیگ نساز.
 • هیچ تاریخ، ساعت، رقیب یا هفته‌ای را که در schedule نیست ننویس. فقط بازی‌های nextLeagueFixtures و leagueFixturesAfterThat را به‌عنوان بازی‌های آینده لیگ نام ببر. نتایج آینده را پیش‌بینی نکن؛ فقط می‌توانی با زبان احتیاط دربارهٔ حساس بودن بازی‌ها حرف بزنی.
 • قهرمانی لیگ تا وقتی schedule.leagueMatchweek.current برابر null نشده (همهٔ هفته‌ها بازی نشده) قطعی نیست. تا قبل از آن فقط از «صدرنشین فعلی» حرف بزن، نه «قهرمان».
-• در scheduleOutlook جایگاه فعلی و قدم بعدی برنامه را کوتاه و دقیق (۲ تا ۴ جمله) بنویس.
+• در scheduleOutlook و fixturePreviews تمرکز اصلی روی بازی‌های هفتهٔ آینده لیگ (nextLeagueFixtures) است، نه شرح مرحله‌های فصل: دربارهٔ هر بازی با توجه به رتبه، فرم و تغییر رتبه‌ها صحبت کن و برای هر بازی یک آیتم در fixturePreviews بگذار.
 • سوپرکاپ: وقتی superCup.status برابر not_yet_known است، تیم‌های سوپرکاپ هنوز مشخص نیستند (باید لیگ و CUP تمام شوند). وقتی scheduled_not_played است، superCup.teams بازیکنان سوپرکاپ‌اند و بازی هنوز انجام نشده. وقتی played است نتیجه فقط از superCup.result بیاید. اگر superCup.sameTeamWonBoth برابر true بود، همین را به‌عنوان یک دوگانهٔ تاریخی (لیگ و CUP) بگو و توضیح بده حریف نایب‌قهرمان لیگ است. superCupReport فقط وقتی superCup.hasActivity=true است پر شود؛ وگرنه "". سوپرکاپ هیچ تأثیری روی جدول لیگ یا مدال‌های CUP ندارد.
 • superCup.past قهرمان‌های سوپرکاپ فصل‌های قبل است؛ می‌توانی برای مقایسه از آن استفاده کنی.
 • اگر schedule.status برابر no_schedule است، دربارهٔ برنامه یا مرحله‌ها چیزی نساز.
+
+دربارهٔ تغییر رتبه‌ها: در دیتا rankChanges نشان می‌دهد هر تیم نسبت به هفتهٔ قبل چند پله بالا یا پایین آمده یا ثابت مانده (delta). در standingsCommentary و matchReport به این جابه‌جایی‌ها اشاره کن (مثلاً «Bayern یک پله صعود کرد و دوم شد»)، فقط بر اساس همان delta. اپ کنار رتبهٔ هر تیم فلش سبز (صعود)، قرمز (سقوط) یا خط خاکستری (ثابت) می‌گذارد و یک نمودار خطی از رتبهٔ هر تیم در طول فصل (rankHistory) نشان می‌دهد؛ پس هیچ‌وقت خودت جدول یا نمودار متنی نساز.
+
+دربارهٔ مصاحبه (جذاب و زنده بنویس): interviewContext نتایج همین هفتهٔ تیم مصاحبه‌شونده است. مصاحبه مثل یک صحنهٔ واقعی باشد: scene، دیالوگ‌های کوتاه، واکنش‌های stage و لحن شخصیت متناسب با mood. اگر interviewContext.walkout برابر true باشد (تیم این هفته ۲ باخت یا بیشتر داشته)، چند دیالوگ اول آرام و شوخ باشد، بعد خبرنگار یک سؤال چالشی و تلخ دربارهٔ باخت‌ها بپرسد، شخصیت عصبانی شود، پاسخ آخرش نیمه‌کاره و تند باشد و در exitNote جلسه را ترک کند. اگر walkout برابر false است، مصاحبه تا آخر کامل شود و exitNote رشتهٔ خالی باشد. mood=cocky_after_wins یعنی شخصیت از برد خوشحال و کمی از خودراضی است. هیچ نتیجه یا عددی خارج از interviewContext و دیتا نساز.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
@@ -977,6 +1054,7 @@ async function main() {
 
   data.previousIssuesSummary = buildPreviousIssuesSummary(archive);
   data.interviewTeam = computeInterviewTeam(issueNumber);
+  data.interviewContext = computeInterviewContext(data.interviewTeam, data.recentMatches, (data.rankChanges || []).find((r) => r.team === data.interviewTeam));
 
   console.log(`Asking Gemini 3.5 Flash to write the magazine (interview team: ${data.interviewTeam})...`);
   let magazine;
@@ -993,7 +1071,10 @@ async function main() {
   // The rotation must be guaranteed, not just requested — if the model
   // ignored interviewTeam for any reason, force it back to the scheduled
   // team rather than letting the rotation silently drift.
-  if (magazine.interview) magazine.interview.team = data.interviewTeam;
+  if (magazine.interview) {
+    magazine.interview.team = data.interviewTeam;
+    magazine.interview.walkedOut = !!data.interviewContext.walkout; // decided by the results, not by the model
+  }
   // Same idea for the CUP: the structured data decides whether there IS a CUP
   // story, not the model. No CUP activity -> no CUP report, whatever it wrote.
   if (!data.cup.hasActivity) magazine.cupReport = "";
@@ -1026,9 +1107,11 @@ async function main() {
     formGuide: data.formGuide,
     weeklyRecords: data.weeklyRecords,
     titleRace: data.titleRace,
-    allTimeStats: data.allTimeStats,
+    rankHistory: data.rankHistory, // rank after every league matchweek -> chart in the app
+    rankChanges: data.rankChanges, // rank now vs. the week before -> arrows in the table
     ...magazine,
   };
+  delete issue.allTimeStats; // the all-time block was removed from the magazine (the app links to Records instead)
   delete issue.imagePromptEn; // old schema field: never ship it, even if a model still returns one
 
   // Newest issue first — this is the order js/magazine.js expects.

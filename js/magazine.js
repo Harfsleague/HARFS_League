@@ -102,18 +102,19 @@ function magazineGoNewer() {
     if (magazineIssueIdx <= 0) return;
     haptic([6]);
     magazineIssueIdx--;
-    renderCurrentIssue();
+    renderCurrentIssue('newer');
 }
 function magazineGoOlder() {
     if (magazineIssueIdx >= magazineArchive.length - 1) return;
     haptic([6]);
     magazineIssueIdx++;
-    renderCurrentIssue();
+    renderCurrentIssue('older');
 }
 function magazineJumpTo(idx) {
     haptic([6]);
+    const dir = idx > magazineIssueIdx ? 'older' : idx < magazineIssueIdx ? 'newer' : null;
     magazineIssueIdx = idx;
-    renderCurrentIssue();
+    renderCurrentIssue(dir);
     closeMagazineIssuePicker();
 }
 function toggleMagazineIssuePicker() {
@@ -157,12 +158,25 @@ function renderMagazineIssueNav() {
     `;
 }
 
-function renderCurrentIssue() {
+// dir = 'older' | 'newer' when the reader moved between issues: the page slides out to the side the arrow points to and the other
+// issue slides in from the opposite side (the issue pill / arrows update in the middle of it).
+function renderCurrentIssue(dir) {
     if (!magazineArchive.length) { renderMagazineEmpty(); return; }
     if (magazineIssueIdx < 0) magazineIssueIdx = 0;
     if (magazineIssueIdx >= magazineArchive.length) magazineIssueIdx = magazineArchive.length - 1;
-    renderMagazine(magazineArchive[magazineIssueIdx]);
-    renderMagazineIssueNav();
+    const draw = () => { renderMagazine(magazineArchive[magazineIssueIdx]); renderMagazineIssueNav(); };
+    const body = document.getElementById('magazine-body');
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if (!dir || !body || !body.animate || reduce || !body.childElementCount) { draw(); return; }
+    const sign = dir === 'older' ? 1 : -1;                    // RTL page: the "older" arrow points right
+    const pill = document.querySelector('.magazine-issue-pill');
+    if (pill && pill.animate) pill.animate([{ transform: 'scale(1)' }, { transform: 'scale(.88)' }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
+    body.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${sign * 70}px) scale(.96)` }], { duration: 180, easing: 'ease-in', fill: 'forwards' }).finished.then(() => {
+        draw();
+        const sc = document.getElementById('magazine-screen'); if (sc) sc.scrollTop = 0;
+        body.getAnimations().forEach(a => a.cancel());
+        body.animate([{ opacity: 0, transform: `translateX(${-sign * 70}px) scale(.96)` }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,1,.3,1)' });
+    }).catch(draw);
 }
 
 // ---- CUP section (issue.cup comes from scripts/generate-magazine.mjs) ----
@@ -269,23 +283,109 @@ function renderCupSection(issue) {
 // ---- Season schedule + Super Cup (issue.schedule / issue.superCup come from scripts/generate-magazine.mjs) ----
 // The stage list is the same five-stage timetable the app runs (js/flow.js); the phase in
 // the issue was derived from real data at generation time, so nothing here is guessed.
-function renderScheduleSection(issue) {
-    const s = issue.schedule;
-    if (!s || s.status !== 'active') return '';
-    const steps = (s.stages || []).map(st => `
-        <div class="magazine-cup-card ${st.status === 'upcoming' ? 'is-pending' : ''}" style="${st.status === 'active' ? 'border-color:rgba(251,191,36,0.5);' : ''}">
-            <div class="magazine-cup-card-title">${escapeHtml(st.label)}</div>
-            <div class="${st.status === 'done' ? 'magazine-cup-winner' : 'magazine-cup-pending'}">${st.status === 'done' ? '✅ انجام شد' : st.status === 'active' ? '▶️ مرحلهٔ فعلی' : 'در انتظار'}</div>
-        </div>`).join('');
-    const mw = s.leagueMatchweek || {};
-    const next = (s.nextLeagueFixtures || []).map(x => `<div class="magazine-cup-series">${teamLabel(x.home)} <b>vs</b> ${teamLabel(x.away)}</div>`).join('');
+// ============================================================
+// Rank over the season (arrows in the table + the rank-vs-week chart)
+// Newer issues carry `rankHistory` / `rankChanges` (computed by scripts/generate-magazine.mjs). The newest issue of an older
+// archive does not, so for that one we work it out from the live match list (same maths: points, then goal difference).
+// ============================================================
+const MAG_TEAM_COLORS = { Bayern:'#dc2626', HOSI:'#2563eb', Yellow:'#166534', Sezar:'#0a0a0a' };   // Azar red · Mess blue · Nifa dark green · FC Gilas black
+function magFaNum(n) { return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); }
+function magComputeRankHistory(matches) {
+    const played = (matches || []).filter(m => Number.isFinite(+m.round) && +m.round > 0 && /^\d+-\d+$/.test(String(m.score || '')));
+    if (!played.length) return null;
+    const rounds = [...new Set(played.map(m => +m.round))].sort((a, b) => a - b);
+    const tbl = {}, ranks = {};
+    TEAM_NAMES.forEach(t => { tbl[t] = { Pts: 0, GF: 0, GA: 0 }; ranks[t] = []; });
+    rounds.forEach(r => {
+        played.filter(x => +x.round === r).forEach(m => {
+            const [h, a] = String(m.score).split('-').map(Number);
+            if (!tbl[m.home] || !tbl[m.away]) return;
+            tbl[m.home].GF += h; tbl[m.home].GA += a; tbl[m.away].GF += a; tbl[m.away].GA += h;
+            if (h > a) tbl[m.home].Pts += 3; else if (h < a) tbl[m.away].Pts += 3; else { tbl[m.home].Pts += 1; tbl[m.away].Pts += 1; }
+        });
+        [...TEAM_NAMES].sort((a, b) => tbl[b].Pts - tbl[a].Pts || (tbl[b].GF - tbl[b].GA) - (tbl[a].GF - tbl[a].GA) || tbl[b].GF - tbl[a].GF || TEAM_NAMES.indexOf(a) - TEAM_NAMES.indexOf(b))
+            .forEach((t, i) => ranks[t].push(i + 1));
+    });
+    return { weeks: rounds, ranks };
+}
+function magRankHistory(issue) {
+    if (issue.rankHistory && issue.rankHistory.weeks && issue.rankHistory.weeks.length) return issue.rankHistory;
+    const endedFinal = issue.seasonContext && issue.seasonContext.tableRepresents === 'ended_season_final';
+    if (!endedFinal && magazineArchive[0] === issue && typeof matchHistory !== 'undefined' && matchHistory.length) return magComputeRankHistory(matchHistory);
+    return null;
+}
+// → { team: delta } (+ = moved up, − = dropped, 0 = same place) or null when there is no week-to-week data
+function magRankDeltas(issue, hist) {
+    if (Array.isArray(issue.rankChanges) && issue.rankChanges.length) {
+        const o = {}; issue.rankChanges.forEach(r => { if (r.delta != null) o[r.team] = r.delta; });
+        return Object.keys(o).length ? o : null;
+    }
+    if (!hist || hist.weeks.length < 2) return null;
+    const last = hist.weeks.length - 1, o = {};
+    TEAM_NAMES.forEach(t => { o[t] = hist.ranks[t][last - 1] - hist.ranks[t][last]; });
+    return o;
+}
+function magRankArrow(delta) {
+    if (delta == null) return '';
+    if (delta > 0) return `<span class="mrk up" title="${magFaNum(delta)} پله صعود"><i></i><b>${magFaNum(delta)}</b></span>`;
+    if (delta < 0) return `<span class="mrk down" title="${magFaNum(-delta)} پله سقوط"><i></i><b>${magFaNum(-delta)}</b></span>`;
+    return `<span class="mrk same" title="بدون تغییر"><i></i></span>`;
+}
+function magRankChart(hist) {
+    if (!hist || !hist.weeks.length) return '';
+    const W = 340, H = 214, L = 30, R = 18, T = 18, B = 34;
+    const n = hist.weeks.length;
+    const x = i => L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1));
+    const y = r => T + (r - 1) * (H - T - B) / 3;
+    const grid = [1, 2, 3, 4].map(r => `<line class="mrc-grid" x1="${L}" x2="${W - R}" y1="${y(r)}" y2="${y(r)}"/><text class="mrc-ylab" x="${L - 10}" y="${y(r) + 4}">${r}</text>`).join('');
+    const xlab = hist.weeks.map((w, i) => `<text class="mrc-xlab" x="${x(i)}" y="${H - 12}">${magFaNum(w)}</text>`).join('');
+    const order = [...TEAM_NAMES].sort((a, b) => hist.ranks[b][n - 1] - hist.ranks[a][n - 1]);          // leader drawn last (on top)
+    const lines = order.map((t, k) => {
+        const col = MAG_TEAM_COLORS[t] || '#64748b', rs = hist.ranks[t];
+        const pts = rs.map((r, i) => `${x(i).toFixed(1)},${y(r).toFixed(1)}`);
+        const d = 'M' + pts.join(' L');
+        const dots = rs.map((r, i) => `<circle class="mrc-dot" cx="${x(i).toFixed(1)}" cy="${y(r).toFixed(1)}" r="${i === n - 1 ? 5.5 : 4}" fill="${col}" style="animation-delay:${400 + k * 120 + i * 90}ms"/>`).join('');
+        return `<g>${n > 1 ? `<path class="mrc-line" d="${d}" stroke="${col}" pathLength="1" style="animation-delay:${k * 120}ms"/>` : ''}${dots}</g>`;
+    }).join('');
+    const legend = [...TEAM_NAMES].sort((a, b) => hist.ranks[a][n - 1] - hist.ranks[b][n - 1]).map(t => `
+        <span class="mrc-leg"><i style="background:${MAG_TEAM_COLORS[t] || '#64748b'}"></i>${teamLabel(t)} <b>${magFaNum(hist.ranks[t][n - 1])}</b></span>`).join('');
     return `
-        <div class="magazine-page magazine-cup">
-            <h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> برنامهٔ فصل ${s.seasonId ?? ''} <span class="magazine-cup-badge">${escapeHtml(s.phaseLabelFa || '')}</span></h2>
-            <div class="magazine-cup-note">بازی‌های لیگ: ${mw.fixturesPlayed ?? 0} از ${mw.fixturesTotal ?? 24}${mw.current ? ` · هفتهٔ ${mw.current} از ${mw.total}` : ' · لیگ تمام شده'}</div>
-            <div class="magazine-cup-bracket">${steps}</div>
-            ${next ? `<div class="magazine-cup-card"><div class="magazine-cup-card-title">بازی‌های بعدی لیگ (هفتهٔ ${mw.current})</div>${next}</div>` : ''}
-            ${issue.scheduleOutlook ? `<p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p>` : ''}
+        <div class="mrc-card">
+            <div class="mrc-cap"><span>رتبه</span><span>هفته ←</span></div>
+            <svg class="mrc-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="نمودار رتبهٔ تیم‌ها در طول فصل">${grid}${xlab}${lines}</svg>
+            <div class="mrc-legend">${legend}</div>
+        </div>`;
+}
+
+// ---- Next week (end of the magazine): the upcoming league games + a short preview of each ----
+function renderNextWeekSection(issue, ranksNow) {
+    const s = issue.schedule;
+    const hasOutlook = !!(issue.scheduleOutlook && String(issue.scheduleOutlook).trim());
+    if (!s || s.status !== 'active') return hasOutlook ? `<div class="magazine-page"><h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> هفتهٔ آینده</h2><p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p></div>` : '';
+    const mw = s.leagueMatchweek || {};
+    const fixtures = s.nextLeagueFixtures || [];
+    const previews = issue.fixturePreviews || [];
+    const formOf = t => ((issue.formGuide || []).find(f => f.team === t) || {}).form || [];
+    const side = t => `
+        <div class="mnw-side">
+            <img src="${teamLogoUrl(t)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
+            <b>${teamLabel(t)}</b>
+            <span class="mnw-rank">${ranksNow[t] ? 'رتبهٔ ' + magFaNum(ranksNow[t]) : ''}</span>
+            <span class="mnw-form">${formOf(t).slice(0, 5).reverse().map(r => `<i class="${r}"></i>`).join('')}</span>
+        </div>`;
+    const cards = fixtures.map((x, i) => {
+        const pv = previews.find(p => p.home === x.home && p.away === x.away) || previews[i];
+        return `
+        <div class="mnw-card" style="--i:${i}">
+            <div class="mnw-vs">${side(x.home)}<div class="mnw-vs-mid"><span>VS</span></div>${side(x.away)}</div>
+            ${pv && pv.take ? `<p class="mnw-take">${escapeHtml(pv.take)}</p>` : ''}
+        </div>`;
+    }).join('');
+    return `
+        <div class="magazine-page magazine-nextweek">
+            <h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> بازی‌های هفتهٔ آینده <span class="magazine-cup-badge">${mw.current ? `هفتهٔ ${magFaNum(mw.current)} از ${magFaNum(mw.total)}` : escapeHtml(s.phaseLabelFa || '')}</span></h2>
+            ${cards || `<div class="magazine-cup-note">${escapeHtml(s.nextStepFa || 'این هفته بازی لیگ در برنامه نیست.')}</div>`}
+            ${hasOutlook ? `<p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p>` : ''}
         </div>`;
 }
 
@@ -315,13 +415,18 @@ function renderMagazine(issue) {
     const coverUrl = `${GITHUB_IMAGE_BASE_URL}${coverFile}?v=${issue.issueDate}`;
     const defaultCoverUrl = `${GITHUB_IMAGE_BASE_URL}${DEFAULT_MAGAZINE_COVER}?v=${issue.issueDate}`;
 
-    // ---- standings ----
-    const standingsRows = (issue.standingsTable || [])
-        .slice()
-        .sort((a, b) => (b.Pts || 0) - (a.Pts || 0))
-        .map((t, i) => `
+    // ---- rank over the season (arrows + chart) ----
+    const hist = magRankHistory(issue);
+    const deltas = magRankDeltas(issue, hist);
+    const ranksNow = {};
+    if (hist) TEAM_NAMES.forEach(t => { ranksNow[t] = hist.ranks[t][hist.weeks.length - 1]; });
+
+    // ---- standings (same order as the app's league table: points, then goal difference) ----
+    const sortedTable = (issue.standingsTable || []).slice().sort((a, b) => (b.Pts || 0) - (a.Pts || 0) || ((b.GF || 0) - (b.GA || 0)) - ((a.GF || 0) - (a.GA || 0)));
+    sortedTable.forEach((t, i) => { if (!ranksNow[t.name]) ranksNow[t.name] = i + 1; });
+    const standingsRows = sortedTable.map((t, i) => `
             <tr>
-                <td>${i + 1}</td>
+                <td class="mag-rank-cell"><span class="mag-rank-num">${i + 1}</span>${magRankArrow(deltas ? deltas[t.name] : null)}</td>
                 <td>${teamLabel(t.name)}</td>
                 <td>${t.P ?? '—'}</td>
                 <td>${t.W ?? '—'}</td>
@@ -330,7 +435,7 @@ function renderMagazine(issue) {
                 <td>${t.Pts ?? '—'}</td>
             </tr>`).join('');
 
-    // ---- title race ----
+    // ---- title race: rank-vs-week chart (older issues without rank data keep the points bars) ----
     const gaps = issue.titleRace?.gaps || [];
     const maxGap = Math.max(1, ...gaps.map(g => g.gapToLeader || 0));
     const raceRows = gaps.map(g => `
@@ -339,13 +444,14 @@ function renderMagazine(issue) {
             <div class="magazine-race-bar-track"><div class="magazine-race-bar-fill" style="width:${100 - Math.round((g.gapToLeader || 0) / maxGap * 90)}%"></div></div>
             <div class="magazine-race-pts">${g.pts ?? '—'}</div>
         </div>`).join('');
+    const raceVisual = hist ? magRankChart(hist) : raceRows;
 
-    // ---- form guide ----
+    // ---- form guide: the streak text sits at the right, so every row's circles line up in one column ----
     const formRows = (issue.formGuide || []).map(f => `
         <div class="magazine-form-row">
-            <div class="magazine-form-team">${teamLabel(f.team)}</div>
-            <div class="magazine-form-chips">${(f.form || []).slice().reverse().map(r => `<span class="magazine-form-chip ${r}">${r}</span>`).join('') || '<span class="magazine-form-streak">—</span>'}</div>
             <div class="magazine-form-streak">${f.streakCount > 1 ? `${f.streakCount} ${f.streakType === 'W' ? 'برد' : f.streakType === 'L' ? 'باخت' : 'تساوی'} پیاپی` : ''}</div>
+            <div class="magazine-form-team">${teamLabel(f.team)}</div>
+            <div class="magazine-form-chips">${(f.form || []).slice().reverse().map(r => `<span class="magazine-form-chip ${r}">${r}</span>`).join('') || '<span class="magazine-form-none">—</span>'}</div>
         </div>`).join('');
 
     // ---- weekly records ----
@@ -366,31 +472,6 @@ function renderMagazine(issue) {
             </div>` : ''}
         </div>` : '';
 
-    // ---- all-time cross-season stats ----
-    // Rendered as a stacked card per team (not a wide table) so the panel
-    // never needs horizontal dragging on a phone — every stat wraps inside
-    // its own small block instead of forcing a 12-column row to fit.
-    const allTimeCards = (issue.allTimeStats || [])
-        .slice()
-        .sort((a, b) => (b.leagueTitles - a.leagueTitles) || (b.Pts - a.Pts) || (b.GF - a.GF))
-        .map(s => `
-            <div class="magazine-alltime-card">
-                <div class="magazine-alltime-card-head">${teamLabel(s.team)}</div>
-                <div class="magazine-alltime-stats">
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">قهرمانی</span><span class="magazine-alltime-stat-value">${s.leagueTitles ?? 0} 🏆</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">مدال CUP</span><span class="magazine-alltime-stat-value">${s.mbaMedals ?? 0} 🥇</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">فصل</span><span class="magazine-alltime-stat-value">${s.seasonsPlayed ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">بازی</span><span class="magazine-alltime-stat-value">${s.P ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">برد</span><span class="magazine-alltime-stat-value">${s.W ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">مساوی</span><span class="magazine-alltime-stat-value">${s.D ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">باخت</span><span class="magazine-alltime-stat-value">${s.L ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">گل زده</span><span class="magazine-alltime-stat-value">${s.GF ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">گل خورده</span><span class="magazine-alltime-stat-value">${s.GA ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">تفاضل</span><span class="magazine-alltime-stat-value">${s.GD ?? '—'}</span></div>
-                    <div class="magazine-alltime-stat"><span class="magazine-alltime-stat-label">٪ برد</span><span class="magazine-alltime-stat-value">${s.winRate ?? 0}%</span></div>
-                </div>
-            </div>`).join('');
-
     const spotlights = (issue.playerSpotlights || []).map(s => `
         <div class="magazine-spotlight-card">
             <div class="magazine-spotlight-team">${teamLabel(s.team)}</div>
@@ -400,20 +481,29 @@ function renderMagazine(issue) {
 
     const recommendations = (issue.recommendations || []).map(r => `<li>${escapeHtml(r)}</li>`).join('');
 
-    // ---- interview (fictional, one team per issue — see interview.team) ----
+    // ---- interview (fictional, one team per issue): a little scene with bubbles; after a bad week it ends in a walk-out ----
     const iv = issue.interview;
+    const qa = (iv && iv.qAndA) || [];
     const interviewSection = iv ? `
         <div class="magazine-page magazine-interview">
             <h2 class="magazine-section-title"><i class="fas fa-microphone"></i> مصاحبهٔ این هفته</h2>
-            <div class="magazine-interview-head">
-                <span class="magazine-interview-team">${teamLabel(iv.team)}</span>
-                <span class="magazine-interview-role">${escapeHtml(iv.intervieweeRole || '')} · ${escapeHtml(iv.intervieweeName || '')}</span>
+            <div class="mi-head">
+                <img src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
+                <div><span class="magazine-interview-team">${teamLabel(iv.team)}</span><span class="magazine-interview-role">${escapeHtml(iv.intervieweeRole || '')} · ${escapeHtml(iv.intervieweeName || '')}</span></div>
             </div>
             ${iv.headline ? `<div class="magazine-interview-headline">${escapeHtml(iv.headline)}</div>` : ''}
-            <div class="magazine-interview-qa">
-                ${(iv.qAndA || []).map(qa => `
-                <div class="magazine-interview-q">${escapeHtml(qa.question)}</div>
-                <div class="magazine-interview-a">${escapeHtml(qa.answer)}</div>`).join('')}
+            ${iv.scene ? `<div class="mi-scene">${escapeHtml(iv.scene)}</div>` : ''}
+            <div class="mi-chat">
+                ${qa.map((x, i) => {
+                    const last = i === qa.length - 1, angry = !!iv.walkedOut && i >= qa.length - 2;
+                    return `
+                <div class="mi-row mi-q" style="--i:${i * 2}"><span class="mi-ava mi-ava-q"><i class="fas fa-microphone-lines"></i></span><div class="mi-bubble">${escapeHtml(x.question)}</div></div>
+                <div class="mi-row mi-a${angry ? ' angry' : ''}${iv.walkedOut && last ? ' last-angry' : ''}" style="--i:${i * 2 + 1}">
+                    <img class="mi-ava" src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
+                    <div class="mi-bubble">${x.stage ? `<em class="mi-stage">(${escapeHtml(String(x.stage).replace(/^\(|\)$/g, ''))})</em>` : ''}${escapeHtml(x.answer)}</div>
+                </div>`;
+                }).join('')}
+                ${iv.walkedOut ? `<div class="mi-exit" style="--i:${qa.length * 2}"><span class="mi-door">🚪</span><span>${escapeHtml(iv.exitNote || 'مصاحبه‌شونده عصبانی شد و جلسه را ترک کرد.')}</span></div>` : ''}
             </div>
             <div class="magazine-interview-disclaimer">این مصاحبه کاملاً خیالی و طنزآمیز است.</div>
         </div>` : '';
@@ -421,13 +511,13 @@ function renderMagazine(issue) {
     // ---- week type: both | league_only | cup_only | quiet (older issues: undefined = league layout) ----
     const weekType = issue.weekType || 'league_only';
     const cupSection = renderCupSection(issue) + renderSuperCupSection(issue);
-    const scheduleSection = renderScheduleSection(issue);
     const idleByDesign = !!issue.schedule?.leagueIdleByDesign;
     const leagueIdleNote = (weekType === 'cup_only' || weekType === 'quiet')
         ? (idleByDesign
             ? `<div class="magazine-cup-note">لیگ طبق برنامهٔ فصل (${escapeHtml(issue.schedule.phaseLabelFa || '')}) فعلاً متوقف است؛ جدول زیر وضعیت فعلی لیگ است.</div>`
             : '<div class="magazine-cup-note">این هفته بازی لیگ برگزار نشد؛ جدول زیر وضعیت فعلی لیگ است.</div>') : '';
     const hasCupLayout = !!issue.weekType;
+    const rankLegend = deltas ? `<div class="mag-rank-legend"><span class="mrk up"><i></i></span> صعود <span class="mrk down"><i></i></span> سقوط <span class="mrk same"><i></i></span> بدون تغییر نسبت به هفتهٔ قبل</div>` : '';
 
     body.innerHTML = `
         <div class="magazine-hero">
@@ -446,21 +536,25 @@ function renderMagazine(issue) {
         ${weekType === 'cup_only' ? cupSection : ''}
 
         <div class="magazine-page">
+            <h2 class="magazine-section-title"><i class="fas fa-newspaper"></i> ${hasCupLayout ? 'گزارش لیگ' : 'گزارش هفته'}</h2>
+            <p class="magazine-text">${escapeHtml(issue.matchReport).replace(/\n/g, '<br>')}</p>
+        </div>
+
+        <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-table"></i> ${issue.seasonContext?.tableRepresents === 'ended_season_final' && issue.seasonContext.endedSeasonId ? `جدول نهایی فصل ${issue.seasonContext.endedSeasonId}` : 'جدول رده‌بندی'}</h2>
             <table class="magazine-table">
                 <thead><tr><th>#</th><th>تیم</th><th>ب</th><th>برد</th><th>مساوی</th><th>باخت</th><th>امتیاز</th></tr></thead>
                 <tbody>${standingsRows}</tbody>
             </table>
+            ${rankLegend}
             ${leagueIdleNote}
             <p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>
         </div>
 
-        ${scheduleSection}
-
-        ${gaps.length ? `
+        ${(hist || gaps.length) ? `
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-crown"></i> جدال قهرمانی</h2>
-            ${raceRows}
+            ${raceVisual}
             <p class="magazine-commentary">${escapeHtml(issue.titleRaceCommentary)}</p>
         </div>` : ''}
 
@@ -469,11 +563,6 @@ function renderMagazine(issue) {
             <h2 class="magazine-section-title"><i class="fas fa-chart-line"></i> ${hasCupLayout ? 'فرم لیگ' : 'فرم این هفته'}</h2>
             <div class="magazine-form-grid">${formRows}</div>
         </div>` : ''}
-
-        <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-newspaper"></i> ${hasCupLayout ? 'گزارش لیگ' : 'گزارش هفته'}</h2>
-            <p class="magazine-text">${escapeHtml(issue.matchReport).replace(/\n/g, '<br>')}</p>
-        </div>
 
         ${weekType === 'both' ? cupSection : ''}
 
@@ -491,15 +580,19 @@ function renderMagazine(issue) {
 
         ${interviewSection}
 
-        ${allTimeCards ? `
-        <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-trophy"></i> آمار کلی تمام فصل‌ها</h2>
-            <div class="magazine-alltime-grid">${allTimeCards}</div>
-        </div>` : ''}
-
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-lightbulb"></i> توصیه‌های این هفته</h2>
             <ul class="magazine-recommendations">${recommendations}</ul>
+        </div>
+
+        ${renderNextWeekSection(issue, ranksNow)}
+
+        <div class="magazine-page magazine-records-link-wrap">
+            <button type="button" class="magazine-records-link" onclick="if(typeof openRecordsSheet==='function')openRecordsSheet()">
+                <span class="mrl-ico"><i class="fas fa-medal"></i></span>
+                <span class="mrl-txt"><b>رکوردها و آمار کامل لیگ</b><small>بیشترین گل، کلین‌شیت، طولانی‌ترین رشته‌ها و …</small></span>
+                <i class="fas fa-chevron-left mrl-arrow"></i>
+            </button>
         </div>
 
         <div class="magazine-page magazine-closing">

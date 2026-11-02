@@ -1172,3 +1172,101 @@ html.lite-mode .rec-card::after, html.lite-mode .rec-logo-wrap, html.lite-mode .
     box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .ov-podium-frame .ranking-top3-wrapper{ margin-bottom:6px; }
+
+/* =====================================================
+   MAGAZINE v2 — rank arrows, rank-vs-week chart, form column, interview scene, next-week cards, records link
+   ===================================================== */
+/* rank arrows next to the table rank */
+.mag-rank-cell{ white-space:nowrap; }
+.mag-rank-num{ display:inline-block; min-width:1ch; font-weight:800; }
+.mrk{ display:inline-flex; align-items:center; gap:2px; margin-inline-start:5px; vertical-align:middle; font-size:.58rem; font-weight:900; line-height:1; }
+.mrk i{ display:block; width:0; height:0; }
+.mrk.up{ color:#22c55e; }  .mrk.up i{ border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:8px solid #22c55e; filter:drop-shadow(0 0 4px rgba(34,197,94,.7)); animation:mrkUp 1.6s ease-in-out infinite; }
+.mrk.down{ color:#ef4444; }  .mrk.down i{ border-left:5px solid transparent; border-right:5px solid transparent; border-top:8px solid #ef4444; filter:drop-shadow(0 0 4px rgba(239,68,68,.7)); animation:mrkDown 1.6s ease-in-out infinite; }
+.mrk.same i{ width:10px; height:2px; border-radius:2px; background:#9ca3af; }
+@keyframes mrkUp{ 0%,100%{ transform:translateY(1px); } 50%{ transform:translateY(-2px); } }
+@keyframes mrkDown{ 0%,100%{ transform:translateY(-1px); } 50%{ transform:translateY(2px); } }
+.mag-rank-legend{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; font-size:.62rem; color:#9ca3af; margin:-2px 0 10px; }
+.mag-rank-legend .mrk{ margin:0 2px 0 6px; }
+.mag-rank-legend .mrk i{ animation:none; filter:none; }
+
+/* chart: one line per team, rank (1 on top) against league week */
+.mrc-card{ background:linear-gradient(180deg,#eef2f8,#dfe5ee); border-radius:20px; padding:12px 8px 10px; box-shadow:0 10px 24px -8px rgba(0,0,0,.6), inset 0 1px 0 #fff; }
+.mrc-cap{ display:flex; justify-content:space-between; padding:0 10px 2px; font-size:.6rem; font-weight:800; color:#64748b; direction:rtl; }
+.mrc-svg{ width:100%; height:auto; display:block; direction:ltr; overflow:visible; }
+.mrc-grid{ stroke:#c2cad8; stroke-width:1; stroke-dasharray:3 4; }
+.mrc-ylab, .mrc-xlab{ fill:#475569; font-size:11px; font-weight:800; text-anchor:middle; }
+.mrc-line{ fill:none; stroke-width:3.4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:1; animation:mrcDraw 1.2s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes mrcDraw{ to{ stroke-dashoffset:0; } }
+.mrc-dot{ stroke:#fff; stroke-width:2; opacity:0; transform-box:fill-box; transform-origin:center; animation:mrcPop .45s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes mrcPop{ from{ opacity:0; transform:scale(.2); } to{ opacity:1; transform:scale(1); } }
+.mrc-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px 12px; padding:8px 6px 0; }
+.mrc-leg{ display:inline-flex; align-items:center; gap:5px; font-size:.7rem; font-weight:800; color:#1e293b; direction:ltr; }
+.mrc-leg i{ width:12px; height:12px; border-radius:50%; box-shadow:0 0 0 2px #fff; }
+.mrc-leg b{ font-size:.6rem; color:#475569; background:rgba(15,23,42,.08); padding:1px 6px; border-radius:99px; }
+
+/* form: streak text at the right, then team, then the circles — circles of every row stay on one vertical line */
+.magazine-form-row{ gap:8px; }
+.magazine-form-streak{ width:84px; flex:none; text-align:right; white-space:nowrap; }
+.magazine-form-team{ text-align:right; }
+.magazine-form-chips{ flex:none; width:128px; justify-content:flex-start; }
+.magazine-form-none{ color:#6b7280; font-size:.7rem; }
+
+/* interview as a scene */
+.mi-head{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.mi-head img{ width:42px; height:42px; border-radius:50%; object-fit:cover; background:#0b1220; border:2px solid #fbbf24; flex:none; box-shadow:0 0 14px rgba(251,191,36,.4); }
+.mi-head > div{ display:flex; flex-direction:column; gap:1px; }
+.mi-scene{ font-size:.74rem; line-height:1.9; color:#9ca3af; font-style:italic; padding:6px 10px; margin:0 0 12px; border-inline-start:3px solid rgba(251,191,36,.5); background:rgba(255,255,255,.03); border-radius:0 10px 10px 0; }
+.mi-chat{ display:flex; flex-direction:column; gap:9px; }
+.mi-row{ display:flex; align-items:flex-end; gap:8px; animation:miIn .5s cubic-bezier(.2,1.1,.4,1) both; animation-delay:calc(var(--i,0) * 160ms); }
+.mi-a{ flex-direction:row-reverse; }
+@keyframes miIn{ from{ opacity:0; transform:translateY(14px) scale(.96); } to{ opacity:1; transform:none; } }
+.mi-ava{ width:30px; height:30px; border-radius:50%; object-fit:cover; flex:none; background:#0b1220; }
+.mi-ava-q{ display:flex; align-items:center; justify-content:center; background:#334155; color:#cbd5e1; font-size:.72rem; }
+.mi-a .mi-ava{ border:1.5px solid rgba(251,191,36,.7); }
+.mi-bubble{ max-width:80%; padding:9px 13px; border-radius:16px; font-size:.82rem; line-height:1.95; color:#e2e8f0; }
+.mi-q .mi-bubble{ background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); border-end-start-radius:4px; font-weight:700; color:var(--header-text); }
+.mi-a .mi-bubble{ background:linear-gradient(160deg,rgba(251,191,36,.16),rgba(251,191,36,.06)); border:1px solid rgba(251,191,36,.3); border-end-end-radius:4px; }
+.mi-stage{ display:block; font-size:.68rem; color:#a8a29e; font-style:italic; margin-bottom:2px; }
+.mi-a.angry .mi-bubble{ background:linear-gradient(160deg,rgba(239,68,68,.22),rgba(239,68,68,.08)); border-color:rgba(239,68,68,.5); }
+.mi-a.last-angry .mi-bubble{ animation:miShake .55s ease both; animation-delay:calc(var(--i,0) * 160ms + 350ms); }
+@keyframes miShake{ 0%,100%{ transform:none; } 20%{ transform:translateX(-5px) rotate(-1deg); } 40%{ transform:translateX(5px) rotate(1deg); } 60%{ transform:translateX(-4px); } 80%{ transform:translateX(3px); } }
+.mi-exit{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:6px; padding:11px 14px; border-radius:14px; background:rgba(239,68,68,.1); border:1px dashed rgba(239,68,68,.5); color:#fecaca; font-size:.78rem; font-weight:700; line-height:1.8; text-align:center; animation:miIn .6s ease both; animation-delay:calc(var(--i,0) * 160ms + 500ms); }
+.mi-door{ font-size:1.5rem; display:inline-block; animation:miDoor 2.4s ease-in-out infinite; animation-delay:2s; }
+@keyframes miDoor{ 0%,70%,100%{ transform:none; } 85%{ transform:translateX(-10px) rotate(-12deg); } }
+
+/* next week */
+.mnw-card{ margin-bottom:12px; padding:12px 12px 10px; border-radius:18px; background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.1); animation:miIn .5s ease both; animation-delay:calc(var(--i,0) * 120ms); }
+.mnw-vs{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.mnw-side{ display:flex; flex-direction:column; align-items:center; gap:3px; width:38%; text-align:center; }
+.mnw-side img{ width:46px; height:46px; border-radius:50%; object-fit:cover; background:#0b1220; border:2px solid rgba(255,255,255,.2); }
+.mnw-side b{ font-size:.8rem; color:#f8fafc; }
+.mnw-rank{ font-size:.62rem; font-weight:800; color:#fbbf24; min-height:1em; }
+.mnw-form{ display:flex; gap:3px; direction:ltr; min-height:8px; }
+.mnw-form i{ width:8px; height:8px; border-radius:50%; background:#94a3b8; }
+.mnw-form i.W{ background:#4ade80; } .mnw-form i.L{ background:#f87171; }
+.mnw-vs-mid{ flex:1; display:flex; align-items:center; justify-content:center; }
+.mnw-vs-mid span{ font-size:.8rem; font-weight:900; letter-spacing:2px; color:#64748b; padding:5px 10px; border-radius:99px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.25); }
+.mnw-take{ margin:10px 2px 0; font-size:.78rem; line-height:1.95; color:#cbd5e1; border-top:1px solid rgba(255,255,255,.07); padding-top:8px; }
+
+/* link to the Records sheet */
+.magazine-records-link-wrap{ padding-top:6px; }
+.magazine-records-link{
+    width:100%; display:flex; align-items:center; gap:12px; text-align:start; cursor:pointer; position:relative; overflow:hidden;
+    padding:13px 14px; border-radius:18px; color:#e0f2fe; font-family:inherit; -webkit-tap-highlight-color:transparent;
+    background:linear-gradient(135deg,rgba(14,116,144,.5),rgba(8,47,73,.7)); border:1px solid rgba(34,211,238,.4);
+    box-shadow:0 8px 20px -8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15); transition:transform .15s ease;
+}
+.magazine-records-link:active{ transform:scale(.98); }
+.magazine-records-link::after{ content:''; position:absolute; top:0; bottom:0; width:35%; left:-50%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.18),transparent); transform:skewX(-18deg); animation:recShine 4.5s ease-in-out infinite; }
+.mrl-ico{ width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex:none; font-size:1.1rem; color:#67e8f9; background:rgba(34,211,238,.14); border:1px solid rgba(34,211,238,.35); }
+.mrl-txt{ display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.mrl-txt b{ font-size:.86rem; font-weight:900; }
+.mrl-txt small{ font-size:.64rem; color:#7dd3fc; font-weight:700; }
+.mrl-arrow{ color:#67e8f9; font-size:.8rem; }
+@media (prefers-reduced-motion:reduce){
+    .mrk i, .mrc-line, .mrc-dot, .mi-row, .mi-exit, .mi-door, .mnw-card, .magazine-records-link::after{ animation:none !important; }
+    .mrc-line{ stroke-dashoffset:0; } .mrc-dot{ opacity:1; }
+}
+.mrc-card{ margin-bottom:14px; }
+.magazine-nextweek .magazine-text{ margin-top:4px; }
