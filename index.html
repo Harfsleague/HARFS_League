@@ -289,10 +289,8 @@
                 <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
                     <i class="fas fa-gamepad"></i><span>Game</span>
                 </button>
-                <button class="ov-tile ov-tile-fed" id="ov-tile-fed" onclick="openPeopleSheet()" aria-label="Federation and Owners">
-                    <i class="fas fa-crown"></i><span>Federation</span>
-                </button>
-                <!-- Takes the Federation tile's place when that tile is switched off in Profile (only possible while the Assistant is off) -->
+                
+                <!-- Records (Federation now opens by holding the HARFS capsule at the top for 3 seconds) -->
                 <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
                     <i class="fas fa-medal"></i><span>Records</span>
                 </button>
@@ -616,13 +614,17 @@
 
         <div class="w-full px-4">
             <div class="settings-section-label">Appearance &amp; Sound</div>
-            <div class="settings-page-grid">
-                <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
-                    <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
-                    <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
+            <div class="settings-frame">
+                <div class="settings-page-grid">
+                    <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
+                        <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
+                        <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleAiAssistant()">
+                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-wand-magic-sparkles"></i>HARFS Assistant</span>
+                        <div class="perf-toggle on" id="ai-assistant-toggle"></div>
+                    </div>
                 </div>
-            </div>
-
             <div class="music-player" id="music-player">
                 <div class="mp-top">
                     <div class="mp-art" id="mp-art" aria-hidden="true">
@@ -645,37 +647,15 @@
                     <button class="mp-play" id="mp-play" onclick="playerTogglePlay()" aria-label="Play / pause"><i class="fas fa-play" id="mp-play-icon"></i></button>
                     <button class="mp-btn" onclick="playerNext()" aria-label="Next"><i class="fas fa-forward-step"></i></button>
                     <button class="mp-btn" onclick="openPlaylistSheet()" aria-label="Playlist"><i class="fas fa-list-ul"></i></button>
-                </div>
-                <div class="mp-volume">
-                    <i class="fas fa-volume-low"></i>
-                    <input type="range" class="mp-range" id="mp-vol" min="0" max="100" value="15" step="1" aria-label="Volume">
-                    <i class="fas fa-volume-high"></i>
-                </div>
-            </div>
-
-            <div class="settings-section-label">Features</div>
-            <div class="settings-page-grid">
-                <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleAiAssistant()">
-                    <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-wand-magic-sparkles"></i>HARFS Assistant</span>
-                    <div class="perf-toggle on" id="ai-assistant-toggle"></div>
+                    <div class="mp-vol-wrap">
+                        <button class="mp-btn" id="mp-vol-btn" onclick="toggleVolPop(event)" aria-label="Volume" aria-expanded="false"><i class="fas fa-volume-low" id="mp-vol-icon"></i></button>
+                        <div class="mp-vol-pop" id="mp-vol-pop" onclick="event.stopPropagation()">
+                            <span class="mp-vol-pct" id="mp-vol-pct">15</span>
+                            <div class="mp-vol-track"><input type="range" class="mp-range" id="mp-vol" min="0" max="100" value="15" step="1" aria-label="Volume"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to hide the assistant from the Home page.</p>
-
-            <!-- Only shown while the Assistant is off -->
-            <div class="settings-page-grid fed-setting-row" style="margin-top:8px;">
-                <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleFedTile()">
-                    <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-crown"></i>Federation on Home</span>
-                    <div class="perf-toggle on" id="fed-tile-toggle"></div>
-                </div>
-            </div>
-            <p class="fed-setting-row" style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">Turn off to swap the Federation button on Home for Records.</p>
-            <!-- Only shown once the Federation button has been taken off Home -->
-            <div class="settings-page-grid fed-open-row" style="margin-top:8px;">
-                <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="openPeopleSheet()">
-                    <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-crown"></i>Federation</span>
-                    <i class="fas fa-chevron-right" style="font-size:0.7rem;color:#6b7280;"></i>
-                </div>
             </div>
 
             <div id="settings-admin-section" style="display:none;">
@@ -692,27 +672,16 @@
                 <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories.</p>
             </div>
 
-            <div id="settings-tools-section" style="display:none;">
-                <div class="settings-section-label">My Tools</div>
-                <div class="settings-page-grid">
-                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
-                        <i class="fas fa-toolbox" style="margin-right:8px;"></i><span>Music &amp; Moments Tools</span>
-                    </div>
-                </div>
-                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">The admin gave you extra abilities.</p>
+            <div class="settings-section-label">Quick Access</div>
+            <div class="settings-quick-row">
+                <button type="button" class="settings-quick-btn" id="settings-lite-tile" onclick="openLiteSheet()"><i class="fas fa-life-ring"></i><span>Emergency</span></button>
+                <button type="button" class="settings-quick-btn" id="settings-notif-tile" onclick="openNotifSheet()"><i class="fas fa-bell"></i><span>Notifications</span></button>
+                <button type="button" class="settings-quick-btn" id="settings-devices-tile" onclick="openSessionsSheet()"><i class="fas fa-mobile-screen-button"></i><span>Devices</span></button>
+                <button type="button" class="settings-quick-btn" id="settings-tools-section" style="display:none;" onclick="navigate('admin')"><i class="fas fa-toolbox"></i><span>Tools</span></button>
             </div>
 
             <div class="settings-section-label">Account</div>
             <div class="settings-page-grid">
-                <div class="settings-page-tile wide" id="settings-lite-tile" onclick="openLiteSheet()">
-                    <i class="fas fa-life-ring" style="margin-right:8px;"></i><span>Emergency &amp; Offline</span>
-                </div>
-                <div class="settings-page-tile wide" id="settings-notif-tile" onclick="openNotifSheet()">
-                    <i class="fas fa-bell" style="margin-right:8px;"></i><span>Notifications</span>
-                </div>
-                <div class="settings-page-tile wide" id="settings-devices-tile" onclick="openSessionsSheet()">
-                    <i class="fas fa-laptop-mobile" style="margin-right:8px;"></i><span>Devices &amp; Sessions</span>
-                </div>
                 <div class="settings-page-tile wide danger-tile" id="settings-logout-tile" onclick="logoutTeam()" style="display:none;">
                     <i class="fas fa-right-from-bracket" style="margin-right:8px;"></i><span>Log Out</span>
                 </div>

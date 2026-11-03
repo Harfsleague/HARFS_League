@@ -168,14 +168,12 @@ function renderCurrentIssue(dir) {
     const body = document.getElementById('magazine-body');
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
     if (!dir || !body || !body.animate || reduce || !body.childElementCount) { draw(); return; }
-    const sign = dir === 'older' ? 1 : -1;                    // RTL page: the "older" arrow points right
-    const pill = document.querySelector('.magazine-issue-pill');
-    if (pill && pill.animate) pill.animate([{ transform: 'scale(1)' }, { transform: 'scale(.88)' }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
-    body.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${sign * 70}px) scale(.96)` }], { duration: 180, easing: 'ease-in', fill: 'forwards' }).finished.then(() => {
+    // simple: the page fades out, the other issue fades in
+    body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-out', fill: 'forwards' }).finished.then(() => {
         draw();
         const sc = document.getElementById('magazine-screen'); if (sc) sc.scrollTop = 0;
         body.getAnimations().forEach(a => a.cancel());
-        body.animate([{ opacity: 0, transform: `translateX(${-sign * 70}px) scale(.96)` }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,1,.3,1)' });
+        body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-in' });
     }).catch(draw);
 }
 
@@ -357,6 +355,33 @@ function magRankChart(hist) {
         </div>`;
 }
 
+// ---- interview: no emoji in the text; the reporter has a fixed on-page profile ----
+const MAG_REPORTER = { name: 'آرش بهرامی', role: 'خبرنگار ارشد HARFS' };
+function magNoEmoji(t) { return String(t == null ? '' : t).replace(/[\p{Extended_Pictographic}\u200d\ufe0f]/gu, '').replace(/\s{2,}/g, ' ').trim(); }
+
+// ---- lineup suggestion per team: the AI's own (issue.lineupSuggestions) when the issue has them, otherwise worked out from the table + form ----
+function magLineupSuggestions(issue) {
+    if (Array.isArray(issue.lineupSuggestions) && issue.lineupSuggestions.length) return issue.lineupSuggestions;
+    const rows = (issue.standingsTable || []).map(t => {
+        const p = Math.max(1, t.P || 0);
+        const f = (issue.formGuide || []).find(x => x.team === t.name) || {};
+        return { team: t.name, P: t.P || 0, GF: t.GF || 0, GA: t.GA || 0, gfp: (t.GF || 0) / p, gap: (t.GA || 0) / p, f };
+    });
+    const fa = magFaNum, avg = n => fa((Math.round(n * 10) / 10).toString().replace('.', '٫'));
+    const left = new Set(rows.map(r => r.team)), out = {};
+    const take = (r, formation, idea) => { out[r.team] = { team: r.team, formation, idea }; left.delete(r.team); };
+    const pool = () => rows.filter(r => left.has(r.team));
+    // 1) best attack keeps attacking, 2) leakiest defence gets a back five, 3) weakest attack gets a creator, 4) the rest stay balanced
+    let r = pool().sort((a, b) => b.gfp - a.gfp)[0];
+    if (r) take(r, '4-3-3', `بهترین خط حمله (${fa(r.GF)} گل در ${fa(r.P)} بازی)؛ همین فشار بالا و سه‌نفرهٔ جلو را ادامه بدهید.`);
+    r = pool().sort((a, b) => b.gap - a.gap)[0];
+    if (r) take(r, '5-3-2', `${fa(r.GA)} گل خورده در ${fa(r.P)} بازی (میانگین ${avg(r.gap)})؛ با دفاع پنج‌نفره اول فضاها را ببندید.`);
+    r = pool().sort((a, b) => a.gfp - b.gfp)[0];
+    if (r) take(r, '4-2-3-1', `فقط ${fa(r.GF)} گل زده‌اید؛ یک هافبک خلاق پشت مهاجم بگذارید تا موقعیت‌ها بیشتر شود.`);
+    pool().forEach(x => take(x, '4-4-2', 'ترکیب متعادل: دو خط چهارنفره و دو مهاجم؛ منظم بمانید و از هر فرصت استفاده کنید.'));
+    return rows.map(x => out[x.team]);
+}
+
 // ---- Next week (end of the magazine): the upcoming league games + a short preview of each ----
 function renderNextWeekSection(issue, ranksNow) {
     const s = issue.schedule;
@@ -480,6 +505,11 @@ function renderMagazine(issue) {
         </div>`).join('');
 
     const recommendations = (issue.recommendations || []).map(r => `<li>${escapeHtml(r)}</li>`).join('');
+    const lineups = magLineupSuggestions(issue).map((l, i) => `
+        <div class="mlu-card" style="--i:${i}">
+            <div class="mlu-top"><img src="${teamLogoUrl(l.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'"><b>${teamLabel(l.team)}</b><span class="mlu-form">${escapeHtml(String(l.formation || ''))}</span></div>
+            <p>${escapeHtml(l.idea || '')}</p>
+        </div>`).join('');
 
     // ---- interview (fictional, one team per issue): a little scene with bubbles; after a bad week it ends in a walk-out ----
     const iv = issue.interview;
@@ -487,25 +517,31 @@ function renderMagazine(issue) {
     const interviewSection = iv ? `
         <div class="magazine-page magazine-interview">
             <h2 class="magazine-section-title"><i class="fas fa-microphone"></i> مصاحبهٔ این هفته</h2>
-            <div class="mi-head">
-                <img src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
-                <div><span class="magazine-interview-team">${teamLabel(iv.team)}</span><span class="magazine-interview-role">${escapeHtml(iv.intervieweeRole || '')} · ${escapeHtml(iv.intervieweeName || '')}</span></div>
+            <div class="mi-people">
+                <div class="mi-person">
+                    <span class="mi-ava mi-ava-q mi-ava-big"><i class="fas fa-microphone"></i></span>
+                    <div><b>${MAG_REPORTER.name}</b><small>${MAG_REPORTER.role}</small></div>
+                </div>
+                <span class="mi-people-sep">با</span>
+                <div class="mi-person">
+                    <img class="mi-ava mi-ava-big" src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
+                    <div><b>${escapeHtml(magNoEmoji(iv.intervieweeName || teamLabel(iv.team)))}</b><small>${escapeHtml(magNoEmoji(iv.intervieweeRole || ''))} · ${teamLabel(iv.team)}</small></div>
+                </div>
             </div>
-            ${iv.headline ? `<div class="magazine-interview-headline">${escapeHtml(iv.headline)}</div>` : ''}
-            ${iv.scene ? `<div class="mi-scene">${escapeHtml(iv.scene)}</div>` : ''}
+            ${iv.headline ? `<div class="magazine-interview-headline">${escapeHtml(magNoEmoji(iv.headline))}</div>` : ''}
+            ${iv.scene ? `<div class="mi-scene">${escapeHtml(magNoEmoji(iv.scene))}</div>` : ''}
             <div class="mi-chat">
                 ${qa.map((x, i) => {
                     const last = i === qa.length - 1, angry = !!iv.walkedOut && i >= qa.length - 2;
                     return `
-                <div class="mi-row mi-q" style="--i:${i * 2}"><span class="mi-ava mi-ava-q"><i class="fas fa-microphone-lines"></i></span><div class="mi-bubble">${escapeHtml(x.question)}</div></div>
+                <div class="mi-row mi-q" style="--i:${i * 2}"><span class="mi-ava mi-ava-q"><i class="fas fa-microphone"></i></span><div class="mi-bubble"><span class="mi-who">${MAG_REPORTER.name}</span>${escapeHtml(magNoEmoji(x.question))}</div></div>
                 <div class="mi-row mi-a${angry ? ' angry' : ''}${iv.walkedOut && last ? ' last-angry' : ''}" style="--i:${i * 2 + 1}">
                     <img class="mi-ava" src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
-                    <div class="mi-bubble">${x.stage ? `<em class="mi-stage">(${escapeHtml(String(x.stage).replace(/^\(|\)$/g, ''))})</em>` : ''}${escapeHtml(x.answer)}</div>
+                    <div class="mi-bubble">${x.stage ? `<em class="mi-stage">(${escapeHtml(magNoEmoji(String(x.stage).replace(/^\(|\)$/g, '')))})</em>` : ''}${escapeHtml(magNoEmoji(x.answer))}</div>
                 </div>`;
                 }).join('')}
-                ${iv.walkedOut ? `<div class="mi-exit" style="--i:${qa.length * 2}"><span class="mi-door">🚪</span><span>${escapeHtml(iv.exitNote || 'مصاحبه‌شونده عصبانی شد و جلسه را ترک کرد.')}</span></div>` : ''}
+                ${iv.walkedOut ? `<div class="mi-exit" style="--i:${qa.length * 2}"><span>${escapeHtml(magNoEmoji(iv.exitNote) || 'مصاحبه‌شونده عصبانی شد و جلسه را ترک کرد.')}</span></div>` : ''}
             </div>
-            <div class="magazine-interview-disclaimer">این مصاحبه کاملاً خیالی و طنزآمیز است.</div>
         </div>` : '';
 
     // ---- week type: both | league_only | cup_only | quiet (older issues: undefined = league layout) ----
@@ -583,6 +619,7 @@ function renderMagazine(issue) {
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-lightbulb"></i> توصیه‌های این هفته</h2>
             <ul class="magazine-recommendations">${recommendations}</ul>
+            ${lineups ? `<h3 class="mlu-title"><i class="fas fa-futbol"></i> پیشنهاد ترکیب برای هر تیم</h3><div class="mlu-grid">${lineups}</div>` : ''}
         </div>
 
         ${renderNextWeekSection(issue, ranksNow)}

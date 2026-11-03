@@ -793,6 +793,15 @@ const MAGAZINE_SCHEMA = {
     cupReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط دربارهٔ بازی‌های «CUP» این هفته (cup.gamesThisWeek، cup.bracket، cup.medals، cup.recordsThisWeek). اگر cup.hasActivity برابر false است، رشتهٔ خالی \"\" برگردان." },
     superCupReport: { type: "string", description: "گزارش کوتاه دربارهٔ سوپرکاپ (فقط وقتی superCup.hasActivity برابر true است: تیم‌ها، نتیجه و برنده از superCup.result). در غیر این صورت رشتهٔ خالی \"\" برگردان." },
     scheduleOutlook: { type: "string", description: "پیش‌نمایش بازی‌های هفتهٔ آینده لیگ (۲ تا ۳ پاراگراف کوتاه): تمرکز اصلی روی بازی‌های schedule.nextLeagueFixtures — هر بازی را با توجه به رتبه و فرم دو تیم (formGuide، currentSeasonTable، rankChanges) تحلیل کن، حساسیت‌ها و ماجراهای بالقوه را بگو. مرحله‌های برنامهٔ فصل را شرح نده. هیچ بازی، تاریخ یا حریفی که در schedule نیست نساز و نتیجه را پیش‌بینی نکن. اگر schedule.nextLeagueFixtures خالی بود (مثلاً نوبت CUP یا سوپرکاپ است) فقط ۱ تا ۲ جمله بگو بعدی چیست (nextStepFa). اگر schedule.status برابر no_schedule بود فقط یک جملهٔ کوتاه بنویس." },
+    lineupSuggestions: {
+      type: "array",
+      description: "پیشنهاد ترکیب برای هر چهار تیم (هر تیم دقیقاً یک آیتم): team همان نام لاتین دیتا، formation مثل 4-3-3 یا 5-3-2 یا 4-2-3-1، و idea یک تا دو جملهٔ توضیح دربارهٔ اینکه چرا این ترکیب مناسب است — بر اساس آمار گل زده و خورده، فرم اخیر، تغییر رتبه و حریف هفتهٔ بعد. نام بازیکن نساز.",
+      items: {
+        type: "object",
+        properties: { team: { type: "string" }, formation: { type: "string" }, idea: { type: "string" } },
+        required: ["team", "formation", "idea"],
+      },
+    },
     fixturePreviews: {
       type: "array",
       description: "برای هر بازی در schedule.nextLeagueFixtures دقیقاً یک آیتم: home و away همان نام‌های لاتین دیتا، و take یک تحلیل کوتاه ۱ تا ۲ جمله‌ای و بامزه دربارهٔ آن بازی. اگر nextLeagueFixtures خالی است، آرایهٔ خالی برگردان.",
@@ -865,6 +874,7 @@ const MAGAZINE_SCHEMA = {
     "superCupReport",
     "scheduleOutlook",
     "fixturePreviews",
+    "lineupSuggestions",
     "playerSpotlights",
     "recommendations",
     "titleRaceCommentary",
@@ -912,6 +922,10 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 دربارهٔ تغییر رتبه‌ها: در دیتا rankChanges نشان می‌دهد هر تیم نسبت به هفتهٔ قبل چند پله بالا یا پایین آمده یا ثابت مانده (delta). در standingsCommentary و matchReport به این جابه‌جایی‌ها اشاره کن (مثلاً «Bayern یک پله صعود کرد و دوم شد»)، فقط بر اساس همان delta. اپ کنار رتبهٔ هر تیم فلش سبز (صعود)، قرمز (سقوط) یا خط خاکستری (ثابت) می‌گذارد و یک نمودار خطی از رتبهٔ هر تیم در طول فصل (rankHistory) نشان می‌دهد؛ پس هیچ‌وقت خودت جدول یا نمودار متنی نساز.
 
 دربارهٔ مصاحبه (جذاب و زنده بنویس): interviewContext نتایج همین هفتهٔ تیم مصاحبه‌شونده است. مصاحبه مثل یک صحنهٔ واقعی باشد: scene، دیالوگ‌های کوتاه، واکنش‌های stage و لحن شخصیت متناسب با mood. اگر interviewContext.walkout برابر true باشد (تیم این هفته ۲ باخت یا بیشتر داشته)، چند دیالوگ اول آرام و شوخ باشد، بعد خبرنگار یک سؤال چالشی و تلخ دربارهٔ باخت‌ها بپرسد، شخصیت عصبانی شود، پاسخ آخرش نیمه‌کاره و تند باشد و در exitNote جلسه را ترک کند. اگر walkout برابر false است، مصاحبه تا آخر کامل شود و exitNote رشتهٔ خالی باشد. mood=cocky_after_wins یعنی شخصیت از برد خوشحال و کمی از خودراضی است. هیچ نتیجه یا عددی خارج از interviewContext و دیتا نساز.
+
+در تمام بخش‌های مصاحبه (headline، scene، question، stage، answer و exitNote) هیچ ایموجی و شکلک ننویس؛ فقط متن ساده. نام خبرنگار مصاحبه «آرش بهرامی» است و می‌تواند یک بار در مصاحبه خطاب شود.
+
+در lineupSuggestions برای هر چهار تیم یک پیشنهاد ترکیب بده (مثلاً تیمی که زیاد گل خورده 5-3-2 یا 4-5-1، تیمی که کم گل زده 4-2-3-1 یا 4-3-3). فقط بر اساس دیتا استدلال کن و نام بازیکن نساز. این پیشنهاد در بخش «توصیه‌های این هفته» نمایش داده می‌شود.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 

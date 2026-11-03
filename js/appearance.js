@@ -453,21 +453,8 @@ function syncSettingsUI(){
 // opening the chat) when switched off. Saved on this device.
 // ============================================================
 let aiAssistantEnabled = localStorage.getItem('aiAssistant') !== 'off';
-// Federation button on Home: it can only be switched off while the Assistant is off (the switch is hidden otherwise).
-// Off → Home shows "Records" in its place and Profile gets a Federation button.
-let fedTileHidden = localStorage.getItem('fedTile') === 'off';
-function toggleFedTile(){
-    haptic([8]);
-    fedTileHidden = !fedTileHidden;
-    localStorage.setItem('fedTile', fedTileHidden ? 'off' : 'on');
-    syncAiAssistantUI();
-    showToast(fedTileHidden ? 'Federation button replaced by Records' : 'Federation button back on Home', 'info', 1800);
-}
 function syncAiAssistantUI(){
     document.body.classList.toggle('ai-disabled', !aiAssistantEnabled);
-    document.body.classList.toggle('fed-hidden', !aiAssistantEnabled && fedTileHidden);
-    const ft=document.getElementById('fed-tile-toggle');
-    if(ft) ft.classList.toggle('on', !fedTileHidden);
     const t=document.getElementById('ai-assistant-toggle');
     if(t) t.classList.toggle('on', aiAssistantEnabled);
 }
@@ -514,7 +501,7 @@ function renderSettingsScreen(){
     const adminSection=document.getElementById('settings-admin-section');
     if(adminSection) adminSection.style.display = (loggedInTeam==='Bayern') ? 'block' : 'none';
     const toolsSection=document.getElementById('settings-tools-section');
-    if(toolsSection) toolsSection.style.display = (loggedInTeam && loggedInTeam!=='Bayern' && hasAnyTool()) ? 'block' : 'none';
+    if(toolsSection) toolsSection.style.display = (loggedInTeam && loggedInTeam!=='Bayern' && hasAnyTool()) ? 'flex' : 'none';
     const editToggle=document.getElementById('admin-edit-mode-toggle');
     if(editToggle) editToggle.classList.toggle('on', isAdminUnlocked);
 }
@@ -622,7 +609,7 @@ function renderMusicPlayerUI(){
     document.getElementById('mp-play-icon').className='fas '+(playing?'fa-pause':'fa-play');
     document.getElementById('mp-art').classList.toggle('playing', playing);
     const vol=document.getElementById('mp-vol');
-    if(vol && document.activeElement!==vol){ const v=Math.round(getMusicVolume()*100); vol.value=v; setRangeFill(vol,v); }
+    if(vol && document.activeElement!==vol){ const v=Math.round(getMusicVolume()*100); vol.value=v; setRangeFill(vol,v); renderVolumeBadge(v); }
     renderMusicProgress();
 }
 function renderMusicProgress(){
@@ -668,6 +655,7 @@ function initMusicPlayer(){
         const v=vol.value/100;
         bg.volume=v; localStorage.setItem('musicVolume', String(v));
         setRangeFill(vol, vol.value);
+        renderVolumeBadge(vol.value);
     });
     // the app's page-swipe listens on #app-container — keep slider drags from changing pages
     ['touchstart','touchend'].forEach(ev=>root.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
@@ -790,3 +778,27 @@ async function saveTeamEdit(){
     }
 }
 
+
+
+// ---- Music player: the volume slider lives in a little vertical pop-up that opens from the speaker button ----
+function renderVolumeBadge(v){
+    v = Number(v)||0;
+    const ic=document.getElementById('mp-vol-icon'), pct=document.getElementById('mp-vol-pct');
+    if(ic) ic.className='fas '+(v===0?'fa-volume-xmark':v<50?'fa-volume-low':'fa-volume-high');
+    if(pct) pct.textContent=v;
+}
+function toggleVolPop(e){
+    if(e) e.stopPropagation();
+    haptic([6]);
+    const pop=document.getElementById('mp-vol-pop'), btn=document.getElementById('mp-vol-btn'); if(!pop) return;
+    const open=!pop.classList.contains('open');
+    pop.classList.toggle('open', open);
+    if(btn){ btn.setAttribute('aria-expanded', open?'true':'false'); btn.classList.toggle('on', open); }
+}
+function closeVolPop(){
+    const pop=document.getElementById('mp-vol-pop'), btn=document.getElementById('mp-vol-btn');
+    if(pop) pop.classList.remove('open');
+    if(btn){ btn.setAttribute('aria-expanded','false'); btn.classList.remove('on'); }
+}
+document.addEventListener('click', closeVolPop);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVolPop(); });

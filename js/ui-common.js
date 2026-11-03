@@ -210,3 +210,25 @@ function setupOverallHold(){
 
 
 
+
+
+// ---- Hold the HARFS capsule at the top for 3 seconds → Federation (it no longer has a button on Home) ----
+(function heroHoldForFederation(){
+    const el = document.getElementById('hero-logo-container'); if(!el) return;
+    const HOLD_MS = 3000;
+    let timer = null, sx = 0, sy = 0;
+    const cancel = ()=>{ if(timer){ clearTimeout(timer); timer = null; } el.classList.remove('holding'); };
+    el.addEventListener('pointerdown', e=>{
+        if(!el.classList.contains('in-header') || el.classList.contains('showing-notif') || !loggedInTeam) return;
+        sx = e.clientX; sy = e.clientY;
+        el.classList.add('holding');
+        timer = setTimeout(()=>{
+            timer = null; el.classList.remove('holding');
+            haptic([14,40,14]);
+            if(typeof openPeopleSheet==='function') openPeopleSheet();
+        }, HOLD_MS);
+    });
+    el.addEventListener('pointermove', e=>{ if(timer && Math.hypot(e.clientX-sx, e.clientY-sy) > 14) cancel(); });
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, cancel));
+    el.addEventListener('contextmenu', e=>e.preventDefault());
+})();
