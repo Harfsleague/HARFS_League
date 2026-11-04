@@ -130,10 +130,14 @@ function renderPeopleSheet(){
 function openPeopleSheet(){
     haptic([8]);
     renderPeopleSheet();
-    document.getElementById('people-sheet').classList.add('open');
+    const sh = document.getElementById('people-sheet'), cap = document.getElementById('hero-logo-container');
+    document.body.classList.add('cards-open');                 // the capsule fades while the page grows out of it
+    sh.classList.add('open');
+    if(cap && cap.classList.contains('in-header')) fxExpand(sh, sh.querySelector('.people-modal'), cap.getBoundingClientRect(), sh.querySelectorAll('.rec-banner, h4, .people-sub, .people-row'));
 }
 function closePeopleSheet(){
     document.getElementById('people-sheet').classList.remove('open');
+    document.body.classList.remove('cards-open');
 }
 
 

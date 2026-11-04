@@ -118,7 +118,10 @@ function openTeamPanel(team){
         const sec = document.getElementById(id) && document.getElementById(id).closest('.team-panel-section');
         if(sec) sec.style.display = isSymbolicTeam(team) ? 'none' : '';
     });
-    document.getElementById('team-panel-overlay').classList.add('open');
+    const ov = document.getElementById('team-panel-overlay');
+    const src = fxTappedRect();                      // set when a team card on Overall was tapped
+    ov.classList.add('open');
+    if(src) fxExpand(ov, ov.querySelector('.modal-content'), src, ov.querySelectorAll('#team-panel-name, #team-panel-pinned, .team-panel-section'));
 }
 function closeTeamPanel(){
     document.getElementById('team-panel-overlay').classList.remove('open');

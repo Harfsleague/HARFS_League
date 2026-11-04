@@ -212,23 +212,49 @@ function setupOverallHold(){
 
 
 
-// ---- Hold the HARFS capsule at the top for 3 seconds → Federation (it no longer has a button on Home) ----
-(function heroHoldForFederation(){
+// ---- Tap the HARFS capsule three times in a row → Federation & Owners (it has no button on Home any more) ----
+(function heroTripleTapForFederation(){
     const el = document.getElementById('hero-logo-container'); if(!el) return;
-    const HOLD_MS = 3000;
-    let timer = null, sx = 0, sy = 0;
-    const cancel = ()=>{ if(timer){ clearTimeout(timer); timer = null; } el.classList.remove('holding'); };
-    el.addEventListener('pointerdown', e=>{
-        if(!el.classList.contains('in-header') || el.classList.contains('showing-notif') || !loggedInTeam) return;
-        sx = e.clientX; sy = e.clientY;
-        el.classList.add('holding');
-        timer = setTimeout(()=>{
-            timer = null; el.classList.remove('holding');
-            haptic([14,40,14]);
-            if(typeof openPeopleSheet==='function') openPeopleSheet();
-        }, HOLD_MS);
+    let taps = 0, timer = null, sx = 0, sy = 0, t0 = 0;
+    el.addEventListener('pointerdown', e=>{ sx = e.clientX; sy = e.clientY; t0 = Date.now(); });
+    el.addEventListener('pointerup', e=>{
+        if(!el.classList.contains('in-header') || el.classList.contains('showing-notif') || !loggedInTeam) { taps = 0; return; }
+        if(Math.hypot(e.clientX-sx, e.clientY-sy) > 14 || Date.now()-t0 > 450){ taps = 0; return; }   // a drag / long press is not a tap
+        taps++; clearTimeout(timer);
+        if(taps >= 3){ taps = 0; haptic([14,40,14]); if(typeof openPeopleSheet==='function') openPeopleSheet(); return; }
+        haptic([5]);
+        timer = setTimeout(()=>{ taps = 0; }, 650);
     });
-    el.addEventListener('pointermove', e=>{ if(timer && Math.hypot(e.clientX-sx, e.clientY-sy) > 14) cancel(); });
-    ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, cancel));
     el.addEventListener('contextmenu', e=>e.preventDefault());
 })();
+
+// ---- "Grow out of the thing you tapped": the panel starts as a small rounded window at the tapped element's place and opens up
+//      to its full size, then its sections fade in one after another. Used by the team panel (from the team card) and by
+//      Federation (from the HARFS capsule). Falls back to the normal pop-in when motion is off or there is no source. ----
+let fxLastTap = null;            // the team card that was tapped last (set in the capture phase, before the card's own onclick runs)
+document.addEventListener('click', e=>{
+    const el = e.target.closest && e.target.closest('.hof-podium-col, .ranking-card');
+    fxLastTap = el ? { el, t: Date.now() } : null;
+}, true);
+function fxTappedRect(){ return (fxLastTap && Date.now()-fxLastTap.t < 900 && fxLastTap.el.isConnected) ? fxLastTap.el.getBoundingClientRect() : null; }
+function fxExpand(overlay, panel, src, stagger){
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if(!overlay || !panel || !src || !panel.animate || reduce || document.body.classList.contains('perf-no-anim')) return;
+    overlay.classList.add('fx-expand');                       // switches the sheet's own pop transition off while we animate
+    const r = panel.getBoundingClientRect();
+    if(!r.width || !r.height){ overlay.classList.remove('fx-expand'); return; }
+    const w = Math.min(src.width, r.width), h = Math.min(src.height, r.height);
+    const dx = (src.left + src.width/2) - (r.left + r.width/2), dy = src.top - r.top;
+    const side = (r.width - w) / 2, bottom = r.height - h;
+    const rad = parseFloat(getComputedStyle(panel).borderTopLeftRadius) || 24;
+    const ease = 'cubic-bezier(.22,1,.36,1)';
+    const anim = panel.animate([
+        { transform:`translate(${dx}px,${dy}px)`, clipPath:`inset(0px ${side}px ${bottom}px ${side}px round ${Math.min(rad, 22)}px)`, opacity:.55 },
+        { transform:'translate(0,0)',             clipPath:`inset(0px 0px 0px 0px round ${rad}px)`,                                   opacity:1 }
+    ], { duration:600, easing:ease });
+    (stagger ? Array.from(stagger) : []).forEach((el,i)=>{
+        if(el.animate) el.animate([{ opacity:0, transform:'translateY(16px)' },{ opacity:1, transform:'none' }], { duration:460, delay:260 + i*70, easing:ease, fill:'backwards' });
+    });
+    const done = ()=>overlay.classList.remove('fx-expand');
+    anim.onfinish = done; anim.oncancel = done;
+}

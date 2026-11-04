@@ -1314,15 +1314,8 @@ html.lite-mode .rec-card::after, html.lite-mode .rec-logo-wrap, html.lite-mode .
 .mp-vol-pop .mp-range::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background:#fbbf24; border:none; box-shadow:0 1px 6px rgba(0,0,0,.5); }
 @media (prefers-reduced-motion:reduce){ .mp-vol-pop{ transition:opacity .01s; } }
 
-/* HARFS capsule: reachable for the 3-second hold (Federation) + a fill that shows the hold progress */
+/* HARFS capsule stays tappable (triple tap → Federation) */
 #hero-logo-container.in-header{ pointer-events:auto; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; touch-action:manipulation; }
-#hero-logo-container.holding::before{
-    content:''; position:absolute; inset:0; z-index:0; pointer-events:none; border-radius:inherit;
-    background:linear-gradient(90deg,color-mix(in srgb,var(--primary) 38%,transparent),color-mix(in srgb,var(--primary) 18%,transparent));
-    background-repeat:no-repeat; background-size:0% 100%; animation:heroHold 3s linear forwards;
-    box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--primary) 70%,transparent);
-}
-@keyframes heroHold{ to{ background-size:100% 100%; } }
 
 /* =====================================================
    MAGAZINE v3 — comments divider, interview people/profile, lineup cards
@@ -1414,3 +1407,46 @@ body .magazine-panel-header{ position:relative; top:auto; display:flex; flex-dir
 .mrc-leg i{ box-shadow:0 0 0 2px #0a1832, 0 0 0 3px rgba(255,255,255,.35); }
 .mrc-leg b{ color:#dbe7ff; background:rgba(255,255,255,.12); }
 .mrc-dot{ stroke:#e8eefc; }
+
+
+/* =====================================================
+   HARFS capsule — gliding up: "COMPETITIONS SYSTEM" fades away, HARFS grows. Without Liquid Glass (or in Lite) it looks like the Home buttons.
+   ===================================================== */
+#hero-logo-container.in-header .hero-subtext{
+    opacity:0; transform:translate3d(0,-5px,0); max-height:0; margin:0; overflow:hidden; pointer-events:none;
+    transition:opacity .3s ease, transform .45s cubic-bezier(.22,1,.36,1), max-height .55s cubic-bezier(.22,1,.36,1);
+}
+#hero-logo-container.in-header .hero-text{
+    font-size:2.2rem; letter-spacing:8px; padding-left:8px;
+    transition:font-size .65s cubic-bezier(.22,1,.36,1), letter-spacing .65s cubic-bezier(.22,1,.36,1), opacity .45s ease .06s, transform .5s cubic-bezier(.22,1,.36,1) .06s;
+}
+body.perf-no-blur #hero-logo-container.in-header,
+body.lite-mode #hero-logo-container.in-header{
+    border-radius:24px !important;
+    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710) !important;
+    background-image:radial-gradient(100% 90% at 50% 0%,rgba(255,255,255,0.09),transparent 62%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.35)) !important;
+    border:1px solid rgba(255,255,255,0.10) !important;
+    border-top-color:color-mix(in srgb,var(--primary) 40%,rgba(255,255,255,0.2)) !important;
+    border-bottom-color:rgba(0,0,0,0.6) !important;
+    box-shadow:0 12px 24px -8px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+/* panels that grow out of a tapped element (fxExpand in js/ui-common.js) */
+.fx-expand .modal-content,
+.fx-expand.team-picker-sheet.as-modal .team-picker-panel{ transition:none !important; transform:none !important; }
+
+/* Federation page in the new theme */
+.people-banner{ background:radial-gradient(90% 140% at 50% 0%,rgba(251,191,36,0.34),transparent 65%), linear-gradient(180deg,rgba(124,58,237,0.32),transparent); }
+.people-banner > i{ color:#fde68a; filter:drop-shadow(0 0 14px rgba(251,191,36,0.85)); }
+.people-modal{ background-color:color-mix(in srgb,var(--bg-mid) 92%,#040710); border:1px solid rgba(255,255,255,0.1); border-top-color:rgba(251,191,36,0.4); }
+.people-modal .people-row{
+    position:relative; overflow:hidden; border-radius:20px;
+    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
+    background-image:radial-gradient(90% 80% at 100% 0%,color-mix(in srgb,var(--pa,#60a5fa) 16%,transparent),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:color-mix(in srgb,var(--pa,#60a5fa) 45%,rgba(255,255,255,0.14));
+    box-shadow:0 10px 22px -8px rgba(0,0,0,0.6);
+}
+.people-modal .people-row::after{ content:''; position:absolute; top:0; bottom:0; width:38%; left:-60%; background:linear-gradient(100deg,transparent,rgba(255,255,255,0.09),transparent); transform:skewX(-18deg); animation:recShine 6s ease-in-out infinite; animation-delay:calc(var(--i,0) * 1s + 1.4s); pointer-events:none; }
+.people-modal .people-row-hero{ border-top-color:rgba(251,191,36,0.6); background-image:radial-gradient(90% 90% at 100% 0%,rgba(251,191,36,0.2),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.06),transparent 45%,rgba(0,0,0,0.3)); }
+.people-modal #people-list{ display:flex; flex-direction:column; gap:10px; padding:2px 2px 10px; }
+@media (prefers-reduced-motion:reduce){ .people-modal .people-row::after{ animation:none; } }

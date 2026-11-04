@@ -888,13 +888,10 @@
     <div id="people-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closePeopleSheet()">
         <div class="team-picker-panel hero-modal people-modal">
             <div class="modal-x-close" onclick="closePeopleSheet()"><i class="fas fa-times"></i></div>
-            <div class="profile-header" style="flex-shrink:0;">
-                <div class="profile-header-bg people-hero-bg"></div>
-                <div class="profile-icon-badge people-crown"><i class="fas fa-crown"></i></div>
-            </div>
+            <div class="rec-banner people-banner"><i class="fas fa-crown"></i><span class="rec-spark s1"></span><span class="rec-spark s2"></span><span class="rec-spark s3"></span></div>
             <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
                 <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">Federation &amp; Owners</h4>
-                <div style="text-align:center;color:var(--primary);font-size:0.65rem;min-height:14px;margin-bottom:10px;">The people behind HARFS · tap a photo to view</div>
+                <div class="people-sub" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">The people behind HARFS · tap a photo to view</div>
                 <div id="people-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
             </div>
         </div>
