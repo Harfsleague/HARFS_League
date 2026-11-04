@@ -144,16 +144,14 @@ function renderMagazineIssueNav() {
     const atOldest = magazineIssueIdx >= magazineArchive.length - 1;
     const isAdmin = typeof isAdminUnlocked !== 'undefined' && isAdminUnlocked && loggedInTeam === 'Bayern';
     nav.innerHTML = `
-        <button class="magazine-nav-arrow" onclick="magazineGoOlder()" ${atOldest ? 'disabled' : ''} title="شمارهٔ قدیمی‌تر"><i class="fas fa-chevron-right"></i></button>
         <div class="magazine-issue-picker-wrap">
             <button class="magazine-issue-pill" onclick="toggleMagazineIssuePicker()">
                 شمارهٔ ${issue.issueNumber ?? (magazineArchive.length - magazineIssueIdx)} <i class="fas fa-caret-down"></i>
             </button>
             <div class="magazine-issue-picker" id="magazine-issue-picker"></div>
         </div>
-        <button class="magazine-nav-arrow" onclick="magazineGoNewer()" ${atNewest ? 'disabled' : ''} title="شمارهٔ جدیدتر"><i class="fas fa-chevron-left"></i></button>
         ${isAdmin ? `
-        <button class="weird-admin-btn" style="margin-inline-start:auto;" onclick="editMagazineIssue(${magazineIssueIdx})"><i class="fas fa-pen"></i> ادیت</button>
+        <button class="weird-admin-btn" onclick="editMagazineIssue(${magazineIssueIdx})"><i class="fas fa-pen"></i> ادیت</button>
         <button class="weird-admin-btn weird-admin-btn-danger" onclick="deleteMagazineIssue(${magazineIssueIdx})"><i class="fas fa-trash"></i> حذف</button>` : ''}
     `;
 }
@@ -306,6 +304,24 @@ function magComputeRankHistory(matches) {
             .forEach((t, i) => ranks[t].push(i + 1));
     });
     return { weeks: rounds, ranks };
+}
+// The newest issue of an older archive has no rank data of its own, so it is worked out from the live match list. That list can still be
+// loading the first time the magazine opens — then the chart shows a short "preparing" box (never the old bars) and the page redraws
+// itself the moment the matches are in.
+let magMatchHistoryPending = false;
+function magNeedsMatches(issue) {
+    if (issue.rankHistory && issue.rankHistory.weeks && issue.rankHistory.weeks.length) return false;
+    const endedFinal = issue.seasonContext && issue.seasonContext.tableRepresents === 'ended_season_final';
+    return !endedFinal && magazineArchive[0] === issue && !(typeof matchHistory !== 'undefined' && matchHistory.length);
+}
+function magEnsureMatchHistory() {
+    if (magMatchHistoryPending || typeof loadMatchHistoryFromGitHub !== 'function') return;
+    magMatchHistoryPending = true;
+    Promise.resolve().then(() => loadMatchHistoryFromGitHub()).catch(() => {}).then(() => {
+        magMatchHistoryPending = false;
+        const live = document.getElementById('magazine-screen')?.classList.contains('active');
+        if (live && typeof matchHistory !== 'undefined' && matchHistory.length) renderCurrentIssue();
+    });
 }
 function magRankHistory(issue) {
     if (issue.rankHistory && issue.rankHistory.weeks && issue.rankHistory.weeks.length) return issue.rankHistory;
@@ -463,15 +479,11 @@ function renderMagazine(issue) {
             </tr>`).join('');
 
     // ---- title race: rank-vs-week chart (older issues without rank data keep the points bars) ----
-    const gaps = issue.titleRace?.gaps || [];
-    const maxGap = Math.max(1, ...gaps.map(g => g.gapToLeader || 0));
-    const raceRows = gaps.map(g => `
-        <div class="magazine-race-row">
-            <div class="magazine-race-team">${teamLabel(g.team)}</div>
-            <div class="magazine-race-bar-track"><div class="magazine-race-bar-fill" style="width:${100 - Math.round((g.gapToLeader || 0) / maxGap * 90)}%"></div></div>
-            <div class="magazine-race-pts">${g.pts ?? '—'}</div>
-        </div>`).join('');
-    const raceVisual = hist ? magRankChart(hist) : raceRows;
+    // ---- title race: the rank-vs-week chart ----
+    const waitingForMatches = !hist && magNeedsMatches(issue);
+    if (waitingForMatches) magEnsureMatchHistory();
+    // only the new chart is ever shown; an issue with no rank data (old archive, no live matches) simply has no chart
+    const raceVisual = hist ? magRankChart(hist) : (waitingForMatches ? '<div class="mrc-card mrc-wait"><span class="mrc-wait-dot"></span><span class="mrc-wait-dot"></span><span class="mrc-wait-dot"></span></div>' : '');
 
     // ---- form guide: the streak text sits at the right, so every row's circles line up in one column ----
     const formRows = (issue.formGuide || []).map(f => `
@@ -570,7 +582,6 @@ function renderMagazine(issue) {
                     <div class="magazine-masthead">HARFS WEEKLY</div>
                     <div class="magazine-issue-date">شمارهٔ ${issue.issueNumber ?? ''} · ${jFormatDate(issue.issueDate)}</div>
                 </div>
-                <div class="magazine-issue-nav" id="magazine-issue-nav"></div>
             </div>
             <div class="magazine-subtitle">${escapeHtml(issue.coverSubtitle)}</div>
         </div>
@@ -592,7 +603,7 @@ function renderMagazine(issue) {
             <p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>
         </div>
 
-        ${(hist || gaps.length) ? `
+        ${(hist || waitingForMatches || (issue.titleRaceCommentary || '').trim()) ? `
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-crown"></i> جدال قهرمانی</h2>
             ${raceVisual}
