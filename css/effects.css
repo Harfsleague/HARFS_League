@@ -306,21 +306,23 @@ body:not(.lite-mode):not(.perf-no-sheen) .magazine-panel-header::before{
     color:#94a3b8;
     margin:3px 0 0;
 }
+/* centred with `translate` (not `transform`): the sv-fade animation on these buttons sets `transform`, which used to drop the
+   -50% shift for its duration — the button showed lower, then jumped up when the animation ended */
 #league-table-screen .season-back-btn{
     position:absolute;
     left:14px;
     top:50%;
-    transform:translateY(-50%);
+    translate:0 -50%;
     margin:0;
 }
 #league-table-screen .season-back-btn:active{
-    transform:translateY(-50%) scale(0.9);
+    transform:scale(0.9);
 }
 #league-table-screen .season-header-actions{
     position:absolute;
     right:14px;
     top:50%;
-    transform:translateY(-50%);
+    translate:0 -50%;
     margin:0 !important;
     align-self:auto;
 }
@@ -1362,3 +1364,53 @@ html.lite-mode .rec-card::after, html.lite-mode .rec-logo-wrap, html.lite-mode .
 }
 .season-subnav .nav-item.active i{ color:#fff !important; text-shadow:0 0 8px color-mix(in srgb,var(--primary) 80%,transparent); }
 .season-subnav .nav-item:not(.active){ border:1.5px solid transparent; }
+
+/* =====================================================
+   MAGAZINE v4 — header card, intro box with the issue switcher, navy rank chart
+   ===================================================== */
+/* header: brand block on top, back button in its own bottom strip (not sticky any more — it was too tall to keep on screen) */
+body .magazine-panel-header{ position:relative; top:auto; display:flex; flex-direction:column; gap:0; padding:14px 16px 12px; }
+.mph-brand{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:2px 0 12px; direction:ltr; }
+.mph-kicker, .mph-sub{ display:flex; align-items:center; gap:9px; }
+.mph-kicker i, .mph-sub i{ display:block; width:34px; height:1px; background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--primary) 80%,#fff)); }
+.mph-kicker i:last-child, .mph-sub i:last-child{ transform:scaleX(-1); }
+.mph-kicker span{ font-size:.54rem; font-weight:900; letter-spacing:5px; color:#94a3b8; padding-left:5px; }
+.mph-title{
+    font-size:1.75rem; font-weight:900; letter-spacing:6px; line-height:1.1; padding-left:6px;
+    background:linear-gradient(100deg,#fff7d6 0%,#fbbf24 28%,#f472b6 62%,#67e8f9 100%); background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 2px 14px color-mix(in srgb,var(--primary) 45%,transparent)); animation:mphShimmer 7s ease-in-out infinite alternate;
+}
+@keyframes mphShimmer{ from{ background-position:0% 0; } to{ background-position:100% 0; } }
+.mph-sub span{ font-size:.74rem; font-weight:800; letter-spacing:5.5px; color:var(--header-text); padding-left:5px; }
+.mph-bottom{ display:flex; align-items:center; justify-content:flex-start; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08); }
+.magazine-panel-back-btn.mph-back{
+    width:auto; height:34px; border-radius:999px; padding:0 14px; gap:8px; font-family:inherit; font-size:.72rem; font-weight:800;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 16%,rgba(255,255,255,0.05)),rgba(255,255,255,0.03));
+    border:1px solid color-mix(in srgb,var(--primary) 35%,rgba(255,255,255,0.14));
+}
+.magazine-panel-back-btn.mph-back i{ font-size:.78rem; }
+@media (prefers-reduced-motion:reduce){ .mph-title{ animation:none; } }
+
+/* intro box: issue number + date on the right, the issue switcher on the left, the intro line under both */
+.magazine-hero-meta .mhm-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.mhm-id{ min-width:0; }
+.mhm-id .magazine-masthead{ margin-bottom:5px; text-align:right; }
+.mhm-id .magazine-issue-date{ margin-bottom:0; }
+.magazine-hero-meta .magazine-issue-nav{ flex-wrap:nowrap; flex-shrink:0; gap:6px; }
+.magazine-hero-meta .magazine-issue-picker{ right:auto; left:0; }
+.magazine-hero-meta .magazine-issue-nav .weird-admin-btn{ margin-inline-start:0 !important; }
+
+/* rank chart: dark navy like the rest of the site */
+.mrc-card{
+    background:linear-gradient(180deg,#0f2550,#0a1832); border:1px solid rgba(96,150,255,.26); border-top-color:rgba(147,197,253,.4);
+    box-shadow:0 12px 26px -10px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.1);
+}
+.mrc-cap{ color:#93a8cf; }
+.mrc-grid{ stroke:rgba(148,163,184,.26); }
+.mrc-ylab, .mrc-xlab{ fill:#b6c6e6; }
+.mrc-halo{ stroke-width:6.4; opacity:.95; }
+.mrc-leg{ color:#e2e8f0; }
+.mrc-leg i{ box-shadow:0 0 0 2px #0a1832, 0 0 0 3px rgba(255,255,255,.35); }
+.mrc-leg b{ color:#dbe7ff; background:rgba(255,255,255,.12); }
+.mrc-dot{ stroke:#e8eefc; }

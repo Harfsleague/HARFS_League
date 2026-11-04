@@ -286,7 +286,8 @@ function renderCupSection(issue) {
 // Newer issues carry `rankHistory` / `rankChanges` (computed by scripts/generate-magazine.mjs). The newest issue of an older
 // archive does not, so for that one we work it out from the live match list (same maths: points, then goal difference).
 // ============================================================
-const MAG_TEAM_COLORS = { Bayern:'#dc2626', HOSI:'#2563eb', Yellow:'#166534', Sezar:'#0a0a0a' };   // Azar red · Mess blue · Nifa dark green · FC Gilas black
+const MAG_TEAM_COLORS = { Bayern:'#dc2626', HOSI:'#2563eb', Yellow:'#166534', Sezar:'#0a0a0a' };
+const MAG_LINE_HALO = { Sezar:'#e8eefc', Yellow:'#86efac' };   // Azar red · Mess blue · Nifa dark green · FC Gilas black
 function magFaNum(n) { return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); }
 function magComputeRankHistory(matches) {
     const played = (matches || []).filter(m => Number.isFinite(+m.round) && +m.round > 0 && /^\d+-\d+$/.test(String(m.score || '')));
@@ -343,7 +344,8 @@ function magRankChart(hist) {
         const pts = rs.map((r, i) => `${x(i).toFixed(1)},${y(r).toFixed(1)}`);
         const d = 'M' + pts.join(' L');
         const dots = rs.map((r, i) => `<circle class="mrc-dot" cx="${x(i).toFixed(1)}" cy="${y(r).toFixed(1)}" r="${i === n - 1 ? 5.5 : 4}" fill="${col}" style="animation-delay:${400 + k * 120 + i * 90}ms"/>`).join('');
-        return `<g>${n > 1 ? `<path class="mrc-line" d="${d}" stroke="${col}" pathLength="1" style="animation-delay:${k * 120}ms"/>` : ''}${dots}</g>`;
+        const halo = MAG_LINE_HALO[t];        // black / dark-green lines get a light outline so they read on the navy panel
+        return `<g>${n > 1 ? `${halo ? `<path class="mrc-line mrc-halo" d="${d}" stroke="${halo}" pathLength="1" style="animation-delay:${k * 120}ms"/>` : ''}<path class="mrc-line" d="${d}" stroke="${col}" pathLength="1" style="animation-delay:${k * 120}ms"/>` : ''}${dots}</g>`;
     }).join('');
     const legend = [...TEAM_NAMES].sort((a, b) => hist.ranks[a][n - 1] - hist.ranks[b][n - 1]).map(t => `
         <span class="mrc-leg"><i style="background:${MAG_TEAM_COLORS[t] || '#64748b'}"></i>${teamLabel(t)} <b>${magFaNum(hist.ranks[t][n - 1])}</b></span>`).join('');
@@ -553,7 +555,6 @@ function renderMagazine(issue) {
             ? `<div class="magazine-cup-note">لیگ طبق برنامهٔ فصل (${escapeHtml(issue.schedule.phaseLabelFa || '')}) فعلاً متوقف است؛ جدول زیر وضعیت فعلی لیگ است.</div>`
             : '<div class="magazine-cup-note">این هفته بازی لیگ برگزار نشد؛ جدول زیر وضعیت فعلی لیگ است.</div>') : '';
     const hasCupLayout = !!issue.weekType;
-    const rankLegend = deltas ? `<div class="mag-rank-legend"><span class="mrk up"><i></i></span> صعود <span class="mrk down"><i></i></span> سقوط <span class="mrk same"><i></i></span> بدون تغییر نسبت به هفتهٔ قبل</div>` : '';
 
     body.innerHTML = `
         <div class="magazine-hero">
@@ -564,8 +565,13 @@ function renderMagazine(issue) {
             </div>
         </div>
         <div class="magazine-hero-meta">
-            <div class="magazine-masthead">HARFS WEEKLY</div>
-            <div class="magazine-issue-date">شمارهٔ ${issue.issueNumber ?? ''} · ${jFormatDate(issue.issueDate)}</div>
+            <div class="mhm-top">
+                <div class="mhm-id">
+                    <div class="magazine-masthead">HARFS WEEKLY</div>
+                    <div class="magazine-issue-date">شمارهٔ ${issue.issueNumber ?? ''} · ${jFormatDate(issue.issueDate)}</div>
+                </div>
+                <div class="magazine-issue-nav" id="magazine-issue-nav"></div>
+            </div>
             <div class="magazine-subtitle">${escapeHtml(issue.coverSubtitle)}</div>
         </div>
 
@@ -582,7 +588,6 @@ function renderMagazine(issue) {
                 <thead><tr><th>#</th><th>تیم</th><th>ب</th><th>برد</th><th>مساوی</th><th>باخت</th><th>امتیاز</th></tr></thead>
                 <tbody>${standingsRows}</tbody>
             </table>
-            ${rankLegend}
             ${leagueIdleNote}
             <p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>
         </div>

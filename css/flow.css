@@ -413,7 +413,7 @@ body.ai-disabled #nav-admin{ display:none !important; }   /* Assistant switched 
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
 }
 #ai-chat-screen .season-date{ font-size:0.68rem; font-weight:700; letter-spacing:0.6px; color:#94a3b8; margin:3px 0 0; }
-#ai-chat-screen .season-header-actions{ position:absolute; right:14px; top:50%; transform:translateY(-50%); margin:0 !important; align-self:auto; }
+#ai-chat-screen .season-header-actions{ position:absolute; right:14px; top:50%; translate:0 -50%; margin:0 !important; align-self:auto; }
 #ai-chat-screen .season-icon-btn{
     width:38px; height:38px; border-radius:13px;
     background:color-mix(in srgb,var(--primary) 12%,rgba(255,255,255,0.05));
