@@ -212,13 +212,14 @@ function recordsRender(){
         };
         requestAnimationFrame(tick);
     });
-    box.scrollTop = 0;
+    const sh = document.getElementById('records-sheet'), pn = sh && sh.querySelector('.records-modal'); if(pn) pn.scrollTop = 0;
 }
 function openRecordsSheet(){
     haptic([8]);
     const sh = document.getElementById('records-sheet'); if(!sh) return;
     document.body.classList.add('cards-open');          // same as Cards: the HARFS capsule fades away while the sheet is open and returns when it closes
     recordsRender();
+    recordsBindScroll();
     sh.classList.remove('open'); void sh.offsetWidth; sh.classList.add('open');
     requestAnimationFrame(recordsSyncScopeUI);
 }
@@ -270,4 +271,20 @@ function recordsTeamPanelHtml(team){
     const game = (icon,title,g)=> g ? `<div class="tp-game"><div class="tp-game-h"><span>${icon}</span>${title}<em>${escapeHtml(g.label)}</em></div>
         <div class="tp-game-s"><span>${escapeHtml(recordsTeamLabel(g.m.home))}</span><b>${g.sc.a} – ${g.sc.b}</b><span>${escapeHtml(recordsTeamLabel(g.m.away))}</span></div></div>` : '';
     return heldHtml + `<div class="tp-rec-list">${list}</div>` + game('💥','Biggest win',bigWin) + game('🎯','Highest-scoring game',topGame);
+}
+
+// ---- the whole sheet scrolls (banner and title slide away, more room for the cards); an arrow appears once you scroll down ----
+let recordsScrollBound = false;
+function recordsBindScroll(){
+    const pn = document.querySelector('#records-sheet .records-modal'), fab = document.getElementById('rec-top-fab');
+    if(!pn || !fab) return;
+    fab.classList.remove('show');
+    if(recordsScrollBound) return;
+    recordsScrollBound = true;
+    pn.addEventListener('scroll', ()=>fab.classList.toggle('show', pn.scrollTop > 160), { passive:true });
+}
+function recordsScrollTop(){
+    haptic([6]);
+    const pn = document.querySelector('#records-sheet .records-modal');
+    if(pn) pn.scrollTo({ top:0, behavior:'smooth' });
 }

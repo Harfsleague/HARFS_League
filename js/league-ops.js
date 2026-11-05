@@ -104,22 +104,10 @@ function openTeamPanel(team){
 
     document.getElementById('team-panel-records').innerHTML = (typeof recordsTeamPanelHtml==='function') ? recordsTeamPanelHtml(team) : renderRecordBadgesFor(team);
 
-    const mbaLogEl = document.getElementById('team-panel-mba');
-    const mbaLog = w.mbaChampionLog||[];
-    mbaLogEl.innerHTML = mbaLog.length ? mbaLog.slice().reverse().map(entry=>{
-        const d = new Date(entry.ts);
-        const when = isNaN(d) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-        return `<div class="coin-log-row"><span>🏆 CUP Champion — Edition #${entry.edition}</span>${when?`<span style="color:#6b7280;font-weight:600;">${when}</span>`:''}</div>`;
-    }).join('') : '<div class="team-panel-empty">No CUP titles yet</div>';
-    // Super Cup titles (league champion vs CUP champion) are tallied from the archive
-    const superTitles = (typeof computeSuperCupCounts==='function' && computeSuperCupCounts()[team]) || [];
-    if(superTitles.length) mbaLogEl.innerHTML += superTitles.slice().reverse().map(sid=>`<div class="coin-log-row"><span>⚡ Super Cup Winner — Season ${sid}</span></div>`).join('');
-
-    // A symbolic team plays no league/CUP, so those sections stay hidden for it.
-    ['team-panel-records','team-panel-mba'].forEach(id=>{
-        const sec = document.getElementById(id) && document.getElementById(id).closest('.team-panel-section');
-        if(sec) sec.style.display = isSymbolicTeam(team) ? 'none' : '';
-    });
+    // A symbolic team plays no league, so its records section stays hidden.
+    const recEl = document.getElementById('team-panel-records');
+    const recSec = recEl && recEl.closest('.team-panel-section');
+    if(recSec) recSec.style.display = isSymbolicTeam(team) ? 'none' : '';
     const ov = document.getElementById('team-panel-overlay');
     ov.dataset.team = team;                          // accent colour of the panel (css/effects.css)
     const src = fxTappedRect();                      // set when a team card on Overall was tapped

@@ -782,8 +782,8 @@
          appears once the user scrolls down into the match history.
          Sibling of the .page-screens (not nested inside one) so it stays a
          true non-scrolling overlay — see the .season-fab comment in the CSS. -->
-    <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="scrollSeasonToTop()">
-        <i class="fas fa-arrow-up"></i><span>Back to Top</span>
+    <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="scrollSeasonToTop()" role="button" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
     </div>
 
     <!-- ============ CUP — RESULT EDITOR (record / edit a game) ============ -->
@@ -861,10 +861,6 @@
                         <div class="team-panel-section-title"><i class="fas fa-crown"></i> League Records</div>
                         <div id="team-panel-records"></div>
                     </div>
-                    <div class="team-panel-section">
-                        <div class="team-panel-section-title"><i class="fas fa-medal"></i> CUP &amp; Super Cup Titles</div>
-                        <div id="team-panel-mba"></div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -909,7 +905,7 @@
                         <linearGradient id="recGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".55" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient>
                         <linearGradient id="recSilver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#94a3b8"/></linearGradient>
                     </defs>
-                    <g class="rec-art-side l"><circle cx="58" cy="82" r="30" fill="#0f172a" stroke="url(#recSilver)" stroke-width="3"/><path d="M58 62l8.5 6.2-3.2 10H52.7l-3.2-10z" fill="#e2e8f0"/><path d="M49.5 68.2L40 70.5M66.5 68.2L76 70.5M52.7 78.2L46 86M63.3 78.2L70 86M58 62V54" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" fill="none"/></g>
+                    <g class="rec-art-side l"><circle cx="58" cy="82" r="32" fill="#fbbf24" opacity=".22"/><circle cx="58" cy="82" r="28" fill="url(#recGold)" stroke="#fff3b0" stroke-width="2"/><path d="M58 66l9 6.6-3.4 10.6H52.4L49 72.6z" fill="#92400e"/><path d="M49 72.6L40 70M67 72.6L76 70M52.4 83.2L46 92M63.6 83.2L70 92M58 66V57" stroke="#b45309" stroke-width="2.2" stroke-linecap="round" fill="none"/><ellipse cx="49" cy="70" rx="7" ry="4" fill="#fff" opacity=".5" transform="rotate(-35 49 70)"/></g>
                     <g class="rec-art-side r"><rect x="236" y="54" width="46" height="56" rx="9" fill="#0f172a" stroke="url(#recSilver)" stroke-width="3"/><path d="M243 66h32M243 76h32M243 86h22" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/><circle cx="270" cy="98" r="6" fill="#fbbf24"/></g>
                     <g class="rec-art-cup">
                         <path d="M128 38c-26-2-30 28-6 34M192 38c26-2 30 28 6 34" fill="none" stroke="url(#recGold)" stroke-width="6" stroke-linecap="round"/>
@@ -935,6 +931,7 @@
                 </div>
                 <div id="records-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
             </div>
+            <div class="rec-top-wrap"><button type="button" class="rec-top-fab" id="rec-top-fab" aria-label="Back to top" onclick="recordsScrollTop()"><i class="fas fa-arrow-up"></i></button></div>
         </div>
     </div>
     <!-- ============ CARDS (Home → Cards): a team sees only its own hand ============ -->
