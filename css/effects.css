@@ -1730,3 +1730,33 @@ body.perf-no-anim #season-subnav .nav-pill{ transition:none !important; }
 .back-to-top-fab:active{ transform:scale(.92); }
 .season-fab.back-to-top-fab.season-fab-faded{ transform:translateY(14px) scale(.8); }
 body.perf-no-anim .rec-top-fab{ transition:none; }
+
+
+/* =====================================================
+   v90 — white sweep effects only with Liquid Glass ON; card zoom animation
+   (Liquid Glass off = body.perf-no-blur, Lite = body.lite-mode / html.lite-mode)
+   ===================================================== */
+body.perf-no-blur .team-modal .team-panel-section::after,
+body.perf-no-blur #team-panel-overlay .profile-header-bg[data-team]::after,
+body.perf-no-blur .rec-card::after,
+body.perf-no-blur .people-modal .people-row::after,
+body.perf-no-blur .magazine-records-link::after,
+body.lite-mode .team-modal .team-panel-section::after,
+body.lite-mode #team-panel-overlay .profile-header-bg[data-team]::after,
+body.lite-mode .rec-card::after,
+body.lite-mode .people-modal .people-row::after,
+body.lite-mode .magazine-records-link::after,
+html.lite-mode .team-modal .team-panel-section::after,
+html.lite-mode #team-panel-overlay .profile-header-bg[data-team]::after,
+html.lite-mode .rec-card::after,
+html.lite-mode .people-modal .people-row::after,
+html.lite-mode .magazine-records-link::after{ display:none !important; animation:none !important; }
+
+/* Cards → tap a card: it flies out of its place and the page behind fades in (js/cards.js → cardsZoom) */
+.cards-zoom.open{ animation:czFade .28s ease both; }
+.cards-zoom.open .cz-name, .cards-zoom.open .cz-desc{ animation:czUp .45s cubic-bezier(.22,1,.36,1) .18s both; }
+@keyframes czFade{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes czUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+.cards-zoom.closing{ animation:none; opacity:0; transition:opacity .28s ease; }
+.cards-zoom.closing .cz-name, .cards-zoom.closing .cz-desc{ animation:none; opacity:0; transition:opacity .15s ease; }
+body.perf-no-anim .cards-zoom, body.perf-no-anim .cards-zoom .cz-name, body.perf-no-anim .cards-zoom .cz-desc{ animation:none !important; transition:none; }

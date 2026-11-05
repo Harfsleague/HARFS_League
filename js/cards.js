@@ -233,17 +233,50 @@ async function cardsDiscardAsk(team, uid){
     const ok = await showConfirm({icon:'🗑️',title:'Discard this card?',message:`“${def?def.name:h.card}” is removed from your hand for good.`,okLabel:'Discard',okColor:'red'});
     if(ok) cardsAct(team,'discard',uid);
 }
+// The card that was tapped last (recorded before its own onclick runs) — the zoom grows out of it and shrinks back into it.
+let cardsZoomSrc = null;
+document.addEventListener('click', e=>{
+    const w = e.target.closest && e.target.closest('.cards-info-cell, .cd-img-wrap, .cb-item');
+    cardsZoomSrc = w ? (w.querySelector('img') || w) : null;
+}, true);
+function cardsZoomMotionOk(){
+    return !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function cardsZoomFlip(img, from, toOpen){
+    if(!img.animate || !from) return null;
+    const to = img.getBoundingClientRect(); if(!to.width || !from.width) return null;
+    const dx = (from.left+from.width/2)-(to.left+to.width/2), dy = (from.top+from.height/2)-(to.top+to.height/2), sc = from.width/to.width;
+    const small = { transform:`translate(${dx}px,${dy}px) scale(${sc})`, borderRadius:`${Math.round(20/sc)}px` }, big = { transform:'none', borderRadius:'20px' };
+    return img.animate(toOpen ? [small,big] : [big,small], { duration: toOpen ? 460 : 300, easing: toOpen ? 'cubic-bezier(.22,1,.36,1)' : 'cubic-bezier(.4,0,.8,.4)', fill:'both' });
+}
 function cardsZoom(cardId, withTag){
     const def = cardDef(cardId); if(!def) return;
     const box = document.getElementById('cards-zoom'); if(!box) return;
-    box.querySelector('img').src = cardImgUrl(def);
+    clearTimeout(box._closeT); box.classList.remove('closing');
+    const img = box.querySelector('img');
+    img.getAnimations && img.getAnimations().forEach(a=>a.cancel());
+    img.src = cardImgUrl(def);
     box.querySelector('.cz-name').textContent = def.name;
     const dz = box.querySelector('.cz-desc');
     dz.style.whiteSpace = 'pre-line';
     dz.textContent = [def.desc || '', withTag ? cardsInfoTag(def) : ''].filter(Boolean).join('\n');
+    const srcEl = (cardsZoomSrc && cardsZoomSrc.isConnected) ? cardsZoomSrc : null;
+    box._src = srcEl;
     box.classList.add('open');
+    if(srcEl && cardsZoomMotionOk()) cardsZoomFlip(img, srcEl.getBoundingClientRect(), true);
 }
-function cardsZoomClose(){ const b=document.getElementById('cards-zoom'); if(b) b.classList.remove('open'); }
+function cardsZoomClose(){
+    const box = document.getElementById('cards-zoom'); if(!box || !box.classList.contains('open')) return;
+    const img = box.querySelector('img'), src = box._src && box._src.isConnected ? box._src : null;
+    if(!cardsZoomMotionOk()){ box.classList.remove('open'); return; }
+    box.classList.add('closing');
+    if(src) cardsZoomFlip(img, src.getBoundingClientRect(), false);
+    clearTimeout(box._closeT);
+    box._closeT = setTimeout(()=>{
+        box.classList.remove('open','closing');
+        img.getAnimations && img.getAnimations().forEach(a=>a.cancel());
+    }, 300);
+}
 function renderCardsSheet(){
     const box = document.getElementById('cards-body'); if(!box) return;
     if(cardsInfoOpen){ renderCardsInfo(); return; }
