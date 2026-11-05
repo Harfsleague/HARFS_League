@@ -1701,9 +1701,8 @@ body.perf-no-anim #season-subnav .nav-pill{ transition:none !important; }
    v89 — team-panel scroll fix, Records sheet scrolls as a whole, arrow-only "back to top"
    ===================================================== */
 /* team panel: sections used to be squeezed (overflow:hidden + flex shrink) instead of scrolling */
-.team-modal .team-panel-scroll{ overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.25) transparent; }
-.team-modal .team-panel-scroll::-webkit-scrollbar{ display:block; width:4px; }
-.team-modal .team-panel-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.25); border-radius:4px; }
+.team-modal .team-panel-scroll{ overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:none; -ms-overflow-style:none; }
+.team-modal .team-panel-scroll::-webkit-scrollbar{ display:none; width:0; height:0; }
 .team-modal .team-panel-section{ flex:none; }
 
 /* Records: the banner + title scroll away with the cards; the All-time | Latest season switch stays on top */
@@ -1719,16 +1718,20 @@ body.perf-no-anim #season-subnav .nav-pill{ transition:none !important; }
 .rec-top-wrap{ position:sticky; bottom:14px; height:0; z-index:40; pointer-events:none; }
 .rec-top-fab, .back-to-top-fab{ width:42px; height:42px; padding:0; border-radius:50%; justify-content:center; align-items:center; gap:0; }
 .rec-top-fab{
-    position:absolute; right:14px; bottom:0; display:flex; border:1px solid rgba(255,255,255,0.2); cursor:pointer; color:#fff; pointer-events:auto;
+    position:absolute; left:calc(50% - 21px); bottom:0; display:flex; border:1px solid rgba(255,255,255,0.2); cursor:pointer; color:#fff; pointer-events:auto;
     background:radial-gradient(110% 80% at 50% 0%,rgba(255,255,255,0.2),transparent 60%), color-mix(in srgb,var(--primary) 45%,rgba(4,8,18,0.9));
     box-shadow:0 8px 22px rgba(0,0,0,0.55), 0 0 14px var(--primary-glow);
     opacity:0; transform:translateY(12px) scale(.8); pointer-events:none; transition:opacity .25s ease, transform .35s cubic-bezier(.34,1.4,.5,1);
 }
 .rec-top-fab.show{ opacity:1; transform:none; pointer-events:auto; }
 .rec-top-fab:active{ transform:scale(.92); }
-.back-to-top-fab{ left:auto; right:16px; transform:none; }
-.back-to-top-fab:active{ transform:scale(.92); }
-.season-fab.back-to-top-fab.season-fab-faded{ transform:translateY(14px) scale(.8); }
+.back-to-top-fab{ left:50%; right:auto; transform:translateX(-50%); }
+.back-to-top-fab:active{ transform:translateX(-50%) scale(.92); }
+.season-fab.back-to-top-fab.season-fab-faded{ transform:translateX(-50%) translateY(14px) scale(.8); }
+/* Cup tab: the centre is taken by the Super Cup game bubble, so the arrow sits bottom-left there */
+body[data-season-tab="cup"] .season-fab.back-to-top-fab{ left:16px; transform:none; }
+body[data-season-tab="cup"] .season-fab.back-to-top-fab:active{ transform:scale(.92); }
+body[data-season-tab="cup"] .season-fab.back-to-top-fab.season-fab-faded{ transform:translateY(14px) scale(.8); }
 body.perf-no-anim .rec-top-fab{ transition:none; }
 
 
