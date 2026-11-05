@@ -31,24 +31,43 @@ function magCommentsMount(issue){
     <section class="magazine-page mag-comments" id="mag-comments">
         <h2 class="magazine-section-title"><i class="fas fa-comments"></i> نظرات <span class="mag-c-count" id="mag-c-count"></span></h2>
         <div id="mag-c-list" class="mag-c-list"><div class="mag-c-empty"><span class="spinner"></span></div></div>
-        <div class="mag-c-composer">
-            <div class="mag-c-chip" id="mag-c-replybar" hidden><span>پاسخ به <b id="mag-c-replyname"></b></span><button type="button" onclick="magCancelReply()" aria-label="لغو"><i class="fas fa-xmark"></i></button></div>
-            <div class="mag-c-chip mag-c-gifchip" id="mag-c-gifprev" hidden><img alt="GIF"><button type="button" onclick="magClearGif()" aria-label="حذف GIF"><i class="fas fa-xmark"></i></button></div>
-            <div class="mag-c-row">
-                <button type="button" class="mag-c-gifbtn" onclick="magToggleGifPicker()" aria-label="GIF">GIF</button>
-                <textarea id="mag-c-input" rows="1" maxlength="${MAG_COMMENT_MAX}" placeholder="نظرت رو بنویس…" oninput="magAutoGrow(this)"></textarea>
-                <button type="button" class="mag-c-send" id="mag-c-send" onclick="magSendComment()" aria-label="ارسال"><i class="fas fa-paper-plane"></i></button>
+        <div class="mgc" id="mgc">
+            <div class="mgc-chip" id="mag-c-replybar"><span>پاسخ به <b id="mag-c-replyname"></b></span><button type="button" onclick="magCancelReply()" aria-label="لغو"><i class="fas fa-xmark"></i></button></div>
+            <div class="mgc-chip mgc-gifchip" id="mag-c-gifprev"><img alt="GIF"><button type="button" onclick="magClearGif()" aria-label="حذف GIF"><i class="fas fa-xmark"></i></button></div>
+            <div class="mgc-bar">
+                <button type="button" class="mgc-btn mgc-gifbtn" onclick="magToggleGifPicker()" aria-label="GIF">GIF</button>
+                <textarea id="mag-c-input" class="mgc-input" rows="1" maxlength="${MAG_COMMENT_MAX}" dir="auto" enterkeyhint="send" autocomplete="off" aria-label="نظر" placeholder="نظرت رو بنویس…"></textarea>
+                <button type="button" class="mgc-btn mgc-send" id="mag-c-send" onclick="magSendComment()" aria-label="ارسال" disabled><i class="fas fa-paper-plane"></i></button>
             </div>
-            <div class="mag-gif-picker" id="mag-gif-picker" hidden>
+            <div class="mgc-foot"><span id="mgc-count"></span></div>
+            <div class="mgc-picker mag-gif-picker" id="mag-gif-picker">
                 <label class="mag-gif-upload"><i class="fas fa-photo-film"></i> آپلود GIF یا ویدئو<input type="file" accept="image/gif,image/webp,image/png,image/jpeg,video/*" onchange="magUploadMedia(event)" hidden></label>
                 <p class="mag-gif-note">ویدئو (حداکثر ۱۰ ثانیهٔ اول) به‌صورت خودکار و با کیفیت به GIF تبدیل می‌شود.</p>
-                <div class="mag-gif-status" id="mag-gif-status" hidden><div class="mag-gif-bar"><span id="mag-gif-bar"></span></div><span id="mag-gif-msg"></span></div>
+                <div class="mag-gif-status" id="mag-gif-status"><div class="mag-gif-bar"><span id="mag-gif-bar"></span></div><span id="mag-gif-msg"></span></div>
             </div>
         </div>
     </section>`);
+    magComposerBind();
     magCommentsLoad();
 }
-function magAutoGrow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+// ---- composer (rebuilt): 16px field (no zoom-on-focus on phones), grows with the text, Send is only enabled when there is something to send ----
+function magAutoGrow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,132)+'px'; }
+function magComposerChanged(){
+    const inp = document.getElementById('mag-c-input'); if(!inp) return;
+    magAutoGrow(inp);
+    const n = inp.value.length;
+    const cnt = document.getElementById('mgc-count');
+    if(cnt){ cnt.textContent = n ? `${n.toLocaleString('fa-IR')} / ${MAG_COMMENT_MAX.toLocaleString('fa-IR')}` : ''; cnt.classList.toggle('near', n > MAG_COMMENT_MAX - 60); }
+    const btn = document.getElementById('mag-c-send');
+    if(btn) btn.disabled = magCSending || !(inp.value.trim() || magCGif);
+}
+function magComposerBind(){
+    const inp = document.getElementById('mag-c-input'); if(!inp) return;
+    inp.addEventListener('input', magComposerChanged);
+    inp.addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); magSendComment(); } });
+    magComposerChanged();
+}
+function magShow(id, on){ const el = document.getElementById(id); if(el) el.classList.toggle('show', !!on); }
 
 // ---------------- load + render ----------------
 async function magCommentsLoad(){
@@ -107,12 +126,12 @@ function harfsAuthImg(img, url){
 function magReplyTo(id){
     const c = magCList.find(x=>x.id===id); if(!c) return;
     magCReplyTo = c.replyTo || c.id;           // threads are one level deep
-    const bar = document.getElementById('mag-c-replybar'); const nm = document.getElementById('mag-c-replyname');
+    const nm = document.getElementById('mag-c-replyname');
     if(nm) nm.textContent = TEAM_DISPLAY_NAMES[c.team] || c.team;
-    if(bar) bar.hidden = false;
-    const inp = document.getElementById('mag-c-input'); if(inp){ inp.scrollIntoView({block:'center',behavior:'smooth'}); setTimeout(()=>inp.focus(),250); }
+    magShow('mag-c-replybar', true);
+    const inp = document.getElementById('mag-c-input'); if(inp){ inp.scrollIntoView({block:'center',behavior:'smooth'}); setTimeout(()=>inp.focus({preventScroll:true}),250); }
 }
-function magCancelReply(){ magCReplyTo = null; const bar=document.getElementById('mag-c-replybar'); if(bar) bar.hidden = true; }
+function magCancelReply(){ magCReplyTo = null; magShow('mag-c-replybar', false); }
 async function magSendComment(){
     if(magCSending) return;
     if(!loggedInTeam){ showToast('اول وارد شو','error',2200); return; }
@@ -120,14 +139,15 @@ async function magSendComment(){
     const text = inp.value.trim();
     if(!text && !magCGif){ showToast('یه متن بنویس یا GIF اضافه کن','error',2000); return; }
     magCSending = true;
-    const btn = document.getElementById('mag-c-send'); if(btn) btn.disabled = true;
+    const btn = document.getElementById('mag-c-send'); if(btn){ btn.disabled = true; btn.classList.add('busy'); }
     try{
         await magApi('/comments','POST',{ issue:magCIssue, text, gif:magCGif||undefined, replyTo:magCReplyTo||undefined });
-        inp.value=''; magAutoGrow(inp); magCancelReply(); magClearGif(); magCloseGifPicker();
+        inp.value=''; magCancelReply(); magClearGif(); magCloseGifPicker();
         await magCommentsLoad();
         haptic([8]);
     }catch(e){ showToast(e.message||'ارسال نشد','error',3200); }
-    magCSending = false; if(btn) btn.disabled = false;
+    magCSending = false; if(btn) btn.classList.remove('busy');
+    magComposerChanged();
 }
 async function magDeleteComment(id){
     const ok = await showConfirm({icon:'🗑️',title:'این نظر حذف شود؟',message:'قابل بازگشت نیست.',okLabel:'حذف',okColor:'red'});
@@ -140,19 +160,19 @@ async function magDeleteComment(id){
 function magSetGif(url){
     magCGif = { url };
     const box = document.getElementById('mag-c-gifprev'); if(!box) return;
-    harfsAuthImg(box.querySelector('img'), url); box.hidden = false;
-    magCloseGifPicker();
+    harfsAuthImg(box.querySelector('img'), url); magShow('mag-c-gifprev', true);
+    magCloseGifPicker(); magComposerChanged();
 }
-function magClearGif(){ magCGif = null; const box=document.getElementById('mag-c-gifprev'); if(box){ box.hidden = true; box.querySelector('img').removeAttribute('src'); } }
-function magCloseGifPicker(){ const p=document.getElementById('mag-gif-picker'); if(p) p.hidden = true; }
+function magClearGif(){ magCGif = null; const box=document.getElementById('mag-c-gifprev'); if(box){ magShow('mag-c-gifprev', false); box.querySelector('img').removeAttribute('src'); } magComposerChanged(); }
+function magCloseGifPicker(){ magShow('mag-gif-picker', false); }
 function magToggleGifPicker(){
     const p = document.getElementById('mag-gif-picker'); if(!p) return;
-    p.hidden = !p.hidden;
+    p.classList.toggle('show');
 }
 function magGifStatus(frac, msg){
     const box = document.getElementById('mag-gif-status'); if(!box) return;
-    if(frac===null){ box.hidden = true; return; }
-    box.hidden = false;
+    box.classList.toggle('show', frac!==null);
+    if(frac===null) return;
     document.getElementById('mag-gif-bar').style.width = Math.round(frac*100)+'%';
     document.getElementById('mag-gif-msg').textContent = msg || '';
 }

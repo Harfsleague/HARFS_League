@@ -12,7 +12,7 @@ function recordsLeaders(list){          // list: [{team,value}] → every team s
     const best = Math.max(0, ...list.map(x=>x.value));
     return { best, teams: best>0 ? list.filter(x=>x.value===best).map(x=>x.team) : [] };
 }
-function recordsCompute(){
+function recordsComputeAll(){
     const stats = computeAllTimeStats();
     const trophies = computeTrophyCounts();
     const logs = [];
@@ -80,6 +80,80 @@ function recordsCompute(){
     ];
     return { cards, biggest, highest };
 }
+// ---- Latest season only: the live season while it has games, otherwise the most recent archived one ----
+function recordsSeasonSource(){
+    if((matchHistory||[]).length){
+        const rows = {}; TEAM_NAMES.forEach(t=>rows[t] = (leagueData && leagueData[t]) || {});
+        return { label:'This season', rows, logs:matchHistory };
+    }
+    const last = [...(archivedSeasons||[])].filter(x=>x && x.table && x.table.length).sort((a,b)=>(b.seasonId||0)-(a.seasonId||0))[0];
+    if(!last) return null;
+    const rows = {}; last.table.forEach(r=>{ rows[r.name] = r; });
+    return { label:`Season ${last.seasonId}`, rows, logs:last.history || [] };
+}
+function recordsComputeSeason(){
+    const src = recordsSeasonSource(); if(!src) return { cards:[], biggest:null, highest:null, label:'' };
+    const g = (t,k)=>Number((src.rows[t] && src.rows[t][k]) || 0);
+    const logs = src.logs.filter(m=>recordsParseScore(m) && TEAM_NAMES.includes(m.home) && TEAM_NAMES.includes(m.away));
+    const clean = {}, winRun = {}, unbRun = {}; TEAM_NAMES.forEach(t=>{ clean[t]=0; winRun[t]={cur:0,best:0}; unbRun[t]={cur:0,best:0}; });
+    let biggest = null, highest = null;
+    [...logs].sort((x,y)=>String(x.timestamp||'').localeCompare(String(y.timestamp||''))).forEach(m=>{
+        const sc = recordsParseScore(m);
+        if(sc.b===0) clean[m.home]++;
+        if(sc.a===0) clean[m.away]++;
+        [[m.home,sc.a,sc.b],[m.away,sc.b,sc.a]].forEach(([t,gf,ga])=>{
+            winRun[t].cur = gf>ga ? winRun[t].cur+1 : 0;  winRun[t].best = Math.max(winRun[t].best, winRun[t].cur);
+            unbRun[t].cur = gf>=ga ? unbRun[t].cur+1 : 0; unbRun[t].best = Math.max(unbRun[t].best, unbRun[t].cur);
+        });
+        const margin = Math.abs(sc.a-sc.b), total = sc.a+sc.b;
+        if(margin>0 && (!biggest || margin>biggest.margin || (margin===biggest.margin && total>biggest.total))) biggest = { m, sc, margin, total };
+        if(!highest || total>highest.total) highest = { m, sc, margin, total };
+    });
+    // weeks spent in first place (needs round numbers: the live season has them)
+    let top = null;
+    if(typeof magComputeRankHistory==='function'){
+        const h = magComputeRankHistory(logs);
+        if(h){ top = {}; TEAM_NAMES.forEach(t=>{ top[t] = h.ranks[t].filter(r=>r===1).length; }); }
+    }
+    const bars = fn=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
+    const n = logs.length;
+    const cards = [
+        { id:'goals',   icon:'⚽', title:'Most Goals Scored',     note:src.label,                         list:bars(t=>g(t,'GF')), unit:'goals' },
+        { id:'conc',    icon:'🧱', title:'Most Goals Conceded',   note:`${src.label} — the leakiest defence`, list:bars(t=>g(t,'GA')), unit:'goals' },
+        { id:'clean',   icon:'🧤', title:'Most Clean Sheets',     note:`${src.label} · ${n} games on record`, list:bars(t=>clean[t]), unit:'clean sheets' },
+        { id:'wins',    icon:'🔥', title:'Most Wins',             note:src.label,                         list:bars(t=>g(t,'W')), unit:'wins' },
+        { id:'pts',     icon:'⭐', title:'Most Points',           note:src.label,                         list:bars(t=>g(t,'Pts')), unit:'points' },
+        ...(top ? [{ id:'top', icon:'👑', title:'Most Weeks on Top', note:`${src.label} — matchweeks in first place`, list:bars(t=>top[t]), unit:'weeks' }] : []),
+        { id:'wrate',   icon:'📈', title:'Best Win Rate',         note:`${src.label} (3+ games played)`,   list:bars(t=>g(t,'P')>=3 ? Math.round(g(t,'W')/g(t,'P')*100) : 0), unit:'of games won', fmt:v=>v+'%',
+          extra:t=>`${g(t,'W')} wins from ${g(t,'P')} games` },
+        { id:'gd',      icon:'⚖️', title:'Best Goal Difference',  note:`${src.label}`,                     list:bars(t=>g(t,'GF')-g(t,'GA')), unit:'goal diff', fmt:v=>(v>0?'+':'')+v,
+          extra:t=>`${g(t,'GF')} for · ${g(t,'GA')} against` },
+        { id:'wstreak', icon:'🚀', title:'Longest Winning Streak', note:`${src.label} — wins in a row`,   list:bars(t=>winRun[t].best), unit:'in a row' },
+        { id:'unb',     icon:'🛡️', title:'Longest Unbeaten Run',  note:`${src.label} — games without a defeat`, list:bars(t=>unbRun[t].best), unit:'games' },
+        { id:'defeats', icon:'💔', title:'Most Defeats',          note:`${src.label} — the hard-luck record`, list:bars(t=>g(t,'L')), unit:'defeats' },
+        { id:'played',  icon:'🏟️', title:'Most Games Played',     note:src.label,                         list:bars(t=>g(t,'P')), unit:'games' },
+    ];
+    return { cards, biggest, highest, label:src.label };
+}
+let recordsScope = 'all';
+function recordsCompute(){ return recordsScope==='season' ? recordsComputeSeason() : recordsComputeAll(); }
+function setRecordsScope(sc){
+    recordsScope = sc==='season' ? 'season' : 'all';
+    haptic([6]);
+    recordsSyncScopeUI();
+    const box = document.getElementById('records-list');
+    if(box && box.animate) box.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});
+    recordsRender();
+}
+function recordsSyncScopeUI(){
+    const wrap = document.getElementById('rec-scope'); if(!wrap) return;
+    const btns = [...wrap.querySelectorAll('button')];
+    btns.forEach(b=>b.classList.toggle('on', b.dataset.scope===recordsScope));
+    const on = btns.find(b=>b.classList.contains('on')), pill = document.getElementById('rec-scope-pill');
+    if(on && pill){ pill.style.width = on.offsetWidth+'px'; pill.style.transform = `translateX(${on.offsetLeft}px)`; }
+    const sub = document.getElementById('records-sub');
+    if(sub){ const lab = recordsScope==='season' ? (recordsSeasonSource()||{}).label : ''; sub.textContent = recordsScope==='season' ? (lab ? `${lab} — only this season's games` : 'No season data yet') : 'The best (and worst) of every team'; }
+}
 function recordsTeamLabel(t){ return (typeof TEAM_DISPLAY_NAMES!=='undefined' && TEAM_DISPLAY_NAMES[t]) || t; }
 function recordsLogo(t, cls){ return `<img class="${cls||''}" src="${teamLogoUrl(t)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">`; }
 
@@ -87,6 +161,7 @@ function recordsRender(){
     const box = document.getElementById('records-list'); if(!box) return;
     const { cards, biggest, highest } = recordsCompute();
     let i = 0;
+    if(!cards.length){ box.innerHTML = '<div class="rec-empty" style="text-align:center;padding:24px 0;">No games on record for this season yet</div>'; return; }
     const rows = cards.map(c=>{
         const L = recordsLeaders(c.list);
         const max = Math.max(1, L.best);
@@ -145,5 +220,6 @@ function openRecordsSheet(){
     document.body.classList.add('cards-open');          // same as Cards: the HARFS capsule fades away while the sheet is open and returns when it closes
     recordsRender();
     sh.classList.remove('open'); void sh.offsetWidth; sh.classList.add('open');
+    requestAnimationFrame(recordsSyncScopeUI);
 }
 function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); document.body.classList.remove('cards-open'); }

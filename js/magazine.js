@@ -284,8 +284,8 @@ function renderCupSection(issue) {
 // Newer issues carry `rankHistory` / `rankChanges` (computed by scripts/generate-magazine.mjs). The newest issue of an older
 // archive does not, so for that one we work it out from the live match list (same maths: points, then goal difference).
 // ============================================================
-const MAG_TEAM_COLORS = { Bayern:'#dc2626', HOSI:'#2563eb', Yellow:'#166534', Sezar:'#0a0a0a' };
-const MAG_LINE_HALO = { Sezar:'#e8eefc', Yellow:'#86efac' };   // Azar red · Mess blue · Nifa dark green · FC Gilas black
+const MAG_TEAM_COLORS = { Bayern:'#ef4444', HOSI:'#3b82f6', Yellow:'#facc15', Sezar:'#22c55e' };   // Azar red · Mess blue · Nifa yellow · FC Gilas green
+const MAG_LINE_HALO = {};
 function magFaNum(n) { return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); }
 function magComputeRankHistory(matches) {
     const played = (matches || []).filter(m => Number.isFinite(+m.round) && +m.round > 0 && /^\d+-\d+$/.test(String(m.score || '')));
@@ -470,7 +470,7 @@ function renderMagazine(issue) {
     const standingsRows = sortedTable.map((t, i) => `
             <tr>
                 <td class="mag-rank-cell"><span class="mag-rank-num">${i + 1}</span>${magRankArrow(deltas ? deltas[t.name] : null)}</td>
-                <td>${teamLabel(t.name)}</td>
+                <td><span class="mag-team-cell"><img src="${teamLogoUrl(t.name)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">${teamLabel(t.name)}</span></td>
                 <td>${t.P ?? '—'}</td>
                 <td>${t.W ?? '—'}</td>
                 <td>${t.D ?? '—'}</td>

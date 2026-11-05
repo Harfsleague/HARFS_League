@@ -258,3 +258,25 @@ function fxExpand(overlay, panel, src, stagger){
     const done = ()=>overlay.classList.remove('fx-expand');
     anim.onfinish = done; anim.oncancel = done;
 }
+
+// ---- Bottom bar: ONE highlight that slides to the tab you open (instead of each tab lighting up on its own) ----
+(function navPillInit(){
+    const nav = document.getElementById('bottom-navigation'), pill = document.getElementById('nav-pill');
+    if(!nav || !pill) return;
+    let first = true;
+    function place(){
+        const act = nav.querySelector('.nav-item.active');
+        if(!act || !act.offsetWidth){ pill.style.opacity = '0'; return; }
+        if(first){ pill.style.transition = 'none'; }
+        pill.style.width = act.offsetWidth + 'px';
+        pill.style.height = act.offsetHeight + 'px';
+        pill.style.transform = `translate(${act.offsetLeft}px, ${act.offsetTop}px)`;
+        pill.style.opacity = '1';
+        if(first){ void pill.offsetWidth; pill.style.transition = ''; first = false; }
+    }
+    new MutationObserver(place).observe(nav, { attributes:true, attributeFilter:['class','style'], subtree:true });
+    if(window.ResizeObserver) new ResizeObserver(place).observe(nav);
+    window.addEventListener('resize', place);
+    window.addEventListener('load', place);
+    requestAnimationFrame(()=>requestAnimationFrame(place));
+})();

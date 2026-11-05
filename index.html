@@ -222,6 +222,7 @@
 <div class="app-container" id="app-container">
 
     <nav class="bottom-nav" id="bottom-navigation">
+        <span class="nav-pill" id="nav-pill" aria-hidden="true"></span>
         <div class="nav-item" id="nav-main">
             <i class="fas fa-house"></i><span>Home</span>
         </div>
@@ -900,10 +901,37 @@
     <div id="records-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeRecordsSheet()">
         <div class="team-picker-panel hero-modal records-modal">
             <div class="modal-x-close" onclick="closeRecordsSheet()"><i class="fas fa-times"></i></div>
-            <div class="rec-banner"><i class="fas fa-medal"></i><span class="rec-spark s1"></span><span class="rec-spark s2"></span><span class="rec-spark s3"></span></div>
+            <div class="rec-banner rec-banner-big">
+                <span class="rec-rays"></span>
+                <svg class="rec-art" viewBox="0 0 320 150" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="recGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".55" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+                        <linearGradient id="recSilver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#94a3b8"/></linearGradient>
+                    </defs>
+                    <g class="rec-art-side l"><circle cx="58" cy="82" r="30" fill="#0f172a" stroke="url(#recSilver)" stroke-width="3"/><path d="M58 62l8.5 6.2-3.2 10H52.7l-3.2-10z" fill="#e2e8f0"/><path d="M49.5 68.2L40 70.5M66.5 68.2L76 70.5M52.7 78.2L46 86M63.3 78.2L70 86M58 62V54" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" fill="none"/></g>
+                    <g class="rec-art-side r"><rect x="236" y="54" width="46" height="56" rx="9" fill="#0f172a" stroke="url(#recSilver)" stroke-width="3"/><path d="M243 66h32M243 76h32M243 86h22" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/><circle cx="270" cy="98" r="6" fill="#fbbf24"/></g>
+                    <g class="rec-art-cup">
+                        <path d="M128 38c-26-2-30 28-6 34M192 38c26-2 30 28 6 34" fill="none" stroke="url(#recGold)" stroke-width="6" stroke-linecap="round"/>
+                        <path d="M128 30h64v22c0 22-14 38-32 42-18-4-32-20-32-42z" fill="url(#recGold)"/>
+                        <path d="M160 30h32v22c0 22-14 38-32 42z" fill="#b45309" opacity=".35"/>
+                        <rect x="152" y="94" width="16" height="16" fill="url(#recGold)"/>
+                        <rect x="136" y="108" width="48" height="10" rx="4" fill="#b45309"/>
+                        <rect x="130" y="116" width="60" height="9" rx="4" fill="url(#recGold)"/>
+                        <path d="M160 44l5.2 10.6 11.6 1.7-8.4 8.2 2 11.6-10.4-5.5-10.4 5.5 2-11.6-8.4-8.2 11.6-1.7z" fill="#fff8d6"/>
+                    </g>
+                    <g class="rec-art-stars" fill="#fde68a"><path d="M20 28l3 6 6.5 1-4.7 4.6 1.1 6.4-5.9-3.1-5.9 3.1 1.1-6.4-4.7-4.6 6.5-1z"/><path d="M296 40l2.4 4.8 5.2.8-3.8 3.7.9 5.2-4.7-2.5-4.7 2.5.9-5.2-3.8-3.7 5.2-.8z"/><path d="M286 118l2 4 4.4.7-3.2 3.1.8 4.4-4-2.1-4 2.1.8-4.4-3.2-3.1 4.4-.7z"/></g>
+                </svg>
+                <span class="rec-confetti c1"></span><span class="rec-confetti c2"></span><span class="rec-confetti c3"></span><span class="rec-confetti c4"></span><span class="rec-confetti c5"></span><span class="rec-confetti c6"></span><span class="rec-confetti c7"></span><span class="rec-confetti c8"></span>
+                <span class="rec-spark s1"></span><span class="rec-spark s2"></span><span class="rec-spark s3"></span>
+            </div>
             <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
                 <h4 class="text-xl font-black text-white mb-0.5" style="text-align:center;">League Records</h4>
-                <div style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">The best (and worst) of every team</div>
+                <div id="records-sub" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:8px;">The best (and worst) of every team</div>
+                <div class="rec-scope" id="rec-scope" role="tablist">
+                    <span class="rec-scope-pill" id="rec-scope-pill"></span>
+                    <button type="button" class="on" data-scope="all" role="tab" onclick="setRecordsScope('all')">All-time</button>
+                    <button type="button" data-scope="season" role="tab" onclick="setRecordsScope('season')">Latest season</button>
+                </div>
                 <div id="records-list" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
             </div>
         </div>
@@ -954,9 +982,7 @@
     <div class="magazine-inner">
         <div class="magazine-panel-header">
             <div class="mph-brand">
-                <div class="mph-kicker"><i></i><span>OFFICIAL</span><i></i></div>
-                <div class="mph-title">HARFS LEAGUE</div>
-                <div class="mph-sub"><i></i><span>WEEKLY MAGAZINE</span><i></i></div>
+                <div class="mph-title">WEEKLY MAGAZINE</div>
             </div>
             <div class="mph-bottom">
                 <button class="magazine-panel-back-btn mph-back" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-right"></i></button>

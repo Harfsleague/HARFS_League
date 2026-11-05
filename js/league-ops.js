@@ -71,6 +71,8 @@ function openTeamPanel(team){
     if(!mainLeagueData[team]) return;
     teamPanelCurrent = team;
     haptic([8]);
+    const coverBg = document.querySelector('#team-panel-overlay .profile-header-bg');
+    if(coverBg) coverBg.dataset.team = team;           // team colours + texture for the cover (css/effects.css)
     ensureWalletFields(team);
     const w = mainLeagueData[team];
     const trophies = computeTrophyCounts()[team] || {gold:0,silver:0,bronze:0,leagueGold:0,cup:0,superCup:0};
