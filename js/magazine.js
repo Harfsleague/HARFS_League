@@ -1049,3 +1049,22 @@ async function magTileInit(){
     }catch(e){}
 }
 setTimeout(magTileInit, 700);
+
+
+// ---- Reading progress: a blue bar in the header fills from the right as you scroll down the issue (no text, no number) ----
+(function magazineReadingProgress(){
+    const screen = document.getElementById('magazine-screen'), fill = document.getElementById('mag-progress-fill');
+    if(!screen || !fill) return;
+    function update(){
+        const max = screen.scrollHeight - screen.clientHeight;
+        const p = max > 8 ? Math.min(1, Math.max(0, screen.scrollTop / max)) : 0;
+        fill.style.transform = `scaleX(${p})`;
+        fill.parentNode.classList.toggle('on', p > 0.002);
+    }
+    screen.addEventListener('scroll', update, { passive:true });
+    window.addEventListener('resize', update);
+    const inner = screen.querySelector('.magazine-inner');
+    if(window.ResizeObserver && inner) new ResizeObserver(update).observe(inner);   // issue loaded / switched → height changes
+    new MutationObserver(update).observe(screen, { attributes:true, attributeFilter:['class'] });   // screen opened again
+    update();
+})();
