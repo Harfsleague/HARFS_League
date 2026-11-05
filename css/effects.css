@@ -1768,25 +1768,6 @@ body.perf-no-anim .cards-zoom, body.perf-no-anim .cards-zoom .cz-name, body.perf
 /* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */
-/* Magazine reading progress: slim capsule above the bottom nav, same dark rim + glow as the HARFS bars */
-.mag-progress{
-    position:absolute; left:50%; bottom:92px; width:min(46%,200px); height:9px; margin-left:calc(min(46%,200px) / -2); z-index:99; padding:2px; box-sizing:border-box;
-    border-radius:9999px; overflow:hidden; pointer-events:none;
-    background:rgba(3,7,14,0.94);
-    border:1.5px solid color-mix(in srgb,var(--primary) 70%,rgba(255,255,255,0.5));
-    box-shadow:0 0 0 2px rgba(3,7,14,0.7), 0 6px 18px rgba(0,0,0,0.6), 0 0 14px color-mix(in srgb,var(--primary) 30%,transparent), inset 0 1px 0 rgba(255,255,255,0.14);
-    opacity:0; transform:translateY(10px); transition:opacity .3s ease, transform .4s cubic-bezier(.22,1.25,.36,1);
-}
-.mag-progress.on{ opacity:1; transform:none; }
-.mag-progress i{ display:block; width:100%; height:100%; border-radius:9999px; transform:scaleX(0); transform-origin:100% 50%;
-    background:radial-gradient(110% 80% at 50% 0%,rgba(255,255,255,0.35),rgba(255,255,255,0) 60%), linear-gradient(270deg,color-mix(in srgb,var(--primary) 70%,#7dd3fc),var(--primary));
-    box-shadow:0 0 10px var(--primary-glow); will-change:transform; }
-body.perf-no-anim .mag-progress{ transition:none; }
-
-
-/* =====================================================
-   v92 — Magazine reading-progress bar (blue, fills from the right)
-   ===================================================== */
 /* sticky strip at the very top of the Magazine screen (the header itself scrolls away, so the bar lives outside it) */
 .mag-progress-stick{ position:sticky; top:0; align-self:stretch; height:0; flex:none; z-index:60; pointer-events:none; }
 .mag-progress{ position:absolute; left:0; right:0; top:0; height:4px; background:rgba(255,255,255,0.06); overflow:hidden; opacity:0; transition:opacity .25s ease; }
