@@ -1529,25 +1529,25 @@ body.perf-no-blur #bottom-navigation .nav-item, body.lite-mode #bottom-navigatio
         repeating-linear-gradient(-45deg,rgba(255,255,255,0.045) 0 2px,transparent 2px 9px),
         linear-gradient(135deg,#02040b 0%,#071a45 60%,#0b2a6b 100%);
 }
-/* Azar (Bayern): light blue, red and white — lightning bolts */
+/* Azar (Bayern): dark red — dark blue and black lightning bolts */
 #team-panel-overlay .profile-header-bg[data-team="Bayern"]{
     background:
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='60' viewBox='0 0 46 60'><path d='M27 2 L9 33 H22 L16 58 L38 24 H25 Z' fill='white' fill-opacity='.42'/></svg>") 0 0/46px 60px,
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='60' viewBox='0 0 46 60'><path d='M27 2 L9 33 H22 L16 58 L38 24 H25 Z' fill='%23b91c1c' fill-opacity='.45'/></svg>") 23px 30px/46px 60px,
-        linear-gradient(112deg,#7dd3fc 0%,#38bdf8 36%,#ffffff 36.5%,#ffffff 44%,#ef4444 44.5%,#b91c1c 100%);
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='60' viewBox='0 0 46 60'><path d='M27 2 L9 33 H22 L16 58 L38 24 H25 Z' fill='%23000000' fill-opacity='.6'/></svg>") 0 0/46px 60px,
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='60' viewBox='0 0 46 60'><path d='M27 2 L9 33 H22 L16 58 L38 24 H25 Z' fill='%231e3a8a' fill-opacity='.9'/></svg>") 23px 30px/46px 60px,
+        linear-gradient(135deg,#450a0a 0%,#7f1d1d 50%,#991b1b 100%);
 }
-/* FC Gilas (Sezar): black and red — racing stripes */
+/* FC Gilas (Sezar): red with racing stripes (the black block on the left is gone) */
 #team-panel-overlay .profile-header-bg[data-team="Sezar"]{
     background:
         repeating-linear-gradient(115deg,rgba(0,0,0,0.38) 0 16px,transparent 16px 32px),
         radial-gradient(circle at 20% 30%,rgba(255,255,255,0.1) 0 2px,transparent 3px) 0 0/22px 22px,
-        linear-gradient(135deg,#050505 0%,#0a0a0a 38%,#991b1b 38.5%,#ef4444 100%);
+        linear-gradient(135deg,#991b1b 0%,#ef4444 100%);
 }
-/* Nmiya (Yellow): yellow, pink and white — polka dots */
+/* Nifa Mahmouz (Yellow): yellow, pink and yellow bananas */
 #team-panel-overlay .profile-header-bg[data-team="Yellow"]{
     background:
-        radial-gradient(circle at 14px 14px,rgba(255,255,255,0.8) 0 4.5px,transparent 5px) 0 0/30px 30px,
-        radial-gradient(circle at 14px 14px,rgba(244,114,182,0.7) 0 4px,transparent 4.5px) 15px 15px/30px 30px,
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'><g transform='rotate(-28 22 22)'><path d='M5 14 C6 27 19 35 36 25 L38 28 C20 43 2 33 1 14 Z' fill='%23facc15' stroke='%23a16207' stroke-width='1.5' stroke-linejoin='round'/><path d='M7 15 C9 26 20 31 33 25' fill='none' stroke='%23fef08a' stroke-width='1.6' stroke-linecap='round'/><path d='M1 14 L2 9 L6 9 L5 14 Z' fill='%2378350f'/><path d='M36 25 L38 28 L40 26 L38 24 Z' fill='%2378350f'/></g></svg>") 0 0/44px 44px,
+        radial-gradient(circle at 14px 14px,rgba(244,114,182,0.7) 0 4px,transparent 4.5px) 22px 22px/44px 44px,
         linear-gradient(135deg,#fde047 0%,#fbbf24 38%,#f9a8d4 72%,#fdf2f8 100%);
 }
 @media (prefers-reduced-motion:reduce){ #team-panel-overlay .profile-header-bg[data-team]::after{ animation:none; } }
@@ -1617,3 +1617,81 @@ html.lite-mode .rec-rays, html.lite-mode .rec-confetti{ display:none; }
 .mgc-picker.show{ display:block; animation:mgcIn .25s ease both; }
 .mag-gif-status{ display:none; }
 .mag-gif-status.show{ display:flex; }
+
+
+/* =====================================================
+   v88 — team panel in the new theme, Season League|Cup sliding highlight, HARFS hold glow
+   ===================================================== */
+/* HARFS capsule: hold 2 s → Federation */
+#hero-logo-container{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+#hero-logo-container.holding .hero-text{ animation:heroHold 2s linear forwards; }
+@keyframes heroHold{ 0%{ text-shadow:0 0 0 rgba(251,191,36,0); } 100%{ text-shadow:0 0 18px rgba(251,191,36,.95), 0 0 34px rgba(251,191,36,.55); color:#fff7d6; } }
+body.perf-no-anim #hero-logo-container.holding .hero-text{ animation:none; }
+
+/* Season League | Cup bar: one bubble that glides between the two tabs */
+#season-subnav{ position:absolute; }
+#season-subnav .nav-pill{
+    position:absolute; left:0; top:0; width:0; height:0; z-index:0; border-radius:9999px; pointer-events:none; opacity:0;
+    background:radial-gradient(110% 80% at 50% 0%,rgba(255,255,255,0.22) 0%,rgba(255,255,255,0.02) 55%), color-mix(in srgb,var(--primary) 34%,rgba(4,8,18,0.35));
+    border:1.5px solid color-mix(in srgb,var(--primary) 85%,#fff); border-top-color:rgba(255,255,255,0.45);
+    box-shadow:0 0 16px color-mix(in srgb,var(--primary) 60%,transparent), inset 0 1px 1px rgba(255,255,255,0.3);
+    transition:transform .5s cubic-bezier(.34,1.25,.5,1), width .5s cubic-bezier(.34,1.25,.5,1), height .3s ease, opacity .3s ease;
+    will-change:transform,width;
+}
+#season-subnav .nav-item{ position:relative; z-index:1; }
+#season-subnav .nav-item.active{ background:none !important; border-color:transparent !important; box-shadow:none !important; }
+body.perf-no-anim #season-subnav .nav-pill{ transition:none !important; }
+
+/* Team panel (tap a team on Home) — same look as Federation / Records */
+.team-modal{
+    background-color:color-mix(in srgb,var(--bg-mid) 92%,#040710) !important;
+    border:1px solid rgba(255,255,255,0.1) !important; border-top-color:color-mix(in srgb,var(--tp,#fbbf24) 55%,rgba(255,255,255,0.2)) !important;
+    box-shadow:0 24px 60px -12px rgba(0,0,0,0.8), 0 0 30px -10px color-mix(in srgb,var(--tp,#fbbf24) 40%,transparent);
+}
+#team-panel-overlay{ --tp:#fbbf24; }
+#team-panel-overlay[data-team="Bayern"]{ --tp:#ef4444; }
+#team-panel-overlay[data-team="HOSI"]{ --tp:#3b82f6; }
+#team-panel-overlay[data-team="Sezar"]{ --tp:#f87171; }
+#team-panel-overlay[data-team="Yellow"]{ --tp:#facc15; }
+.team-modal #team-panel-name{ font-size:1.35rem; letter-spacing:.5px; }
+.team-modal .team-panel-section{
+    position:relative; overflow:hidden; border-radius:20px; padding:12px 13px;
+    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
+    background-image:radial-gradient(90% 80% at 100% 0%,color-mix(in srgb,var(--tp) 16%,transparent),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:color-mix(in srgb,var(--tp) 45%,rgba(255,255,255,0.14));
+    box-shadow:0 10px 22px -8px rgba(0,0,0,0.6);
+}
+.team-modal .team-panel-section::after{ content:''; position:absolute; top:0; bottom:0; width:38%; left:-60%; background:linear-gradient(100deg,transparent,rgba(255,255,255,0.08),transparent); transform:skewX(-18deg); animation:recShine 6s ease-in-out infinite; pointer-events:none; }
+.team-modal .team-panel-section-title{ color:#cbd5e1; font-size:.66rem; }
+.team-modal .team-panel-section-title i{ color:var(--tp); }
+.team-modal .coin-log-row{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); }
+.team-modal .trophy-cabinet-item .trophy-count{ color:#fff; text-shadow:0 0 12px color-mix(in srgb,var(--tp) 60%,transparent); }
+.team-modal .team-panel-scroll{ padding:2px 2px 10px; }
+
+/* records inside the team panel */
+.tp-held{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.tp-held-chip{ display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:99px; font-size:.62rem; color:#fde68a;
+    background:linear-gradient(180deg,rgba(251,191,36,0.2),rgba(251,191,36,0.08)); border:1px solid rgba(251,191,36,0.45); box-shadow:0 0 12px rgba(251,191,36,0.2); }
+.tp-held-chip b{ font-weight:900; color:#fff; } .tp-held-chip em{ font-style:normal; font-weight:800; color:#fbbf24; }
+.tp-held-none{ font-size:.66rem; font-weight:700; color:#94a3b8; margin-bottom:10px; }
+.tp-rec-list{ display:flex; flex-direction:column; gap:6px; }
+.tp-rec-row{ display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.05); animation:recIn .5s cubic-bezier(.2,1.1,.4,1) both; animation-delay:var(--d,0ms); }
+.tp-rec-row.lead{ background:linear-gradient(90deg,rgba(251,191,36,0.14),rgba(255,255,255,0.03)); border-color:rgba(251,191,36,0.4); }
+.tp-rec-ico{ font-size:1.05rem; flex:none; width:22px; text-align:center; }
+.tp-rec-main{ flex:1; min-width:0; }
+.tp-rec-top{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+.tp-rec-title{ font-size:.66rem; font-weight:800; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tp-rec-val{ font-size:.8rem; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tp-rec-val small{ font-size:.5rem; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-left:3px; letter-spacing:.4px; }
+.tp-rec-row.lead .tp-rec-val{ color:#fbbf24; }
+.tp-rec-bar{ height:5px; border-radius:99px; background:rgba(255,255,255,0.07); overflow:hidden; margin-top:4px; }
+.tp-rec-bar i{ display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,color-mix(in srgb,var(--tp) 55%,#475569),var(--tp)); animation:recBar .9s cubic-bezier(.2,1,.3,1) both; animation-delay:calc(var(--d,0ms) + .2s); }
+.tp-rec-row.lead .tp-rec-bar i{ background:linear-gradient(90deg,#f59e0b,#fde047); box-shadow:0 0 8px rgba(251,191,36,0.6); }
+.tp-rec-extra{ font-size:.55rem; font-weight:700; color:#94a3b8; margin-top:3px; }
+.tp-rec-rank{ flex:none; min-width:26px; text-align:center; font-size:.68rem; font-weight:900; color:#94a3b8; }
+.tp-game{ margin-top:8px; padding:9px 11px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07); }
+.tp-game-h{ display:flex; align-items:center; gap:6px; font-size:.64rem; font-weight:800; color:#cbd5e1; }
+.tp-game-h em{ margin-left:auto; font-style:normal; font-size:.55rem; color:#94a3b8; }
+.tp-game-s{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:6px; font-size:.68rem; font-weight:800; color:#e2e8f0; }
+.tp-game-s b{ font-size:1.05rem; font-weight:900; color:#fff; text-shadow:0 0 12px color-mix(in srgb,var(--tp) 60%,transparent); }
+@media (prefers-reduced-motion:reduce){ .team-modal .team-panel-section::after, .tp-rec-row, .tp-rec-bar i{ animation:none !important; } .tp-rec-bar i{ width:var(--w); } }

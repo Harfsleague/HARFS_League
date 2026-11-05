@@ -102,7 +102,7 @@ function openTeamPanel(team){
         : (hofMedals(trophies).map(m=>`<div class="trophy-cabinet-item${m.isTitle?' is-title':''}" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><div class="trophy-count">${m.n}</div></div>`).join('')
             || '<div class="team-panel-empty">No trophies yet</div>');
 
-    document.getElementById('team-panel-records').innerHTML = renderRecordBadgesFor(team);
+    document.getElementById('team-panel-records').innerHTML = (typeof recordsTeamPanelHtml==='function') ? recordsTeamPanelHtml(team) : renderRecordBadgesFor(team);
 
     const mbaLogEl = document.getElementById('team-panel-mba');
     const mbaLog = w.mbaChampionLog||[];
@@ -121,6 +121,7 @@ function openTeamPanel(team){
         if(sec) sec.style.display = isSymbolicTeam(team) ? 'none' : '';
     });
     const ov = document.getElementById('team-panel-overlay');
+    ov.dataset.team = team;                          // accent colour of the panel (css/effects.css)
     const src = fxTappedRect();                      // set when a team card on Overall was tapped
     ov.classList.add('open');
     if(src) fxExpand(ov, ov.querySelector('.modal-content'), src, ov.querySelectorAll('#team-panel-name, #team-panel-pinned, .team-panel-section'));

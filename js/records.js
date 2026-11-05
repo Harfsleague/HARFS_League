@@ -223,3 +223,51 @@ function openRecordsSheet(){
     requestAnimationFrame(recordsSyncScopeUI);
 }
 function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); document.body.classList.remove('cards-open'); }
+
+// ---- One team's slice of the Records page (used by the team panel on Home): the same all-time numbers, plus where the team ranks ----
+function recordsForTeam(team){
+    const { cards } = recordsComputeAll();
+    const rows = cards.map(c=>{
+        const me = c.list.find(x=>x.team===team); if(!me) return null;
+        const L = recordsLeaders(c.list);
+        const rank = 1 + c.list.filter(x=>x.value>me.value).length;
+        return { id:c.id, icon:c.icon, title:c.title, unit:c.unit, value:me.value, shown:c.fmt ? c.fmt(me.value) : String(me.value),
+                 rank, of:c.list.length, best:L.best, holds: L.best>0 && L.teams.includes(team), shared: L.teams.length>1,
+                 extra: c.extra ? c.extra(team) : '' };
+    }).filter(Boolean);
+    // this team's own best / highest-scoring games from every game on record
+    const logs = [];
+    (archivedSeasons||[]).forEach(se=>(se.history||[]).forEach(m=>logs.push({ m, label:`Season ${se.seasonId}` })));
+    (matchHistory||[]).forEach(m=>logs.push({ m, label:'This season' }));
+    let bigWin = null, topGame = null;
+    logs.forEach(({m,label})=>{
+        const sc = recordsParseScore(m); if(!sc || (m.home!==team && m.away!==team)) return;
+        const mine = m.home===team ? sc.a : sc.b, theirs = m.home===team ? sc.b : sc.a, total = mine+theirs;
+        if(mine>theirs && (!bigWin || (mine-theirs)>bigWin.margin || ((mine-theirs)===bigWin.margin && total>bigWin.total))) bigWin = { m, sc, label, margin:mine-theirs, total };
+        if(!topGame || total>topGame.total) topGame = { m, sc, label, total };
+    });
+    return { rows, bigWin, topGame };
+}
+function recordsTeamPanelHtml(team){
+    const { rows, bigWin, topGame } = recordsForTeam(team);
+    if(!rows.length) return '<div class="team-panel-empty">No records yet</div>';
+    const held = rows.filter(r=>r.holds);
+    const heldHtml = held.length
+        ? `<div class="tp-held">${held.map(r=>`<span class="tp-held-chip"><span>${r.icon}</span><b>${escapeHtml(r.title)}</b><em>${r.shown}${r.shared?' · shared':''}</em></span>`).join('')}</div>`
+        : '<div class="tp-held-none">No league record held right now</div>';
+    const list = rows.map((r,k)=>{
+        const pct = r.best>0 ? Math.round(Math.max(0,r.value)/r.best*100) : 0;
+        return `<div class="tp-rec-row${r.holds?' lead':''}" style="--d:${k*35}ms">
+            <span class="tp-rec-ico">${r.icon}</span>
+            <div class="tp-rec-main">
+                <div class="tp-rec-top"><span class="tp-rec-title">${escapeHtml(r.title)}</span><span class="tp-rec-val">${r.shown}<small>${escapeHtml(r.unit)}</small></span></div>
+                <div class="tp-rec-bar"><i style="--w:${pct}%"></i></div>
+                ${r.extra ? `<div class="tp-rec-extra">${escapeHtml(r.extra)}</div>` : ''}
+            </div>
+            <span class="tp-rec-rank">${r.holds ? '👑' : '#'+r.rank}</span>
+        </div>`;
+    }).join('');
+    const game = (icon,title,g)=> g ? `<div class="tp-game"><div class="tp-game-h"><span>${icon}</span>${title}<em>${escapeHtml(g.label)}</em></div>
+        <div class="tp-game-s"><span>${escapeHtml(recordsTeamLabel(g.m.home))}</span><b>${g.sc.a} – ${g.sc.b}</b><span>${escapeHtml(recordsTeamLabel(g.m.away))}</span></div></div>` : '';
+    return heldHtml + `<div class="tp-rec-list">${list}</div>` + game('💥','Biggest win',bigWin) + game('🎯','Highest-scoring game',topGame);
+}

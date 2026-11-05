@@ -212,19 +212,27 @@ function setupOverallHold(){
 
 
 
-// ---- Tap the HARFS capsule three times in a row → Federation & Owners (it has no button on Home any more) ----
-(function heroTripleTapForFederation(){
+// ---- Hold the HARFS capsule for 2 seconds → Federation & Owners (it has no button on Home any more) ----
+//      While you hold, the wordmark slowly glows (CSS .holding); letting go or dragging away before 2 s cancels it.
+(function heroHoldForFederation(){
     const el = document.getElementById('hero-logo-container'); if(!el) return;
-    let taps = 0, timer = null, sx = 0, sy = 0, t0 = 0;
-    el.addEventListener('pointerdown', e=>{ sx = e.clientX; sy = e.clientY; t0 = Date.now(); });
-    el.addEventListener('pointerup', e=>{
-        if(!el.classList.contains('in-header') || el.classList.contains('showing-notif') || !loggedInTeam) { taps = 0; return; }
-        if(Math.hypot(e.clientX-sx, e.clientY-sy) > 14 || Date.now()-t0 > 450){ taps = 0; return; }   // a drag / long press is not a tap
-        taps++; clearTimeout(timer);
-        if(taps >= 3){ taps = 0; haptic([14,40,14]); if(typeof openPeopleSheet==='function') openPeopleSheet(); return; }
-        haptic([5]);
-        timer = setTimeout(()=>{ taps = 0; }, 650);
+    const HOLD_MS = 2000;
+    let timer = null, sx = 0, sy = 0;
+    function cancel(){ clearTimeout(timer); timer = null; el.classList.remove('holding'); }
+    el.addEventListener('pointerdown', e=>{
+        if(!el.classList.contains('in-header') || el.classList.contains('showing-notif') || !loggedInTeam) return;
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        cancel();
+        sx = e.clientX; sy = e.clientY;
+        el.classList.add('holding');
+        timer = setTimeout(()=>{
+            timer = null; el.classList.remove('holding');
+            haptic([14,40,14]);
+            if(typeof openPeopleSheet==='function') openPeopleSheet();
+        }, HOLD_MS);
     });
+    el.addEventListener('pointermove', e=>{ if(timer && Math.hypot(e.clientX-sx, e.clientY-sy) > 14) cancel(); });
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, cancel));
     el.addEventListener('contextmenu', e=>e.preventDefault());
 })();
 
@@ -259,9 +267,9 @@ function fxExpand(overlay, panel, src, stagger){
     anim.onfinish = done; anim.oncancel = done;
 }
 
-// ---- Bottom bar: ONE highlight that slides to the tab you open (instead of each tab lighting up on its own) ----
-(function navPillInit(){
-    const nav = document.getElementById('bottom-navigation'), pill = document.getElementById('nav-pill');
+// ---- Bottom bar + Season League|Cup bar: ONE highlight that slides to the tab you open (instead of each tab lighting up on its own) ----
+function slidingPill(navId, pillId){
+    const nav = document.getElementById(navId), pill = document.getElementById(pillId);
     if(!nav || !pill) return;
     let first = true;
     function place(){
@@ -279,4 +287,6 @@ function fxExpand(overlay, panel, src, stagger){
     window.addEventListener('resize', place);
     window.addEventListener('load', place);
     requestAnimationFrame(()=>requestAnimationFrame(place));
-})();
+}
+slidingPill('bottom-navigation', 'nav-pill');
+slidingPill('season-subnav', 'subnav-pill');

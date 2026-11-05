@@ -241,6 +241,7 @@
 
     <!-- Season sub-nav: League | Cup. Slides out from behind the bottom nav while the Season screen is open (js/season-layout.js) -->
     <div class="season-subnav" id="season-subnav">
+        <span class="nav-pill" id="subnav-pill" aria-hidden="true"></span>
         <div class="nav-item active" data-tab="league" onclick="seasonSetTab('league')"><i class="fas fa-table"></i><span>League</span></div>
         <div class="nav-item" data-tab="cup" onclick="seasonSetTab('cup')"><i class="fas fa-trophy"></i><span>Cup</span></div>
     </div>
@@ -291,7 +292,7 @@
                     <i class="fas fa-gamepad"></i><span>Game</span>
                 </button>
                 
-                <!-- Records (Federation now opens by holding the HARFS capsule at the top for 3 seconds) -->
+                <!-- Records (Federation now opens by holding the HARFS capsule at the top for 2 seconds) -->
                 <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
                     <i class="fas fa-medal"></i><span>Records</span>
                 </button>
@@ -841,7 +842,7 @@
 
     <!-- ============ TEAM PANEL (tap a team on Overall) ============ -->
     <div id="team-panel-overlay" class="modal-overlay" onclick="if(event.target===this)closeTeamPanel()">
-        <div class="modal-content" style="padding:0;overflow:hidden;max-width:360px;max-height:86vh;display:flex;flex-direction:column;position:relative;">
+        <div class="modal-content team-modal" style="padding:0;overflow:hidden;max-width:360px;max-height:86vh;display:flex;flex-direction:column;position:relative;">
             <div class="modal-x-close" onclick="closeTeamPanel()"><i class="fas fa-times"></i></div>
             <div class="profile-header" style="flex-shrink:0;">
                 <div class="profile-header-bg"></div>
