@@ -789,6 +789,9 @@
         </div>
     </div>
 
+    <!-- Magazine: arrow-only back-to-top (js/magazine.js) -->
+    <button type="button" class="mag-top-fab" id="mag-top-fab" aria-label="Back to top" onclick="magazineScrollTop()"><i class="fas fa-arrow-up"></i></button>
+
     <!-- Season screen's "back to top" pill — floats above the bottom nav,
          appears once the user scrolls down into the match history.
          Sibling of the .page-screens (not nested inside one) so it stays a
@@ -1063,7 +1066,6 @@
         <div class="ai-chat-inner">
             <div class="ai-panel chat-panel">
                 <div class="ai-panel-header chat-head">
-                    <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
                     <div class="chat-head-info">
                         <div class="ai-panel-title"><i class="fas fa-comments"></i> Chat</div>
                         <div class="chat-sub" id="chat-sub"><span class="chat-dot"></span><span id="chat-sub-txt">5 Members</span></div>
@@ -1071,6 +1073,7 @@
                     <div class="ai-panel-header-actions">
                         <button class="ai-icon-btn" onclick="chatToggleSearch()" title="Search" aria-label="Search"><i class="fas fa-magnifying-glass"></i></button>
                         <button class="ai-icon-btn" onclick="openNotifSheet()" title="Notifications" aria-label="Notifications"><i class="fas fa-bell"></i></button>
+                        <button class="ai-icon-btn chat-back-btn" onclick="navigate('main-league')" title="Back" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
                     </div>
                 </div>
                 <div class="chat-searchbar" id="chat-searchbar" hidden>

@@ -536,6 +536,7 @@ function closePlaylistSheet(){
     haptic([6]);
     document.getElementById('playlist-sheet').classList.remove('open');
 }
+let playlistPicked = -1;   // the row just tapped → plays the pick animation once
 function renderPlaylistSheet(){
     const container=document.getElementById('playlist-list-container');
     if(!container)return;
@@ -547,8 +548,8 @@ function renderPlaylistSheet(){
     }
     container.innerHTML=PLAYLIST.map((t,i)=>{
         const isPlaying = i===currentTrackIndex && backgroundMusicStarted && !musicMuted;
-        return `<div class="playlist-track-item ${isPlaying?'playing':''}" onclick="selectPlaylistTrack(${i})">
-            <div class="playlist-track-icon"><i class="fas ${isPlaying?'fa-volume-up':'fa-music'}"></i></div>
+        return `<div class="playlist-track-item ${isPlaying?'playing':''} ${i===playlistPicked?'picked':''}" onclick="selectPlaylistTrack(${i})">
+            <div class="playlist-track-icon">${isPlaying ? '<span class="pl-eq"><i></i><i></i><i></i></span>' : '<i class="fas fa-music"></i>'}</div>
             <div class="playlist-track-title">${escapeHtml(t.title)}</div>
         </div>`;
     }).join('');
@@ -562,7 +563,11 @@ function selectPlaylistTrack(index){
     playTrack(index);
     backgroundMusicStarted=true;
     syncSettingsUI();
+    playlistPicked = index;
     renderPlaylistSheet();
+    playlistPicked = -1;
+    const badge = document.querySelector('#playlist-sheet .profile-icon-badge');
+    if(badge){ badge.classList.remove('pl-hit'); void badge.offsetWidth; badge.classList.add('pl-hit'); }
 }
 // ============================================================
 // MUSIC PLAYER (Settings) — drives the same <audio id="background-music"> the

@@ -169,7 +169,7 @@ function renderCurrentIssue(dir) {
     // simple: the page fades out, the other issue fades in
     body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-out', fill: 'forwards' }).finished.then(() => {
         draw();
-        const sc = document.getElementById('magazine-screen'); if (sc) sc.scrollTop = 0;
+        const sc = document.getElementById('magazine-screen'); if (sc) sc.scrollTop = 0; const mi = sc && sc.querySelector('.magazine-inner'); if (mi) mi.scrollTop = 0;
         body.getAnimations().forEach(a => a.cancel());
         body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-in' });
     }).catch(draw);
@@ -1049,6 +1049,29 @@ async function magTileInit(){
     }catch(e){}
 }
 setTimeout(magTileInit, 700);
+
+
+// ---- Magazine scrolling: the text lives in .magazine-inner (it is the scroll container, not the screen).
+//      • the top edge fades in gradually as you scroll (mask size grows with scrollTop — nothing is cut off at rest)
+//      • an arrow-only "back to top" button appears after a little scrolling ----
+(function magazineScrollFx(){
+    const screen = document.getElementById('magazine-screen'); if(!screen) return;
+    const inner = screen.querySelector('.magazine-inner'), fab = document.getElementById('mag-top-fab');
+    if(!inner) return;
+    function update(){
+        const y = inner.scrollTop;
+        inner.style.setProperty('--magfade', Math.min(46, y) + 'px');
+        if(fab) fab.classList.toggle('show', y > 220 && screen.classList.contains('active'));
+    }
+    inner.addEventListener('scroll', update, { passive:true });
+    new MutationObserver(update).observe(screen, { attributes:true, attributeFilter:['class'] });
+    update();
+})();
+function magazineScrollTop(){
+    haptic([6]);
+    const inner = document.querySelector('#magazine-screen .magazine-inner');
+    if(inner) inner.scrollTo({ top:0, behavior:'smooth' });
+}
 
 
 // ---- Reading progress: a blue bar in the header fills from the right as you scroll down the issue (no text, no number) ----

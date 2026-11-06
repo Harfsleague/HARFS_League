@@ -1771,11 +1771,11 @@ body.perf-no-anim .cards-zoom, body.perf-no-anim .cards-zoom .cz-name, body.perf
 #playlist-sheet{ --tp:#a855f7; }
 #appearance-sheet{ --tp:var(--primary); }
 
-/* playlist header: rainbow that flows sideways + drifting 🎶 pattern */
+/* playlist header: DARK rainbow that flows sideways + drifting black music notes */
 .playlist-rgb-bg{
     background:
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'><text x='4' y='32' font-size='26' opacity='.55'>🎶</text></svg>") 0 0/46px 46px,
-        linear-gradient(90deg,#ff3b3b,#ff9f1c,#ffe14d,#3ddc84,#22d3ee,#3b82f6,#a855f7,#ff3b9a,#ff3b3b) 0 0/640px 100%;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'><g fill='%23000' fill-opacity='.62'><ellipse cx='14' cy='34' rx='5.2' ry='3.7' transform='rotate(-20 14 34)'/><ellipse cx='32' cy='30' rx='5.2' ry='3.7' transform='rotate(-20 32 30)'/><path d='M17.5 33V13L35.5 9V29h-2V12.5L19.5 15.6V33z'/></g></svg>") 0 0/46px 46px,
+        linear-gradient(90deg,#991b1b,#9a3412,#854d0e,#166534,#155e75,#1e40af,#6b21a8,#9d174d,#991b1b) 0 0/640px 100%;
     animation:plRgb 9s linear infinite;
 }
 @keyframes plRgb{ from{ background-position:0 0, 0 0; } to{ background-position:46px 46px, 640px 0; } }
@@ -1813,6 +1813,49 @@ body.perf-no-anim .playlist-rgb-bg, body.lite-mode .playlist-rgb-bg, html.lite-m
 .ap-card .custom-color-row label{ color:#cbd5e1; }
 
 #mba-pill-label{ display:inline-block; }
+
+
+/* =====================================================
+   v95 — playlist pick animation, Magazine edges + back-to-top, chat back button
+   ===================================================== */
+/* playing track: little equalizer instead of a static speaker icon */
+.pl-eq{ display:inline-flex; align-items:flex-end; gap:2px; height:14px; }
+.pl-eq i{ display:block; width:3px; height:100%; border-radius:2px; background:currentColor; transform-origin:50% 100%; animation:plEq .9s ease-in-out infinite; }
+.pl-eq i:nth-child(2){ animation-delay:-.3s; } .pl-eq i:nth-child(3){ animation-delay:-.6s; }
+@keyframes plEq{ 0%,100%{ transform:scaleY(.25); } 50%{ transform:scaleY(1); } }
+/* tapped track: pops, a coloured sweep runs across it, the header badge bounces */
+.playlist-panel.team-modal .playlist-track-item{ position:relative; overflow:hidden; }
+.playlist-panel.team-modal .playlist-track-item.picked{ animation:plPick .6s cubic-bezier(.2,1.2,.4,1); }
+.playlist-panel.team-modal .playlist-track-item.picked::after{
+    content:''; position:absolute; top:0; bottom:0; width:45%; left:-55%; pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(244,114,182,.45),rgba(96,165,250,.45),transparent); transform:skewX(-18deg); animation:plSweep .7s ease-out forwards;
+}
+@keyframes plPick{ 0%{ transform:scale(.96); } 45%{ transform:scale(1.04); } 100%{ transform:scale(1); } }
+@keyframes plSweep{ to{ left:120%; } }
+.playlist-panel .profile-icon-badge.pl-hit{ animation:plBadge .55s cubic-bezier(.2,1.3,.4,1); }
+@keyframes plBadge{ 0%{ transform:translateX(-50%) scale(1); } 40%{ transform:translateX(-50%) scale(1.22) rotate(-8deg); } 100%{ transform:translateX(-50%) scale(1); } }
+body.perf-no-anim .pl-eq i, body.perf-no-anim .playlist-track-item.picked, body.perf-no-anim .playlist-track-item.picked::after, body.perf-no-anim .profile-icon-badge.pl-hit{ animation:none !important; }
+
+/* Magazine: .magazine-inner is the scroller. It now runs all the way down behind the bottom bar (text readable as low as the screen goes)
+   and the top edge fades out gradually instead of being cut off */
+#magazine-screen.page-screen{ padding-bottom:0; }
+#magazine-screen .magazine-inner{
+    padding-bottom:140px;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 var(--magfade,0px)); mask-image:linear-gradient(180deg,transparent 0,#000 var(--magfade,0px));
+}
+/* arrow-only back-to-top, bottom centre (same look as the other ones) */
+.mag-top-fab{
+    position:absolute; left:50%; bottom:92px; width:42px; height:42px; margin-left:-21px; z-index:99; display:flex; align-items:center; justify-content:center; padding:0;
+    border-radius:50%; cursor:pointer; color:#fff; border:1px solid rgba(255,255,255,0.2);
+    background:radial-gradient(110% 80% at 50% 0%,rgba(255,255,255,0.2),transparent 60%), color-mix(in srgb,var(--primary) 45%,rgba(4,8,18,0.9));
+    box-shadow:0 8px 22px rgba(0,0,0,0.55), 0 0 14px var(--primary-glow);
+    opacity:0; transform:translateY(12px) scale(.8); pointer-events:none; transition:opacity .25s ease, transform .35s cubic-bezier(.34,1.4,.5,1);
+}
+.mag-top-fab.show{ opacity:1; transform:none; pointer-events:auto; }
+.mag-top-fab:active{ transform:scale(.92); }
+body.perf-no-anim .mag-top-fab{ transition:none; }
+/* chat: back button is the last icon on the right */
+.chat-head .ai-panel-header-actions{ margin-left:auto; }
 
 
 /* =====================================================
