@@ -1766,6 +1766,56 @@ body.perf-no-anim .cards-zoom, body.perf-no-anim .cards-zoom .cz-name, body.perf
 
 
 /* =====================================================
+   v94 — Playlist + Appearance in the new theme; Playlist header = moving RGB with a 🎶 texture
+   ===================================================== */
+#playlist-sheet{ --tp:#a855f7; }
+#appearance-sheet{ --tp:var(--primary); }
+
+/* playlist header: rainbow that flows sideways + drifting 🎶 pattern */
+.playlist-rgb-bg{
+    background:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'><text x='4' y='32' font-size='26' opacity='.55'>🎶</text></svg>") 0 0/46px 46px,
+        linear-gradient(90deg,#ff3b3b,#ff9f1c,#ffe14d,#3ddc84,#22d3ee,#3b82f6,#a855f7,#ff3b9a,#ff3b3b) 0 0/640px 100%;
+    animation:plRgb 9s linear infinite;
+}
+@keyframes plRgb{ from{ background-position:0 0, 0 0; } to{ background-position:46px 46px, 640px 0; } }
+body.perf-no-anim .playlist-rgb-bg, body.lite-mode .playlist-rgb-bg, html.lite-mode .playlist-rgb-bg{ animation:none; }
+.playlist-panel.team-modal .profile-header-bg::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,0) 40%,color-mix(in srgb,var(--bg-mid) 92%,#040710) 100%); pointer-events:none; }
+
+/* playlist rows — same card style as the team-panel rows */
+.playlist-panel.team-modal #playlist-track-count{ color:var(--tp); font-weight:800; letter-spacing:.4px; }
+.playlist-panel.team-modal .playlist-track-item{
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:10px 12px; margin-bottom:7px;
+}
+.playlist-panel.team-modal .playlist-track-item:active{ background:rgba(255,255,255,0.09); }
+.playlist-panel.team-modal .playlist-track-item.playing{
+    background:linear-gradient(90deg,color-mix(in srgb,var(--tp) 26%,transparent),rgba(255,255,255,0.04)); border-color:color-mix(in srgb,var(--tp) 55%,transparent);
+    box-shadow:0 0 14px -4px color-mix(in srgb,var(--tp) 60%,transparent);
+}
+.playlist-panel.team-modal .playlist-track-item.playing .playlist-track-icon{ background:linear-gradient(135deg,#f472b6,#a855f7,#60a5fa); color:#fff; }
+.playlist-panel.team-modal .playlist-track-item.playing .playlist-track-title{ color:#fff; }
+
+/* Appearance — each section is a card like the team-panel sections */
+.appearance-panel.team-modal{ padding:14px 14px 16px; }
+.appearance-panel.team-modal .team-picker-title{ font-size:1.2rem; letter-spacing:.5px; }
+.ap-card{
+    position:relative; border-radius:20px; padding:12px 13px; margin-top:10px;
+    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
+    background-image:radial-gradient(90% 80% at 100% 0%,color-mix(in srgb,var(--tp) 14%,transparent),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:color-mix(in srgb,var(--tp) 45%,rgba(255,255,255,0.14));
+    box-shadow:0 10px 22px -8px rgba(0,0,0,0.6);
+}
+.ap-card .appearance-section-label{ margin:0 2px 10px; color:#cbd5e1; font-size:.66rem; }
+.ap-card .segmented-control{ background:rgba(0,0,0,0.25); border-radius:16px; }
+.ap-card .perf-option-row{ background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:9px 10px; margin-top:7px; }
+.ap-card .perf-option-row:last-child{ border-bottom:1px solid rgba(255,255,255,0.05); }
+.ap-card .font-size-row{ background:rgba(255,255,255,0.04); border-radius:14px; padding:4px; }
+.ap-card .custom-color-row label{ color:#cbd5e1; }
+
+#mba-pill-label{ display:inline-block; }
+
+
+/* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */
 /* sticky strip at the very top of the Magazine screen (the header itself scrolls away, so the bar lives outside it) */

@@ -92,11 +92,12 @@
 
 <!-- Appearance Sheet (Performance customization + Color scheme + Palette) -->
 <div class="team-picker-sheet as-modal" id="appearance-sheet" onclick="if(event.target===this)closeAppearanceSheet()">
-    <div class="team-picker-panel appearance-panel">
+    <div class="team-picker-panel appearance-panel team-modal">
             <div class="modal-x-close" onclick="closeAppearanceSheet()"><i class="fas fa-times"></i></div>
         <div class="team-picker-handle"></div>
         <div class="team-picker-title">Appearance</div>
 
+        <div class="ap-card">
         <div class="appearance-section-label">Performance</div>
         <div class="segmented-control" id="perf-segmented">
             <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
@@ -132,6 +133,9 @@
             </div>
         </div>
 
+        </div>
+
+        <div class="ap-card">
         <div class="appearance-section-label">Palette</div>
         <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
 
@@ -143,6 +147,9 @@
             </div>
         </div>
 
+        </div>
+
+        <div class="ap-card">
         <div class="appearance-section-label">App Font</div>
         <div class="font-grid" id="font-grid"><!-- filled by JS from APP_FONTS --></div>
         <div class="font-size-row">
@@ -151,6 +158,9 @@
             <button class="font-size-btn large" onclick="adjustFontSize('app',10)" id="app-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
         </div>
 
+        </div>
+
+        <div class="ap-card">
         <div class="appearance-section-label">Magazine Font</div>
         <div class="font-grid" id="font-grid-magazine"><!-- filled by JS from APP_FONTS --></div>
         <div class="font-size-row">
@@ -158,15 +168,16 @@
             <span class="font-size-value" id="magazine-font-size-value">100%</span>
             <button class="font-size-btn large" onclick="adjustFontSize('magazine',10)" id="magazine-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
         </div>
+        </div>
     </div>
 </div>
 
 <!-- Playlist (centered modal, same look as the team panel) -->
 <div class="team-picker-sheet as-modal" id="playlist-sheet" onclick="if(event.target===this)closePlaylistSheet()">
-    <div class="team-picker-panel hero-modal playlist-panel">
+    <div class="team-picker-panel hero-modal playlist-panel team-modal">
         <div class="modal-x-close" onclick="closePlaylistSheet()"><i class="fas fa-times"></i></div>
         <div class="profile-header" style="flex-shrink:0;">
-            <div class="profile-header-bg"></div>
+            <div class="profile-header-bg playlist-rgb-bg"></div>
             <div class="profile-icon-badge"><i class="fas fa-music"></i></div>
         </div>
         <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
@@ -1054,8 +1065,8 @@
                 <div class="ai-panel-header chat-head">
                     <button class="ai-panel-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
                     <div class="chat-head-info">
-                        <div class="ai-panel-title"><i class="fas fa-comments"></i> HARFS Chat</div>
-                        <div class="chat-sub" id="chat-sub"><span class="chat-dot"></span><span id="chat-sub-txt">Group · everyone in the league</span></div>
+                        <div class="ai-panel-title"><i class="fas fa-comments"></i> Chat</div>
+                        <div class="chat-sub" id="chat-sub"><span class="chat-dot"></span><span id="chat-sub-txt">5 Members</span></div>
                     </div>
                     <div class="ai-panel-header-actions">
                         <button class="ai-icon-btn" onclick="chatToggleSearch()" title="Search" aria-label="Search"><i class="fas fa-magnifying-glass"></i></button>

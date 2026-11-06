@@ -290,9 +290,8 @@ function chatRender(){
 function chatUpdateSub(){
     const t = chatEl('chat-sub-txt'), d = chatEl('chat-sub'); if(!t || !d) return;
     const local = typeof liteIsEmergency === 'function' && liteIsEmergency();
-    const peers = (typeof liteNet !== 'undefined' && liteNet.peers) ? Array.from(liteNet.peers.values()).filter(p=>p.state==='open').length : 0;
     d.classList.toggle('local', !!local);
-    t.textContent = local ? `Local chat · ${peers ? peers+' device(s) connected' : 'devices on this Wi-Fi'}` : `Group · everyone in the league${chatMsgs.length ? ' · '+chatMsgs.length+' messages' : ''}`;
+    t.textContent = '5 Members';   // the dot turns orange when the chat runs over the local (offline) network
 }
 
 // ---------------- scrolling ----------------

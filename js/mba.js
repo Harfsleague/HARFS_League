@@ -655,6 +655,7 @@ function navigateMbaEdition(dir){
     if(ni<0 || ni>=opts.length) return;
     mbaViewValue = opts[ni].value;
     renderMbaSeasonView();
+    mbaSwapAnim(dir);
 }
 function openMbaPicker(){
     haptic([6]);
@@ -670,9 +671,27 @@ function openMbaPicker(){
 function closeMbaPicker(){ document.getElementById('mba-picker-sheet').classList.remove('open'); }
 function selectMbaEdition(value){
     haptic([8]);
+    const before = mbaSelected().idx;
     mbaViewValue = value;
     closeMbaPicker();
     renderMbaSeasonView();
+    mbaSwapAnim(Math.sign(mbaSelected().idx - before) || 1);
+}
+// Switching between CUP editions: the bracket slides in from the side you are heading to (older edition → from the right),
+// and the edition name in the pill pops. Skipped when animations are off / reduced motion.
+function mbaSwapAnim(dir){
+    if(document.body.classList.contains('perf-no-anim') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const el = document.getElementById('mba-season-body'), lbl = document.getElementById('mba-pill-label');
+    if(el && el.animate){
+        const d = (dir||1) * 42;
+        el.getAnimations().forEach(a=>a.cancel());
+        el.animate([ { opacity:0, transform:`translateX(${d}px) scale(.97)`, filter:'blur(3px)' }, { opacity:1, transform:'none', filter:'blur(0)' } ],
+                   { duration:420, easing:'cubic-bezier(.22,1,.36,1)' });
+    }
+    if(lbl && lbl.animate){
+        lbl.getAnimations().forEach(a=>a.cancel());
+        lbl.animate([ { opacity:0, transform:`translateX(${(dir||1)*14}px)` }, { opacity:1, transform:'none' } ], { duration:300, easing:'cubic-bezier(.22,1,.36,1)' });
+    }
 }
 function resetMbaView(){ mbaViewValue = null; }
 
