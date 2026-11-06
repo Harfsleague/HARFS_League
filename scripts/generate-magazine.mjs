@@ -929,6 +929,14 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
+// One-shot interview line. It is NOT part of SYSTEM_PROMPT: it is attached only while no earlier issue has used it
+// (interview.grievanceUsed in the archive). Once an interview has used it, it disappears from the prompt for good.
+const GRIEVANCE_PROMPT = `نکتهٔ یک‌بارمصرف دربارهٔ مصاحبه (فقط چون interviewContext.refGrievance در دیتا هست): در همین مصاحبه، فقط یک بار و به‌صورت طبیعی (نه اغراق‌آمیز و نه در چند پاسخ) مصاحبه‌شونده گله کند که ۲۵ تا موقعیت پنالتی داشتیم و برامون نگرفتن، و بعد اضافه کند که ۲ تا میله هم زدیم. این دو جمله را فقط در یک پاسخ بیاور و در بقیهٔ پاسخ‌ها یا حاشیهٔ صحنه تکرار نکن.`;
+function systemPromptFor(data) {
+  return data && data.interviewContext && data.interviewContext.refGrievance ? `${SYSTEM_PROMPT}\n\n${GRIEVANCE_PROMPT}` : SYSTEM_PROMPT;
+}
+
+
 // Retries a fetch call on transient errors — bad HTTP statuses (503
 // overloaded, 429 rate limited, 5xx) AND network-level failures (DNS
 // hiccups, connection resets, timeouts — anything where fetch() itself
@@ -974,7 +982,7 @@ async function callGeminiText(data) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: systemPromptFor(data) }] },
         contents: [
           {
             role: "user",
@@ -1033,7 +1041,7 @@ async function callOpenRouterText(data) {
         model: OPENROUTER_TEXT_MODEL,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: `${SYSTEM_PROMPT}\n\n${schemaInstruction}` },
+          { role: "system", content: `${systemPromptFor(data)}\n\n${schemaInstruction}` },
           {
             role: "user",
             content: `این دیتای این هفتهٔ لیگ HARFS است:\n\n${JSON.stringify(data, null, 2)}`,
@@ -1069,6 +1077,8 @@ async function main() {
   data.previousIssuesSummary = buildPreviousIssuesSummary(archive);
   data.interviewTeam = computeInterviewTeam(issueNumber);
   data.interviewContext = computeInterviewContext(data.interviewTeam, data.recentMatches, (data.rankChanges || []).find((r) => r.team === data.interviewTeam));
+  // The one-time complaint (25 penalty chances not given, 2 posts hit) is offered to the model until an interview has used it.
+  if (!archive.some((i) => i.interview && i.interview.grievanceUsed)) data.interviewContext.refGrievance = { penaltyChances: 25, postsHit: 2 };
 
   console.log(`Asking Gemini 3.5 Flash to write the magazine (interview team: ${data.interviewTeam})...`);
   let magazine;
@@ -1088,6 +1098,8 @@ async function main() {
   if (magazine.interview) {
     magazine.interview.team = data.interviewTeam;
     magazine.interview.walkedOut = !!data.interviewContext.walkout; // decided by the results, not by the model
+    // used = the interview really contains the line (25 in Latin or Persian digits); only then it stops being offered
+    if (data.interviewContext.refGrievance && /(?:25|\u06f2\u06f5)/.test(JSON.stringify(magazine.interview))) magazine.interview.grievanceUsed = true;
   }
   // Same idea for the CUP: the structured data decides whether there IS a CUP
   // story, not the model. No CUP activity -> no CUP report, whatever it wrote.

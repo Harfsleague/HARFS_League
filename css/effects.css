@@ -1725,13 +1725,12 @@ body.perf-no-anim #season-subnav .nav-pill{ transition:none !important; }
 }
 .rec-top-fab.show{ opacity:1; transform:none; pointer-events:auto; }
 .rec-top-fab:active{ transform:scale(.92); }
-.back-to-top-fab{ left:50%; right:auto; transform:translateX(-50%); }
-.back-to-top-fab:active{ transform:translateX(-50%) scale(.92); }
-.season-fab.back-to-top-fab.season-fab-faded{ transform:translateX(-50%) translateY(14px) scale(.8); }
-/* Cup tab: the centre is taken by the Super Cup game bubble, so the arrow sits bottom-left there */
-body[data-season-tab="cup"] .season-fab.back-to-top-fab{ left:16px; transform:none; }
-body[data-season-tab="cup"] .season-fab.back-to-top-fab:active{ transform:scale(.92); }
-body[data-season-tab="cup"] .season-fab.back-to-top-fab.season-fab-faded{ transform:translateY(14px) scale(.8); }
+.season-fab.back-to-top-fab{ left:calc(50% - 21px); right:auto; transform:none; transition:opacity .25s ease; }
+.season-fab.back-to-top-fab:active{ transform:scale(.92); }
+.season-fab.back-to-top-fab.season-fab-faded{ transform:none; opacity:0; pointer-events:none; }
+/* Cup tab: the centre is taken by the Super Cup game bubble, so the arrow sits bottom-left there.
+   Only opacity animates, so switching Cup <-> League no longer makes the button slide across the screen */
+body[data-season-tab="cup"] .season-fab.back-to-top-fab{ left:16px; }
 body.perf-no-anim .rec-top-fab{ transition:none; }
 
 
