@@ -1858,6 +1858,16 @@ body.perf-no-anim .mag-top-fab{ transition:none; }
 .chat-head .ai-panel-header-actions{ margin-left:auto; }
 
 
+/* Magazine standings: logo is the right-most thing in the team column (fixed spot for every team), the name sits to its left */
+.magazine-table th.mag-st-team-h{ width:38%; }
+.magazine-table td.mag-st-team{ text-align:right; padding-right:2px; }
+.mag-st-cell{ display:flex; align-items:center; justify-content:flex-end; gap:7px; direction:ltr; }
+.mag-st-cell img{ width:22px; height:22px; border-radius:50%; object-fit:cover; background:#0b1220; flex:none; border:1px solid rgba(255,255,255,0.18); }
+.mag-st-name{ font-weight:800; letter-spacing:.3px; white-space:nowrap; }
+.magazine-table tbody tr:first-child td.mag-st-team{ color:#fbbf24; }
+.magazine-table th{ letter-spacing:.4px; }
+
+
 /* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */

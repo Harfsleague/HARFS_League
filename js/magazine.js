@@ -450,6 +450,12 @@ function renderSuperCupSection(issue) {
         </div>`;
 }
 
+// Standings table: team names as short as the table needs — Nifa Mahmouz (the "Yellow" team) is always NMIYA.
+function magStandingsName(team){
+    const label = String(TEAM_DISPLAY_NAMES[team] || team || '?');
+    if(team === 'Yellow' || /nifa|mahmou[sz]|\u0646\u06cc\u0641\u0627|\u0645\u0627\u0647\u0645\u0648/i.test(label)) return 'NMIYA';
+    return label;
+}
 function renderMagazine(issue) {
     const body = document.getElementById('magazine-body');
     if (!body) return;
@@ -470,7 +476,7 @@ function renderMagazine(issue) {
     const standingsRows = sortedTable.map((t, i) => `
             <tr>
                 <td class="mag-rank-cell"><span class="mag-rank-num">${i + 1}</span>${magRankArrow(deltas ? deltas[t.name] : null)}</td>
-                <td><span class="mag-team-cell"><img src="${teamLogoUrl(t.name)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">${teamLabel(t.name)}</span></td>
+                <td class="mag-st-team"><span class="mag-st-cell"><span class="mag-st-name">${escapeHtml(magStandingsName(t.name))}</span><img src="${teamLogoUrl(t.name)}" alt="" draggable="false" onerror="this.style.visibility='hidden'"></span></td>
                 <td>${t.P ?? '—'}</td>
                 <td>${t.W ?? '—'}</td>
                 <td>${t.D ?? '—'}</td>
@@ -596,7 +602,7 @@ function renderMagazine(issue) {
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-table"></i> ${issue.seasonContext?.tableRepresents === 'ended_season_final' && issue.seasonContext.endedSeasonId ? `جدول نهایی فصل ${issue.seasonContext.endedSeasonId}` : 'جدول رده‌بندی'}</h2>
             <table class="magazine-table">
-                <thead><tr><th>#</th><th>تیم</th><th>ب</th><th>برد</th><th>مساوی</th><th>باخت</th><th>امتیاز</th></tr></thead>
+                <thead><tr><th>#</th><th class="mag-st-team-h">تیم</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pt</th></tr></thead>
                 <tbody>${standingsRows}</tbody>
             </table>
             ${leagueIdleNote}
