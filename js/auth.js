@@ -23,6 +23,7 @@ function renderLoginTeamGrid(){
         + (others.length ? '<div class="login-group-label">Federation, owners &amp; fans</div>' + others.map(card).join('') : '');
 }
 function showLoginScreen(){
+    if(typeof heroSetSection==='function') heroSetSection('');   // login has no section name
     renderLoginTeamGrid();
     document.getElementById('login-step-pick').style.display='block';
     document.getElementById('login-step-password').style.display='none';

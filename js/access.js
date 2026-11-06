@@ -64,6 +64,7 @@ function applyAdminScreenAccess(){
     });
     const title = document.querySelector('#admin-screen .league-header h2');
     if(title) title.textContent = full ? 'Admin Panel' : 'My Tools';
+    if(typeof heroSectionKey!=='undefined' && heroSectionKey==='admin' && typeof heroSetSection==='function') heroSetSection(full ? 'Admin Panel' : 'My Tools','admin');
 }
 
 // ---- Admin: "User Permissions" card -------------------------------------

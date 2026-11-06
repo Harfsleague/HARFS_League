@@ -290,3 +290,45 @@ function slidingPill(navId, pillId){
 }
 slidingPill('bottom-navigation', 'nav-pill');
 slidingPill('season-subnav', 'subnav-pill');
+
+
+// ============================================================
+// HARFS capsule × section title
+// ------------------------------------------------------------
+// Each section used to have its own title card under the HARFS capsule. The title now lives IN the capsule: the
+// HARFS wordmark shrinks by 20 % (css/effects.css, .has-section), the capsule grows by 15 % and the section name is
+// written under the wordmark. Home has no section name, so the capsule stays as it was there.
+// ============================================================
+let heroSectionKey = '';          // route whose name is shown right now ('' = none)
+let heroSectionTimer = null;
+const HERO_SECTION_LABELS = { magazine:'Weekly Magazine', chat:'Chat', weird:'Golden Moments', 'ai-chat':'Assistant', settings:'Profile' };
+function heroSectionLabel(route){
+    if(route==='league') return (typeof SEASON_VIEW_TITLES!=='undefined' && typeof seasonView!=='undefined' && SEASON_VIEW_TITLES[seasonView]) || 'Season';
+    if(route==='admin') return (typeof isFullAdmin==='function' && !isFullAdmin()) ? 'My Tools' : 'Admin Panel';
+    return HERO_SECTION_LABELS[route] || '';
+}
+function heroSetSection(text, key){
+    const cap = document.getElementById('hero-logo-container');
+    const lab = document.getElementById('hero-section-label');
+    if(!cap || !lab) return;
+    clearTimeout(heroSectionTimer);
+    if(!text){
+        heroSectionKey = '';
+        delete cap.dataset.section;
+        lab.classList.remove('swap');
+        cap.classList.remove('has-section');
+        heroSectionTimer = setTimeout(()=>{ lab.textContent = ''; }, 500);   // keep the words until the label has folded away
+        return;
+    }
+    heroSectionKey = key || '';
+    cap.dataset.section = heroSectionKey;
+    const shown = cap.classList.contains('has-section') && lab.textContent;
+    if(!shown || lab.textContent === text){
+        lab.classList.remove('swap');
+        lab.textContent = text;
+        cap.classList.add('has-section');
+        return;
+    }
+    lab.classList.add('swap');                                   // old name fades out, new one fades in
+    heroSectionTimer = setTimeout(()=>{ lab.textContent = text; lab.classList.remove('swap'); }, 160);
+}
