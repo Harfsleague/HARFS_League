@@ -4,6 +4,8 @@
 // that exist (archived seasons keep a log from season 6 on; the current season has its own), the champions list and the trophy counts.
 // Nothing is stored. Loaded as a classic script.
 // ============================================================
+// Special badge of the Treble record: a golden crest with three stars
+const RECORDS_TREBLE_BADGE = '<svg class="rec-treble-badge" viewBox="0 0 48 52" aria-hidden="true"><path d="M24 2l19 7v15c0 12-8 21-19 26C13 45 5 36 5 24V9z" fill="#fbbf24" stroke="#b45309" stroke-width="2" stroke-linejoin="round"/><path d="M24 6l15 5.5V24c0 9.6-6 17-15 21.4C15 41 9 33.6 9 24V11.5z" fill="#fde68a"/><path d="M24 6l15 5.5V24c0 9.6-6 17-15 21.4z" fill="#f59e0b" opacity=".55"/><g fill="#92400e"><path d="M24 12l2.2 4.6 5 .6-3.7 3.4 1 5L24 23.2l-4.5 2.4 1-5-3.7-3.4 5-.6z"/><path d="M15.5 27l1.5 3.1 3.4.4-2.5 2.3.7 3.3-3.1-1.7-3.1 1.7.7-3.3-2.5-2.3 3.4-.4z"/><path d="M32.5 27l1.5 3.1 3.4.4-2.5 2.3.7 3.3-3.1-1.7-3.1 1.7.7-3.3-2.5-2.3 3.4-.4z"/></g></svg>';
 function recordsParseScore(m){
     const p = String(m && m.score || '').split('-').map(x=>parseInt(x,10));
     return (p.length===2 && p.every(n=>Number.isFinite(n))) ? { a:p[0], b:p[1] } : null;
@@ -56,8 +58,19 @@ function recordsComputeAll(){
     };
     (archivedSeasons||[]).forEach(s=>(s.table||[]).forEach(r=>{ if(r && seasonBest.pts[r.name]) seasonRow(r.name,r,`Season ${s.seasonId}`); }));
     TEAM_NAMES.forEach(t=>{ const r = leagueData && leagueData[t]; if(r) seasonRow(t,r,'This season'); });
+    // Treble: the same team won the league, the CUP and the Super Cup of ONE season (archived seasons only)
+    const treble = {}; TEAM_NAMES.forEach(t=>treble[t]={ n:0, seasons:[] });
+    (archivedSeasons||[]).forEach(se=>{
+        const lg = se && se.table && se.table[0] && se.table[0].name;
+        if(!lg || !treble[lg] || !(se.superCup && se.superCup.winner===lg)) return;
+        const ed = (typeof mbaEditionForSeason==='function') ? mbaEditionForSeason(se) : null;
+        const rec = ed!=null ? ((mbaData && mbaData.completed) || []).find(r=>r.edition===ed) : null;
+        if(rec && rec.gold===lg){ treble[lg].n++; treble[lg].seasons.push(se.seasonId); }
+    });
     const bars = (fn)=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
     const cards = [
+        { id:'treble', special:true, icon:'\ud83c\udfc6', badge:RECORDS_TREBLE_BADGE, title:'The Treble', note:'League + CUP + Super Cup in the same season', list:bars(t=>treble[t].n), unit:'trebles',
+          extra:t=> treble[t].seasons.length ? 'Season ' + treble[t].seasons.join(', ') : '' },
         { id:'goals',   icon:'⚽', title:'Most Goals Scored',     note:'All-time, every season',            list:bars(t=>stats[t].GF), unit:'goals' },
         { id:'conc',    icon:'🧱', title:'Most Goals Conceded',   note:'All-time — the leakiest defence',   list:bars(t=>stats[t].GA), unit:'goals' },
         { id:'clean',   icon:'🧤', title:'Most Clean Sheets',     note:`From the ${logs.length} games on record`, list:bars(t=>clean[t]), unit:'clean sheets' },
@@ -175,8 +188,8 @@ function recordsRender(){
                 <b>${c.fmt ? c.fmt(x.value) : x.value}</b>
             </div>`).join('');
         return `
-        <div class="rec-card" style="--d:${(i++)*90}ms">
-            <div class="rec-head"><span class="rec-ico">${c.icon}</span><div><div class="rec-title">${c.title}</div><div class="rec-note">${escapeHtml(c.note)}</div></div></div>
+        <div class="rec-card${c.special?' rec-special':''}" style="--d:${(i++)*90}ms">
+            <div class="rec-head"><span class="rec-ico">${c.badge || c.icon}</span><div><div class="rec-title">${c.title}</div><div class="rec-note">${escapeHtml(c.note)}</div></div></div>
             ${L.teams.length ? `
             <div class="rec-hero">
                 <div class="rec-logos">${logos}</div>
@@ -232,7 +245,7 @@ function recordsForTeam(team){
         const me = c.list.find(x=>x.team===team); if(!me) return null;
         const L = recordsLeaders(c.list);
         const rank = 1 + c.list.filter(x=>x.value>me.value).length;
-        return { id:c.id, icon:c.icon, title:c.title, unit:c.unit, value:me.value, shown:c.fmt ? c.fmt(me.value) : String(me.value),
+        return { id:c.id, icon:c.badge || c.icon, special:!!c.special, title:c.title, unit:c.unit, value:me.value, shown:c.fmt ? c.fmt(me.value) : String(me.value),
                  rank, of:c.list.length, best:L.best, holds: L.best>0 && L.teams.includes(team), shared: L.teams.length>1,
                  extra: c.extra ? c.extra(team) : '' };
     }).filter(Boolean);
