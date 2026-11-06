@@ -99,7 +99,6 @@ function navigate(route){
     });
 
     currentRouteIndex=ROUTES.indexOf(route);
-    if(typeof heroSetSection==='function') heroSetSection(heroSectionLabel(route), route);   // section name goes into the HARFS capsule
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-main',
         'settings':'nav-settings','admin':'nav-settings',

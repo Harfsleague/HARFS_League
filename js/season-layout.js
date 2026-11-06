@@ -64,7 +64,7 @@ function seasonSetTab(tab, opts){
 function seasonApplyView(view, prev, keepTitle){
     const $ = id => document.getElementById(id);
     document.body.dataset.seasonView = view;
-    if(!keepTitle){ const title = $('season-screen-title'); if(title) title.textContent = SEASON_VIEW_TITLES[view]; seasonHeroLabel(SEASON_VIEW_TITLES[view]); }
+    if(!keepTitle){ const title = $('season-screen-title'); if(title) title.textContent = SEASON_VIEW_TITLES[view]; }
     const back = $('season-back-btn');
     if(back){ back.style.display = view==='main' ? 'none' : 'flex'; if(view!=='main' && seasonMotionOk()) seasonPlay(back,'sv-fade',320); }
     const actions = $('season-header-actions');
@@ -84,10 +84,7 @@ function seasonApplyView(view, prev, keepTitle){
 }
 
 // Title swap: the old word lifts away, the new one rises in (text changes mid-way).
-// the Season / Schedule name is written in the HARFS capsule (js/ui-common.js heroSetSection), only while Season is the open section
-function seasonHeroLabel(text){ if(typeof heroSectionKey!=='undefined' && heroSectionKey==='league' && typeof heroSetSection==='function') heroSetSection(text,'league'); }
 function seasonAnimateTitle(text, delay){
-    seasonHeroLabel(text);
     const t = document.getElementById('season-screen-title');
     if(!t) return;
     t.classList.remove('t-in'); void t.offsetWidth;
