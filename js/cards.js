@@ -252,7 +252,7 @@ function cardsZoomFlip(img, from, toOpen){
 function cardsZoom(cardId, withTag){
     const def = cardDef(cardId); if(!def) return;
     const box = document.getElementById('cards-zoom'); if(!box) return;
-    clearTimeout(box._closeT); box.classList.remove('closing');
+    clearTimeout(box._closeT); box._closing = false; box.classList.remove('closing'); box.getAnimations().forEach(a=>a.cancel());
     const img = box.querySelector('img');
     img.getAnimations && img.getAnimations().forEach(a=>a.cancel());
     img.src = cardImgUrl(def);
@@ -266,16 +266,24 @@ function cardsZoom(cardId, withTag){
     if(srcEl && cardsZoomMotionOk()) cardsZoomFlip(img, srcEl.getBoundingClientRect(), true);
 }
 function cardsZoomClose(){
-    const box = document.getElementById('cards-zoom'); if(!box || !box.classList.contains('open')) return;
+    const box = document.getElementById('cards-zoom'); if(!box || !box.classList.contains('open') || box._closing) return;
     const img = box.querySelector('img'), src = box._src && box._src.isConnected ? box._src : null;
-    if(!cardsZoomMotionOk()){ box.classList.remove('open'); return; }
-    box.classList.add('closing');
-    if(src) cardsZoomFlip(img, src.getBoundingClientRect(), false);
+    if(!cardsZoomMotionOk() || !img.animate){ box.classList.remove('open'); return; }
+    box._closing = true;
+    box.classList.add('closing');                         // texts fade out first (css)
+    box.getAnimations().forEach(a=>a.cancel());
+    // the backdrop fades while the card flies back into the tile it came from (or shrinks away if that tile is gone)
+    box.animate([{ opacity:1 }, { opacity:0 }], { duration:320, easing:'ease-in', fill:'forwards' });
+    if(!(src && cardsZoomFlip(img, src.getBoundingClientRect(), false))){
+        img.animate([{ transform:'none', opacity:1 }, { transform:'translateY(26px) scale(.8)', opacity:0 }], { duration:320, easing:'cubic-bezier(.4,0,.8,.4)', fill:'forwards' });
+    }
     clearTimeout(box._closeT);
     box._closeT = setTimeout(()=>{
+        box._closing = false;
         box.classList.remove('open','closing');
-        img.getAnimations && img.getAnimations().forEach(a=>a.cancel());
-    }, 300);
+        box.getAnimations().forEach(a=>a.cancel());
+        img.getAnimations().forEach(a=>a.cancel());
+    }, 340);
 }
 function renderCardsSheet(){
     const box = document.getElementById('cards-body'); if(!box) return;

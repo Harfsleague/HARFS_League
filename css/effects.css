@@ -1887,6 +1887,49 @@ body.perf-no-anim .rec-card.rec-special .rec-ico, html.lite-mode .rec-card.rec-s
 
 
 /* =====================================================
+   v99 — Golden Moments in the new theme; Background Effects icon; card-zoom exit
+   ===================================================== */
+.perf-orbs-ico{ display:block; }
+
+/* Golden Moments header: gold-rimmed dark capsule like the Records banner */
+#weird-screen .league-header{
+    position:relative; overflow:hidden; border-radius:22px; margin:0 0 14px; padding:16px 52px 16px; text-align:center;
+    background-color:color-mix(in srgb,var(--bg-mid) 90%,#040710);
+    background-image:radial-gradient(80% 140% at 50% 0%,rgba(251,191,36,0.26),transparent 70%), radial-gradient(60% 90% at 100% 100%,rgba(168,85,247,0.16),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.09); border-top-color:rgba(251,191,36,0.55);
+    box-shadow:0 12px 26px -8px rgba(0,0,0,0.6), 0 0 28px -10px rgba(251,191,36,0.4);
+}
+#weird-screen .league-header h2{ font-size:1.02rem; letter-spacing:2px; text-shadow:none; filter:drop-shadow(0 0 10px rgba(251,191,36,0.45)); }
+#weird-screen .league-header .season-back-btn{ position:absolute; left:14px; top:50%; translate:0 -50%; margin:0; }
+#weird-screen .league-header .season-back-btn:active{ transform:scale(0.9); }
+
+/* cards: same family as the Records / team-panel cards */
+body:not(.lite-mode) .weird-card{
+    border-radius:22px;
+    background-color:color-mix(in srgb,var(--bg-mid) 88%,#040710);
+    background-image:radial-gradient(90% 70% at 100% 0%,rgba(251,191,36,0.13),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+    border:1px solid rgba(255,255,255,0.08); border-top-color:rgba(251,191,36,0.4);
+    box-shadow:0 10px 22px -8px rgba(0,0,0,0.6);
+}
+.weird-card-bar{ height:3px; background:linear-gradient(90deg,transparent,#fbbf24,#f59e0b,#fde68a,transparent); opacity:.9; }
+.weird-card-date{ color:#fde68a; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.28); font-family:inherit; letter-spacing:.3px; }
+.weird-card-pinned{ border-color:rgba(251,191,36,0.55) !important; border-top-color:#fde68a !important;
+    box-shadow:0 12px 26px -8px rgba(0,0,0,0.65), 0 0 26px -6px rgba(251,191,36,0.5) !important; }
+.weird-pin-badge{ background:linear-gradient(180deg,rgba(251,191,36,0.22),rgba(251,191,36,0.08)); box-shadow:0 0 12px rgba(251,191,36,0.25); }
+.weird-card-text{ color:#e2e8f0; }
+.weird-img-thumb-sm{ border:1px solid rgba(251,191,36,0.35); box-shadow:0 6px 14px rgba(0,0,0,0.5), 0 0 12px -4px rgba(251,191,36,0.35); }
+.weird-admin-btn{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; }
+.weird-admin-actions{ border-top:1px solid rgba(255,255,255,0.07); }
+body:not(.lite-mode) .weird-card:nth-child(n){ animation:recIn .55s cubic-bezier(.2,1.1,.4,1) both; }
+body:not(.lite-mode) .weird-card:nth-child(2){ animation-delay:70ms; } body:not(.lite-mode) .weird-card:nth-child(3){ animation-delay:140ms; }
+body:not(.lite-mode) .weird-card:nth-child(4){ animation-delay:210ms; } body:not(.lite-mode) .weird-card:nth-child(n+5){ animation-delay:280ms; }
+/* the white sweep: Liquid Glass only */
+.weird-card::after{ content:''; position:absolute; top:0; bottom:0; width:38%; left:-60%; background:linear-gradient(100deg,transparent,rgba(255,255,255,0.08),transparent); transform:skewX(-18deg); animation:recShine 7s ease-in-out infinite; pointer-events:none; }
+body.perf-no-blur .weird-card::after, body.lite-mode .weird-card::after, html.lite-mode .weird-card::after{ display:none !important; animation:none !important; }
+body.perf-no-anim .weird-card{ animation:none !important; }
+
+
+/* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */
 /* sticky strip at the very top of the Magazine screen (the header itself scrolls away, so the bar lives outside it) */
