@@ -367,8 +367,8 @@ function magRankChart(hist) {
         <span class="mrc-leg"><i style="background:${MAG_TEAM_COLORS[t] || '#64748b'}"></i>${teamLabel(t)} <b>${magFaNum(hist.ranks[t][n - 1])}</b></span>`).join('');
     return `
         <div class="mrc-card">
-            <div class="mrc-cap"><span>رتبه</span><span>هفته ←</span></div>
             <svg class="mrc-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="نمودار رتبهٔ تیم‌ها در طول فصل">${grid}${xlab}${lines}</svg>
+            <div class="mrc-axis"><span>هفته</span><svg class="mrc-axis-arrow" viewBox="0 0 22 10" aria-hidden="true"><path d="M1 5h18M15.5 1.5L20 5l-4.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             <div class="mrc-legend">${legend}</div>
         </div>`;
 }

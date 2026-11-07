@@ -1929,6 +1929,11 @@ body.perf-no-blur .weird-card::after, body.lite-mode .weird-card::after, html.li
 body.perf-no-anim .weird-card{ animation:none !important; }
 
 
+/* v100 — rank chart: the week label sits under the chart with a small right-pointing arrow (the old top caption is gone) */
+.mrc-axis{ display:flex; align-items:center; justify-content:center; gap:5px; margin-top:-2px; font-size:.62rem; font-weight:800; color:#93a8cf; direction:rtl; }
+.mrc-axis-arrow{ width:20px; height:9px; display:block; }
+
+
 /* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */
