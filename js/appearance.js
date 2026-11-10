@@ -611,7 +611,9 @@ function renderMusicPlayerUI(){
     const mode=PLAYBACK_MODES[playbackMode]||PLAYBACK_MODES.shuffle;
     document.getElementById('mp-sub').textContent = PLAYLIST.length
         ? `Track ${currentTrackIndex+1} of ${PLAYLIST.length} · ${mode.label}` : 'HARFS Playlist';
-    document.getElementById('mp-mode-icon').className='fas '+mode.icon;
+    const shB=document.getElementById('mp-shuffle-btn'), rpB=document.getElementById('mp-repeat-btn');
+    if(shB) shB.classList.toggle('on', playbackMode==='shuffle');
+    if(rpB) rpB.classList.toggle('on', playbackMode==='single');
     document.getElementById('mp-play-icon').className='fas '+(playing?'fa-pause':'fa-play');
     document.getElementById('mp-art').classList.toggle('playing', playing);
     const vol=document.getElementById('mp-vol');
@@ -702,6 +704,15 @@ function playerPrev(){
     playerStep(-1);
 }
 
+// shuffle / repeat-one are two toggles; neither on = play in order (same three modes as before)
+function setPlaybackModeTo(m, label){
+    playbackMode = m;
+    localStorage.setItem('playbackMode', playbackMode);
+    syncSettingsUI();
+    showToast(label, 'info', 1400);
+}
+function toggleShuffleMode(){ haptic([6]); playbackMode==='shuffle' ? setPlaybackModeTo('sequential','Playback: In order') : setPlaybackModeTo('shuffle','Playback: Shuffle'); }
+function toggleRepeatMode(){ haptic([6]); playbackMode==='single' ? setPlaybackModeTo('sequential','Playback: In order') : setPlaybackModeTo('single','Playback: Repeat One'); }
 function cyclePlaybackMode(){
     const order=['shuffle','sequential','single'];
     const idx=order.indexOf(playbackMode);
@@ -815,14 +826,12 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVolPop(); })
 function togglePlaylistPop(e){
     if(e) e.stopPropagation();
     haptic([6]);
-    const pop=document.getElementById('mp-pl-pop'), btn=document.getElementById('mp-pl-btn'), pl=document.getElementById('music-player');
-    if(!pop || !btn || !pl) return;
+    const pop=document.getElementById('mp-pl-pop'), btn=document.getElementById('mp-pl-btn');
+    if(!pop || !btn) return;
     if(pop.classList.contains('open')){ closePlaylistPop(); return; }
     closeVolPop();
-    const pr=pl.getBoundingClientRect(), br=btn.getBoundingClientRect();
-    const cx=Math.max(26, Math.min(pr.width-26, br.left+br.width/2-pr.left));
-    pop.style.setProperty('--cx', cx+'px');
-    pop.classList.toggle('down', pr.top < 330);          // not enough room above the player → open downwards
+    const br=btn.getBoundingClientRect();
+    pop.classList.toggle('down', br.top < 250);          // only when there is really no room above the icon
     renderPlaylistSheet();
     if(!PLAYLIST.length) loadPlaylistFromGitHub().then(renderPlaylistSheet);
     pop.classList.add('open','entering');

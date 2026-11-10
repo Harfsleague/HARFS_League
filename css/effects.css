@@ -2022,6 +2022,50 @@ body.perf-no-anim .mp-play::after, body.lite-mode .mp-play::after{ animation:non
 
 
 /* =====================================================
+   v102 — music player laid out like the reference: playlist + volume on top, thin seek bar with times under it,
+   shuffle · previous · PLAY · next · repeat along the bottom (bare white icons, no heart / plus)
+   ===================================================== */
+body .music-player{ gap:10px; padding:16px 14px 14px; }
+.mpx-top{ display:flex; align-items:center; justify-content:space-between; padding:0 2px; margin-top:2px; }
+.mpx-pl-wrap{ position:relative; display:flex; }
+.mpx-ic{ position:relative; width:46px; height:46px; border:0; border-radius:50%; background:transparent; color:#fff; font-size:1.3rem;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .15s, color .2s, background .2s, opacity .2s; }
+.mpx-ic svg{ display:block; }
+.mpx-ic:active{ transform:scale(.88); background:rgba(255,255,255,0.1); }
+.mpx-top .mpx-ic.on{ color:var(--primary); background:color-mix(in srgb,var(--primary) 16%,transparent); }
+.mpx-mode{ opacity:.78; }
+.mpx-mode.on{ opacity:1; color:var(--primary); filter:drop-shadow(0 0 8px var(--primary-glow)); }
+.mpx-mode.on::after{ content:''; position:absolute; bottom:3px; left:50%; width:4px; height:4px; margin-left:-2px; border-radius:50%; background:var(--primary); box-shadow:0 0 6px var(--primary-glow); }
+.mpx-skip svg{ width:30px; height:30px; }
+
+.mpx-seek{ padding:0 2px; }
+.mpx-seek .mp-range{ display:block; width:100%; flex:none; height:24px; }
+.mpx-seek .mp-range::-webkit-slider-runnable-track{ height:4px; border-radius:4px; background:linear-gradient(90deg,#fff var(--p),rgba(255,255,255,0.24) var(--p)); }
+.mpx-seek .mp-range::-moz-range-track{ height:4px; border-radius:4px; background:rgba(255,255,255,0.24); }
+.mpx-seek .mp-range::-moz-range-progress{ height:4px; border-radius:4px; background:#fff; }
+.mpx-seek .mp-range::-webkit-slider-thumb{ width:20px; height:20px; margin-top:-8px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 0 4px color-mix(in srgb,var(--primary) 26%,transparent), 0 0 14px var(--primary-glow); }
+.mpx-seek .mp-range::-moz-range-thumb{ width:20px; height:20px; background:#fff; border:0; box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 0 4px color-mix(in srgb,var(--primary) 26%,transparent); }
+.mpx-times{ display:flex; justify-content:space-between; margin-top:2px; padding:0 1px; }
+.mpx-times .mp-time{ min-width:0; font-size:.8rem; font-weight:700; color:#fff; letter-spacing:.2px; }
+
+.mpx-controls{ display:flex; align-items:center; justify-content:space-between; padding:0 2px; }
+.mpx-play{ position:relative; width:68px; height:68px; border:0; padding:0; background:transparent; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent; transition:transform .15s; }
+.mpx-play:active{ transform:scale(.9); }
+.mpx-play i{ margin:0; font-size:0; line-height:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+.mpx-play i::before{ content:''; display:block; width:38px; height:38px; background:#fff; font-family:inherit;
+    -webkit-mask:center/contain no-repeat; mask:center/contain no-repeat; filter:drop-shadow(0 2px 12px color-mix(in srgb,var(--primary) 60%,transparent)); }
+.mpx-play i.fa-play::before{ -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'><path transform='translate(-2.2 0)' d='M9 5.5c0-1.6 1.8-2.6 3.2-1.7l16 10.4c1.3.9 1.3 2.7 0 3.5L12.2 28.2C10.8 29.1 9 28.1 9 26.5z'/></svg>"); mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'><path transform='translate(-2.2 0)' d='M9 5.5c0-1.6 1.8-2.6 3.2-1.7l16 10.4c1.3.9 1.3 2.7 0 3.5L12.2 28.2C10.8 29.1 9 28.1 9 26.5z'/></svg>"); }
+.mpx-play i.fa-pause::before{ -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'><rect x='7.5' y='4.5' width='7.5' height='25' rx='2.4'/><rect x='19' y='4.5' width='7.5' height='25' rx='2.4'/></svg>"); mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'><rect x='7.5' y='4.5' width='7.5' height='25' rx='2.4'/><rect x='19' y='4.5' width='7.5' height='25' rx='2.4'/></svg>"); }
+#music-player:has(.mp-art.playing) .mpx-play::after{ content:''; position:absolute; inset:6px; border-radius:50%; border:2px solid var(--primary); opacity:0; animation:mpRing 2.4s ease-out infinite; pointer-events:none; }
+body.perf-no-anim .mpx-play::after, body.lite-mode .mpx-play::after{ animation:none !important; }
+
+/* playlist bubble: comes out of ITS OWN icon (top-left), like the volume bubble does from the speaker icon */
+.mp-pl-pop{ --cx:26px; left:-8px; right:auto; width:min(290px,calc(100vw - 44px)); bottom:calc(100% + 12px); }
+.mp-pl-pop.down{ top:calc(100% + 12px); bottom:auto; }
+
+
+/* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */
 /* sticky strip at the very top of the Magazine screen (the header itself scrolls away, so the bar lives outside it) */
