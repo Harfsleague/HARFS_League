@@ -849,37 +849,75 @@ document.addEventListener('click', closePlaylistPop);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(); });
 
 
-// ---- Player stage: the whole top of the player is the song effect — a mirrored equaliser that moves while music plays,
-//      settles to a thin line when paused. (Driven by the "playing" class that syncSettingsUI() puts on #mp-art.) ----
+// ---- Player stage: the whole top of the player is the song effect. ----
+// It follows the song's real playback position (currentTime), so it restarts with the track, jumps with the seek bar and freezes on pause.
+// Each song gets its own tempo / groove (seeded by its title): bass bars (centre) kick on every beat, mids answer on 2 & 4, highs flutter on the
+// off-beats, every 8 bars the energy swells and every 16th bar breaks down. Bars rise fast and fall slowly; little caps float on top and drop.
+// (It is a rhythm model, not a spectrum analyser — routing the <audio> through Web Audio can silence music when an iPhone locks its screen.)
 (function playerStage(){
     const stage=document.getElementById('mp-art'); if(!stage) return;
-    const N=36;
-    stage.innerHTML='<div class="mpx-glow"></div><div class="mpx-bars">'+'<i></i>'.repeat(N)+'</div>';
-    const bars=Array.from(stage.querySelectorAll('.mpx-bars i')), glow=stage.querySelector('.mpx-glow');
-    const ph=bars.map((_,i)=>({ a:1.1+((i*37)%11)/9, b:2.3+((i*53)%13)/7, p:i*1.7, q:i*0.9 }));
-    const env=bars.map((_,i)=>{ const x=(i/(N-1))*2-1; return 0.42+0.58*Math.cos(x*Math.PI/2); });   // taller in the middle
-    let raf=0, amp=0, last=0;
+    const N=37, MID=(N-1)/2;
+    stage.innerHTML='<div class="mpx-glow"></div><div class="mpx-bars">'+'<span class="bar"><i></i><b></b><u></u></span>'.repeat(N)+'</div>';
+    const wrap=stage.querySelector('.mpx-bars'), glow=stage.querySelector('.mpx-glow');
+    const els=Array.from(stage.querySelectorAll('.bar')).map(el=>({ i:el.children[0], b:el.children[1], u:el.children[2] }));
+    const pos=els.map((_,k)=>Math.abs(k-MID)/MID);                                   // 0 = centre … 1 = edge
+    const wB=pos.map(x=>Math.exp(-x*3.6)), wM=pos.map(x=>Math.exp(-Math.pow(x-0.45,2)/0.05)), wH=pos.map(x=>Math.min(1,Math.max(0,(x-0.5)/0.5)));
+    const val=new Float32Array(N), peak=new Float32Array(N), hold=new Float32Array(N);
+    let bpm=110, swing=0.1, seed=1, half=40, amp=0, raf=0, lastDraw=0, lastEnergy=0;
+    const anchor={ ct:0, ts:0, seen:-1 };
     const still=()=>document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || document.documentElement.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-    function draw(v, pulse){ bars.forEach((b,i)=>{ b.style.transform='scaleY('+Math.max(.06, v[i]).toFixed(3)+')'; }); glow.style.opacity=(0.35+pulse*0.5).toFixed(2); glow.style.transform='scale('+(1+pulse*0.12).toFixed(3)+')'; }
-    function frame(ts){
+    function reseed(){
+        const t=String(window.nowPlayingTitle||'');
+        let h=2166136261; for(let k=0;k<t.length;k++){ h^=t.charCodeAt(k); h=Math.imul(h,16777619); }
+        seed=(h>>>0)%9973; bpm=86+(seed%47); swing=((seed>>3)%5)/40;               // 86–132 bpm, light swing
+    }
+    function measure(){ half=Math.max(10,wrap.clientHeight/2-14-2); }
+    const env=(f,k)=>Math.exp(-f*k);
+    function hum(i,t){ return (Math.sin(t*(1.7+(i*7+seed)%5)+i*1.3)+Math.sin(t*(3.1+(i*11+seed)%7)+i*0.7)+2)/4; }   // small per-bar life between hits
+    function frame(now){
         raf=0;
+        const audio=document.getElementById('background-music');
         const playing=stage.classList.contains('playing') && !document.hidden && !document.body.classList.contains('fx-paused');
-        if(ts-last<33){ raf=requestAnimationFrame(frame); return; }      // ~30 fps is plenty and cheap
-        last=ts;
-        amp += ((playing?1:0)-amp)*0.14;                                // ease in / out
-        const t=ts/1000, beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*2*1.9)),5);   // soft pulse
-        const v=ph.map((o,i)=>{
-            const n=(Math.sin(t*o.a*3+o.p)+Math.sin(t*o.b*2.1+o.q)+2)/4;         // 0..1
-            return 0.06 + amp*env[i]*(0.2+0.8*n)*(0.82+0.3*beat);
-        });
-        draw(v, amp*beat);
-        if(amp>0.01 || playing) raf=requestAnimationFrame(frame);
+        if(now-lastDraw<33){ raf=requestAnimationFrame(frame); return; }
+        const dt=Math.min(.1,(now-lastDraw)/1000); lastDraw=now;
+        amp += ((playing?1:0)-amp)*0.16;
+        // song clock: currentTime only ticks a few times a second, so it is re-anchored and interpolated in between
+        let tt=anchor.ct;
+        if(audio && isFinite(audio.currentTime)){
+            if(audio.currentTime!==anchor.seen){ anchor.seen=audio.currentTime; anchor.ct=audio.currentTime; anchor.ts=now; }
+            tt=anchor.ct+(playing?(now-anchor.ts)/1000:0);
+        }
+        const beatLen=60/bpm, phase=tt/beatLen, beatN=Math.floor(phase), f=phase-beatN, inBar=beatN%4, bar=Math.floor(beatN/4);
+        const swungHalf=((phase*2)%1), offBeat=((phase+0.5-swing)%1);
+        const kick=env(f,5.5)*(inBar===0?1:(inBar===2?.85:.7));
+        const snare=(inBar===1||inBar===3)?env(f,7):0;
+        const hat=Math.max(env(swungHalf,9)*.55, env(offBeat<0?offBeat+1:offBeat,10)*.8);
+        const phrase=0.72+0.28*Math.sin(Math.PI*2*(bar%8)/8)+((bar%16)===15?-0.3:0)+(((bar%8)===7&&inBar>=2)?0.18:0);   // swell … break
+        const energy=Math.max(.25,phrase)*amp;
+        lastEnergy=energy*kick;
+        for(let k=0;k<N;k++){
+            const t=0.04+energy*(kick*wB[k]*1.0 + snare*wM[k]*0.85 + hat*wH[k]*0.7 + hum(k,tt)*0.22*(0.35+wB[k]*.4+wM[k]*.5+wH[k]*.5));
+            const tg=Math.min(1,t);
+            val[k]+= (tg-val[k])*(tg>val[k]?0.65:0.18);                                  // fast attack, slow release
+            if(val[k]>=peak[k]){ peak[k]=val[k]; hold[k]=0.22; }
+            else if(hold[k]>0){ hold[k]-=dt; } else { peak[k]=Math.max(val[k],peak[k]-dt*0.9); }   // cap hangs, then drops
+            const e=els[k], v=Math.max(.05,val[k]), pk=Math.max(0,peak[k]-0.02)*half;
+            e.i.style.transform='scaleY('+v.toFixed(3)+')';
+            e.b.style.transform='translateY('+(-pk).toFixed(1)+'px)'; e.u.style.transform='translateY('+pk.toFixed(1)+'px)';
+        }
+        glow.style.opacity=(0.3+Math.min(1,lastEnergy)*0.55).toFixed(2);
+        glow.style.transform='scale('+(1+Math.min(1,lastEnergy)*0.14).toFixed(3)+')';
+        if(amp>0.01 || playing || val.some(x=>x>0.07) || peak.some(x=>x>0.08)) raf=requestAnimationFrame(frame);
     }
-    function sync(){
-        if(still()){ draw(env.map(e=>stage.classList.contains('playing')?0.12+e*0.5:0.06), 0); return; }
-        if(!raf) raf=requestAnimationFrame(frame);
+    function staticPose(){
+        const on=stage.classList.contains('playing');
+        els.forEach((e,k)=>{ const v=on?0.14+wB[k]*0.4+wM[k]*0.15:0.05; e.i.style.transform='scaleY('+v.toFixed(2)+')'; e.b.style.transform='translateY('+(-v*half).toFixed(1)+'px)'; e.u.style.transform='translateY('+(v*half).toFixed(1)+'px)'; });
+        glow.style.opacity=on?'.5':'.3';
     }
+    function sync(){ measure(); if(still()){ staticPose(); return; } if(!raf) raf=requestAnimationFrame(frame); }
     new MutationObserver(sync).observe(stage,{ attributes:true, attributeFilter:['class'] });
+    document.addEventListener('harfs-track', ()=>{ reseed(); sync(); });
     document.addEventListener('visibilitychange', sync);
-    sync();
+    window.addEventListener('resize', measure);
+    reseed(); sync();
 })();
