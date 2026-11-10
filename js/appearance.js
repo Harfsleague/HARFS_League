@@ -847,3 +847,39 @@ function closePlaylistPop(){
 }
 document.addEventListener('click', closePlaylistPop);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(); });
+
+
+// ---- Player stage: the whole top of the player is the song effect — a mirrored equaliser that moves while music plays,
+//      settles to a thin line when paused. (Driven by the "playing" class that syncSettingsUI() puts on #mp-art.) ----
+(function playerStage(){
+    const stage=document.getElementById('mp-art'); if(!stage) return;
+    const N=36;
+    stage.innerHTML='<div class="mpx-glow"></div><div class="mpx-bars">'+'<i></i>'.repeat(N)+'</div>';
+    const bars=Array.from(stage.querySelectorAll('.mpx-bars i')), glow=stage.querySelector('.mpx-glow');
+    const ph=bars.map((_,i)=>({ a:1.1+((i*37)%11)/9, b:2.3+((i*53)%13)/7, p:i*1.7, q:i*0.9 }));
+    const env=bars.map((_,i)=>{ const x=(i/(N-1))*2-1; return 0.42+0.58*Math.cos(x*Math.PI/2); });   // taller in the middle
+    let raf=0, amp=0, last=0;
+    const still=()=>document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || document.documentElement.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    function draw(v, pulse){ bars.forEach((b,i)=>{ b.style.transform='scaleY('+Math.max(.06, v[i]).toFixed(3)+')'; }); glow.style.opacity=(0.35+pulse*0.5).toFixed(2); glow.style.transform='scale('+(1+pulse*0.12).toFixed(3)+')'; }
+    function frame(ts){
+        raf=0;
+        const playing=stage.classList.contains('playing') && !document.hidden && !document.body.classList.contains('fx-paused');
+        if(ts-last<33){ raf=requestAnimationFrame(frame); return; }      // ~30 fps is plenty and cheap
+        last=ts;
+        amp += ((playing?1:0)-amp)*0.14;                                // ease in / out
+        const t=ts/1000, beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*2*1.9)),5);   // soft pulse
+        const v=ph.map((o,i)=>{
+            const n=(Math.sin(t*o.a*3+o.p)+Math.sin(t*o.b*2.1+o.q)+2)/4;         // 0..1
+            return 0.06 + amp*env[i]*(0.2+0.8*n)*(0.82+0.3*beat);
+        });
+        draw(v, amp*beat);
+        if(amp>0.01 || playing) raf=requestAnimationFrame(frame);
+    }
+    function sync(){
+        if(still()){ draw(env.map(e=>stage.classList.contains('playing')?0.12+e*0.5:0.06), 0); return; }
+        if(!raf) raf=requestAnimationFrame(frame);
+    }
+    new MutationObserver(sync).observe(stage,{ attributes:true, attributeFilter:['class'] });
+    document.addEventListener('visibilitychange', sync);
+    sync();
+})();
