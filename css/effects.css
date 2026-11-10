@@ -2107,6 +2107,11 @@ body.perf-no-anim .mpx-play::after, body.lite-mode .mpx-play::after{ animation:n
 .mpx-canvas{ -webkit-mask-image:none; mask-image:none; filter:drop-shadow(0 0 7px color-mix(in srgb,var(--primary) 45%,transparent)); }
 
 
+/* v106 — LED-matrix equaliser stage: no edge fade, a soft neon glow instead */
+.mpx-stage{ height:128px; }
+.mpx-canvas{ -webkit-mask-image:none; mask-image:none; filter:drop-shadow(0 0 7px color-mix(in srgb,var(--primary) 45%,transparent)); }
+
+
 /* =====================================================
    v92 — Magazine reading-progress bar (blue, fills from the right)
    ===================================================== */
