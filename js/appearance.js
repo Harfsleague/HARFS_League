@@ -849,97 +849,94 @@ document.addEventListener('click', closePlaylistPop);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(); });
 
 
-// ---- Player stage: the whole top of the player is an ambient "aurora" visual (canvas). ----
-// Not a beat meter on purpose: slow layered ribbons, a fine glowing line, a soft capsule silhouette and drifting light dust.
-// Everything moves continuously (no hits, no jumps); on play it swells in, on pause it calms down to a quiet line.
+// ---- Player stage: the whole top of the player is a clean LED-matrix equaliser (canvas). ----
+// Columns of small rounded squares, bottom → top fading from the theme's main colour to its accent, one falling "peak" square per column,
+// a faint unlit grid behind, and a thin glowing baseline. It is lively but smooth (fast attack, softer release, time-based so it looks the same
+// at any frame rate) and is deliberately NOT locked to the beat of the track.
 (function playerStage(){
     const stage=document.getElementById('mp-art'); if(!stage) return;
     stage.innerHTML='';
     const cv=document.createElement('canvas'); cv.className='mpx-canvas'; stage.appendChild(cv);
     const ctx=cv.getContext('2d'); if(!ctx) return;
-    let W=0,H=0,amp=0,raf=0,clock=0,prev=0,cP='#38bdf8',cA='#a855f7';
-    const dust=Array.from({length:30},(_,i)=>({ x:Math.random(), y:Math.random(), r:.5+Math.random()*1.7, v:.006+Math.random()*.02, ph:Math.random()*6.28, sw:.2+Math.random()*.5, i }));
-    const CAPS=58;
+    const CELL=8, GAP=3, PITCH=CELL+GAP, PADX=14, BASE=16;          // BASE = room under the grid for the glowing line
+    let W=0,H=0,cols=0,rows=0,x0=0,amp=0,raf=0,clock=0,prev=0,cP=[56,189,248],cA=[168,85,247];
+    let val=[],peak=[],hold=[],ph=[];
     const still=()=>document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || document.documentElement.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-    function colors(){ const cs=getComputedStyle(stage); cP=cs.getPropertyValue('--primary').trim()||cP; cA=cs.getPropertyValue('--accent').trim()||cA; }
+    const probe=document.createElement('canvas'); probe.width=probe.height=1; const pc=probe.getContext('2d',{ willReadFrequently:true });
+    function toRGB(str,fallback){ try{ pc.clearRect(0,0,1,1); pc.fillStyle='#000'; pc.fillStyle=str; pc.fillRect(0,0,1,1); const d=pc.getImageData(0,0,1,1).data; return [d[0],d[1],d[2]]; }catch(e){ return fallback; } }
+    function colors(){ const cs=getComputedStyle(stage); cP=toRGB(cs.getPropertyValue('--primary').trim()||'#38bdf8',cP); cA=toRGB(cs.getPropertyValue('--accent').trim()||'#a855f7',cA); }
     function resize(){
         const r=stage.getBoundingClientRect(); if(!r.width) return;
         const dpr=Math.min(2,window.devicePixelRatio||1); W=r.width; H=r.height;
         cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);
+        cols=Math.max(8,Math.floor((W-PADX*2+GAP)/PITCH)); rows=Math.max(4,Math.floor((H-BASE-10+GAP)/PITCH));
+        x0=(W-(cols*PITCH-GAP))/2;
+        if(val.length!==cols){ val=new Array(cols).fill(0); peak=new Array(cols).fill(0); hold=new Array(cols).fill(0); ph=Array.from({length:cols},(_,i)=>({ a:Math.random()*6.28, b:Math.random()*6.28, c:.8+Math.random()*.5 })); }
     }
-    const sm=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
-    function draw(t, a){
-        if(!W || !H) return;
+    const rgb=(c,a)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+    const mix=(a,b,t)=>[a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+    function cell(x,y,fill){ ctx.fillStyle=fill; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,CELL,CELL,2.2); else ctx.rect(x,y,CELL,CELL); ctx.fill(); }
+    function draw(){
+        if(!W||!H) return;
         ctx.clearRect(0,0,W,H);
-        const cy=H/2, calm=0.1+0.9*a;
-        // — soft moving light blobs
-        [[.28,.5,.55,cP,.0],[.72,.5,.5,cA,2.2]].forEach(([bx,by,br,col,ph])=>{
-            const x=W*(bx+Math.sin(t*.23+ph)*.12), y=H*(by+Math.cos(t*.19+ph)*.18), r=W*br*(.55+.1*Math.sin(t*.31+ph));
-            const g=ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)');
-            ctx.globalAlpha=0.10+0.16*a; ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-        });
-        // — capsule silhouette: thin rounded bars whose heights flow like a slow tide, mirrored on the centre line
-        const cw=(W-28)/CAPS, bw=Math.max(1.6,cw*.5);
-        const lg=ctx.createLinearGradient(0,0,W,0); lg.addColorStop(0,cA); lg.addColorStop(.5,cP); lg.addColorStop(1,cA);
-        ctx.fillStyle=lg;
-        for(let i=0;i<CAPS;i++){
-            const x=14+i*cw+cw/2, u=i/(CAPS-1);
-            const n=(Math.sin(u*9+t*.9)+Math.sin(u*17-t*.6)*.6+Math.sin(u*4.5+t*.35)*.9+2.5)/5;     // 0..1, slowly drifting
-            const env=Math.pow(Math.sin(Math.PI*u),.9);
-            const h=(2+ (H*.36)*n*env*calm);
-            ctx.globalAlpha=0.28+0.3*n*a;
-            const r=bw/2; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x-bw/2,cy-h,bw,h*2,r) : ctx.rect(x-bw/2,cy-h,bw,h*2); ctx.fill();
-        }
-        // — layered ribbons (aurora bands)
-        const L=[ { A:.30, f:[1.3,2.7], s:[.42,.31], ph:0.0, a:.20 }, { A:.24, f:[1.9,3.4], s:[-.36,.27], ph:1.7, a:.18 }, { A:.18, f:[2.6,4.6], s:[.5,-.33], ph:3.1, a:.16 } ];
-        L.forEach((l,j)=>{
-            const g=ctx.createLinearGradient(0,0,W,0); g.addColorStop(0,j%2?cP:cA); g.addColorStop(.5,j%2?cA:cP); g.addColorStop(1,j%2?cP:cA);
-            const top=[], bot=[]; const step=Math.max(3,W/110);
-            for(let x=0;x<=W+step;x+=step){
-                const u=x/W, e=Math.pow(Math.sin(Math.PI*Math.min(1,u)),.8);
-                const w1=Math.sin(u*Math.PI*2*l.f[0]+t*l.s[0]+l.ph), w2=Math.sin(u*Math.PI*2*l.f[1]+t*l.s[1]+l.ph*1.6);
-                const mid=cy+(w1*.55+w2*.45)*H*.18*calm*(1+.4*Math.sin(t*.2+j));
-                const th=(H*l.A*calm*(.55+.45*Math.sin(u*5+t*.4+j*1.9)))*e+1.2;
-                top.push([x,mid-th]); bot.push([x,mid+th]);
+        const top=H-BASE-rows*PITCH+GAP;                                  // y of the top row
+        for(let i=0;i<cols;i++){
+            const x=x0+i*PITCH, lit=val[i]*rows, full=Math.floor(lit), part=lit-full, pk=Math.min(rows-1,Math.floor(peak[i]*rows));
+            for(let r=0;r<rows;r++){
+                const y=top+(rows-1-r)*PITCH, f=rows>1?r/(rows-1):0;
+                const col=mix(cP,cA,Math.pow(f,1.15));
+                if(r<full) cell(x,y,rgb(col,1));
+                else if(r===full && part>0.04) cell(x,y,rgb(col,part));    // top square fades in/out → smooth growth
+                else if(r===pk && peak[i]>0.06) cell(x,y,rgb(mix(col,[255,255,255],.45),.95));   // falling peak square
+                else cell(x,y,'rgba(255,255,255,0.045)');                    // unlit grid
             }
-            ctx.beginPath(); top.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); for(let k=bot.length-1;k>=0;k--) ctx.lineTo(bot[k][0],bot[k][1]); ctx.closePath();
-            ctx.globalAlpha=l.a*(.5+.7*a); ctx.fillStyle=g; ctx.fill();
-            ctx.globalAlpha=(.35+.4*a); ctx.lineWidth=1; ctx.strokeStyle=g;
-            ctx.beginPath(); top.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
-        });
-        // — fine glowing line through the middle
-        ctx.save(); ctx.globalAlpha=.55+.4*a; ctx.lineWidth=1.4; ctx.strokeStyle='#fff'; ctx.shadowColor=cP; ctx.shadowBlur=10;
-        ctx.beginPath();
-        for(let x=0;x<=W;x+=3){ const u=x/W, e=Math.pow(Math.sin(Math.PI*u),.7);
-            const y=cy+(Math.sin(u*Math.PI*2*3.2+t*.8)*.5+Math.sin(u*Math.PI*2*7.1-t*1.15)*.28+Math.sin(u*Math.PI*2*1.4+t*.3)*.6)*H*.16*calm*e;
-            x?ctx.lineTo(x,y):ctx.moveTo(x,y); }
-        ctx.stroke(); ctx.restore();
-        // — drifting light dust
-        dust.forEach(d=>{
-            const y=((d.y - t*d.v*(.4+a))%1+1)%1, x=d.x+Math.sin(t*d.sw+d.ph)*.02;
-            const tw=.35+.65*(.5+.5*Math.sin(t*(.6+d.sw)+d.ph));
-            ctx.globalAlpha=(.12+.5*a)*tw; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x*W,y*H,d.r,0,6.283); ctx.fill();
-        });
-        ctx.globalAlpha=1;
+        }
+        // thin glowing baseline with a soft reflection
+        const by=H-BASE/2, g=ctx.createLinearGradient(x0,0,W-x0,0);
+        g.addColorStop(0,rgb(cA,0)); g.addColorStop(.2,rgb(cA,.9)); g.addColorStop(.5,rgb(cP,1)); g.addColorStop(.8,rgb(cA,.9)); g.addColorStop(1,rgb(cA,0));
+        ctx.fillStyle=g; ctx.fillRect(x0,by-1,W-x0*2,2);
+        const rg=ctx.createLinearGradient(0,by,0,H); rg.addColorStop(0,rgb(cP,.22*(.3+amp))); rg.addColorStop(1,rgb(cP,0));
+        ctx.fillStyle=rg; ctx.fillRect(x0,by+1,W-x0*2,H-by-1);
+    }
+    function step(dt){
+        amp += ((stage.classList.contains('playing')?1:0)-amp)*Math.min(1,dt*5);
+        clock += dt;
+        const t=clock, swell=0.78+0.22*Math.sin(t*0.9), kA=1-Math.exp(-dt*16), kD=1-Math.exp(-dt*6.5);
+        let moving=false;
+        for(let i=0;i<cols;i++){
+            const u=i/(cols-1), o=ph[i];
+            const n=(Math.sin(t*3.1*o.c+o.a+i*.7)*.45 + Math.sin(t*5.3-o.b+i*.38)*.3 + Math.sin(t*1.7+u*7.5)*.45 + 1.2)/2.4;   // 0..1, quick but smooth
+            const env=0.38+0.62*Math.pow(Math.sin(Math.PI*(0.1+0.8*u)),.7);
+            const target=Math.min(1,Math.pow(Math.max(0,n),1.25)*env*swell*1.4)*amp;
+            val[i]+= (target-val[i])*(target>val[i]?kA:kD);
+            if(val[i]>=peak[i]){ peak[i]=val[i]; hold[i]=.18; } else if(hold[i]>0) hold[i]-=dt; else peak[i]=Math.max(val[i],peak[i]-dt*.7);
+            if(val[i]>0.01 || peak[i]>0.03) moving=true;
+        }
+        return moving;
     }
     function frame(now){
         raf=0;
-        if(!stage.offsetWidth){ prev=0; setTimeout(()=>{ if(!raf && !still()){ resize(); raf=requestAnimationFrame(frame); } },400); return; }   // settings page not on screen → check back later, no drawing
+        if(!stage.offsetWidth){ prev=0; setTimeout(()=>{ if(!raf && !still()){ resize(); raf=requestAnimationFrame(frame); } },400); return; }
         if(!W) resize();
         const playing=stage.classList.contains('playing') && !document.hidden && !document.body.classList.contains('fx-paused');
         const dt=Math.min(.05,(now-(prev||now))/1000); prev=now;
-        amp += ((playing?1:0)-amp)*Math.min(1,dt*2.4);                 // slow, eased swell / calm
-        clock += dt*(0.45+0.9*amp);                                   // time slows down when paused
-        draw(clock, amp);
-        if(playing || amp>0.012) raf=requestAnimationFrame(frame); else { amp=0; draw(clock,0); prev=0; }
+        if(!playing) stage.dataset.idle='1'; else delete stage.dataset.idle;
+        const moving=step(dt);
+        draw();
+        if(playing || moving || amp>0.01) raf=requestAnimationFrame(frame); else prev=0;
+    }
+    function staticPose(){
+        const on=stage.classList.contains('playing');
+        for(let i=0;i<cols;i++){ const u=i/(cols-1); val[i]=on?0.22+0.4*Math.pow(Math.sin(Math.PI*(0.1+0.8*u)),1.2)*(0.6+0.4*Math.sin(i*1.3)):0; peak[i]=val[i]+(on?.12:0); }
+        amp=on?1:0; draw();
     }
     function sync(){
         colors(); resize();
-        if(still()){ draw(3.2, stage.classList.contains('playing')?.6:0); return; }
+        if(still()){ staticPose(); return; }
         if(!raf){ prev=0; raf=requestAnimationFrame(frame); }
     }
     new MutationObserver(sync).observe(stage,{ attributes:true, attributeFilter:['class'] });
-    if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); if(!raf) draw(clock,amp); }).observe(stage);
+    if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); if(!raf) draw(); }).observe(stage);
     document.addEventListener('visibilitychange', sync);
     sync();
 })();
