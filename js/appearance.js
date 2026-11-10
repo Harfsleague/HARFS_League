@@ -849,75 +849,97 @@ document.addEventListener('click', closePlaylistPop);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(); });
 
 
-// ---- Player stage: the whole top of the player is the song effect. ----
-// It follows the song's real playback position (currentTime), so it restarts with the track, jumps with the seek bar and freezes on pause.
-// Each song gets its own tempo / groove (seeded by its title): bass bars (centre) kick on every beat, mids answer on 2 & 4, highs flutter on the
-// off-beats, every 8 bars the energy swells and every 16th bar breaks down. Bars rise fast and fall slowly; little caps float on top and drop.
-// (It is a rhythm model, not a spectrum analyser — routing the <audio> through Web Audio can silence music when an iPhone locks its screen.)
+// ---- Player stage: the whole top of the player is an ambient "aurora" visual (canvas). ----
+// Not a beat meter on purpose: slow layered ribbons, a fine glowing line, a soft capsule silhouette and drifting light dust.
+// Everything moves continuously (no hits, no jumps); on play it swells in, on pause it calms down to a quiet line.
 (function playerStage(){
     const stage=document.getElementById('mp-art'); if(!stage) return;
-    const N=37, MID=(N-1)/2;
-    stage.innerHTML='<div class="mpx-glow"></div><div class="mpx-bars">'+'<span class="bar"><i></i><b></b><u></u></span>'.repeat(N)+'</div>';
-    const wrap=stage.querySelector('.mpx-bars'), glow=stage.querySelector('.mpx-glow');
-    const els=Array.from(stage.querySelectorAll('.bar')).map(el=>({ i:el.children[0], b:el.children[1], u:el.children[2] }));
-    const pos=els.map((_,k)=>Math.abs(k-MID)/MID);                                   // 0 = centre … 1 = edge
-    const wB=pos.map(x=>Math.exp(-x*3.6)), wM=pos.map(x=>Math.exp(-Math.pow(x-0.45,2)/0.05)), wH=pos.map(x=>Math.min(1,Math.max(0,(x-0.5)/0.5)));
-    const val=new Float32Array(N), peak=new Float32Array(N), hold=new Float32Array(N);
-    let bpm=110, swing=0.1, seed=1, half=40, amp=0, raf=0, lastDraw=0, lastEnergy=0;
-    const anchor={ ct:0, ts:0, seen:-1 };
+    stage.innerHTML='';
+    const cv=document.createElement('canvas'); cv.className='mpx-canvas'; stage.appendChild(cv);
+    const ctx=cv.getContext('2d'); if(!ctx) return;
+    let W=0,H=0,amp=0,raf=0,clock=0,prev=0,cP='#38bdf8',cA='#a855f7';
+    const dust=Array.from({length:30},(_,i)=>({ x:Math.random(), y:Math.random(), r:.5+Math.random()*1.7, v:.006+Math.random()*.02, ph:Math.random()*6.28, sw:.2+Math.random()*.5, i }));
+    const CAPS=58;
     const still=()=>document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || document.documentElement.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-    function reseed(){
-        const t=String(window.nowPlayingTitle||'');
-        let h=2166136261; for(let k=0;k<t.length;k++){ h^=t.charCodeAt(k); h=Math.imul(h,16777619); }
-        seed=(h>>>0)%9973; bpm=86+(seed%47); swing=((seed>>3)%5)/40;               // 86–132 bpm, light swing
+    function colors(){ const cs=getComputedStyle(stage); cP=cs.getPropertyValue('--primary').trim()||cP; cA=cs.getPropertyValue('--accent').trim()||cA; }
+    function resize(){
+        const r=stage.getBoundingClientRect(); if(!r.width) return;
+        const dpr=Math.min(2,window.devicePixelRatio||1); W=r.width; H=r.height;
+        cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);
     }
-    function measure(){ half=Math.max(10,wrap.clientHeight/2-14-2); }
-    const env=(f,k)=>Math.exp(-f*k);
-    function hum(i,t){ return (Math.sin(t*(1.7+(i*7+seed)%5)+i*1.3)+Math.sin(t*(3.1+(i*11+seed)%7)+i*0.7)+2)/4; }   // small per-bar life between hits
+    const sm=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
+    function draw(t, a){
+        if(!W || !H) return;
+        ctx.clearRect(0,0,W,H);
+        const cy=H/2, calm=0.1+0.9*a;
+        // — soft moving light blobs
+        [[.28,.5,.55,cP,.0],[.72,.5,.5,cA,2.2]].forEach(([bx,by,br,col,ph])=>{
+            const x=W*(bx+Math.sin(t*.23+ph)*.12), y=H*(by+Math.cos(t*.19+ph)*.18), r=W*br*(.55+.1*Math.sin(t*.31+ph));
+            const g=ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)');
+            ctx.globalAlpha=0.10+0.16*a; ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+        });
+        // — capsule silhouette: thin rounded bars whose heights flow like a slow tide, mirrored on the centre line
+        const cw=(W-28)/CAPS, bw=Math.max(1.6,cw*.5);
+        const lg=ctx.createLinearGradient(0,0,W,0); lg.addColorStop(0,cA); lg.addColorStop(.5,cP); lg.addColorStop(1,cA);
+        ctx.fillStyle=lg;
+        for(let i=0;i<CAPS;i++){
+            const x=14+i*cw+cw/2, u=i/(CAPS-1);
+            const n=(Math.sin(u*9+t*.9)+Math.sin(u*17-t*.6)*.6+Math.sin(u*4.5+t*.35)*.9+2.5)/5;     // 0..1, slowly drifting
+            const env=Math.pow(Math.sin(Math.PI*u),.9);
+            const h=(2+ (H*.36)*n*env*calm);
+            ctx.globalAlpha=0.28+0.3*n*a;
+            const r=bw/2; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x-bw/2,cy-h,bw,h*2,r) : ctx.rect(x-bw/2,cy-h,bw,h*2); ctx.fill();
+        }
+        // — layered ribbons (aurora bands)
+        const L=[ { A:.30, f:[1.3,2.7], s:[.42,.31], ph:0.0, a:.20 }, { A:.24, f:[1.9,3.4], s:[-.36,.27], ph:1.7, a:.18 }, { A:.18, f:[2.6,4.6], s:[.5,-.33], ph:3.1, a:.16 } ];
+        L.forEach((l,j)=>{
+            const g=ctx.createLinearGradient(0,0,W,0); g.addColorStop(0,j%2?cP:cA); g.addColorStop(.5,j%2?cA:cP); g.addColorStop(1,j%2?cP:cA);
+            const top=[], bot=[]; const step=Math.max(3,W/110);
+            for(let x=0;x<=W+step;x+=step){
+                const u=x/W, e=Math.pow(Math.sin(Math.PI*Math.min(1,u)),.8);
+                const w1=Math.sin(u*Math.PI*2*l.f[0]+t*l.s[0]+l.ph), w2=Math.sin(u*Math.PI*2*l.f[1]+t*l.s[1]+l.ph*1.6);
+                const mid=cy+(w1*.55+w2*.45)*H*.18*calm*(1+.4*Math.sin(t*.2+j));
+                const th=(H*l.A*calm*(.55+.45*Math.sin(u*5+t*.4+j*1.9)))*e+1.2;
+                top.push([x,mid-th]); bot.push([x,mid+th]);
+            }
+            ctx.beginPath(); top.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); for(let k=bot.length-1;k>=0;k--) ctx.lineTo(bot[k][0],bot[k][1]); ctx.closePath();
+            ctx.globalAlpha=l.a*(.5+.7*a); ctx.fillStyle=g; ctx.fill();
+            ctx.globalAlpha=(.35+.4*a); ctx.lineWidth=1; ctx.strokeStyle=g;
+            ctx.beginPath(); top.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+        });
+        // — fine glowing line through the middle
+        ctx.save(); ctx.globalAlpha=.55+.4*a; ctx.lineWidth=1.4; ctx.strokeStyle='#fff'; ctx.shadowColor=cP; ctx.shadowBlur=10;
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=3){ const u=x/W, e=Math.pow(Math.sin(Math.PI*u),.7);
+            const y=cy+(Math.sin(u*Math.PI*2*3.2+t*.8)*.5+Math.sin(u*Math.PI*2*7.1-t*1.15)*.28+Math.sin(u*Math.PI*2*1.4+t*.3)*.6)*H*.16*calm*e;
+            x?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+        ctx.stroke(); ctx.restore();
+        // — drifting light dust
+        dust.forEach(d=>{
+            const y=((d.y - t*d.v*(.4+a))%1+1)%1, x=d.x+Math.sin(t*d.sw+d.ph)*.02;
+            const tw=.35+.65*(.5+.5*Math.sin(t*(.6+d.sw)+d.ph));
+            ctx.globalAlpha=(.12+.5*a)*tw; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x*W,y*H,d.r,0,6.283); ctx.fill();
+        });
+        ctx.globalAlpha=1;
+    }
     function frame(now){
         raf=0;
-        const audio=document.getElementById('background-music');
+        if(!stage.offsetWidth){ prev=0; setTimeout(()=>{ if(!raf && !still()){ resize(); raf=requestAnimationFrame(frame); } },400); return; }   // settings page not on screen → check back later, no drawing
+        if(!W) resize();
         const playing=stage.classList.contains('playing') && !document.hidden && !document.body.classList.contains('fx-paused');
-        if(now-lastDraw<33){ raf=requestAnimationFrame(frame); return; }
-        const dt=Math.min(.1,(now-lastDraw)/1000); lastDraw=now;
-        amp += ((playing?1:0)-amp)*0.16;
-        // song clock: currentTime only ticks a few times a second, so it is re-anchored and interpolated in between
-        let tt=anchor.ct;
-        if(audio && isFinite(audio.currentTime)){
-            if(audio.currentTime!==anchor.seen){ anchor.seen=audio.currentTime; anchor.ct=audio.currentTime; anchor.ts=now; }
-            tt=anchor.ct+(playing?(now-anchor.ts)/1000:0);
-        }
-        const beatLen=60/bpm, phase=tt/beatLen, beatN=Math.floor(phase), f=phase-beatN, inBar=beatN%4, bar=Math.floor(beatN/4);
-        const swungHalf=((phase*2)%1), offBeat=((phase+0.5-swing)%1);
-        const kick=env(f,5.5)*(inBar===0?1:(inBar===2?.85:.7));
-        const snare=(inBar===1||inBar===3)?env(f,7):0;
-        const hat=Math.max(env(swungHalf,9)*.55, env(offBeat<0?offBeat+1:offBeat,10)*.8);
-        const phrase=0.72+0.28*Math.sin(Math.PI*2*(bar%8)/8)+((bar%16)===15?-0.3:0)+(((bar%8)===7&&inBar>=2)?0.18:0);   // swell … break
-        const energy=Math.max(.25,phrase)*amp;
-        lastEnergy=energy*kick;
-        for(let k=0;k<N;k++){
-            const t=0.04+energy*(kick*wB[k]*1.0 + snare*wM[k]*0.85 + hat*wH[k]*0.7 + hum(k,tt)*0.22*(0.35+wB[k]*.4+wM[k]*.5+wH[k]*.5));
-            const tg=Math.min(1,t);
-            val[k]+= (tg-val[k])*(tg>val[k]?0.65:0.18);                                  // fast attack, slow release
-            if(val[k]>=peak[k]){ peak[k]=val[k]; hold[k]=0.22; }
-            else if(hold[k]>0){ hold[k]-=dt; } else { peak[k]=Math.max(val[k],peak[k]-dt*0.9); }   // cap hangs, then drops
-            const e=els[k], v=Math.max(.05,val[k]), pk=Math.max(0,peak[k]-0.02)*half;
-            e.i.style.transform='scaleY('+v.toFixed(3)+')';
-            e.b.style.transform='translateY('+(-pk).toFixed(1)+'px)'; e.u.style.transform='translateY('+pk.toFixed(1)+'px)';
-        }
-        glow.style.opacity=(0.3+Math.min(1,lastEnergy)*0.55).toFixed(2);
-        glow.style.transform='scale('+(1+Math.min(1,lastEnergy)*0.14).toFixed(3)+')';
-        if(amp>0.01 || playing || val.some(x=>x>0.07) || peak.some(x=>x>0.08)) raf=requestAnimationFrame(frame);
+        const dt=Math.min(.05,(now-(prev||now))/1000); prev=now;
+        amp += ((playing?1:0)-amp)*Math.min(1,dt*2.4);                 // slow, eased swell / calm
+        clock += dt*(0.45+0.9*amp);                                   // time slows down when paused
+        draw(clock, amp);
+        if(playing || amp>0.012) raf=requestAnimationFrame(frame); else { amp=0; draw(clock,0); prev=0; }
     }
-    function staticPose(){
-        const on=stage.classList.contains('playing');
-        els.forEach((e,k)=>{ const v=on?0.14+wB[k]*0.4+wM[k]*0.15:0.05; e.i.style.transform='scaleY('+v.toFixed(2)+')'; e.b.style.transform='translateY('+(-v*half).toFixed(1)+'px)'; e.u.style.transform='translateY('+(v*half).toFixed(1)+'px)'; });
-        glow.style.opacity=on?'.5':'.3';
+    function sync(){
+        colors(); resize();
+        if(still()){ draw(3.2, stage.classList.contains('playing')?.6:0); return; }
+        if(!raf){ prev=0; raf=requestAnimationFrame(frame); }
     }
-    function sync(){ measure(); if(still()){ staticPose(); return; } if(!raf) raf=requestAnimationFrame(frame); }
     new MutationObserver(sync).observe(stage,{ attributes:true, attributeFilter:['class'] });
-    document.addEventListener('harfs-track', ()=>{ reseed(); sync(); });
+    if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); if(!raf) draw(clock,amp); }).observe(stage);
     document.addEventListener('visibilitychange', sync);
-    window.addEventListener('resize', measure);
-    reseed(); sync();
+    sync();
 })();
