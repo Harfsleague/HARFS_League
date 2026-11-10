@@ -538,21 +538,22 @@ function closePlaylistSheet(){
 }
 let playlistPicked = -1;   // the row just tapped → plays the pick animation once
 function renderPlaylistSheet(){
-    const container=document.getElementById('playlist-list-container');
-    if(!container)return;
-    const cnt=document.getElementById('playlist-track-count');
-    if(cnt) cnt.textContent = PLAYLIST.length ? `${PLAYLIST.length} track${PLAYLIST.length===1?'':'s'}` : 'Loading…';
-    if(!PLAYLIST.length){
-        container.innerHTML='<div class="playlist-empty"><span class="spinner"></span></div>';
-        return;
-    }
-    container.innerHTML=PLAYLIST.map((t,i)=>{
-        const isPlaying = i===currentTrackIndex && backgroundMusicStarted && !musicMuted;
-        return `<div class="playlist-track-item ${isPlaying?'playing':''} ${i===playlistPicked?'picked':''}" onclick="selectPlaylistTrack(${i})">
-            <div class="playlist-track-icon">${isPlaying ? '<span class="pl-eq"><i></i><i></i><i></i></span>' : '<i class="fas fa-music"></i>'}</div>
-            <div class="playlist-track-title">${escapeHtml(t.title)}</div>
-        </div>`;
-    }).join('');
+    // the same list is drawn in the old sheet and in the bubble under the player (scroll position survives a re-draw)
+    [['playlist-list-container','playlist-track-count'],['mp-pl-list','mp-pl-count']].forEach(([listId,cntId])=>{
+        const container=document.getElementById(listId); if(!container) return;
+        const cnt=document.getElementById(cntId);
+        if(cnt) cnt.textContent = PLAYLIST.length ? `${PLAYLIST.length} track${PLAYLIST.length===1?'':'s'}` : 'Loading…';
+        if(!PLAYLIST.length){ container.innerHTML='<div class="playlist-empty"><span class="spinner"></span></div>'; return; }
+        const keep=container.scrollTop;
+        container.innerHTML=PLAYLIST.map((t,i)=>{
+            const isPlaying = i===currentTrackIndex && backgroundMusicStarted && !musicMuted;
+            return `<div class="playlist-track-item ${isPlaying?'playing':''} ${i===playlistPicked?'picked':''}" style="--i:${Math.min(i,8)}" onclick="selectPlaylistTrack(${i})">
+                <div class="playlist-track-icon">${isPlaying ? '<span class="pl-eq"><i></i><i></i><i></i></span>' : '<i class="fas fa-music"></i>'}</div>
+                <div class="playlist-track-title">${escapeHtml(t.title)}</div>
+            </div>`;
+        }).join('');
+        container.scrollTop=keep;
+    });
 }
 function selectPlaylistTrack(index){
     haptic([8]);
@@ -795,6 +796,7 @@ function renderVolumeBadge(v){
 function toggleVolPop(e){
     if(e) e.stopPropagation();
     haptic([6]);
+    closePlaylistPop();
     const pop=document.getElementById('mp-vol-pop'), btn=document.getElementById('mp-vol-btn'); if(!pop) return;
     const open=!pop.classList.contains('open');
     pop.classList.toggle('open', open);
@@ -807,3 +809,32 @@ function closeVolPop(){
 }
 document.addEventListener('click', closeVolPop);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVolPop(); });
+
+
+// ---- Playlist bubble (profile → music player): grows out of the playlist button, caret points at it ----
+function togglePlaylistPop(e){
+    if(e) e.stopPropagation();
+    haptic([6]);
+    const pop=document.getElementById('mp-pl-pop'), btn=document.getElementById('mp-pl-btn'), pl=document.getElementById('music-player');
+    if(!pop || !btn || !pl) return;
+    if(pop.classList.contains('open')){ closePlaylistPop(); return; }
+    closeVolPop();
+    const pr=pl.getBoundingClientRect(), br=btn.getBoundingClientRect();
+    const cx=Math.max(26, Math.min(pr.width-26, br.left+br.width/2-pr.left));
+    pop.style.setProperty('--cx', cx+'px');
+    pop.classList.toggle('down', pr.top < 330);          // not enough room above the player → open downwards
+    renderPlaylistSheet();
+    if(!PLAYLIST.length) loadPlaylistFromGitHub().then(renderPlaylistSheet);
+    pop.classList.add('open','entering');
+    btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
+    clearTimeout(pop._enterT); pop._enterT=setTimeout(()=>pop.classList.remove('entering'), 900);
+    const cur=pop.querySelector('.playlist-track-item.playing');
+    if(cur) setTimeout(()=>cur.scrollIntoView({ block:'nearest' }), 60);
+}
+function closePlaylistPop(){
+    const pop=document.getElementById('mp-pl-pop'), btn=document.getElementById('mp-pl-btn');
+    if(pop) pop.classList.remove('open','entering');
+    if(btn){ btn.classList.remove('on'); btn.setAttribute('aria-expanded','false'); }
+}
+document.addEventListener('click', closePlaylistPop);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(); });

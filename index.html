@@ -659,7 +659,7 @@
                     <button class="mp-btn" onclick="playerPrev()" aria-label="Previous"><i class="fas fa-backward-step"></i></button>
                     <button class="mp-play" id="mp-play" onclick="playerTogglePlay()" aria-label="Play / pause"><i class="fas fa-play" id="mp-play-icon"></i></button>
                     <button class="mp-btn" onclick="playerNext()" aria-label="Next"><i class="fas fa-forward-step"></i></button>
-                    <button class="mp-btn" onclick="openPlaylistSheet()" aria-label="Playlist"><i class="fas fa-list-ul"></i></button>
+                    <button class="mp-btn" id="mp-pl-btn" onclick="togglePlaylistPop(event)" aria-label="Playlist" aria-expanded="false"><i class="fas fa-list-ul"></i></button>
                     <div class="mp-vol-wrap">
                         <button class="mp-btn" id="mp-vol-btn" onclick="toggleVolPop(event)" aria-label="Volume" aria-expanded="false"><i class="fas fa-volume-low" id="mp-vol-icon"></i></button>
                         <div class="mp-vol-pop" id="mp-vol-pop" onclick="event.stopPropagation()">
@@ -667,6 +667,11 @@
                             <div class="mp-vol-track"><input type="range" class="mp-range" id="mp-vol" min="0" max="100" value="15" step="1" aria-label="Volume"></div>
                         </div>
                     </div>
+                </div>
+                <!-- Playlist bubble: pops out of the playlist button like the volume bubble does -->
+                <div class="mp-pl-pop" id="mp-pl-pop" onclick="event.stopPropagation()">
+                    <div class="mp-pl-head"><span class="mp-pl-title"><i class="fas fa-music"></i> Playlist</span><span class="mp-pl-count" id="mp-pl-count"></span></div>
+                    <div class="mp-pl-list" id="mp-pl-list"></div>
                 </div>
             </div>
             </div>
