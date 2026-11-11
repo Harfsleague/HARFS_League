@@ -2140,6 +2140,73 @@ html.lite-mode #team-edit-sheet .profile-header-bg[data-team]::after{ display:no
 .team-picker-sheet.as-modal:has(.sessions-modal) .team-picker-panel.sessions-modal{ max-height:calc(100vh - 86px - env(safe-area-inset-top,0px) - 24px); max-height:calc(100dvh - 86px - env(safe-area-inset-top,0px) - 24px); }
 
 
+/* =====================================================
+   1.09 — the whole profile card opens Edit Profile; softer open / close motion everywhere in Profile
+   ===================================================== */
+/* the whole account bubble is the button */
+.account-card{ cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .25s cubic-bezier(.22,1,.36,1), background .25s ease, border-color .25s ease, box-shadow .25s ease; }
+.account-card:active{ transform:scale(.975); background:rgba(255,255,255,0.09); border-color:color-mix(in srgb,var(--primary) 45%,rgba(255,255,255,0.12)); }
+.account-card:focus-visible{ outline:2px solid color-mix(in srgb,var(--primary) 70%,#fff); outline-offset:2px; }
+.account-avatar-edit-btn{ pointer-events:none; }
+
+/* Profile sheets (Edit profile, Appearance, Playlist, Sessions, Emergency, Notifications):
+   opening = a long ease-out with no bounce, closing = a quicker, gentler ease-in */
+#team-edit-sheet, #appearance-sheet, #playlist-sheet, #sessions-sheet, #lite-sheet, #notif-sheet{
+    transition:opacity .42s cubic-bezier(.22,1,.36,1);
+}
+#team-edit-sheet:not(.open), #appearance-sheet:not(.open), #playlist-sheet:not(.open), #sessions-sheet:not(.open), #lite-sheet:not(.open), #notif-sheet:not(.open){
+    transition:opacity .3s ease-in;
+}
+#team-edit-sheet.as-modal .team-picker-panel, #appearance-sheet.as-modal .team-picker-panel, #playlist-sheet.as-modal .team-picker-panel,
+#sessions-sheet.as-modal .team-picker-panel, #lite-sheet.as-modal .team-picker-panel, #notif-sheet.as-modal .team-picker-panel{
+    opacity:0; transform:translateY(28px) scale(.965);
+    transition:transform .32s cubic-bezier(.4,0,.6,1), opacity .24s ease-in;
+}
+#team-edit-sheet.as-modal.open .team-picker-panel, #appearance-sheet.as-modal.open .team-picker-panel, #playlist-sheet.as-modal.open .team-picker-panel,
+#sessions-sheet.as-modal.open .team-picker-panel, #lite-sheet.as-modal.open .team-picker-panel, #notif-sheet.as-modal.open .team-picker-panel{
+    opacity:1; transform:none;
+    transition:transform .6s cubic-bezier(.16,1,.3,1), opacity .42s ease-out;
+}
+/* what is inside drifts in one block after another once the sheet is up */
+#team-edit-sheet.open .team-panel-section, #team-edit-sheet.open .team-panel-scroll > div:last-child,
+#appearance-sheet.open .ap-card, #sessions-sheet.open .sessions-modal > :not(.modal-x-close):not(.team-picker-handle),
+#lite-sheet.open .sessions-modal > :not(.modal-x-close):not(.team-picker-handle):not(.cards-info-btn),
+#notif-sheet.open .sessions-modal > :not(.modal-x-close):not(.team-picker-handle){
+    animation:profItemIn .6s cubic-bezier(.22,1,.36,1) backwards;
+}
+#team-edit-sheet.open .team-panel-section:nth-child(1), #appearance-sheet.open .team-picker-title + .ap-card{ animation-delay:.12s; }
+#team-edit-sheet.open .team-panel-section:nth-child(2), #appearance-sheet.open .ap-card + .ap-card{ animation-delay:.2s; }
+#team-edit-sheet.open .team-panel-scroll > div:last-child, #appearance-sheet.open .ap-card + .ap-card + .ap-card{ animation-delay:.28s; }
+#appearance-sheet.open .ap-card + .ap-card + .ap-card + .ap-card{ animation-delay:.36s; }
+.sessions-modal > :nth-child(n+4){ --pd:.14s; }
+#sessions-sheet.open .sessions-modal > *, #lite-sheet.open .sessions-modal > *, #notif-sheet.open .sessions-modal > *{ animation-delay:var(--pd,.1s); }
+@keyframes profItemIn{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+
+/* Profile page itself: it glides in slowly, and leaves a touch quicker (the screen is hidden 370 ms after it starts to leave) */
+#settings-screen.page-screen{ transform:translateY(16px) scale(.99); transition:opacity .3s ease-in, transform .33s cubic-bezier(.4,0,.6,1); }
+#settings-screen.page-screen.active{ transform:none; transition:opacity .5s ease-out, transform .6s cubic-bezier(.22,1,.36,1); }
+/* ...and its blocks rise one after another */
+#settings-screen.active .settings-screen-header, #settings-screen.active .w-full > *{ animation:profItemIn .7s cubic-bezier(.22,1,.36,1) backwards; }
+#settings-screen.active .w-full > :nth-child(1){ animation-delay:.08s; } #settings-screen.active .w-full > :nth-child(2){ animation-delay:.14s; }
+#settings-screen.active .w-full > :nth-child(3){ animation-delay:.2s; }  #settings-screen.active .w-full > :nth-child(4){ animation-delay:.26s; }
+#settings-screen.active .w-full > :nth-child(n+5){ animation-delay:.32s; }
+
+/* popovers on the player: same unhurried ease, no spring overshoot */
+.mp-vol-pop{ transition:opacity .22s ease-in, transform .3s cubic-bezier(.4,0,.6,1), visibility 0s linear .3s; }
+.mp-vol-pop.open{ transition:opacity .3s ease-out, transform .5s cubic-bezier(.16,1,.3,1), visibility 0s; }
+.mp-pl-pop{ transition:opacity .22s ease-in, transform .3s cubic-bezier(.4,0,.6,1), visibility 0s linear .3s; }
+.mp-pl-pop.open{ transition:opacity .3s ease-out, transform .55s cubic-bezier(.16,1,.3,1), visibility 0s; }
+.mp-pl-pop.entering .playlist-track-item{ animation-duration:.6s; animation-timing-function:cubic-bezier(.22,1,.36,1); }
+.mpx-ic, .mpx-play{ transition-duration:.25s; }
+
+body.perf-no-anim #team-edit-sheet .team-panel-section, body.perf-no-anim #appearance-sheet .ap-card, body.perf-no-anim .sessions-modal > *,
+body.perf-no-anim #settings-screen .settings-screen-header, body.perf-no-anim #settings-screen .w-full > *{ animation:none !important; }
+@media (prefers-reduced-motion:reduce){
+    #settings-screen .settings-screen-header, #settings-screen .w-full > *, #team-edit-sheet .team-panel-section, #appearance-sheet .ap-card, .sessions-modal > *{ animation:none !important; }
+    #settings-screen.page-screen, #settings-screen.page-screen.active{ transition:opacity .2s; transform:none; }
+}
+
+
 /* v106 — LED-matrix equaliser stage: no edge fade, a soft neon glow instead */
 .mpx-stage{ height:128px; }
 .mpx-canvas{ -webkit-mask-image:none; mask-image:none; filter:drop-shadow(0 0 7px color-mix(in srgb,var(--primary) 45%,transparent)); }

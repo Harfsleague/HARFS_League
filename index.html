@@ -613,10 +613,10 @@
     <div id="settings-screen" class="page-screen">
         <div class="league-header settings-screen-header">
             <h2 class="text-base font-black uppercase tracking-widest mb-1" style="color:var(--header-text);">Profile</h2>
-            <div class="account-card">
+            <div class="account-card" role="button" tabindex="0" onclick="openTeamEditSheet()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTeamEditSheet();}" aria-label="Edit profile">
                 <div class="account-avatar-wrap">
                     <img id="settings-team-badge-logo" src="" class="account-avatar">
-                    <button class="account-avatar-edit-btn" onclick="openTeamEditSheet()" aria-label="Edit team name and logo"><i class="fas fa-pen"></i></button>
+                    <span class="account-avatar-edit-btn" aria-hidden="true"><i class="fas fa-pen"></i></span>
                 </div>
                 <div class="account-textcol">
                     <span id="settings-team-badge-name" class="account-name">—</span>
