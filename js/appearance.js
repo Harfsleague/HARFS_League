@@ -4,6 +4,8 @@
 // with every other file below, in load order, exactly as this code
 // used to run when it was one inline <script> block.
 // ============================================================
+// Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
+const HARFS_VERSION_LABEL = "1.08";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -478,7 +480,7 @@ function renderSettingsScreen(){
     const badgeName=document.getElementById('settings-team-badge-name');
     const subtitle=document.getElementById('settings-account-subtitle');
     const logoutTile=document.getElementById('settings-logout-tile');
-    const verEl=document.getElementById('settings-app-version'); if(verEl) verEl.textContent='HARFS '+String(APP_VERSION).replace(/^v?(\d+)$/i,(_,n)=>'v'+(Number(n)/10).toFixed(1));
+    const verEl=document.getElementById('settings-app-version'); if(verEl) verEl.textContent='HARFS v'+HARFS_VERSION_LABEL;
     const signinTile=document.getElementById('settings-signin-tile');
     if(loggedInTeam){
         if(badgeLogo) badgeLogo.src=`${teamLogoUrl(loggedInTeam)}`;
