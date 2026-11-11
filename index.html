@@ -193,10 +193,10 @@
 <!-- Team Edit (centered modal) — each team can only ever edit its own record;
      see openTeamEditSheet()/saveTeamEdit() in appearance.js and js/profile-photos.js. -->
 <div class="team-picker-sheet as-modal" id="team-edit-sheet" onclick="if(event.target===this)closeTeamEditSheet()">
-    <div class="team-picker-panel hero-modal">
+    <div class="team-picker-panel hero-modal team-modal">
         <div class="modal-x-close" onclick="closeTeamEditSheet()"><i class="fas fa-times"></i></div>
         <div class="profile-header" style="flex-shrink:0;">
-            <div class="profile-header-bg"></div>
+            <div class="profile-header-bg" id="team-edit-header-bg"></div>
             <img id="team-edit-logo-preview" src="" alt="" class="profile-avatar" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'">
         </div>
         <div class="profile-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">

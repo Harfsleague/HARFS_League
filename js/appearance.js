@@ -740,7 +740,10 @@ function openTeamEditSheet(){
     shortInput.value = mainLeagueData[loggedInTeam].customShort || '';
     shortInput.placeholder = deriveShortName(TEAM_DISPLAY_NAMES[loggedInTeam] || loggedInTeam) || 'Short name';
     peLoadFromProfile(loggedInTeam); // photo gallery editor — see js/profile-photos.js
-    document.getElementById('team-edit-sheet').classList.add('open');
+    const sheet = document.getElementById('team-edit-sheet'), hbg = document.getElementById('team-edit-header-bg');
+    sheet.dataset.team = loggedInTeam;                 // accent colour of the sheet
+    if(hbg) hbg.dataset.team = loggedInTeam;           // the same cover the team shows on Home (css/effects.css)
+    sheet.classList.add('open');
 }
 function closeTeamEditSheet(){
     document.getElementById('team-edit-sheet').classList.remove('open');
