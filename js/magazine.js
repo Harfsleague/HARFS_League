@@ -1088,15 +1088,25 @@ function magazineScrollTop(){
 function magazineIslandSync(){
     const on = document.body.classList.contains('island');
     const layer = document.getElementById('mag-isl'), nav = document.getElementById('magazine-issue-nav'),
-          right = document.getElementById('isl-right'), bottom = document.querySelector('.mph-bottom'),
+          slot = document.getElementById('isl-right'), bottom = document.querySelector('.mph-bottom'),
           screen = document.getElementById('magazine-screen');
-    if(nav && right && bottom){ const dest = on ? right : bottom; if(nav.parentNode !== dest) dest.appendChild(nav); }   // the issue picker lives in the right bubble
-    if(layer){
-        const show = on && !!screen && screen.classList.contains('active');
-        layer.classList.toggle('show', show);
-        if(!show) layer.style.setProperty('--p','0');
-    }
+    if(nav && slot && bottom){ const dest = on ? slot : bottom; if(nav.parentNode !== dest) dest.appendChild(nav); }   // the issue picker lives in the number bubble
     if(typeof closeMagazineIssuePicker==='function') closeMagazineIssuePicker();
+    if(!layer) return;
+    const show = on && !!screen && screen.classList.contains('active');
+    clearTimeout(layer._t);
+    if(show){
+        // how far the side bubbles have to travel to hide behind the middle of the HARFS capsule
+        layer.style.setProperty('--isl-dx', Math.max(60, layer.clientWidth/2 - 34) + 'px');
+        layer.classList.remove('leaving');
+        layer.classList.add('show');
+    } else if(on && layer.classList.contains('show') && !layer.classList.contains('leaving')){
+        // Back was pressed: the bubbles slide back in under HARFS, then the layer goes away
+        layer.classList.add('leaving');
+        layer._t = setTimeout(()=>{ layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0'); }, 480);
+    } else if(!on){
+        layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0');
+    }
 }
 magazineIslandSync();
 
