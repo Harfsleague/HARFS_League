@@ -133,6 +133,15 @@
             </div>
         </div>
 
+        <div class="perf-option-row island-row">
+            <div class="perf-option-icon"><svg class="perf-orbs-ico" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="7" rx="3.5" fill="currentColor"/><circle cx="17.2" cy="8" r="1.7" fill="#0b1220"/><circle cx="12" cy="18" r="3" fill="currentColor" opacity=".75"/><circle cx="12" cy="13.2" r="1" fill="currentColor" opacity=".6"/></svg></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title">HARFS Island <span class="beta-tag">BETA</span></span>
+                <span class="perf-option-sub">Bubbles that flow out of the HARFS capsule — intro &amp; Magazine</span>
+            </div>
+            <div class="perf-toggle" id="perf-toggle-island" onclick="toggleIsland()"></div>
+        </div>
+
         </div>
 
         <div class="ap-card">
@@ -793,6 +802,13 @@
                 <button class="confirm-btn confirm-btn-ok green" onclick="saveEditedMatch()">Save</button>
             </div>
         </div>
+    </div>
+
+    <!-- HARFS Island (BETA): Back · WEEKLY MAGAZINE · Issue bubbles that flow out of the HARFS capsule (js/magazine.js, css/effects.css) -->
+    <div class="isl-layer" id="mag-isl">
+        <button type="button" class="isl-bubble isl-back" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-right"></i></button>
+        <div class="isl-bubble isl-title"><span>WEEKLY MAGAZINE</span></div>
+        <div class="isl-right" id="isl-right"></div>
     </div>
 
     <!-- Magazine: arrow-only back-to-top (js/magazine.js) -->

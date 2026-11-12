@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.10";
+const HARFS_VERSION_LABEL = "1.11";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -207,6 +207,7 @@ function applyAppearance(){
     if(magScreen) magScreen.style.zoom = (currentMagazineFontSize/100);
     syncSettingsUI();
     syncAppearanceUI();
+    document.body.classList.toggle('island', harfsIsland);
 }
 // target: 'app' | 'magazine'
 function selectFont(target, id){
@@ -286,7 +287,21 @@ function renderPaletteGrid(){
         </div>`;
     grid.innerHTML = html;
 }
+// ---- HARFS Island (BETA): off for everybody until switched on in Appearance ----
+let harfsIsland = localStorage.getItem('harfsIsland')==='1';
+function applyIsland(){
+    document.body.classList.toggle('island', harfsIsland);
+    const t=document.getElementById('perf-toggle-island'); if(t) t.classList.toggle('on', harfsIsland);
+    if(typeof magazineIslandSync==='function') magazineIslandSync();
+}
+function toggleIsland(){
+    haptic([6]);
+    harfsIsland=!harfsIsland;
+    localStorage.setItem('harfsIsland', harfsIsland?'1':'0');
+    applyIsland();
+}
 function syncAppearanceUI(){
+    { const it=document.getElementById('perf-toggle-island'); if(it) it.classList.toggle('on', harfsIsland); }
     document.querySelectorAll('#perf-segmented .segmented-btn').forEach(b=>{
         b.classList.toggle('active', b.dataset.value === performancePreset);
     });

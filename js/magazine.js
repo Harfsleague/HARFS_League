@@ -146,7 +146,7 @@ function renderMagazineIssueNav() {
     nav.innerHTML = `
         <div class="magazine-issue-picker-wrap">
             <button class="magazine-issue-pill" onclick="toggleMagazineIssuePicker()">
-                شمارهٔ ${issue.issueNumber ?? (magazineArchive.length - magazineIssueIdx)} <i class="fas fa-caret-down"></i>
+                <span class="mip-label">شمارهٔ </span><b class="mip-num">${issue.issueNumber ?? (magazineArchive.length - magazineIssueIdx)}</b> <i class="fas fa-caret-down"></i>
             </button>
             <div class="magazine-issue-picker" id="magazine-issue-picker"></div>
         </div>
@@ -1066,11 +1066,13 @@ setTimeout(magTileInit, 700);
     if(!inner) return;
     function update(){
         const y = inner.scrollTop;
-        inner.style.setProperty('--magfade', Math.min(46, y) + 'px');
+        inner.style.setProperty('--magfade', Math.min(document.body.classList.contains('island') ? 64 : 46, y) + 'px');
+        const isl=document.getElementById('mag-isl');
+        if(isl){ const p=Math.min(1,Math.max(0,y/70)); isl.style.setProperty('--p', (p*p*(3-2*p)).toFixed(3)); }   // 0 = bubbles in the row under HARFS, 1 = side bubbles beside HARFS
         if(fab) fab.classList.toggle('show', y > 220 && screen.classList.contains('active'));
     }
     inner.addEventListener('scroll', update, { passive:true });
-    new MutationObserver(update).observe(screen, { attributes:true, attributeFilter:['class'] });
+    new MutationObserver(()=>{ update(); magazineIslandSync(); }).observe(screen, { attributes:true, attributeFilter:['class'] });
     update();
 })();
 function magazineScrollTop(){
@@ -1078,6 +1080,25 @@ function magazineScrollTop(){
     const inner = document.querySelector('#magazine-screen .magazine-inner');
     if(inner) inner.scrollTo({ top:0, behavior:'smooth' });
 }
+
+
+// ---- HARFS Island (BETA) in the Magazine ----
+// On: the old header is hidden, "WEEKLY MAGAZINE", Back and the issue number become separate glass bubbles that pop out of the HARFS capsule.
+// At the top they sit in a row under HARFS; while you scroll, Back and the number rise to either side of HARFS and the title docks right under it.
+function magazineIslandSync(){
+    const on = document.body.classList.contains('island');
+    const layer = document.getElementById('mag-isl'), nav = document.getElementById('magazine-issue-nav'),
+          right = document.getElementById('isl-right'), bottom = document.querySelector('.mph-bottom'),
+          screen = document.getElementById('magazine-screen');
+    if(nav && right && bottom){ const dest = on ? right : bottom; if(nav.parentNode !== dest) dest.appendChild(nav); }   // the issue picker lives in the right bubble
+    if(layer){
+        const show = on && !!screen && screen.classList.contains('active');
+        layer.classList.toggle('show', show);
+        if(!show) layer.style.setProperty('--p','0');
+    }
+    if(typeof closeMagazineIssuePicker==='function') closeMagazineIssuePicker();
+}
+magazineIslandSync();
 
 
 // ---- Reading progress: a blue bar in the header fills from the right as you scroll down the issue (no text, no number) ----

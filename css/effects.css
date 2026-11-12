@@ -2233,6 +2233,76 @@ html.lite-mode .fed-ring, html.lite-mode .fed-ring circle, html.lite-mode .fed-l
 @media (prefers-reduced-motion:reduce){ .fed-ring, .fed-ring circle, .fed-crown, .fed-laurel{ animation:none !important; } }
 
 
+/* =====================================================
+   1.11 — HARFS Island (BETA). Everything below only applies while body.island is on (Appearance → HARFS Island).
+   ===================================================== */
+.beta-tag{ display:inline-block; margin-left:6px; padding:2px 7px; border-radius:99px; font-size:.5rem; font-weight:900; letter-spacing:1.2px; vertical-align:middle; color:#fff;
+    background:linear-gradient(135deg,#f472b6,#a855f7); box-shadow:0 0 10px rgba(168,85,247,.55); }
+.island-row{ margin-top:10px; }
+.mip-num{ font-weight:inherit; }
+
+/* 1) Intro: the bubble at the centre is already the header bubble — same size, same big HARFS lettering, same glass — and only its
+      "COMPETITIONS SYSTEM" line dissolves while it glides up and settles. */
+body.island #hero-logo-container .hero-text{ font-size:2.2rem; letter-spacing:8px; padding-left:8px; transition:opacity .45s ease .06s, transform .5s cubic-bezier(.22,1,.36,1) .06s; }
+body.island #hero-logo-container.box-forming{
+    transform:translate3d(-50%,var(--intro-y),0) scale(1.22);
+    transition:opacity .5s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.34,1.4,.5,1), background-color .55s ease, border-color .55s ease, box-shadow .6s ease;
+}
+body.island #hero-logo-container.box-forming .hero-subtext{ opacity:1; filter:none; transform:none; max-height:22px; }
+
+/* 2) Magazine bubbles */
+.isl-layer{ --p:0; position:absolute; inset:0; z-index:98; pointer-events:none; opacity:0; visibility:hidden; transition:opacity .25s ease, visibility 0s linear .25s; display:none; }
+body.island .isl-layer{ display:block; }
+.isl-layer.show{ opacity:1; visibility:visible; transition:opacity .25s ease, visibility 0s; }
+.isl-bubble{
+    position:absolute; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; pointer-events:auto; padding:0;
+    background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.24));
+    background-image:radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%), linear-gradient(180deg,rgba(255,255,255,0.14) 0%,rgba(255,255,255,0.01) 16%,rgba(0,0,0,0.16) 55%,rgba(0,0,0,0.26) 88%,rgba(255,255,255,0.08) 100%);
+    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94); backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94);
+    border:1px solid rgba(255,255,255,0.16); border-top-color:rgba(255,255,255,0.44); border-left-color:rgba(255,255,255,0.28);
+    box-shadow:0 14px 30px -6px rgba(0,0,0,0.58), inset 0 1.5px 1px rgba(255,255,255,0.46), inset 0 -1.5px 1.5px rgba(255,255,255,0.14), inset 0 0 14px rgba(0,0,0,0.38);
+    -webkit-tap-highlight-color:transparent; transition:scale .2s cubic-bezier(.22,1,.36,1);
+}
+body.perf-no-blur .isl-bubble, body.lite-mode .isl-bubble{ background-color:var(--bg-mid); background-image:none; -webkit-backdrop-filter:none; backdrop-filter:none; border:1px solid rgba(255,255,255,0.12); }
+.isl-bubble:active{ scale:.92; }
+.isl-back, .isl-right .magazine-issue-pill{ width:44px; height:44px; border-radius:50%; font-size:.95rem; }
+.isl-back{ left:12px; top:calc(100px - 66px * var(--p)); }
+.isl-right{ position:absolute; right:12px; top:calc(100px - 66px * var(--p)); pointer-events:none; }
+.isl-title{ left:50%; top:calc(106px - 9px * var(--p)); height:38px; padding:0 20px; border-radius:9999px; white-space:nowrap; cursor:default;
+    transform:translateX(-50%) scale(calc(1 - 0.1 * var(--p))); }
+.isl-title span{ font-size:.72rem; font-weight:900; letter-spacing:4px; padding-left:4px; background:var(--hero-grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+
+/* the issue number: just the number, in its own round bubble; the archive list drops from it */
+.isl-right .magazine-issue-nav{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; margin:0; direction:rtl; pointer-events:none; }
+.isl-right .magazine-issue-picker-wrap{ position:relative; pointer-events:auto; }
+.isl-right .magazine-issue-pill{ position:relative; display:flex; align-items:center; justify-content:center; padding:0; color:#fff; cursor:pointer; font-weight:900; font-family:inherit;
+    background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.24));
+    background-image:radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%), linear-gradient(180deg,rgba(255,255,255,0.14) 0%,rgba(255,255,255,0.01) 16%,rgba(0,0,0,0.16) 55%,rgba(0,0,0,0.26) 88%,rgba(255,255,255,0.08) 100%);
+    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94); backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94);
+    border:1px solid rgba(255,255,255,0.16); border-top-color:rgba(255,255,255,0.44);
+    box-shadow:0 14px 30px -6px rgba(0,0,0,0.58), inset 0 1.5px 1px rgba(255,255,255,0.46), inset 0 -1.5px 1.5px rgba(255,255,255,0.14), inset 0 0 14px rgba(0,0,0,0.38); }
+body.perf-no-blur .isl-right .magazine-issue-pill, body.lite-mode .isl-right .magazine-issue-pill{ background-color:var(--bg-mid); background-image:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+.isl-right .magazine-issue-pill .mip-label, .isl-right .magazine-issue-pill .fa-caret-down{ display:none; }
+.isl-right .magazine-issue-pill .mip-num{ font-size:.95rem; }
+.isl-right .magazine-issue-picker{ right:0; left:auto; top:calc(100% + 10px); transform-origin:100% 0; }
+.isl-right .weird-admin-btn{ pointer-events:auto; }
+
+/* they pop out of the capsule when the Magazine opens */
+.isl-layer.show .isl-title{ animation:islFromCapsule .9s cubic-bezier(.34,1.45,.5,1) .05s backwards; }
+.isl-layer.show .isl-back{ animation:islFromSideL .8s cubic-bezier(.34,1.45,.5,1) .2s backwards; }
+.isl-layer.show .isl-right{ animation:islFromSideR .8s cubic-bezier(.34,1.45,.5,1) .28s backwards; }
+@keyframes islFromCapsule{ 0%{ opacity:0; translate:0 -48px; scale:.25 1; } 55%{ opacity:1; } 100%{ opacity:1; translate:0 0; scale:1; } }
+@keyframes islFromSideL{ 0%{ opacity:0; translate:78px -34px; scale:.3; } 55%{ opacity:1; } 100%{ opacity:1; translate:0 0; scale:1; } }
+@keyframes islFromSideR{ 0%{ opacity:0; translate:-78px -34px; scale:.3; } 55%{ opacity:1; } 100%{ opacity:1; translate:0 0; scale:1; } }
+body.perf-no-anim .isl-layer.show .isl-title, body.perf-no-anim .isl-layer.show .isl-back, body.perf-no-anim .isl-layer.show .isl-right{ animation:none; }
+@media (prefers-reduced-motion:reduce){ .isl-layer.show .isl-title, .isl-layer.show .isl-back, .isl-layer.show .isl-right{ animation:none; } }
+
+/* the old header goes away; the text scrolls under the capsule and fades from the very top of the screen */
+body.island .magazine-panel-header{ display:none !important; }
+body.island #magazine-screen.page-screen{ padding-top:0; }
+body.island #magazine-screen .magazine-inner{ padding-top:152px; }
+
+
 /* v106 — LED-matrix equaliser stage: no edge fade, a soft neon glow instead */
 .mpx-stage{ height:128px; }
 .mpx-canvas{ -webkit-mask-image:none; mask-image:none; filter:drop-shadow(0 0 7px color-mix(in srgb,var(--primary) 45%,transparent)); }
