@@ -2207,6 +2207,32 @@ body.perf-no-anim #settings-screen .settings-screen-header, body.perf-no-anim #s
 }
 
 
+/* =====================================================
+   1.10 — "COMPETITIONS SYSTEM" dissolves smoothly when the capsule glides up; Federation banner with more detail
+   ===================================================== */
+.hero-subtext{ max-height:22px; }                      /* an explicit start value, so max-height can actually animate (auto/none cannot) */
+#hero-logo-container.in-header .hero-subtext{
+    opacity:0; filter:blur(3px); letter-spacing:9px; transform:translate3d(0,-7px,0) scale(.96); max-height:0; margin:0; overflow:hidden; pointer-events:none;
+    transition:opacity .75s ease, filter .75s ease, letter-spacing .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1), max-height .8s cubic-bezier(.22,1,.36,1) .25s;
+}
+body.perf-no-anim #hero-logo-container.in-header .hero-subtext{ transition:none; filter:none; }
+
+/* Federation banner: gold lattice, medal ring with a slowly turning dotted inner ring, laurel wreath, jewelled crown, rays and twinkles */
+.people-banner-big{ height:168px; background:radial-gradient(90% 140% at 50% 0%,rgba(251,191,36,0.34),transparent 65%), linear-gradient(180deg,rgba(124,58,237,0.34),transparent); }
+.people-banner-big::before{ content:''; position:absolute; inset:0; background:radial-gradient(70% 90% at 50% 100%,rgba(168,85,247,0.28),transparent 70%); }
+.fed-art{ z-index:1; }
+.fed-ring{ transform-box:view-box; transform-origin:160px 80px; animation:fedSpin 46s linear infinite; }
+.fed-ring circle:last-child{ transform-box:view-box; transform-origin:160px 80px; animation:fedSpin 28s linear infinite reverse; }
+.fed-crown{ transform-box:fill-box; transform-origin:50% 90%; animation:fedCrown 3.8s ease-in-out infinite; }
+.fed-laurel{ transform-box:view-box; transform-origin:160px 80px; animation:fedBreath 5s ease-in-out infinite; }
+@keyframes fedSpin{ to{ transform:rotate(360deg); } }
+@keyframes fedCrown{ 0%,100%{ transform:translateY(0) rotate(-1.5deg); } 50%{ transform:translateY(-3px) rotate(1.5deg); } }
+@keyframes fedBreath{ 0%,100%{ transform:scale(1); opacity:.95; } 50%{ transform:scale(1.025); opacity:1; } }
+body.perf-no-anim .fed-ring, body.perf-no-anim .fed-ring circle, body.perf-no-anim .fed-crown, body.perf-no-anim .fed-laurel,
+html.lite-mode .fed-ring, html.lite-mode .fed-ring circle, html.lite-mode .fed-laurel{ animation:none !important; }
+@media (prefers-reduced-motion:reduce){ .fed-ring, .fed-ring circle, .fed-crown, .fed-laurel{ animation:none !important; } }
+
+
 /* v106 — LED-matrix equaliser stage: no edge fade, a soft neon glow instead */
 .mpx-stage{ height:128px; }
 .mpx-canvas{ -webkit-mask-image:none; mask-image:none; filter:drop-shadow(0 0 7px color-mix(in srgb,var(--primary) 45%,transparent)); }
