@@ -2314,6 +2314,25 @@ body.island #magazine-screen.page-screen{ padding-top:0; }
 body.island #magazine-screen .magazine-inner{ padding-top:152px; }
 
 
+/* 1.13 — Island: WEEKLY MAGAZINE is wider and flatter (it no longer covers the side bubbles), and all three bubbles move together */
+.isl-back, .isl-numslot{ z-index:2; }
+.isl-title{
+    z-index:1; height:32px; padding:0 16px; justify-content:center; width:min(212px,calc(100% - 132px)); box-sizing:border-box;
+    top:calc(106px - 11px * var(--p)); --ey:calc(-66px + 11px * var(--p));
+    transform:translateX(-50%) scale(calc(1 - 0.2 * var(--p)));
+}
+.isl-title span{ font-size:.72rem; letter-spacing:4px; padding-left:4px; white-space:nowrap; }
+/* no stagger: the three come out from under HARFS at the same moment, and go back under it at the same moment */
+.isl-layer.show:not(.leaving) .isl-title, .isl-layer.show:not(.leaving) .isl-back, .isl-layer.show:not(.leaving) .isl-numslot{
+    animation:islEmerge .8s cubic-bezier(.34,1.35,.5,1) 0s backwards;
+}
+.isl-layer.leaving .isl-title, .isl-layer.leaving .isl-back, .isl-layer.leaving .isl-numslot{
+    animation:islEmerge .42s cubic-bezier(.55,0,.8,.3) 0s reverse both;
+}
+body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back, body.perf-no-anim .isl-layer .isl-numslot{ animation:none !important; }
+@media (prefers-reduced-motion:reduce){ .isl-layer .isl-title, .isl-layer .isl-back, .isl-layer .isl-numslot{ animation:none !important; } }
+
+
 /* v106 — LED-matrix equaliser stage: no edge fade, a soft neon glow instead */
 .mpx-stage{ height:128px; }
 .mpx-canvas{ -webkit-mask-image:none; mask-image:none; filter:drop-shadow(0 0 7px color-mix(in srgb,var(--primary) 45%,transparent)); }
