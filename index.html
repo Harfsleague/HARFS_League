@@ -686,6 +686,11 @@
                 </div>
             </div>
 
+            <div class="settings-section-label" id="settings-lang-section-label">Language</div>
+            <div class="settings-frame settings-lang-frame">
+                <div class="settings-lang-grid" id="settings-lang-grid" role="radiogroup" aria-label="App Language"></div>
+            </div>
+
             <div id="settings-admin-section" style="display:none;">
                 <div class="settings-section-label">Bayern Admin</div>
                 <div class="settings-page-grid">
@@ -1155,7 +1160,7 @@
     </div>
     <div id="chat-viewer" onclick="chatCloseViewer()"><div class="chat-viewer-x"><i class="fas fa-times"></i></div><div id="chat-viewer-body"></div></div>
 
-    <!-- ============ GAME — Tetris (Overall → Game) ============ -->
+    <!-- ============ GAME — Offline-Capable Multi-Game Hub (Overall → Game) ============ -->
     <div id="game-screen" class="page-screen">
         <div class="game-stage" id="game-stage">
             <div class="game-loading" id="game-loading"><span class="spinner"></span><span id="game-loading-msg">Loading game…</span></div>
@@ -1165,8 +1170,25 @@
             <button type="button" class="game-fab-btn game-fab-more" onclick="gameMenu()" aria-label="Menu"><i class="fas fa-ellipsis"></i></button>
             <div class="game-fab-menu">
                 <button type="button" class="game-fab-btn" onclick="gameReload()" aria-label="Reload"><i class="fas fa-rotate-right"></i></button>
+                <button type="button" class="game-fab-btn" onclick="gameSyncOffline({manual:true});gameMenu(false)" aria-label="Check for game updates"><i class="fas fa-cloud-arrow-down"></i></button>
                 <button type="button" class="game-fab-btn" onclick="gameToggleFullscreen();gameMenu(false)" aria-label="Full screen"><i class="fas fa-expand"></i></button>
                 <a class="game-fab-btn" id="game-ext" href="https://sj2005zarisfi-source.github.io/tetris-game/" target="_blank" rel="noopener" aria-label="Open in browser"><i class="fas fa-up-right-from-square"></i></a>
+            </div>
+        </div>
+        <div class="game-status-hud" id="game-status-hud">
+            <button type="button" class="game-status-pill" id="game-status-pill" onclick="gameToggleHubDrawer()">
+                <span class="game-status-dot" id="game-status-dot"></span>
+                <span id="game-status-text">Offline Ready</span>
+                <i class="fas fa-chevron-down" style="font-size:0.52rem;opacity:0.7;"></i>
+            </button>
+            <div class="game-hub-drawer" id="game-hub-drawer" hidden>
+                <div class="game-hub-head">
+                    <span id="game-hub-title">🎮 Games Library</span>
+                    <button type="button" class="game-hub-sync-btn" id="game-hub-sync-btn" onclick="gameSyncOffline({manual:true})">
+                        <i class="fas fa-rotate"></i> <span id="game-hub-sync-label">Check Updates</span>
+                    </button>
+                </div>
+                <div class="game-hub-list" id="game-hub-list"></div>
             </div>
         </div>
     </div>

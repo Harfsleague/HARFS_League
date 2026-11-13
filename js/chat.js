@@ -699,18 +699,428 @@ function chatSetBadgeEnabled(on){ try{ localStorage.setItem(CHAT_BADGE_KEY, on?'
 function chatSetToastEnabled(on){ try{ localStorage.setItem(CHAT_TOAST_KEY, on?'1':'0'); }catch(e){} }
 
 // ============================================================
-// GAME — Tetris in a full-page frame
+// GAME — Full Offline Multi-Game Engine + Auto-Update & New-Game Sync
 // ============================================================
 const GAME_URL = 'https://sj2005zarisfi-source.github.io/tetris-game/';
+const GAME_IDB_NAME = 'harfs_offline_games_v1';
+const GAME_CACHE_BUCKET = 'harfs-games-v1';
 let gameFrame = null;
 let gameSlowTimer = null;
+let gameActiveUrl = localStorage.getItem('harfs_active_game_url') || GAME_URL;
+let gameCatalog = []; // [{ id, title, url, hash, updatedAt, ready }]
+let gameSyncInFlight = false;
+
+function openGameIdb(){
+    return new Promise(resolve=>{
+        if(!('indexedDB' in window)) return resolve(null);
+        try{
+            const req = indexedDB.open(GAME_IDB_NAME, 1);
+            req.onupgradeneeded = e=>{
+                const db = e.target.result;
+                if(!db.objectStoreNames.contains('pages')) db.createObjectStore('pages');
+                if(!db.objectStoreNames.contains('meta'))  db.createObjectStore('meta');
+            };
+            req.onsuccess = ()=>resolve(req.result);
+            req.onerror   = ()=>resolve(null);
+        }catch(e){ resolve(null); }
+    });
+}
+async function gameIdbGet(store, key){
+    const db = await openGameIdb(); if(!db) return null;
+    return new Promise(resolve=>{
+        try{
+            const tx = db.transaction(store, 'readonly');
+            const r = tx.objectStore(store).get(key);
+            r.onsuccess = ()=>resolve(r.result ?? null);
+            r.onerror   = ()=>resolve(null);
+        }catch(e){ resolve(null); }
+    });
+}
+async function gameIdbSet(store, key, val){
+    const db = await openGameIdb(); if(!db) return false;
+    return new Promise(resolve=>{
+        try{
+            const tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).put(val, key);
+            tx.oncomplete = ()=>resolve(true);
+            tx.onerror    = ()=>resolve(false);
+        }catch(e){ resolve(false); }
+    });
+}
+
+function gameFastHash(str){
+    let h1 = 0xdeadbeef ^ str.length, h2 = 0x41c6ce57 ^ str.length;
+    for(let i = 0, ch; i < str.length; i++){
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+function normalizeGameUrl(u, base){
+    try{
+        const parsed = new URL(u, base || GAME_URL);
+        parsed.hash = '';
+        return parsed.href;
+    }catch(e){ return u; }
+}
+
+// Fetches a single HTML game page, inlines its external CSS & JS and caches
+// images/audio so the resulting HTML runs 100% offline via iframe.srcdoc!
+// Also returns any sub-game links discovered inside the HTML/JS.
+async function gameBundlePage(pageUrl, isRootHub = false){
+    const normUrl = normalizeGameUrl(pageUrl);
+    const res = await fetch(normUrl, { cache: 'no-cache', mode: 'cors' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const rawHtml = await res.text();
+
+    if('caches' in window){
+        try{
+            const c = await caches.open(GAME_CACHE_BUCKET);
+            await c.put(normUrl, new Response(rawHtml, { headers:{ 'Content-Type':'text/html; charset=utf-8' } }));
+        }catch(e){}
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawHtml, 'text/html');
+    const pageTitle = (doc.querySelector('title') && doc.querySelector('title').textContent.trim()) || (isRootHub ? 'HARFS Game Center' : normUrl.split('/').filter(Boolean).pop());
+
+    // Discover sub-games linked from the hub (<a href>, <iframe src>, data-url, data-game, or inline JS paths)
+    const discoveredUrls = new Set();
+    const rootOrigin = new URL(GAME_URL).origin;
+    const addCandidate = (rawHref, labelHint)=>{
+        if(!rawHref || rawHref.startsWith('#') || rawHref.startsWith('javascript:') || rawHref.startsWith('mailto:') || rawHref.startsWith('data:')) return;
+        try{
+            const full = new URL(rawHref, normUrl);
+            if(full.origin !== rootOrigin) return;
+            const p = full.pathname.toLowerCase();
+            if(p.endsWith('.css') || p.endsWith('.js') || p.endsWith('.png') || p.endsWith('.jpg') || p.endsWith('.jpeg') || p.endsWith('.webp') || p.endsWith('.svg') || p.endsWith('.gif') || p.endsWith('.mp3') || p.endsWith('.wav') || p.endsWith('.ogg') || p.endsWith('.woff') || p.endsWith('.woff2') || p.endsWith('.ttf') || p.endsWith('.ico') || p.endsWith('.json')) return;
+            full.hash = '';
+            if(full.href !== normUrl) discoveredUrls.add(JSON.stringify({ url: full.href, title: labelHint || '' }));
+        }catch(e){}
+    };
+
+    if(isRootHub){
+        doc.querySelectorAll('a[href], [data-game-url], [data-href], [data-url], iframe[src]').forEach(el=>{
+            const u = el.getAttribute('href') || el.getAttribute('data-game-url') || el.getAttribute('data-href') || el.getAttribute('data-url') || el.getAttribute('src');
+            const txt = (el.textContent || el.getAttribute('title') || el.getAttribute('aria-label') || '').trim().slice(0, 40);
+            addCandidate(u, txt);
+        });
+        // Also scan inline scripts for relative .html or game folder paths
+        const htmlAndJs = rawHtml;
+        const relHtmlRe = new RegExp("[\x27\x22]([a-zA-Z0-9_.-]+\.html)[\x27\x22]", "g");
+        let m;
+        while((m = relHtmlRe.exec(htmlAndJs)) !== null){
+            addCandidate(m[1], '');
+        }
+        // Check if an optional games.json or games-manifest.json exists alongside GAME_URL
+        for(const mf of ['games.json', 'games-manifest.json']){
+            try{
+                const mfUrl = new URL(mf, normUrl).href;
+                const mfRes = await fetch(mfUrl, { cache:'no-cache' }).catch(()=>null);
+                if(mfRes && mfRes.ok){
+                    const mfData = await mfRes.json().catch(()=>null);
+                    const arr = Array.isArray(mfData) ? mfData : (mfData && Array.isArray(mfData.games) ? mfData.games : []);
+                    arr.forEach(item=>{
+                        if(typeof item === 'string') addCandidate(item, '');
+                        else if(item && item.url) addCandidate(item.url, item.title || item.name || '');
+                    });
+                }
+            }catch(e){}
+        }
+    }
+
+    // Ensure <base href> is present so any relative assets resolve properly
+    let baseEl = doc.querySelector('base');
+    if(!baseEl){
+        baseEl = doc.createElement('base');
+        doc.head.insertBefore(baseEl, doc.head.firstChild);
+    }
+    baseEl.setAttribute('href', normUrl);
+
+    // Inline external stylesheets
+    const links = Array.from(doc.querySelectorAll('link[rel="stylesheet"][href]'));
+    let combinedAssetsHashInput = rawHtml;
+    for(const link of links){
+        try{
+            const cssUrl = new URL(link.getAttribute('href'), normUrl).href;
+            const cssRes = await fetch(cssUrl, { cache:'no-cache' });
+            if(cssRes.ok){
+                const cssTxt = await cssRes.text();
+                combinedAssetsHashInput += cssTxt;
+                if('caches' in window){
+                    const c = await caches.open(GAME_CACHE_BUCKET);
+                    await c.put(cssUrl, new Response(cssTxt, { headers:{ 'Content-Type':'text/css' } }));
+                }
+                const st = doc.createElement('style');
+                st.textContent = cssTxt;
+                link.replaceWith(st);
+            }
+        }catch(e){}
+    }
+
+    // Inline external scripts
+    const scripts = Array.from(doc.querySelectorAll('script[src]'));
+    for(const scr of scripts){
+        try{
+            const jsUrl = new URL(scr.getAttribute('src'), normUrl).href;
+            const jsRes = await fetch(jsUrl, { cache:'no-cache' });
+            if(jsRes.ok){
+                const jsTxt = await jsRes.text();
+                combinedAssetsHashInput += jsTxt;
+                if('caches' in window){
+                    const c = await caches.open(GAME_CACHE_BUCKET);
+                    await c.put(jsUrl, new Response(jsTxt, { headers:{ 'Content-Type':'application/javascript' } }));
+                }
+                const inl = doc.createElement('script');
+                Array.from(scr.attributes).forEach(attr=>{
+                    if(attr.name !== 'src') inl.setAttribute(attr.name, attr.value);
+                });
+                inl.textContent = jsTxt;
+                scr.replaceWith(inl);
+            }
+        }catch(e){}
+    }
+
+    // Cache images & audio in Service Worker Cache (and inline small same-origin images as data URLs if possible)
+    if('caches' in window){
+        try{
+            const c = await caches.open(GAME_CACHE_BUCKET);
+            const mediaEls = Array.from(doc.querySelectorAll('img[src], audio[src], source[src]'));
+            await Promise.all(mediaEls.map(async el=>{
+                const rawSrc = el.getAttribute('src');
+                if(!rawSrc || rawSrc.startsWith('data:') || rawSrc.startsWith('blob:')) return;
+                try{
+                    const mUrl = new URL(rawSrc, normUrl).href;
+                    const mRes = await fetch(mUrl, { cache:'no-cache' });
+                    if(mRes && mRes.ok){
+                        await c.put(mUrl, mRes.clone());
+                        const blob = await mRes.blob();
+                        if(blob.size > 0 && blob.size < 350000){
+                            const dataUrl = await new Promise(r=>{
+                                const fr = new FileReader();
+                                fr.onload = ()=>r(fr.result);
+                                fr.onerror = ()=>r(null);
+                                fr.readAsDataURL(blob);
+                            });
+                            if(dataUrl) el.setAttribute('src', dataUrl);
+                        }
+                    }
+                }catch(e){}
+            }));
+        }catch(e){}
+    }
+
+    // Inject offline navigation bridge so links between games inside the iframe work 100% offline
+    const bridgeScript = doc.createElement('script');
+    bridgeScript.textContent = `
+(function(){
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if(!a) return;
+    var href = a.getAttribute('href');
+    if(!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+    try{
+      var full = new URL(href, document.baseURI).href;
+      if(window.parent && window.parent !== window){
+        e.preventDefault();
+        window.parent.postMessage({ type:'harfs-game-navigate', url:full }, '*');
+      }
+    }catch(err){}
+  }, true);
+})();`;
+    doc.body.appendChild(bridgeScript);
+
+    const bundledHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    const contentHash = gameFastHash(combinedAssetsHashInput);
+
+    const pageRecord = {
+        url: normUrl,
+        title: pageTitle,
+        hash: contentHash,
+        updatedAt: Date.now(),
+        html: bundledHtml
+    };
+    await gameIdbSet('pages', normUrl, pageRecord);
+
+    return {
+        record: pageRecord,
+        subGames: Array.from(discoveredUrls).map(s=>JSON.parse(s))
+    };
+}
+
+// Listen for in-iframe navigation between cached games
+window.addEventListener('message', e=>{
+    if(e && e.data && e.data.type === 'harfs-game-navigate' && e.data.url){
+        gameSelectUrl(e.data.url);
+    }
+});
+
+function gameT(key, fallback){
+    return (typeof window.harfsT === 'function') ? window.harfsT(key) : fallback;
+}
+
+function gameUpdateHudUI(){
+    const pill = chatEl('game-status-pill');
+    const dot  = chatEl('game-status-dot');
+    const txt  = chatEl('game-status-text');
+    const list = chatEl('game-hub-list');
+    const titleEl = chatEl('game-hub-title');
+    const syncLbl = chatEl('game-hub-sync-label');
+
+    if(titleEl) titleEl.textContent = '🎮 ' + gameT('game_hub_title', 'Games Library');
+    if(syncLbl) syncLbl.textContent = gameSyncInFlight ? gameT('game_checking', 'Checking…') : gameT('game_check_updates', 'Check Updates');
+
+    const readyCount = gameCatalog.filter(g=>g.ready).length;
+    const online = navigator.onLine;
+    if(pill){
+        pill.classList.toggle('is-offline', !online);
+        pill.classList.toggle('is-syncing', gameSyncInFlight);
+    }
+    if(dot){
+        dot.style.background = gameSyncInFlight ? '#38bdf8' : (readyCount > 0 ? '#22c55e' : (online ? '#fbbf24' : '#ef4444'));
+    }
+    if(txt){
+        if(gameSyncInFlight) txt.textContent = gameT('game_checking_short', 'Syncing…');
+        else if(!online && readyCount > 0) txt.textContent = gameT('game_offline_mode_badge', 'Offline Mode') + ` (${readyCount})`;
+        else if(readyCount > 0) txt.textContent = gameT('game_offline_ready', 'Offline Ready') + ` (${readyCount})`;
+        else txt.textContent = gameT('game_online_only', 'Online');
+    }
+
+    if(list){
+        if(!gameCatalog.length){
+            list.innerHTML = `<div class="game-hub-empty">${gameT('game_checking', 'Caching games for offline play…')}</div>`;
+        } else {
+            list.innerHTML = gameCatalog.map(g=>{
+                const isAct = normalizeGameUrl(g.url) === normalizeGameUrl(gameActiveUrl);
+                return `<div class="game-hub-item ${isAct?'active':''}" onclick="gameSelectUrl('${escapeHtml(g.url)}')">
+                    <div class="game-hub-ic"><i class="fas ${g.isRoot ? 'fa-gamepad' : 'fa-joystick'}"></i></div>
+                    <div class="game-hub-info">
+                        <div class="game-hub-name">${escapeHtml(g.title || 'Game')}</div>
+                        <div class="game-hub-meta ${g.ready?'ready':''}">
+                            <i class="fas ${g.ready?'fa-circle-check':'fa-cloud'}"></i>
+                            <span>${g.ready ? gameT('game_offline_ready','Offline Ready') : gameT('game_online_only','Caching…')}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+}
+
+function gameToggleHubDrawer(force){
+    const d = chatEl('game-hub-drawer');
+    if(!d) return;
+    const show = force !== undefined ? force : d.hidden;
+    d.hidden = !show;
+    if(show) gameUpdateHudUI();
+}
+
+async function gameLoadCatalogFromIdb(){
+    const saved = await gameIdbGet('meta', 'catalog');
+    if(Array.isArray(saved) && saved.length){
+        gameCatalog = saved;
+    } else {
+        gameCatalog = [{ id: GAME_URL, title: 'HARFS Game Center', url: GAME_URL, hash: '', ready: false, isRoot: true }];
+    }
+    for(const item of gameCatalog){
+        const p = await gameIdbGet('pages', normalizeGameUrl(item.url));
+        item.ready = !!(p && p.html);
+        if(p && p.title && (!item.title || item.title === 'Game')) item.title = p.title;
+    }
+    gameUpdateHudUI();
+}
+
+// Syncs the main Game Hub and all discovered sub-games when online;
+// detects if any game was updated or if a new game was added!
+async function gameSyncOffline({ manual = false, silent = false } = {}){
+    await gameLoadCatalogFromIdb();
+    if(!navigator.onLine){
+        if(manual) showToast('⚡ ' + gameT('game_offline_mode_badge', 'Offline mode active — playing from cache'), 'info', 2400);
+        return;
+    }
+    if(gameSyncInFlight) return;
+    gameSyncInFlight = true;
+    gameUpdateHudUI();
+    if(manual) showToast('🔄 ' + gameT('game_checking', 'Checking for game updates…'), 'info', 1800);
+
+    try{
+        const prevByUrl = new Map(gameCatalog.map(g=>[normalizeGameUrl(g.url), g]));
+        let newGamesCount = 0;
+        let updatedGamesCount = 0;
+
+        // 1. Bundle root Game Hub
+        const rootRes = await gameBundlePage(GAME_URL, true);
+        const rootNorm = normalizeGameUrl(GAME_URL);
+        const prevRoot = prevByUrl.get(rootNorm);
+        if(prevRoot && prevRoot.hash && prevRoot.hash !== rootRes.record.hash){
+            updatedGamesCount++;
+        }
+
+        const nextCatalog = [{
+            id: rootNorm,
+            title: rootRes.record.title || 'HARFS Game Center',
+            url: rootNorm,
+            hash: rootRes.record.hash,
+            updatedAt: rootRes.record.updatedAt,
+            ready: true,
+            isRoot: true
+        }];
+
+        // 2. Bundle every discovered sub-game so ALL games work offline
+        for(const sub of rootRes.subGames){
+            const subNorm = normalizeGameUrl(sub.url);
+            if(nextCatalog.some(x=>x.url === subNorm)) continue;
+            const prevSub = prevByUrl.get(subNorm);
+            try{
+                const subRes = await gameBundlePage(subNorm, false);
+                if(!prevSub) newGamesCount++;
+                else if(prevSub.hash && prevSub.hash !== subRes.record.hash) updatedGamesCount++;
+                nextCatalog.push({
+                    id: subNorm,
+                    title: sub.title || subRes.record.title || 'Game',
+                    url: subNorm,
+                    hash: subRes.record.hash,
+                    updatedAt: subRes.record.updatedAt,
+                    ready: true,
+                    isRoot: false
+                });
+            }catch(e){
+                if(prevSub) nextCatalog.push(prevSub);
+            }
+        }
+
+        gameCatalog = nextCatalog;
+        await gameIdbSet('meta', 'catalog', gameCatalog);
+
+        if(newGamesCount > 0 && !silent){
+            showToast('🎮 ' + gameT('game_new_added_toast', 'New game found & saved for offline play!'), 'success', 3200);
+        } else if(updatedGamesCount > 0 && !silent){
+            showToast('🎮 ' + gameT('game_updated_toast', 'Games updated to the latest version!'), 'success', 3200);
+            // If currently viewing the updated game, refresh smoothly
+            if(document.getElementById('game-screen')?.classList.contains('active') && manual){
+                gameReload();
+            }
+        } else if(manual){
+            showToast('✅ ' + gameT('game_up_to_date', 'All games are up to date & ready offline!'), 'success', 2400);
+        }
+    }catch(e){
+        if(manual) showToast(gameT('game_sync_err', 'Could not check updates right now'), 'error', 2400);
+    }finally{
+        gameSyncInFlight = false;
+        gameUpdateHudUI();
+    }
+}
+
 function openGamePage(){
     haptic([8]);
     navigate('game');
     gameStart();
     gameEnterFullscreen();
 }
-// the page itself already fills the whole viewport (see css/chat.css); where the browser allows it we also hide ITS bars
 function gameEnterFullscreen(){
     const el = chatEl('game-screen'); if(!el) return;
     try{ const f = el.requestFullscreen || el.webkitRequestFullscreen; if(f){ const r = f.call(el); if(r && r.catch) r.catch(()=>{}); } }catch(e){}
@@ -720,29 +1130,97 @@ function gameLeaveFullscreen(){
 }
 function gameToggleFullscreen(){ if(document.fullscreenElement || document.webkitFullscreenElement) gameLeaveFullscreen(); else gameEnterFullscreen(); }
 function gameMenu(force){ const f = chatEl('game-fab'); if(f) f.classList.toggle('open', force === undefined ? !f.classList.contains('open') : force); }
-function gameStart(){
+
+async function gameStart(targetUrl){
     const stage = chatEl('game-stage'), loading = chatEl('game-loading'), msg = chatEl('game-loading-msg');
-    if(!stage || gameFrame) return;
-    if(!navigator.onLine){
+    if(!stage) return;
+    if(targetUrl){
+        gameActiveUrl = normalizeGameUrl(targetUrl);
+        try{ localStorage.setItem('harfs_active_game_url', gameActiveUrl); }catch(e){}
+    }
+    const extLink = chatEl('game-ext');
+    if(extLink) extLink.href = gameActiveUrl || GAME_URL;
+
+    await gameLoadCatalogFromIdb();
+    if(gameFrame && !targetUrl) return;
+    if(gameFrame){ gameFrame.remove(); gameFrame = null; }
+
+    const normTarget = normalizeGameUrl(gameActiveUrl || GAME_URL);
+    const cachedPage = await gameIdbGet('pages', normTarget) || await gameIdbGet('pages', normalizeGameUrl(GAME_URL));
+
+    // If we have a cached offline bundle, we can boot IMMEDIATELY (both offline and online!)
+    if(cachedPage && cachedPage.html){
         loading.style.display = 'flex';
-        msg.textContent = 'You are offline — the game needs an internet connection';
+        msg.textContent = gameT('game_loading', 'Loading game…');
+        const f = document.createElement('iframe');
+        f.id = 'game-frame';
+        f.title = cachedPage.title || 'HARFS Game';
+        f.setAttribute('allow','fullscreen; autoplay; gamepad');
+        f.setAttribute('sandbox','allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-forms allow-modals');
+        f.onload = ()=>{ loading.style.display = 'none'; clearTimeout(gameSlowTimer); };
+        f.srcdoc = cachedPage.html;
+        stage.appendChild(f);
+        gameFrame = f;
+        // When online, silently check in background if the game was updated or new games were added
+        if(navigator.onLine) gameSyncOffline({ manual: false, silent: false });
         return;
     }
-    loading.style.display = 'flex'; msg.textContent = 'Loading game…';
+
+    // First-time ever and offline (no cache yet)
+    if(!navigator.onLine){
+        loading.style.display = 'flex';
+        msg.textContent = gameT('game_offline_first_time', 'Connect to the internet once to download all games for offline play.');
+        return;
+    }
+
+    // Online first-time load: load live URL immediately AND cache bundle in background
+    loading.style.display = 'flex';
+    msg.textContent = gameT('game_loading', 'Loading game…');
     const f = document.createElement('iframe');
-    f.id = 'game-frame'; f.title = 'Tetris'; f.src = GAME_URL;
+    f.id = 'game-frame';
+    f.title = 'HARFS Game';
+    f.src = normTarget;
     f.setAttribute('allow','fullscreen; autoplay; gamepad');
     f.setAttribute('referrerpolicy','no-referrer');
-    f.setAttribute('sandbox','allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-forms');
+    f.setAttribute('sandbox','allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-forms allow-modals');
     f.onload = ()=>{ loading.style.display = 'none'; clearTimeout(gameSlowTimer); };
-    stage.appendChild(f); gameFrame = f;
+    stage.appendChild(f);
+    gameFrame = f;
     clearTimeout(gameSlowTimer);
     gameSlowTimer = setTimeout(()=>{
-        if(gameFrame === f && loading.style.display !== 'none') msg.textContent = 'Taking a while… you can also open it in the browser (↗ top right)';
+        if(gameFrame === f && loading.style.display !== 'none'){
+            msg.textContent = 'Taking a while… you can also open it in the browser (↗ top right)';
+        }
     }, 15000);
+
+    // Bundle in background for offline use
+    gameSyncOffline({ manual: false, silent: true });
 }
+
+function gameSelectUrl(url){
+    haptic([6]);
+    gameToggleHubDrawer(false);
+    gameStop();
+    gameStart(url);
+}
+
 function gameStop(){
     clearTimeout(gameSlowTimer);
+    gameToggleHubDrawer(false);
     if(gameFrame){ gameFrame.remove(); gameFrame = null; }
 }
-function gameReload(){ gameStop(); gameStart(); gameMenu(false); }
+function gameReload(){ gameStop(); gameStart(gameActiveUrl); gameMenu(false); }
+
+// Background pre-sync + online/offline listeners so games are cached and checked automatically
+window.addEventListener('online', ()=>{
+    gameUpdateHudUI();
+    gameSyncOffline({ manual: false, silent: false });
+});
+window.addEventListener('offline', ()=>{
+    gameUpdateHudUI();
+});
+if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>gameSyncOffline({ manual:false, silent:true }), 2500));
+} else {
+    setTimeout(()=>gameSyncOffline({ manual:false, silent:true }), 2500);
+}

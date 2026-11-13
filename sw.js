@@ -21,7 +21,9 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-restore-2026-11-06T18-57-37';
+const CACHE_VERSION = 'harfs-shell-v99';
+const GAME_CACHE_VERSION = 'harfs-games-v1';
+const GAME_CACHE_HOSTS = ['sj2005zarisfi-source.github.io'];
 // Runtime cache for static images pulled from other origins: HARFS team
 // logos + Golden Moment media (raw.githubusercontent.com) and live-score
 // league/team badges (media.api-sports.io). None of this was cached before,
@@ -104,7 +106,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  const keep = [CACHE_VERSION, IMAGE_CACHE_VERSION];
+  const keep = [CACHE_VERSION, IMAGE_CACHE_VERSION, GAME_CACHE_VERSION];
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => !keep.includes(k)).map(k => caches.delete(k))))
@@ -137,6 +139,27 @@ self.addEventListener('fetch', event => {
         cache.match(req).then(cached => {
           const network = fetch(req).then(res => {
             if (res && res.ok) cache.put(req, res.clone());
+            return res;
+          }).catch(() => cached);
+          return cached || network;
+        })
+      )
+    );
+    return;
+  }
+
+  // Offline Game Hub & sub-game assets (sj2005zarisfi-source.github.io):
+  // Cache every HTML, JS, CSS, image, audio, and font file so all games work
+  // 100% offline, while refreshing in the background when online to pick up
+  // game updates or newly added games.
+  if (GAME_CACHE_HOSTS.includes(url.hostname)) {
+    event.respondWith(
+      caches.open(GAME_CACHE_VERSION).then(cache =>
+        cache.match(req, { ignoreSearch: false }).then(cached => {
+          const network = fetch(req, { cache: 'no-cache' }).then(res => {
+            if (res && (res.ok || res.type === 'opaque')) {
+              cache.put(req, res.clone());
+            }
             return res;
           }).catch(() => cached);
           return cached || network;

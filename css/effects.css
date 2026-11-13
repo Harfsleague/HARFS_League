@@ -2347,3 +2347,123 @@ body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back,
 .mag-progress.on{ opacity:1; }
 .mag-progress i{ display:block; width:100%; height:100%; transform:scaleX(0); transform-origin:100% 50%;
     background:linear-gradient(270deg,#38bdf8,#2563eb); box-shadow:0 0 8px rgba(56,189,248,0.7); will-change:transform; }
+
+
+/* =====================================================
+   1.14 (v99) — Profile 4-Language Selector with Country Flags & Offline Game Hub HUD
+   ===================================================== */
+.settings-lang-frame{ margin-top:6px; padding:10px; }
+.settings-lang-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+}
+.settings-lang-card{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 11px; border-radius:16px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-top-color:rgba(255,255,255,0.14);
+    color:#e2e8f0; cursor:pointer; font-family:inherit;
+    text-align:left; direction:ltr;
+    transition:transform .16s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    -webkit-tap-highlight-color:transparent;
+}
+.settings-lang-card:active{ transform:scale(.95); }
+.settings-lang-card.active{
+    background:
+        radial-gradient(95% 120% at 0% 50%,color-mix(in srgb,var(--primary) 26%,transparent),transparent 72%),
+        rgba(255,255,255,0.06);
+    border-color:color-mix(in srgb,var(--primary) 65%,rgba(255,255,255,0.22));
+    box-shadow:0 6px 18px -6px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.settings-lang-flag{
+    position:relative; width:36px; height:28px; border-radius:8px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.14);
+    box-shadow:0 2px 6px rgba(0,0,0,0.35);
+}
+.lang-flag-svg{ border-radius:3px; display:block; }
+.settings-lang-emoji{
+    position:absolute; right:-4px; bottom:-4px; font-size:.62rem; line-height:1;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+}
+.settings-lang-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.settings-lang-name{ font-size:.78rem; font-weight:900; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.settings-lang-sub{ font-size:.56rem; font-weight:700; color:#94a3b8; }
+.settings-lang-check{
+    width:18px; height:18px; border-radius:50%; flex-shrink:0;
+    border:1.5px solid rgba(255,255,255,0.16);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.52rem; color:transparent; transition:all .18s ease;
+}
+.settings-lang-card.active .settings-lang-check{
+    background:var(--primary); border-color:var(--primary); color:#090d16;
+    box-shadow:0 0 10px var(--primary-glow);
+}
+
+/* Offline Game Status Pill & Multi-Game Drawer inside #game-screen */
+.game-status-hud{
+    position:absolute; z-index:6;
+    top:calc(env(safe-area-inset-top,0px) + 8px);
+    right:calc(env(safe-area-inset-right,0px) + 8px);
+    display:flex; flex-direction:column; align-items:flex-end;
+}
+.game-status-pill{
+    height:38px; padding:0 13px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:color-mix(in srgb,var(--bg-mid) 76%,rgba(0,0,0,0.55));
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    color:#f1f5f9; font-family:inherit; font-size:.66rem; font-weight:800;
+    display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,0.45);
+    opacity:.78; transition:opacity .2s ease, transform .15s ease;
+}
+.game-status-pill:active, .game-status-pill:hover{ opacity:1; transform:scale(.96); }
+.game-status-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:#22c55e; box-shadow:0 0 7px currentColor;
+}
+.game-status-pill.is-offline{ border-color:rgba(251,191,36,0.45); color:#fde68a; opacity:.95; }
+.game-status-pill.is-syncing .game-status-dot{ animation:chatRec 1s infinite; }
+.game-hub-drawer{
+    margin-top:8px; width:min(90vw,296px); border-radius:20px; padding:11px;
+    background:color-mix(in srgb,var(--bg-mid) 94%,#020617);
+    border:1px solid rgba(255,255,255,0.16);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 18px 42px rgba(0,0,0,0.72);
+    display:flex; flex-direction:column; gap:8px;
+    animation:cardIn .2s ease both;
+}
+.game-hub-drawer[hidden]{ display:none !important; }
+.game-hub-head{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:2px 4px 7px; border-bottom:1px solid rgba(255,255,255,0.08);
+    font-size:.7rem; font-weight:900; color:var(--header-text);
+}
+.game-hub-sync-btn{
+    padding:5px 10px; border-radius:999px;
+    border:1px solid var(--nav-active-border); background:var(--nav-active-bg);
+    color:var(--primary); font-family:inherit; font-size:.6rem; font-weight:800;
+    cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+}
+.game-hub-sync-btn:active{ transform:scale(.94); }
+.game-hub-list{ display:flex; flex-direction:column; gap:6px; max-height:240px; overflow-y:auto; scrollbar-width:none; }
+.game-hub-list::-webkit-scrollbar{ display:none; }
+.game-hub-item{
+    display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:13px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    cursor:pointer; transition:transform .14s ease, border-color .18s ease;
+}
+.game-hub-item:active{ transform:scale(.97); }
+.game-hub-item.active{ background:var(--nav-active-bg); border-color:var(--primary); }
+.game-hub-ic{
+    width:32px; height:32px; border-radius:9px; flex-shrink:0;
+    background:rgba(255,255,255,0.07); color:var(--primary);
+    display:flex; align-items:center; justify-content:center; font-size:.9rem;
+}
+.game-hub-info{ flex:1; min-width:0; }
+.game-hub-name{ font-size:.74rem; font-weight:800; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.game-hub-meta{ font-size:.56rem; font-weight:700; color:#fbbf24; display:flex; align-items:center; gap:4px; margin-top:1px; }
+.game-hub-meta.ready{ color:#4ade80; }
+.game-hub-empty{ text-align:center; font-size:.66rem; color:#94a3b8; padding:12px 6px; }
