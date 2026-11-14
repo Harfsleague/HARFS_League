@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v99';
+const CACHE_VERSION = 'harfs-shell-v100';
 const GAME_CACHE_VERSION = 'harfs-games-v1';
 const GAME_CACHE_HOSTS = ['sj2005zarisfi-source.github.io'];
 // Runtime cache for static images pulled from other origins: HARFS team

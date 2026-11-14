@@ -2350,17 +2350,39 @@ body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back,
 
 
 /* =====================================================
-   1.14 (v99) — Profile 4-Language Selector with Country Flags & Offline Game Hub HUD
+   1.15 (v100) — Collapsible Language Selector in Appearance (FA/EN/ES) & Compact Left Offline Icon in Game
    ===================================================== */
-.settings-lang-frame{ margin-top:6px; padding:10px; }
+.ap-lang-card{ padding:10px 12px; }
+.lang-toggle-btn{
+    width:100%; display:flex; align-items:center; gap:10px;
+    padding:4px 2px; border:none; background:transparent;
+    color:#e2e8f0; cursor:pointer; font-family:inherit; text-align:left;
+    -webkit-tap-highlight-color:transparent;
+}
+.lang-current-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:999px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+    font-size:.66rem; font-weight:800; color:var(--header-text);
+    flex-shrink:0;
+}
+.lang-cur-flag{ display:inline-flex; align-items:center; }
+.lang-chevron{
+    font-size:.7rem; color:#94a3b8; transition:transform .22s ease; flex-shrink:0; margin-left:2px;
+}
 .settings-lang-grid{
     display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:9px;
+    grid-template-columns:1fr;
+    gap:8px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,0.07);
+    animation:cardIn .2s ease both;
 }
+.settings-lang-grid[hidden]{ display:none !important; }
 .settings-lang-card{
     display:flex; align-items:center; gap:10px;
-    padding:10px 11px; border-radius:16px;
+    padding:9px 12px; border-radius:14px;
     background:rgba(255,255,255,0.04);
     border:1px solid rgba(255,255,255,0.08);
     border-top-color:rgba(255,255,255,0.14);
@@ -2369,7 +2391,7 @@ body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back,
     transition:transform .16s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
     -webkit-tap-highlight-color:transparent;
 }
-.settings-lang-card:active{ transform:scale(.95); }
+.settings-lang-card:active{ transform:scale(.97); }
 .settings-lang-card.active{
     background:
         radial-gradient(95% 120% at 0% 50%,color-mix(in srgb,var(--primary) 26%,transparent),transparent 72%),
@@ -2378,19 +2400,19 @@ body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back,
     box-shadow:0 6px 18px -6px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.22);
 }
 .settings-lang-flag{
-    position:relative; width:36px; height:28px; border-radius:8px; flex-shrink:0;
+    position:relative; width:36px; height:26px; border-radius:7px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
     background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.14);
     box-shadow:0 2px 6px rgba(0,0,0,0.35);
 }
 .lang-flag-svg{ border-radius:3px; display:block; }
 .settings-lang-emoji{
-    position:absolute; right:-4px; bottom:-4px; font-size:.62rem; line-height:1;
+    position:absolute; right:-4px; bottom:-4px; font-size:.6rem; line-height:1;
     filter:drop-shadow(0 1px 2px rgba(0,0,0,0.6));
 }
-.settings-lang-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
-.settings-lang-name{ font-size:.78rem; font-weight:900; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.settings-lang-sub{ font-size:.56rem; font-weight:700; color:#94a3b8; }
+.settings-lang-text{ flex:1; min-width:0; display:flex; align-items:baseline; gap:8px; }
+.settings-lang-name{ font-size:.8rem; font-weight:900; color:#f8fafc; }
+.settings-lang-sub{ font-size:.58rem; font-weight:700; color:#94a3b8; }
 .settings-lang-check{
     width:18px; height:18px; border-radius:50%; flex-shrink:0;
     border:1.5px solid rgba(255,255,255,0.16);
@@ -2402,32 +2424,35 @@ body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back,
     box-shadow:0 0 10px var(--primary-glow);
 }
 
-/* Offline Game Status Pill & Multi-Game Drawer inside #game-screen */
-.game-status-hud{
-    position:absolute; z-index:6;
-    top:calc(env(safe-area-inset-top,0px) + 8px);
-    right:calc(env(safe-area-inset-right,0px) + 8px);
-    display:flex; flex-direction:column; align-items:flex-end;
+/* Compact Icon-Only Offline Button next to the 2 left buttons inside #game-fab */
+.game-offline-ic-btn{
+    position:relative;
 }
-.game-status-pill{
-    height:38px; padding:0 13px; border-radius:999px;
-    border:1px solid rgba(255,255,255,0.22);
-    background:color-mix(in srgb,var(--bg-mid) 76%,rgba(0,0,0,0.55));
-    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-    color:#f1f5f9; font-family:inherit; font-size:.66rem; font-weight:800;
-    display:inline-flex; align-items:center; gap:7px; cursor:pointer;
-    box-shadow:0 6px 18px rgba(0,0,0,0.45);
-    opacity:.78; transition:opacity .2s ease, transform .15s ease;
+.game-offline-ic-btn.is-offline{
+    border-color:rgba(251,191,36,0.55);
+    color:#fde68a;
+    opacity:.92;
 }
-.game-status-pill:active, .game-status-pill:hover{ opacity:1; transform:scale(.96); }
+.game-offline-ic-btn.is-ready{
+    color:#86efac;
+}
 .game-status-dot{
+    position:absolute;
+    top:2px; right:2px;
     width:7px; height:7px; border-radius:50%;
-    background:#22c55e; box-shadow:0 0 7px currentColor;
+    background:#22c55e;
+    border:1.5px solid #0b1220;
+    box-shadow:0 0 6px rgba(34,197,94,0.8);
+    pointer-events:none;
 }
-.game-status-pill.is-offline{ border-color:rgba(251,191,36,0.45); color:#fde68a; opacity:.95; }
-.game-status-pill.is-syncing .game-status-dot{ animation:chatRec 1s infinite; }
+.game-offline-ic-btn.is-syncing .game-status-dot{ animation:chatRec 1s infinite; }
+
+/* Left-aligned Game Hub Drawer directly below #game-fab */
 .game-hub-drawer{
-    margin-top:8px; width:min(90vw,296px); border-radius:20px; padding:11px;
+    position:absolute; z-index:6;
+    top:calc(env(safe-area-inset-top,0px) + 52px);
+    left:calc(env(safe-area-inset-left,0px) + 8px);
+    width:min(90vw,288px); border-radius:20px; padding:11px;
     background:color-mix(in srgb,var(--bg-mid) 94%,#020617);
     border:1px solid rgba(255,255,255,0.16);
     backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);

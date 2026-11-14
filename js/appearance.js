@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.14";
+const HARFS_VERSION_LABEL = "1.15";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -966,19 +966,17 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(
 
 
 // ============================================================
-// APP LANGUAGE SELECTOR (Profile) — Persian 🇮🇷, English 🇬🇧, Arabic 🇸🇦, Spanish 🇪🇸
+// APP LANGUAGE SELECTOR (Appearance Sheet) — Persian 🇮🇷, English 🇬🇧, Spanish 🇪🇸
 // ============================================================
 const HARFS_LANG_KEY = 'harfs_lang';
 const HARFS_FLAGS_SVG = {
-    fa: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="26" height="18" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#fff"/><path d="M0 0h28v6.67H0z" fill="#239f40"/><path d="M0 13.33h28V20H0z" fill="#da0000"/><circle cx="14" cy="10" r="2.1" fill="none" stroke="#da0000" stroke-width="1.1"/><path d="M14 7.7v4.6" stroke="#da0000" stroke-width="1"/></svg>',
-    en: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="26" height="18" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#012169"/><path d="M0 0l28 20M28 0L0 20" stroke="#fff" stroke-width="3.4"/><path d="M0 0l28 20M28 0L0 20" stroke="#C8102E" stroke-width="1.8"/><path d="M14 0v20M0 10h28" stroke="#fff" stroke-width="5.4"/><path d="M14 0v20M0 10h28" stroke="#C8102E" stroke-width="3.2"/></svg>',
-    ar: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="26" height="18" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#006C35"/><rect x="6" y="6.8" width="16" height="2.4" rx="1.1" fill="#fff" opacity=".92"/><path d="M8 13.2h12" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="8.5" cy="13.2" r="1.1" fill="#fff"/></svg>',
-    es: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="26" height="18" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#AA151B"/><rect y="5" width="28" height="10" fill="#F1BF00"/><rect x="6.5" y="7.2" width="3.2" height="5.2" rx="1.2" fill="#AA151B"/></svg>'
+    fa: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="24" height="17" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#fff"/><path d="M0 0h28v6.67H0z" fill="#239f40"/><path d="M0 13.33h28V20H0z" fill="#da0000"/><circle cx="14" cy="10" r="2.1" fill="none" stroke="#da0000" stroke-width="1.1"/><path d="M14 7.7v4.6" stroke="#da0000" stroke-width="1"/></svg>',
+    en: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="24" height="17" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#012169"/><path d="M0 0l28 20M28 0L0 20" stroke="#fff" stroke-width="3.4"/><path d="M0 0l28 20M28 0L0 20" stroke="#C8102E" stroke-width="1.8"/><path d="M14 0v20M0 10h28" stroke="#fff" stroke-width="5.4"/><path d="M14 0v20M0 10h28" stroke="#C8102E" stroke-width="3.2"/></svg>',
+    es: '<svg class="lang-flag-svg" viewBox="0 0 28 20" width="24" height="17" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#AA151B"/><rect y="5" width="28" height="10" fill="#F1BF00"/><rect x="6.5" y="7.2" width="3.2" height="5.2" rx="1.2" fill="#AA151B"/></svg>'
 };
 const HARFS_LANGS = [
     { code:'fa', name:'فارسی',   sub:'ایران',   emoji:'🇮🇷' },
     { code:'en', name:'English', sub:'UK / US', emoji:'🇬🇧' },
-    { code:'ar', name:'العربية', sub:'العربية', emoji:'🇸🇦' },
     { code:'es', name:'Español', sub:'España',  emoji:'🇪🇸' }
 ];
 const HARFS_I18N = {
@@ -989,13 +987,33 @@ const HARFS_I18N = {
         ov_mag_intro:'This week’s issue',
         tile_magazine:'Magazine', tile_cards:'Cards', tile_chat:'Chat', tile_moments:'Moments', tile_game:'Game', tile_records:'Records',
         season_title:'Season', season_current:'Current Season', match_history:'Match History', filter_all:'All',
+        th_team:'Team', th_p:'P', th_w:'W', th_d:'D', th_l:'L', th_gf:'GF', th_ga:'GA', th_gd:'GD', th_pt:'PT',
         moments_title:'⭐ Golden Moments ⭐',
         profile_title:'Profile', account_sub:'HARFS League Account',
         sec_appearance:'Appearance & Sound', btn_appearance:'Appearance & Performance', btn_assistant:'HARFS Assistant',
-        sec_language:'Language',
+        sec_language:'Language', ap_lang_sub:'Tap to choose app language',
         sec_quick:'Quick Access', q_emergency:'Emergency', q_notif:'Notifications', q_devices:'Devices', q_tools:'Tools',
         sec_account:'Account', btn_logout:'Log Out', btn_login:'Log In / Pick a Team',
         mp_nothing:'Nothing playing', mp_playlist:'HARFS Playlist',
+        ap_title:'Appearance', ap_perf:'Performance', ap_lite:'Lite', ap_custom:'Custom',
+        ap_glass:'Liquid Glass', ap_glass_sub:'Frosted blur, specular rims & lens depth',
+        ap_bg:'Background Effects', ap_bg_sub:'Floating orbs & shimmer',
+        ap_motion:'Motion', ap_motion_sub:'Slide/fade transitions between screens',
+        ap_island_sub:'Bubbles that flow out of the HARFS capsule — intro & Magazine',
+        ap_palette:'Palette', ap_primary:'Primary', ap_accent:'Accent', ap_background:'Background',
+        ap_app_font:'App Font', ap_mag_font:'Magazine Font',
+        fed_title:'Federation & Owners', fed_sub:'The people behind HARFS · tap a photo to view',
+        role_pres:'Federation President', role_owner:'Team Owner', role_fan:'Fan',
+        tp_trophies:'Trophy Cabinet', tp_records:'League Records',
+        cards_title:'Cards', cards_sub:'Your hand · tap a card to enlarge it',
+        pl_title:'Playlist',
+        te_title:'Edit Profile', te_name:'Name', te_photos:'Photos', te_reset:'Reset', te_save:'Save',
+        sess_title:'Devices & Sessions', sess_sub:'Where you are signed in',
+        lite_title:'Emergency & Offline', lite_sub:'Keep working when the internet is cut',
+        notif_title:'Notifications', notif_sub:'Choose what HARFS may tell you',
+        pick_season:'Select Season', pick_cup:'Select CUP Edition',
+        ai_title:'HARFS Assistant', ai_sub:'Table · results · trends', ai_ph:'Type your message…',
+        chat_title:'Chat', chat_members:'5 Members', chat_ph:'Write a message…',
         game_hub_title:'Games Library', game_offline_ready:'Offline Ready', game_online_only:'Online',
         game_check_updates:'Check Updates', game_checking:'Checking for updates & new games…', game_checking_short:'Syncing…',
         game_up_to_date:'All games are up to date & ready offline!',
@@ -1012,13 +1030,33 @@ const HARFS_I18N = {
         ov_mag_intro:'شمارهٔ این هفته',
         tile_magazine:'مجله', tile_cards:'کارت‌ها', tile_chat:'چت', tile_moments:'لحظات', tile_game:'بازی', tile_records:'رکوردها',
         season_title:'فصل مسابقات', season_current:'فصل جاری', match_history:'تاریخچه بازی‌ها', filter_all:'همه',
+        th_team:'تیم', th_p:'ب', th_w:'ب', th_d:'م', th_l:'ش', th_gf:'گ‌ز', th_ga:'گ‌خ', th_gd:'ت‌گ', th_pt:'امتیاز',
         moments_title:'⭐ لحظات طلایی ⭐',
         profile_title:'پروفایل', account_sub:'حساب کاربری لیگ HARFS',
         sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر و عملکرد برنامه', btn_assistant:'دستیار هوشمند HARFS',
-        sec_language:'زبان برنامه (Language)',
+        sec_language:'زبان برنامه', ap_lang_sub:'برای انتخاب زبان برنامه ضربه بزنید',
         sec_quick:'دسترسی سریع', q_emergency:'اضطراری', q_notif:'اعلان‌ها', q_devices:'دستگاه‌ها', q_tools:'ابزارها',
         sec_account:'حساب کاربری', btn_logout:'خروج از حساب', btn_login:'ورود / انتخاب تیم',
         mp_nothing:'آهنگی در حال پخش نیست', mp_playlist:'پلی‌لیست HARFS',
+        ap_title:'ظاهر و عملکرد', ap_perf:'عملکرد گرافیکی', ap_lite:'سبک (Lite)', ap_custom:'سفارشی',
+        ap_glass:'شیشه مایع (Liquid Glass)', ap_glass_sub:'مات‌شدگی شیشه‌ای، لبه‌های نوری و عمق لنز',
+        ap_bg:'جلوه‌های پس‌زمینه', ap_bg_sub:'گوی‌های نوری شناور و درخشش محیطی',
+        ap_motion:'انیمیشن و حرکت', ap_motion_sub:'انتقال نرم بین صفحات و پنل‌ها',
+        ap_island_sub:'حباب‌های پویا از دل کپسول HARFS — اینترو و مجله',
+        ap_palette:'پالت رنگی', ap_primary:'رنگ اصلی', ap_accent:'رنگ مکمل', ap_background:'پس‌زمینه',
+        ap_app_font:'فونت برنامه', ap_mag_font:'فونت مجله',
+        fed_title:'فدراسیون و مالکین', fed_sub:'اعضای اصلی HARFS · برای بزرگ‌نمایی روی عکس بزنید',
+        role_pres:'رئیس فدراسیون', role_owner:'مالک تیم', role_fan:'هوادار',
+        tp_trophies:'ویترین افتخارات', tp_records:'رکوردهای لیگ',
+        cards_title:'کارت‌ها', cards_sub:'کارت‌های در دست شما · برای بزرگ‌نمایی روی کارت بزنید',
+        pl_title:'لیست پخش موزیک',
+        te_title:'ویرایش پروفایل', te_name:'نام تیم', te_photos:'تصاویر پروفایل', te_reset:'بازنشانی', te_save:'ذخیره',
+        sess_title:'دستگاه‌ها و نشست‌ها', sess_sub:'دستگاه‌هایی که با این حساب وارد شده‌اند',
+        lite_title:'حالت اضطراری و آفلاین', lite_sub:'ادامه کار با برنامه در زمان قطعی اینترنت',
+        notif_title:'اعلان‌ها', notif_sub:'انتخاب اعلان‌های دریافتی از HARFS',
+        pick_season:'انتخاب فصل', pick_cup:'انتخاب دوره جام حذفی',
+        ai_title:'دستیار هوشمند HARFS', ai_sub:'جدول · نتایج · تحلیل روندها', ai_ph:'پیام خود را بنویسید…',
+        chat_title:'چت گروهی', chat_members:'۵ عضو', chat_ph:'پیام بنویس…',
         game_hub_title:'مجموعه بازی‌ها', game_offline_ready:'آماده آفلاین', game_online_only:'آنلاین',
         game_check_updates:'بررسی آپدیت', game_checking:'در حال بررسی آپدیت و بازی جدید…', game_checking_short:'بروزرسانی…',
         game_up_to_date:'تمام بازی‌ها بروز و آماده اجرای آفلاین هستند!',
@@ -1028,29 +1066,6 @@ const HARFS_I18N = {
         game_offline_first_time:'برای دانلود و اجرای آفلاین بازی‌ها، یک بار به اینترنت متصل شوید.',
         game_sync_err:'خطا در بررسی آپدیت بازی‌ها'
     },
-    ar: {
-        nav_home:'الرئيسية', nav_season:'الموسم', nav_assistant:'المساعد', nav_profile:'الملف',
-        subnav_league:'الدوري', subnav_cup:'الكأس',
-        ov_podium_label:'الترتيب العام والبطولات',
-        ov_mag_intro:'عدد هذا الأسبوع',
-        tile_magazine:'المجلة', tile_cards:'البطاقات', tile_chat:'الدردشة', tile_moments:'اللحظات', tile_game:'الألعاب', tile_records:'الأرقام',
-        season_title:'الموسم', season_current:'الموسم الحالي', match_history:'سجل المباريات', filter_all:'الكل',
-        moments_title:'⭐ اللحظات الذهبية ⭐',
-        profile_title:'الملف الشخصي', account_sub:'حساب دوري HARFS',
-        sec_appearance:'المظهر والصوت', btn_appearance:'المظهر والأداء', btn_assistant:'مساعد HARFS الذكي',
-        sec_language:'لغة التطبيق (Language)',
-        sec_quick:'وصول سريع', q_emergency:'الطوارئ', q_notif:'الإشعارات', q_devices:'الأجهزة', q_tools:'الأدوات',
-        sec_account:'الحساب', btn_logout:'تسجيل الخروج', btn_login:'تسجيل الدخول / اختر فريقاً',
-        mp_nothing:'لا يوجد تشغيل حالياً', mp_playlist:'قائمة تشغيل HARFS',
-        game_hub_title:'مكتبة الألعاب', game_offline_ready:'جاهز بدون نت', game_online_only:'متصل',
-        game_check_updates:'تحديث الألعاب', game_checking:'جاري فحص التحديثات والألعاب الجديدة…', game_checking_short:'مزامنة…',
-        game_up_to_date:'جميع الألعاب محدثة وجاهزة بدون إنترنت!',
-        game_updated_toast:'تم تنزيل تحديث اللعبة للوضع غير المتصل!',
-        game_new_added_toast:'تمت إضافة لعبة جديدة وحفظها للعب بدون إنترنت!',
-        game_offline_mode_badge:'وضع بدون نت', game_loading:'جاري تحميل اللعبة…',
-        game_offline_first_time:'اتصل بالإنترنت مرة واحدة لتنزيل الألعاب للوضع غير المتصل.',
-        game_sync_err:'تعذر التحقق من التحديثات الآن'
-    },
     es: {
         nav_home:'Inicio', nav_season:'Temporada', nav_assistant:'Asistente', nav_profile:'Perfil',
         subnav_league:'Liga', subnav_cup:'Copa',
@@ -1058,13 +1073,33 @@ const HARFS_I18N = {
         ov_mag_intro:'Edición de esta semana',
         tile_magazine:'Revista', tile_cards:'Cartas', tile_chat:'Chat', tile_moments:'Momentos', tile_game:'Juegos', tile_records:'Récords',
         season_title:'Temporada', season_current:'Temporada Actual', match_history:'Historial de Partidos', filter_all:'Todos',
+        th_team:'Equipo', th_p:'PJ', th_w:'G', th_d:'E', th_l:'P', th_gf:'GF', th_ga:'GC', th_gd:'DG', th_pt:'PTS',
         moments_title:'⭐ Momentos Dorados ⭐',
         profile_title:'Perfil', account_sub:'Cuenta de Liga HARFS',
         sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia y Rendimiento', btn_assistant:'Asistente HARFS',
-        sec_language:'Idioma (Language)',
+        sec_language:'Idioma', ap_lang_sub:'Toca para elegir el idioma de la app',
         sec_quick:'Acceso Rápido', q_emergency:'Emergencia', q_notif:'Alertas', q_devices:'Dispositivos', q_tools:'Herramientas',
         sec_account:'Cuenta', btn_logout:'Cerrar Sesión', btn_login:'Iniciar Sesión / Elegir Equipo',
         mp_nothing:'Nada reproduciéndose', mp_playlist:'Lista HARFS',
+        ap_title:'Apariencia', ap_perf:'Rendimiento', ap_lite:'Ligero', ap_custom:'Personalizado',
+        ap_glass:'Liquid Glass', ap_glass_sub:'Desenfoque esmerilado, bordes especulares y lente',
+        ap_bg:'Efectos de Fondo', ap_bg_sub:'Orbes flotantes y brillo ambiental',
+        ap_motion:'Movimiento', ap_motion_sub:'Transiciones suaves entre pantallas',
+        ap_island_sub:'Burbujas dinámicas desde la cápsula HARFS — intro y Revista',
+        ap_palette:'Paleta de Colores', ap_primary:'Primario', ap_accent:'Acento', ap_background:'Fondo',
+        ap_app_font:'Fuente de la App', ap_mag_font:'Fuente de la Revista',
+        fed_title:'Federación y Propietarios', fed_sub:'Las personas detrás de HARFS · toca una foto para ver',
+        role_pres:'Presidente de la Federación', role_owner:'Propietario de Equipo', role_fan:'Aficionado',
+        tp_trophies:'Vitrina de Trofeos', tp_records:'Récords de la Liga',
+        cards_title:'Cartas', cards_sub:'Tu mano · toca una carta para ampliarla',
+        pl_title:'Lista de Reproducción',
+        te_title:'Editar Perfil', te_name:'Nombre', te_photos:'Fotos', te_reset:'Restablecer', te_save:'Guardar',
+        sess_title:'Dispositivos y Sesiones', sess_sub:'Dónde has iniciado sesión',
+        lite_title:'Emergencia y Offline', lite_sub:'Sigue trabajando sin conexión a internet',
+        notif_title:'Notificaciones', notif_sub:'Elige qué notificaciones recibir de HARFS',
+        pick_season:'Seleccionar Temporada', pick_cup:'Seleccionar Edición de Copa',
+        ai_title:'Asistente HARFS', ai_sub:'Tabla · resultados · tendencias', ai_ph:'Escribe tu mensaje…',
+        chat_title:'Chat Grupal', chat_members:'5 Miembros', chat_ph:'Escribe un mensaje…',
         game_hub_title:'Centro de Juegos', game_offline_ready:'Listo Offline', game_online_only:'En línea',
         game_check_updates:'Actualizar', game_checking:'Buscando actualizaciones y juegos nuevos…', game_checking_short:'Sincronizando…',
         game_up_to_date:'¡Todos los juegos están actualizados y listos sin conexión!',
@@ -1074,6 +1109,125 @@ const HARFS_I18N = {
         game_offline_first_time:'Conéctate a internet una vez para descargar los juegos.',
         game_sync_err:'No se pudieron buscar actualizaciones'
     }
+};
+
+// Dynamic phrase translation map for CUP, Schedule, Cards, Notifications, Devices, Emergency & Modals
+const HARFS_DYNAMIC_PHRASES = {
+    fa: [
+        ['Federation President', 'رئیس فدراسیون'],
+        ['Team Owner', 'مالک تیم'],
+        ['Fan', 'هوادار'],
+        ['Tap for Trophy Cabinet & Record', 'مشاهده ویترین افتخارات و رکوردها'],
+        ['No matches yet', 'هنوز مسابقه‌ای ثبت نشده است'],
+        ['No games played yet', 'هنوز مسابقه‌ای انجام نشده است'],
+        ['Match history', 'تاریخچه بازی‌ها'],
+        ['Decided', 'تعیین‌شده'],
+        ['Upcoming', 'در پیش'],
+        ['Waiting for the semifinals', 'در انتظار پایان نیمه‌نهایی'],
+        ['To be decided', 'نامشخص'],
+        ['Played', 'انجام‌شده'],
+        ['To play', 'در انتظار بازی'],
+        ['Third place', 'رده‌بندی (مقام سوم)'],
+        ['Super Cup', 'سوپرجام'],
+        ['No Super Cup recorded', 'سوپرجامی ثبت نشده است'],
+        ['Not played', 'برگزار نشده'],
+        ['To be played after the CUP final', 'پس از فینال جام حذفی برگزار می‌شود'],
+        ['League champion vs CUP champion', 'قهرمان لیگ در برابر قهرمان جام حذفی'],
+        ['Add game result', 'ثبت نتیجه بازی'],
+        ['Add result', 'ثبت نتیجه'],
+        ['Active ✓', 'فعال ✓'],
+        ['Use in next game', 'استفاده در بازی بعد'],
+        ['No cards in your hand right now.', 'در حال حاضر کارتی در دست شما نیست.'],
+        ['Log in with your team to see your cards.', 'برای مشاهده کارت‌ها با حساب تیم خود وارد شوید.'],
+        ['Verify & Repair', 'بررسی و تعمیر خودکار'],
+        ['Danger zone', 'بخش حساس (خطر)'],
+        ['Coming up', 'بازی‌های پیش رو'],
+        ['No season is running.', 'فصلی در حال اجرا نیست.'],
+        ['This device', 'همین دستگاه'],
+        ['Notifications are ON', 'اعلان‌ها روشن هستند'],
+        ['Notifications are OFF', 'اعلان‌ها خاموش هستند'],
+        ['Notify me about', 'ارسال اعلان برای'],
+        ['New magazine issue', 'شماره جدید مجله'],
+        ['When a new HARFS Weekly Magazine is published', 'هنگام انتشار شماره جدید مجله هفتگی HARFS'],
+        ['New Golden Moment', 'لحظه طلایی جدید'],
+        ['When a new post is added to Moments', 'هنگام ثبت پست جدید در لحظات طلایی'],
+        ['Matchweek reminder', 'یادآور بازی‌های هفته'],
+        ['Every Thursday evening: this week’s games', 'پنجشنبه‌شب‌ها: یادآوری بازی‌های هفته جاری'],
+        ['Magazine comments', 'نظرات مجله'],
+        ['Every new comment under a magazine issue', 'هنگام ثبت نظر جدید زیر مجله'],
+        ['Chat messages', 'پیام‌های چت'],
+        ['Every new message in the HARFS group chat', 'هنگام ارسال پیام جدید در چت گروهی'],
+        ['Unread message count', 'تعداد پیام‌های خوانده‌نشده'],
+        ['In-app message banner', 'بنر پیام داخل برنامه'],
+        ['Send a test notification', 'ارسال اعلان آزمایشی'],
+        ['Sign out all other devices', 'خروج از تمام دستگاه‌های دیگر'],
+        ['active now', 'هم‌اکنون فعال'],
+        ['Emergency mode', 'حالت اضطراری'],
+        ['Update local copy now', 'بروزرسانی نسخه محلی'],
+        ['Share over Wi-Fi', 'اشتراک‌گذاری با Wi-Fi'],
+        ['Sync to GitHub', 'همگام‌سازی با گیت‌هاب'],
+        ['Make the lite app file', 'ساخت فایل نسخه سبک (Lite)'],
+        ['Export edits file', 'خروجی گرفتن از تغییرات'],
+        ['Import edits file', 'بارگذاری فایل تغییرات'],
+        ['Stored files', 'فایل‌های ذخیره‌شده'],
+        ['all synced', 'کاملاً همگام'],
+        ['files copied', 'فایل کپی‌شده']
+    ],
+    es: [
+        ['Federation President', 'Presidente de la Federación'],
+        ['Team Owner', 'Propietario de Equipo'],
+        ['Fan', 'Aficionado'],
+        ['Tap for Trophy Cabinet & Record', 'Ver vitrina de trofeos y récords'],
+        ['No matches yet', 'Aún no hay partidos'],
+        ['No games played yet', 'Aún no se han jugado partidos'],
+        ['Match history', 'Historial de partidos'],
+        ['Decided', 'Decidido'],
+        ['Upcoming', 'Próximo'],
+        ['Waiting for the semifinals', 'Esperando las semifinales'],
+        ['To be decided', 'Por definir'],
+        ['Played', 'Jugado'],
+        ['To play', 'Por jugar'],
+        ['Third place', 'Tercer puesto'],
+        ['Super Cup', 'Supercopa'],
+        ['No Super Cup recorded', 'Sin Supercopa registrada'],
+        ['Not played', 'No jugado'],
+        ['To be played after the CUP final', 'Se juega tras la final de Copa'],
+        ['League champion vs CUP champion', 'Campeón de Liga vs Campeón de Copa'],
+        ['Add game result', 'Añadir resultado'],
+        ['Add result', 'Añadir resultado'],
+        ['Active ✓', 'Activa ✓'],
+        ['Use in next game', 'Usar en el próximo partido'],
+        ['No cards in your hand right now.', 'No tienes cartas en tu mano ahora mismo.'],
+        ['Log in with your team to see your cards.', 'Inicia sesión con tu equipo para ver tus cartas.'],
+        ['Verify & Repair', 'Verificar y Reparar'],
+        ['Danger zone', 'Zona de peligro'],
+        ['Coming up', 'Próximos partidos'],
+        ['No season is running.', 'No hay temporada en curso.'],
+        ['This device', 'Este dispositivo'],
+        ['Notifications are ON', 'Notificaciones ACTIVADAS'],
+        ['Notifications are OFF', 'Notificaciones DESACTIVADAS'],
+        ['Notify me about', 'Notificarme sobre'],
+        ['New magazine issue', 'Nueva edición de la revista'],
+        ['New Golden Moment', 'Nuevo Momento Dorado'],
+        ['Matchweek reminder', 'Recordatorio de jornada'],
+        ['Magazine comments', 'Comentarios de la revista'],
+        ['Chat messages', 'Mensajes del chat'],
+        ['Unread message count', 'Contador de mensajes no leídos'],
+        ['In-app message banner', 'Banner de mensajes en la app'],
+        ['Send a test notification', 'Enviar notificación de prueba'],
+        ['Sign out all other devices', 'Cerrar sesión en otros dispositivos'],
+        ['active now', 'activo ahora'],
+        ['Emergency mode', 'Modo de emergencia'],
+        ['Update local copy now', 'Actualizar copia local'],
+        ['Share over Wi-Fi', 'Compartir por Wi-Fi'],
+        ['Sync to GitHub', 'Sincronizar con GitHub'],
+        ['Make the lite app file', 'Crear archivo Lite'],
+        ['Export edits file', 'Exportar cambios'],
+        ['Import edits file', 'Importar cambios'],
+        ['Stored files', 'Archivos guardados'],
+        ['all synced', 'todo sincronizado'],
+        ['files copied', 'archivos copiados']
+    ]
 };
 
 function getAppLanguage(){
@@ -1087,10 +1241,29 @@ function harfsT(key){
 window.harfsT = harfsT;
 window.getAppLanguage = getAppLanguage;
 
+function toggleLanguageOptions(force){
+    haptic([6]);
+    const grid = document.getElementById('settings-lang-grid');
+    const btn  = document.getElementById('appearance-lang-btn');
+    const chev = document.getElementById('ap-lang-chevron');
+    if(!grid || !btn) return;
+    const willOpen = force !== undefined ? force : grid.hidden;
+    grid.hidden = !willOpen;
+    btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    btn.classList.toggle('open', willOpen);
+    if(chev) chev.style.transform = willOpen ? 'rotate(180deg)' : '';
+    if(willOpen) renderLanguageGrid();
+}
+
 function renderLanguageGrid(){
     const grid = document.getElementById('settings-lang-grid');
-    if(!grid) return;
+    const cur  = document.getElementById('ap-lang-current');
     const active = getAppLanguage();
+    const activeObj = HARFS_LANGS.find(l=>l.code===active) || HARFS_LANGS[1];
+    if(cur){
+        cur.innerHTML = `<span class="lang-cur-flag">${HARFS_FLAGS_SVG[activeObj.code]}</span><b>${activeObj.name}</b>`;
+    }
+    if(!grid) return;
     grid.innerHTML = HARFS_LANGS.map(l=>{
         const isOn = l.code === active;
         return `<button type="button" class="settings-lang-card ${isOn?'active':''}" role="radio" aria-checked="${isOn}" onclick="selectAppLanguage('${l.code}')">
@@ -1110,78 +1283,242 @@ function selectAppLanguage(code){
     localStorage.setItem(HARFS_LANG_KEY, code);
     renderLanguageGrid();
     applyAppLanguage();
+    toggleLanguageOptions(false);
     const chosen = HARFS_LANGS.find(l=>l.code===code);
     if(chosen && typeof showToast==='function'){
         showToast(`${chosen.emoji} ${chosen.name}`, 'info', 1600);
     }
 }
 
-function applyAppLanguage(){
-    const lang = getAppLanguage();
-    document.body.setAttribute('data-lang', lang);
-    renderLanguageGrid();
-
-    const setTxt = (sel, key)=>{
-        const el = document.querySelector(sel);
-        if(el) el.textContent = harfsT(key);
-    };
-    // Bottom nav & Season subnav
-    setTxt('#nav-main span', 'nav_home');
-    setTxt('#nav-season span', 'nav_season');
-    setTxt('#nav-admin-label', 'nav_assistant');
-    setTxt('#nav-settings span', 'nav_profile');
-    setTxt('#season-subnav [data-tab="league"] span', 'subnav_league');
-    setTxt('#season-subnav [data-tab="cup"] span', 'subnav_cup');
-
-    // Home screen
-    const ovLbl = document.querySelector('#main-league-screen .ov-label span');
-    if(ovLbl) ovLbl.innerHTML = `<i class="fas fa-trophy"></i>${harfsT('ov_podium_label')}`;
-    setTxt('.ov-tile-mag span', 'tile_magazine');
-    setTxt('.ov-tile-cards span', 'tile_cards');
-    setTxt('.ov-tile-chat span', 'tile_chat');
-    setTxt('.ov-tile-moments span', 'tile_moments');
-    setTxt('.ov-tile-game span', 'tile_game');
-    setTxt('.ov-tile-records span', 'tile_records');
-
-    // Season & Moments headers
-    const sTitle = document.getElementById('season-screen-title');
-    if(sTitle && document.body.getAttribute('data-season-view') !== 'schedule' && document.body.getAttribute('data-season-tab') !== 'cup'){
-        sTitle.textContent = harfsT('season_title');
+let _langApplying = false;
+function translateDynamicContainer(root, lang){
+    if(!root || lang === 'en') return;
+    const pairs = HARFS_DYNAMIC_PHRASES[lang];
+    if(!pairs) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while((node = walker.nextNode())){
+        const raw = node.nodeValue;
+        if(!raw || !raw.trim()) continue;
+        let updated = raw;
+        for(const [enStr, locStr] of pairs){
+            if(updated.includes(enStr)) updated = updated.split(enStr).join(locStr);
+        }
+        if(lang === 'fa'){
+            updated = updated
+                .replace(/\bSemifinal (\d+)/g, 'نیمه‌نهایی $1')
+                .replace(/\bFirst to (\d+)/g, 'اولین به $1 برد')
+                .replace(/\bMatchweek (\d+)/g, 'هفته $1')
+                .replace(/\bSeason (\d+)/g, 'فصل $1')
+                .replace(/\bEdition #?(\d+)/g, 'دوره $1')
+                .replace(/(\d+)\/(\d+) cards active for your next game/g, '$1 از $2 کارت برای بازی بعدی شما فعال است');
+        } else if(lang === 'es'){
+            updated = updated
+                .replace(/\bFirst to (\d+)/g, 'Primero a $1')
+                .replace(/\bMatchweek (\d+)/g, 'Jornada $1')
+                .replace(/\bSeason (\d+)/g, 'Temporada $1')
+                .replace(/\bEdition #?(\d+)/g, 'Edición $1')
+                .replace(/(\d+)\/(\d+) cards active for your next game/g, '$1/$2 cartas activas para tu próximo partido');
+        }
+        if(updated !== raw) node.nodeValue = updated;
     }
-    const pillLbl = document.getElementById('season-pill-label');
-    if(pillLbl && (pillLbl.textContent === 'Current Season' || pillLbl.dataset.isCurrent === '1' || currentSeasonIdx === 0)){
-        pillLbl.dataset.isCurrent = '1';
-        if(typeof currentSeasonIdx === 'undefined' || currentSeasonIdx === 0) pillLbl.textContent = harfsT('season_current');
-    }
-    const histTitle = document.getElementById('season-history-title');
-    if(histTitle) histTitle.innerHTML = `<i class="fas fa-history"></i> ${harfsT('match_history')}`;
-    const allChip = document.querySelector('#season-history-filter-bar .chip');
-    if(allChip) allChip.textContent = harfsT('filter_all');
-    setTxt('#weird-screen .league-header h2', 'moments_title');
-
-    // Profile / Settings screen
-    setTxt('#settings-screen .settings-screen-header h2', 'profile_title');
-    const sub = document.getElementById('settings-account-subtitle');
-    if(sub && loggedInTeam && !SYMBOLIC_ROLES[loggedInTeam]) sub.textContent = harfsT('account_sub');
-
-    const secLabels = document.querySelectorAll('#settings-screen > .w-full > .settings-section-label');
-    if(secLabels[0]) secLabels[0].textContent = harfsT('sec_appearance');
-    const langSecLbl = document.getElementById('settings-lang-section-label');
-    if(langSecLbl) langSecLbl.textContent = harfsT('sec_language');
-    if(secLabels[2]) secLabels[2].textContent = harfsT('sec_quick');
-    if(secLabels[3]) secLabels[3].textContent = harfsT('sec_account');
-
-    setTxt('#settings-screen .settings-page-tile[onclick*="openAppearanceSheet"] span', 'btn_appearance');
-    const aiTile = document.querySelector('#settings-screen .settings-page-tile[onclick*="toggleAiAssistant"] > span');
-    if(aiTile) aiTile.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i>${harfsT('btn_assistant')}`;
-
-    setTxt('#settings-lite-tile span', 'q_emergency');
-    setTxt('#settings-notif-tile span', 'q_notif');
-    setTxt('#settings-devices-tile span', 'q_devices');
-    setTxt('#settings-tools-section span', 'q_tools');
-    setTxt('#settings-logout-tile span', 'btn_logout');
-    setTxt('#settings-signin-tile span', 'btn_login');
-
-    if(typeof gameUpdateHudUI === 'function') gameUpdateHudUI();
-    window.dispatchEvent(new Event('resize')); // keeps #nav-pill and #subnav-pill aligned
 }
+
+function applyAppLanguage(){
+    if(_langApplying) return;
+    _langApplying = true;
+    try{
+        const lang = getAppLanguage();
+        document.body.setAttribute('data-lang', lang);
+        renderLanguageGrid();
+
+        const setTxt = (sel, key)=>{
+            const el = document.querySelector(sel);
+            if(el) el.textContent = harfsT(key);
+        };
+        const setPh = (sel, key)=>{
+            const el = document.querySelector(sel);
+            if(el) el.setAttribute('placeholder', harfsT(key));
+        };
+
+        // 1. Bottom nav & Season subnav
+        setTxt('#nav-main span', 'nav_home');
+        setTxt('#nav-season span', 'nav_season');
+        setTxt('#nav-admin-label', 'nav_assistant');
+        setTxt('#nav-settings span', 'nav_profile');
+        setTxt('#season-subnav [data-tab="league"] span', 'subnav_league');
+        setTxt('#season-subnav [data-tab="cup"] span', 'subnav_cup');
+
+        // 2. Home screen
+        const ovLbl = document.querySelector('#main-league-screen .ov-label span');
+        if(ovLbl) ovLbl.innerHTML = `<i class="fas fa-trophy"></i>${harfsT('ov_podium_label')}`;
+        setTxt('#ov-mag-title .ov-intro-txt', 'ov_mag_intro');
+        setTxt('.ov-tile-mag span', 'tile_magazine');
+        setTxt('.ov-tile-cards span', 'tile_cards');
+        setTxt('.ov-tile-chat span', 'tile_chat');
+        setTxt('.ov-tile-moments span', 'tile_moments');
+        setTxt('.ov-tile-game span', 'tile_game');
+        setTxt('.ov-tile-records span', 'tile_records');
+
+        // 3. Season & Standings Table & Match History
+        const sTitle = document.getElementById('season-screen-title');
+        if(sTitle && document.body.getAttribute('data-season-view') !== 'schedule' && document.body.getAttribute('data-season-tab') !== 'cup'){
+            sTitle.textContent = harfsT('season_title');
+        }
+        const ths = document.querySelectorAll('#league-table-screen .season-table thead th');
+        if(ths.length >= 11){
+            ths[1].textContent = harfsT('th_team');
+            ths[3].textContent = harfsT('th_p');
+            ths[4].textContent = harfsT('th_w');
+            ths[5].textContent = harfsT('th_d');
+            ths[6].textContent = harfsT('th_l');
+            ths[7].textContent = harfsT('th_gf');
+            ths[8].textContent = harfsT('th_ga');
+            ths[9].textContent = harfsT('th_gd');
+            ths[10].textContent = harfsT('th_pt');
+        }
+        const pillLbl = document.getElementById('season-pill-label');
+        if(pillLbl && (typeof currentSeasonIdx === 'undefined' || currentSeasonIdx === 0)){
+            pillLbl.textContent = harfsT('season_current');
+        }
+        const histTitle = document.getElementById('season-history-title');
+        if(histTitle) histTitle.innerHTML = `<i class="fas fa-history"></i> ${harfsT('match_history')}`;
+        const allChip = document.querySelector('#season-history-filter-bar .chip');
+        if(allChip) allChip.textContent = harfsT('filter_all');
+        setTxt('#weird-screen .league-header h2', 'moments_title');
+
+        // 4. Profile / Settings screen
+        setTxt('#settings-screen .settings-screen-header h2', 'profile_title');
+        const sub = document.getElementById('settings-account-subtitle');
+        if(sub && loggedInTeam && !SYMBOLIC_ROLES[loggedInTeam]) sub.textContent = harfsT('account_sub');
+
+        const secLabels = document.querySelectorAll('#settings-screen > .w-full > .settings-section-label');
+        if(secLabels[0]) secLabels[0].textContent = harfsT('sec_appearance');
+        if(secLabels[1]) secLabels[1].textContent = harfsT('sec_quick');
+        if(secLabels[2]) secLabels[2].textContent = harfsT('sec_account');
+
+        setTxt('#settings-screen .settings-page-tile[onclick*="openAppearanceSheet"] span', 'btn_appearance');
+        const aiTile = document.querySelector('#settings-screen .settings-page-tile[onclick*="toggleAiAssistant"] > span');
+        if(aiTile) aiTile.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i>${harfsT('btn_assistant')}`;
+
+        setTxt('#settings-lite-tile span', 'q_emergency');
+        setTxt('#settings-notif-tile span', 'q_notif');
+        setTxt('#settings-devices-tile span', 'q_devices');
+        setTxt('#settings-tools-section span', 'q_tools');
+        setTxt('#settings-logout-tile span', 'btn_logout');
+        setTxt('#settings-signin-tile span', 'btn_login');
+
+        // 5. Appearance Sheet (#appearance-sheet)
+        setTxt('#appearance-sheet .team-picker-title', 'ap_title');
+        const apCards = document.querySelectorAll('#appearance-sheet .ap-card');
+        if(apCards[0]){
+            const lbl = apCards[0].querySelector('.appearance-section-label');
+            if(lbl) lbl.textContent = harfsT('ap_perf');
+            const liteBtn = apCards[0].querySelector('[data-value="lite"]');
+            if(liteBtn) liteBtn.innerHTML = `<i class="fas fa-leaf"></i> ${harfsT('ap_lite')}`;
+            const custBtn = apCards[0].querySelector('[data-value="custom"]');
+            if(custBtn) custBtn.innerHTML = `<i class="fas fa-sliders"></i> ${harfsT('ap_custom')}`;
+            const rows = apCards[0].querySelectorAll('#perf-group-toggles .perf-option-row');
+            if(rows[0]){
+                rows[0].querySelector('.perf-option-title').textContent = harfsT('ap_glass');
+                rows[0].querySelector('.perf-option-sub').textContent = harfsT('ap_glass_sub');
+            }
+            if(rows[1]){
+                rows[1].querySelector('.perf-option-title').textContent = harfsT('ap_bg');
+                rows[1].querySelector('.perf-option-sub').textContent = harfsT('ap_bg_sub');
+            }
+            if(rows[2]){
+                rows[2].querySelector('.perf-option-title').textContent = harfsT('ap_motion');
+                rows[2].querySelector('.perf-option-sub').textContent = harfsT('ap_motion_sub');
+            }
+            const islSub = apCards[0].querySelector('.island-row .perf-option-sub');
+            if(islSub) islSub.textContent = harfsT('ap_island_sub');
+        }
+        setTxt('#ap-lang-title', 'sec_language');
+        setTxt('#ap-lang-sub', 'ap_lang_sub');
+        if(apCards[2]){
+            const lbl = apCards[2].querySelector('.appearance-section-label');
+            if(lbl) lbl.textContent = harfsT('ap_palette');
+        }
+        if(apCards[3]){
+            const lbl = apCards[3].querySelector('.appearance-section-label');
+            if(lbl) lbl.textContent = harfsT('ap_app_font');
+        }
+        if(apCards[4]){
+            const lbl = apCards[4].querySelector('.appearance-section-label');
+            if(lbl) lbl.textContent = harfsT('ap_mag_font');
+        }
+
+        // 6. All Sheets & Modals (Records, Federation, Team Panel, Cards, Playlist, Edit Profile, Sessions, Lite, Notifications, Pickers, Chat, AI Assistant)
+        setTxt('#people-sheet h4', 'fed_title');
+        setTxt('#people-sheet .people-sub', 'fed_sub');
+        const tpSecTitles = document.querySelectorAll('#team-panel-overlay .team-panel-section-title');
+        if(tpSecTitles[0]) tpSecTitles[0].innerHTML = `<i class="fas fa-trophy"></i> ${harfsT('tp_trophies')}`;
+        if(tpSecTitles[1]) tpSecTitles[1].innerHTML = `<i class="fas fa-crown"></i> ${harfsT('tp_records')}`;
+        setTxt('#cards-title', 'cards_title');
+        setTxt('#cards-subtitle', 'cards_sub');
+        setTxt('#playlist-sheet h4', 'pl_title');
+        setTxt('#team-edit-sheet h4', 'te_title');
+        setTxt('#sessions-sheet h4', 'sess_title');
+        const sessSub = document.querySelector('#sessions-sheet h4 + div');
+        if(sessSub) sessSub.textContent = harfsT('sess_sub');
+        setTxt('#lite-title', 'lite_title');
+        setTxt('#lite-subtitle', 'lite_sub');
+        setTxt('#notif-sheet h4', 'notif_title');
+        const notifSub = document.querySelector('#notif-sheet h4 + div');
+        if(notifSub) notifSub.textContent = harfsT('notif_sub');
+        setTxt('#season-picker-sheet .team-picker-title', 'pick_season');
+        setTxt('#mba-picker-sheet .team-picker-title', 'pick_cup');
+        setTxt('#ai-chat-screen .season-title', 'ai_title');
+        setTxt('#ai-chat-screen .season-date', 'ai_sub');
+        setPh('#ai-chat-input', 'ai_ph');
+        const chatTitle = document.querySelector('#chat-screen .ai-panel-title');
+        if(chatTitle) chatTitle.innerHTML = `<i class="fas fa-comments"></i> ${harfsT('chat_title')}`;
+        setPh('#chat-input', 'chat_ph');
+
+        // Re-render Records if Records sheet or Team Panel is open (or pre-sync scope UI)
+        if(typeof recordsSyncScopeUI === 'function') recordsSyncScopeUI();
+        if(document.getElementById('records-sheet')?.classList.contains('open') && typeof recordsRender === 'function'){
+            recordsRender();
+        }
+        if(document.getElementById('team-panel-overlay')?.classList.contains('open') && typeof teamPanelCurrent !== 'undefined' && teamPanelCurrent && typeof recordsTeamPanelHtml === 'function'){
+            const recBox = document.getElementById('team-panel-records');
+            if(recBox) recBox.innerHTML = recordsTeamPanelHtml(teamPanelCurrent);
+        }
+
+        // Translate dynamic containers (Federation, CUP, Schedule, Cards, Notifications, Sessions, Lite)
+        ['people-list','mba-season-body','schedule-season-body','cards-body','notif-body','sessions-body','lite-body','podium-container','season-history-list'].forEach(id=>{
+            const box = document.getElementById(id);
+            if(box) translateDynamicContainer(box, lang);
+        });
+
+        if(typeof gameUpdateHudUI === 'function') gameUpdateHudUI();
+        window.dispatchEvent(new Event('resize'));
+    }finally{
+        _langApplying = false;
+    }
+}
+
+// Observe dynamic sheet/page renders so newly injected DOM nodes in any section get translated immediately
+(function bindGlobalLangObserver(){
+    const run = ()=>{
+        const lang = getAppLanguage();
+        if(lang === 'en' || _langApplying) return;
+        ['people-list','mba-season-body','schedule-season-body','cards-body','notif-body','sessions-body','lite-body','podium-container','season-history-list'].forEach(id=>{
+            const box = document.getElementById(id);
+            if(box) translateDynamicContainer(box, lang);
+        });
+    };
+    let tId = 0;
+    const obs = new MutationObserver(()=>{
+        if(_langApplying || getAppLanguage()==='en') return;
+        clearTimeout(tId);
+        tId = setTimeout(run, 40);
+    });
+    const start = ()=>{
+        obs.observe(document.body, { childList:true, subtree:true });
+        applyAppLanguage();
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+    else start();
+})();

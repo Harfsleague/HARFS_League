@@ -965,29 +965,37 @@ function gameT(key, fallback){
 
 function gameUpdateHudUI(){
     const pill = chatEl('game-status-pill');
+    const ic   = chatEl('game-status-icon');
     const dot  = chatEl('game-status-dot');
-    const txt  = chatEl('game-status-text');
     const list = chatEl('game-hub-list');
     const titleEl = chatEl('game-hub-title');
     const syncLbl = chatEl('game-hub-sync-label');
 
     if(titleEl) titleEl.textContent = '🎮 ' + gameT('game_hub_title', 'Games Library');
-    if(syncLbl) syncLbl.textContent = gameSyncInFlight ? gameT('game_checking', 'Checking…') : gameT('game_check_updates', 'Check Updates');
+    if(syncLbl) syncLbl.textContent = gameSyncInFlight ? gameT('game_checking_short', 'Syncing…') : gameT('game_check_updates', 'Check Updates');
 
     const readyCount = gameCatalog.filter(g=>g.ready).length;
     const online = navigator.onLine;
     if(pill){
         pill.classList.toggle('is-offline', !online);
         pill.classList.toggle('is-syncing', gameSyncInFlight);
+        pill.classList.toggle('is-ready', readyCount > 0);
+        const statusTitle = gameSyncInFlight
+            ? gameT('game_checking_short', 'Syncing…')
+            : (!online && readyCount > 0)
+                ? gameT('game_offline_mode_badge', 'Offline Mode')
+                : (readyCount > 0 ? gameT('game_offline_ready', 'Offline Ready') : gameT('game_online_only', 'Online'));
+        pill.title = statusTitle;
+        pill.setAttribute('aria-label', statusTitle);
+    }
+    if(ic){
+        if(gameSyncInFlight) ic.className = 'fas fa-rotate fa-spin';
+        else if(!online) ic.className = 'fas fa-bolt';
+        else if(readyCount > 0) ic.className = 'fas fa-cloud-arrow-down';
+        else ic.className = 'fas fa-wifi';
     }
     if(dot){
         dot.style.background = gameSyncInFlight ? '#38bdf8' : (readyCount > 0 ? '#22c55e' : (online ? '#fbbf24' : '#ef4444'));
-    }
-    if(txt){
-        if(gameSyncInFlight) txt.textContent = gameT('game_checking_short', 'Syncing…');
-        else if(!online && readyCount > 0) txt.textContent = gameT('game_offline_mode_badge', 'Offline Mode') + ` (${readyCount})`;
-        else if(readyCount > 0) txt.textContent = gameT('game_offline_ready', 'Offline Ready') + ` (${readyCount})`;
-        else txt.textContent = gameT('game_online_only', 'Online');
     }
 
     if(list){
@@ -997,7 +1005,7 @@ function gameUpdateHudUI(){
             list.innerHTML = gameCatalog.map(g=>{
                 const isAct = normalizeGameUrl(g.url) === normalizeGameUrl(gameActiveUrl);
                 return `<div class="game-hub-item ${isAct?'active':''}" onclick="gameSelectUrl('${escapeHtml(g.url)}')">
-                    <div class="game-hub-ic"><i class="fas ${g.isRoot ? 'fa-gamepad' : 'fa-joystick'}"></i></div>
+                    <div class="game-hub-ic"><i class="fas ${g.isRoot ? 'fa-gamepad' : 'fa-bolt'}"></i></div>
                     <div class="game-hub-info">
                         <div class="game-hub-name">${escapeHtml(g.title || 'Game')}</div>
                         <div class="game-hub-meta ${g.ready?'ready':''}">
