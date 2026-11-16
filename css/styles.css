@@ -292,6 +292,24 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     gap:10px; max-width:100%;
 }
 .hero-capsule-notif .toast-msg{ max-width:170px; }
+.hero-capsule-notif.music .toast-msg{ max-width:138px; }
+/* Now Playing: small circle with a few tiny moving pixels (theme colours) */
+.notif-px{
+    display:none; flex-shrink:0; width:26px; height:26px; border-radius:50%;
+    align-items:flex-end; justify-content:center; gap:1.5px; padding:0 0 6px;
+    box-sizing:border-box;
+    background:color-mix(in srgb,var(--primary) 12%,rgba(255,255,255,0.05));
+    border:1px solid color-mix(in srgb,var(--primary) 45%,transparent);
+    box-shadow:0 0 8px -2px var(--primary-glow);
+}
+.hero-capsule-notif.music .notif-px{ display:flex; }
+.npx-col{ display:flex; flex-direction:column-reverse; gap:1.5px; }
+.npx-cell{
+    display:block; width:3px; height:3px; border-radius:1px;
+    background:rgba(255,255,255,0.10);
+    transition:background-color .16s ease, opacity .16s ease;
+}
+.npx-cell.on{ background:color-mix(in srgb,var(--accent) calc(var(--k,0) * 100%),var(--primary)); }
 #nav-settings-team-logo{
     display:none;
     width:1.1rem; height:1.1rem; border-radius:50%; object-fit:cover;

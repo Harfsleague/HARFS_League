@@ -96,6 +96,36 @@ function showToast(msg, type='info', dur=2800){
     _notifQueue.push({msg, type, dur});
     _processNotifQueue();
 }
+// ---- "Now Playing": a small circle beside the song name with a few tiny moving pixels (same idea as the player in Profile, just much smaller) ----
+const NPX_COLS=4, NPX_ROWS=4;
+let _npxTimer=0, _npxLvl=[2,4,3,1];
+function _npxStill(){
+    return document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || document.documentElement.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function _npxPaint(box){
+    box.querySelectorAll('.npx-col').forEach((col,c)=>{
+        [...col.children].forEach((cell,r)=>cell.classList.toggle('on', r<_npxLvl[c]));
+    });
+}
+function _npxStop(){ if(_npxTimer){ clearInterval(_npxTimer); _npxTimer=0; } }
+function _npxStart(){
+    const box=document.getElementById('hero-notif-px'); if(!box) return;
+    if(!box.firstChild){
+        for(let c=0;c<NPX_COLS;c++){
+            const col=document.createElement('div'); col.className='npx-col';
+            for(let r=0;r<NPX_ROWS;r++){ const cell=document.createElement('i'); cell.className='npx-cell'; cell.style.setProperty('--k', r/(NPX_ROWS-1)); col.appendChild(cell); }
+            box.appendChild(col);
+        }
+    }
+    _npxStop();
+    _npxLvl=[2,4,3,1]; _npxPaint(box);
+    if(_npxStill()) return;
+    _npxTimer=setInterval(()=>{
+        if(document.hidden) return;
+        _npxLvl=_npxLvl.map(l=>Math.max(1,Math.min(NPX_ROWS,l+Math.floor(Math.random()*3)-1)));
+        _npxPaint(box);
+    },170);
+}
 function _processNotifQueue(){
     if(_notifShowing || _notifQueue.length===0) return;
     const capsule = document.getElementById('hero-logo-container');
@@ -109,8 +139,10 @@ function _processNotifQueue(){
     document.getElementById('hero-notif-msg').textContent = msg;
     face.className = `hero-capsule-face hero-capsule-notif toast ${type}`;
     capsule.classList.add('showing-notif');
+    if(type==='music') _npxStart(); else _npxStop();
     setTimeout(()=>{
         capsule.classList.remove('showing-notif');
+        _npxStop();
         setTimeout(()=>{ _notifShowing=false; _processNotifQueue(); }, NOTIF_SWAP_MS);
     }, dur);
 }

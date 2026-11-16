@@ -785,11 +785,11 @@ body:not(.lite-mode) .table-wrap{
 .pts-pill{
     display:inline-flex; align-items:center; justify-content:center;
     min-width:30px; padding:3px 7px; border-radius:8px;
-    background:linear-gradient(180deg,rgba(37,72,160,0.62),rgba(23,44,110,0.72));
-    border:1px solid rgba(96,150,255,0.45);
-    color:#e6efff; font-size:0.84rem; font-weight:900;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 38%,rgba(8,12,24,0.55)),color-mix(in srgb,var(--accent) 24%,rgba(8,12,24,0.72)));
+    border:1px solid color-mix(in srgb,var(--primary) 50%,transparent);
+    color:color-mix(in srgb,var(--primary) 22%,#fff); font-size:0.84rem; font-weight:900;
     font-variant-numeric:tabular-nums;
-    box-shadow:0 2px 8px rgba(0,0,0,0.25);
+    box-shadow:0 2px 8px rgba(0,0,0,0.25), 0 0 10px -3px var(--primary-glow);
 }
 
 /* 4g. FotMob / Broadcast Matchday Scorebugs (.season-history-card & .match-card-mini) */
@@ -1396,15 +1396,16 @@ body .magazine-panel-header{ position:relative; top:auto; display:flex; flex-dir
 
 /* rank chart: dark navy like the rest of the site */
 .mrc-card{
-    background:linear-gradient(180deg,#0f2550,#0a1832); border:1px solid rgba(96,150,255,.26); border-top-color:rgba(147,197,253,.4);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--bg-mid) 84%,var(--primary) 16%),color-mix(in srgb,var(--bg-mid) 92%,#040710));
+    border:1px solid color-mix(in srgb,var(--primary) 26%,transparent); border-top-color:color-mix(in srgb,var(--primary) 45%,rgba(255,255,255,.2));
     box-shadow:0 12px 26px -10px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.1);
 }
-.mrc-cap{ color:#93a8cf; }
+.mrc-cap{ color:color-mix(in srgb,var(--primary) 30%,#94a3b8); }
 .mrc-grid{ stroke:rgba(148,163,184,.26); }
-.mrc-ylab, .mrc-xlab{ fill:#b6c6e6; }
+.mrc-ylab, .mrc-xlab{ fill:color-mix(in srgb,var(--primary) 22%,#cbd5e1); }
 .mrc-halo{ stroke-width:6.4; opacity:.95; }
 .mrc-leg{ color:#e2e8f0; }
-.mrc-leg i{ box-shadow:0 0 0 2px #0a1832, 0 0 0 3px rgba(255,255,255,.35); }
+.mrc-leg i{ box-shadow:0 0 0 2px color-mix(in srgb,var(--bg-mid) 92%,#040710), 0 0 0 3px rgba(255,255,255,.35); }
 .mrc-leg b{ color:#dbe7ff; background:rgba(255,255,255,.12); }
 .mrc-dot{ stroke:#e8eefc; }
 
@@ -1484,7 +1485,7 @@ body .magazine-panel-header{ overflow:visible; z-index:30; }
 
 /* chart placeholder while the match list loads */
 .mrc-wait{ height:150px; display:flex; align-items:center; justify-content:center; gap:8px; }
-.mrc-wait-dot{ width:9px; height:9px; border-radius:50%; background:#93a8cf; animation:mrcWait 1s ease-in-out infinite; }
+.mrc-wait-dot{ width:9px; height:9px; border-radius:50%; background:color-mix(in srgb,var(--primary) 30%,#94a3b8); animation:mrcWait 1s ease-in-out infinite; }
 .mrc-wait-dot:nth-child(2){ animation-delay:.15s; } .mrc-wait-dot:nth-child(3){ animation-delay:.3s; }
 @keyframes mrcWait{ 0%,100%{ opacity:.25; transform:scale(.8); } 50%{ opacity:1; transform:scale(1.15); } }
 
@@ -1936,7 +1937,7 @@ body.perf-no-anim .weird-card{ animation:none !important; }
 
 
 /* v100 — rank chart: the week label sits under the chart with a small right-pointing arrow (the old top caption is gone) */
-.mrc-axis{ display:flex; align-items:center; justify-content:center; gap:5px; margin-top:-2px; font-size:.62rem; font-weight:800; color:#93a8cf; direction:rtl; }
+.mrc-axis{ display:flex; align-items:center; justify-content:center; gap:5px; margin-top:-2px; font-size:.62rem; font-weight:800; color:color-mix(in srgb,var(--primary) 30%,#94a3b8); direction:rtl; }
 .mrc-axis-arrow{ width:20px; height:9px; display:block; }
 
 
