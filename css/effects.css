@@ -1639,9 +1639,9 @@ body.perf-no-anim #hero-logo-container.holding .hero-text{ animation:none; }
 #season-subnav{ position:absolute; }
 #season-subnav .nav-pill{
     position:absolute; left:0; top:0; width:0; height:0; z-index:0; border-radius:9999px; pointer-events:none; opacity:0;
-    background:radial-gradient(110% 80% at 50% 0%,rgba(255,255,255,0.22) 0%,rgba(255,255,255,0.02) 55%), color-mix(in srgb,var(--primary) 34%,rgba(4,8,18,0.35));
-    border:1.5px solid color-mix(in srgb,var(--primary) 85%,#fff); border-top-color:rgba(255,255,255,0.45);
-    box-shadow:0 0 16px color-mix(in srgb,var(--primary) 60%,transparent), inset 0 1px 1px rgba(255,255,255,0.3);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 38%,rgba(8,12,24,0.55)),color-mix(in srgb,var(--accent) 24%,rgba(8,12,24,0.72)));
+    border:1px solid color-mix(in srgb,var(--primary) 50%,transparent);
+    box-shadow:0 2px 8px rgba(0,0,0,0.25), 0 0 10px -3px var(--primary-glow);
     transition:transform .5s cubic-bezier(.34,1.25,.5,1), width .5s cubic-bezier(.34,1.25,.5,1), height .3s ease, opacity .3s ease;
     will-change:transform,width;
 }
@@ -2614,23 +2614,20 @@ body.perf-no-anim .isl-prog i{ transition:none; }
 
 /* =====================================================
    1.25 — Graphite (light primary colour): wherever the app puts white on top of the primary colour, the contrast was too low.
-   The switch knobs, the League | Cup bubble, the toast icons, the send buttons and the profile badge icon get dark-on-light instead.
+   The switch knobs, the toast icons, the send buttons and the profile badge icon get dark-on-light instead.
    ===================================================== */
 /* Settings → Appearance switches: dark knob on the light "on" track */
 body[data-palette="graphite"] .perf-toggle.on::after,
 body[data-palette="graphite"] .ai-toggle-switch input:checked + .ai-toggle-slider::before{ background:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.35); }
-
-/* Season: League | Cup — light bubble with a dark icon + label (it used to be white on a mid-grey glow) */
-body[data-palette="graphite"] #season-subnav .nav-pill{
-    background:linear-gradient(180deg,#f8fafc 0%,#cbd5e1 100%);
-    border:1.5px solid #fff;
-    box-shadow:0 0 14px rgba(226,232,240,0.30), inset 0 1px 1px rgba(255,255,255,0.9);
-}
-body[data-palette="graphite"] .season-subnav .nav-item.active,
-body[data-palette="graphite"] .season-subnav .nav-item.active i{ color:#0b1220 !important; text-shadow:none; }
 
 /* white-on-light spots */
 body[data-palette="graphite"] .toast.info .toast-icon-bubble i,
 body[data-palette="graphite"] .toast.music .toast-icon-bubble i{ color:#0b1220; }
 body[data-palette="graphite"] .mgc-send, body[data-palette="graphite"] .mag-c-send{ color:#0b1220; }
 body[data-palette="graphite"] .profile-icon-badge{ color:#0b1220; }
+
+
+/* 1.26 — Season League | Cup: the sliding bubble matches the points highlight in the league table (same theme gradient, border, glow),
+   and the active tab's icon + label use the same text colour as the points number. */
+.season-subnav .nav-item.active,
+.season-subnav .nav-item.active i{ color:color-mix(in srgb,var(--primary) 22%,#fff) !important; text-shadow:none; }
