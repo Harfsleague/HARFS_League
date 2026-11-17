@@ -2610,3 +2610,27 @@ body.perf-no-anim .isl-prog i{ transition:none; }
 .isl-prog{ left:-1px; right:-1px; top:-1px; bottom:-1px; height:auto; border-radius:28px; background:none; overflow:hidden; }
 .isl-prog::before{ content:''; position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(255,255,255,0.14); }
 .isl-prog i{ position:absolute; left:0; right:0; bottom:0; width:auto; height:4px; border-radius:0; }
+
+
+/* =====================================================
+   1.25 — Graphite (light primary colour): wherever the app puts white on top of the primary colour, the contrast was too low.
+   The switch knobs, the League | Cup bubble, the toast icons, the send buttons and the profile badge icon get dark-on-light instead.
+   ===================================================== */
+/* Settings → Appearance switches: dark knob on the light "on" track */
+body[data-palette="graphite"] .perf-toggle.on::after,
+body[data-palette="graphite"] .ai-toggle-switch input:checked + .ai-toggle-slider::before{ background:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.35); }
+
+/* Season: League | Cup — light bubble with a dark icon + label (it used to be white on a mid-grey glow) */
+body[data-palette="graphite"] #season-subnav .nav-pill{
+    background:linear-gradient(180deg,#f8fafc 0%,#cbd5e1 100%);
+    border:1.5px solid #fff;
+    box-shadow:0 0 14px rgba(226,232,240,0.30), inset 0 1px 1px rgba(255,255,255,0.9);
+}
+body[data-palette="graphite"] .season-subnav .nav-item.active,
+body[data-palette="graphite"] .season-subnav .nav-item.active i{ color:#0b1220 !important; text-shadow:none; }
+
+/* white-on-light spots */
+body[data-palette="graphite"] .toast.info .toast-icon-bubble i,
+body[data-palette="graphite"] .toast.music .toast-icon-bubble i{ color:#0b1220; }
+body[data-palette="graphite"] .mgc-send, body[data-palette="graphite"] .mag-c-send{ color:#0b1220; }
+body[data-palette="graphite"] .profile-icon-badge{ color:#0b1220; }

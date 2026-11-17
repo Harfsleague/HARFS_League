@@ -1068,15 +1068,15 @@ setTimeout(magTileInit, 700);
     const screen = document.getElementById('magazine-screen'); if(!screen) return;
     const inner = screen.querySelector('.magazine-inner'), fab = document.getElementById('mag-top-fab'), ifill = document.getElementById('isl-prog-fill');
     if(!inner) return;
-    // Reading bar under the MAGAZINE bubble: 0 at the top of the issue, full once the "Records & full league stats" card has come into view.
-    // The closing line and the comments below it are not part of the issue, so they don't count. Measured with bounding rects (same unit for
-    // scrolled distance and distance left) so it stays right when the Magazine font-size zoom is on.
+    // Reading bar under the MAGAZINE bubble: 0 at the top of the issue, full once you reach the comments section (its heading is on screen).
+    // Measured with bounding rects (same unit for scrolled distance and distance left) so it stays right when the Magazine font-size zoom is on.
     function readProgress(y){
-        const end = inner.querySelector('.magazine-records-link-wrap') || document.getElementById('mag-comments');
+        const cm = document.getElementById('mag-comments');
+        const end = cm || inner.querySelector('.magazine-records-link-wrap');   // comments not mounted yet → the records card is the end
         if(!end || !inner.clientHeight) return 0;
         const ir = inner.getBoundingClientRect(), er = end.getBoundingClientRect();
         const k = ir.height / inner.clientHeight, sc = y * k;
-        const remain = (end === document.getElementById('mag-comments') ? er.top : er.bottom) - ir.bottom;   // px until the end card's bottom edge reaches the bottom of the screen
+        const remain = (cm ? er.top + 90 * k : er.bottom) - ir.bottom;   // px until the comments' heading (or the records card's bottom edge) reaches the bottom of the screen
         if(remain <= 0) return sc > 0 ? 1 : 0;
         return Math.min(1, Math.max(0, sc / (sc + remain)));
     }

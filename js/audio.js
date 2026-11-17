@@ -97,13 +97,23 @@ async function getLastUploadedTrack(){
 // any reason, falls back to the last item in the playlist rather than the
 // first, since folder listings are alphabetical and track files are
 // typically numbered, so the last one is usually the newest addition.
+// The offline song is "EURO 2008" whenever it is in the playlist (matched by title or file name); only if it is missing does the old rule
+// (newest upload) apply.
+const OFFLINE_DEFAULT_RE = /euro[\s._-]*2008/i;
+function findOfflineDefaultTrack(){
+    return PLAYLIST.find(t => OFFLINE_DEFAULT_RE.test(t.title || '') || OFFLINE_DEFAULT_RE.test(decodeURIComponent(String(t.src || '').split('/').pop()))) || null;
+}
 async function ensureOfflineTrackCached(){
     if (!PLAYLIST.length || !navigator.onLine) return;
     try{
         const existing = await idbGet('offlineTrack','v');
-        // Fast path: if the cached offline track is still in the current playlist and we already checked commits this session, skip the 2 unauthenticated GitHub /commits API calls.
-        if (existing && existing.blob && existing.blob.size > 0 && PLAYLIST.some(t => t.src === existing.src) && sessionStorage.getItem('harfs_offline_track_checked') === '1') return;
-        const target = (await getLastUploadedTrack()) || PLAYLIST[PLAYLIST.length-1] || PLAYLIST[0];
+        const pref = findOfflineDefaultTrack();
+        // Fast path: EURO 2008 is already the cached one; or (no EURO 2008 in the playlist) the cached track is still in the playlist and we already checked commits this session, so skip the 2 unauthenticated GitHub /commits API calls.
+        if (existing && existing.blob && existing.blob.size > 0 && PLAYLIST.some(t => t.src === existing.src)) {
+            if (pref) { if (existing.src === pref.src) return; }
+            else if (sessionStorage.getItem('harfs_offline_track_checked') === '1') return;
+        }
+        const target = pref || (await getLastUploadedTrack()) || PLAYLIST[PLAYLIST.length-1] || PLAYLIST[0];
         sessionStorage.setItem('harfs_offline_track_checked', '1');
         if (!target) return;
         if (existing && existing.src === target.src && existing.blob && existing.blob.size > 0) return; // already cached
