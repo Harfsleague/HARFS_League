@@ -1103,7 +1103,7 @@ function magazineIslandSync(){
     } else if(on && layer.classList.contains('show') && !layer.classList.contains('leaving')){
         // Back was pressed: the bubbles slide back in under HARFS, then the layer goes away
         layer.classList.add('leaving');
-        layer._t = setTimeout(()=>{ layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0'); }, 480);
+        layer._t = setTimeout(()=>{ layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0'); }, 800);
     } else if(!on){
         layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0');
     }
