@@ -2631,3 +2631,16 @@ body[data-palette="graphite"] .profile-icon-badge{ color:#0b1220; }
    and the active tab's icon + label use the same text colour as the points number. */
 .season-subnav .nav-item.active,
 .season-subnav .nav-item.active i{ color:color-mix(in srgb,var(--primary) 22%,#fff) !important; text-shadow:none; }
+
+
+/* 1.27 — Bottom navigation bubble (Home · Season · Assistant · Profile): inside the Magazine it fades away softly (it sinks a little and
+   shrinks a touch while it goes); when you come back it settles into its place again with a slower, softer fade-in. */
+#bottom-navigation.bottom-nav{
+    transition:opacity .85s cubic-bezier(.22,1,.36,1) .12s, transform .95s cubic-bezier(.22,1,.36,1) .12s;
+}
+body.mag-nav-away #bottom-navigation.bottom-nav{
+    opacity:0; pointer-events:none;
+    transform:translateX(-50%) translateY(22px) scale(.94);
+    transition:opacity .5s cubic-bezier(.4,0,.6,1), transform .6s cubic-bezier(.4,0,.6,1);
+}
+body.perf-no-anim #bottom-navigation.bottom-nav, body.perf-no-anim.mag-nav-away #bottom-navigation.bottom-nav{ transition:opacity .01s !important; }

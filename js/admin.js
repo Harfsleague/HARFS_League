@@ -99,6 +99,7 @@ function navigate(route){
     });
 
     currentRouteIndex=ROUTES.indexOf(route);
+    document.body.classList.toggle('mag-nav-away', route==='magazine');   // the bottom bar softly fades away inside the Magazine and comes back with the main page
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-main',
         'settings':'nav-settings','admin':'nav-settings',
