@@ -311,7 +311,7 @@ function cb2Html(hand, team){
     return `<div class="cb2">
         <div class="cb2-slot${inSlot.length?' has':''}${inSlot.length>=CARDS_MAX_ACTIVE?' full':''}" id="cb2-slot">
             <span class="cb2-count">${inSlot.length}/${CARDS_MAX_ACTIVE}</span>
-            ${inSlot.length ? inSlot.map(h=>cb2CardHtml(h, team, true)).join('') : `<div class="cb2-hint"><i class="fas fa-hand-pointer"></i><span>Drag a card here to use it in your next game</span></div>`}
+            ${inSlot.length ? inSlot.map(h=>cb2CardHtml(h, team, true)).join('') : `<div class="cb2-hint"><i class="fas fa-arrow-up"></i><span>Drag a card here to use it in your next game</span></div>`}
         </div>
         <div class="cb2-row" id="cb2-row">
             ${inRow.length ? inRow.map(h=>cb2CardHtml(h, team, false)).join('') : `<div class="cb2-hint cb2-hint-row"><span>Drag a card back here to keep it</span></div>`}
@@ -415,7 +415,7 @@ function renderCardsEdit(){
 function cardsApplyInfoChrome(){
     const b = document.getElementById('cards-info-btn'), e = document.getElementById('cards-edit-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
     if(b){ b.classList.toggle('on', cardsInfoOpen); b.innerHTML = cardsInfoOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-info"></i>'; }
-    if(e){ e.style.display = cardsCanEdit() ? 'flex' : 'none'; e.classList.toggle('on', cardsEditOpen); e.innerHTML = cardsEditOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-pencil"></i>'; }
+    if(e){ e.style.display = cardsCanEdit() ? 'flex' : 'none'; e.classList.toggle('on', cardsEditOpen); e.innerHTML = cardsEditOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-pen"></i>'; }
     if(t) t.textContent = cardsInfoOpen ? 'راهنمای کارت‌ها' : (cardsEditOpen ? 'ویرایش کارت‌ها' : 'Cards');
     if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید'
         : (cardsEditOpen ? 'ساخت، ویرایش و حذف کارت‌های بازی'
