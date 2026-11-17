@@ -213,20 +213,6 @@ async function cardsComboRedeem(){
 }
 
 // ---------------- Overall → Cards sheet (a team sees only its own cards) ----------------
-function cardTileHtml(h, team, mine){
-    const def = cardDef(h.card);
-    const name = def ? def.name : h.card;
-    const desc = def && def.desc ? `<div class="cd-desc" dir="auto">${escapeHtml(def.desc)}</div>` : '';
-    const isCombo = h.card===CARD_COMBO_ID;
-    const acts = mine ? `<div class="cd-acts">
-            ${isCombo ? `<span class="cd-btn cd-info">${COMBO_NEED} = +${COMBO_POINTS} pts</span>` : `<button class="cd-btn ${h.active?'on':''}" onclick="cardsAct('${team}','${h.active?'deactivate':'activate'}','${h.uid}')">${h.active?'Active ✓':'Use in next game'}</button>`}
-            <button class="cd-btn cd-del" onclick="cardsDiscardAsk('${team}','${h.uid}')" aria-label="Discard"><i class="fas fa-trash"></i></button>
-        </div>` : '';
-    return `<div class="cd-tile${h.active?' active':''}">
-        <div class="cd-img-wrap" onclick="cardsZoom('${h.card}')"><img class="cd-img" src="${cardImgUrl(def)}" alt="" onerror="this.src='${cardPlaceholderSvg(name).replace(/'/g,'%27')}'">${h.active?'<span class="cd-flag">ACTIVE</span>':''}</div>
-        <div class="cd-name" dir="auto">${escapeHtml(name)}</div>${desc}${acts}
-    </div>`;
-}
 async function cardsDiscardAsk(team, uid){
     const h = cardsHand(team).find(x=>x.uid===uid); if(!h) return;
     const def = cardDef(h.card);
@@ -287,7 +273,9 @@ function cardsZoomClose(){
 }
 function renderCardsSheet(){
     const box = document.getElementById('cards-body'); if(!box) return;
+    if(cardsEditOpen && !cardsCanEdit()){ cardsEditOpen = false; cardsApplyInfoChrome(); }   // the right to edit was taken away meanwhile
     if(cardsInfoOpen){ renderCardsInfo(); return; }
+    if(cardsEditOpen){ renderCardsEdit(); return; }
     const team = loggedInTeam;
     if(!team || !TEAM_NAMES.includes(team)){
         box.innerHTML = `<div class="cards-empty"><i class="fas fa-lock"></i><p>${team?'Cards belong to the teams. Log in with a team account to see yours.':'Log in with your team to see your cards.'}</p></div>`;
@@ -295,19 +283,16 @@ function renderCardsSheet(){
     }
     const hand = cardsHand(team);
     const keep = cardsKeep(team), over = cardsOver(team);
-    const comboN = hand.filter(h=>h.card===CARD_COMBO_ID).length, actN = cardsActiveList(team).length;
+    const comboN = hand.filter(h=>h.card===CARD_COMBO_ID).length;
     let html = `<div class="cards-team"><img src="${teamLogoUrl(team)}" alt=""><span dir="auto">${escapeHtml(TEAM_DISPLAY_NAMES[team]||team)}</span><b>${keep}/${CARDS_MAX_KEEP}</b></div>`;
     if(over) html += `<div class="cards-warn"><i class="fas fa-triangle-exclamation"></i> You hold ${keep} cards — discard ${over}, the limit is ${CARDS_MAX_KEEP}.</div>`;
     if(comboN) html += `<div class="cards-combo"><span>🃏 Combo point: <b>${comboN}</b> / ${COMBO_NEED}</span>${comboN>=COMBO_NEED?`<button class="cd-btn on" onclick="cardsComboRedeem()">Redeem → +${COMBO_POINTS} pts</button>`:`<span class="cards-combo-hint">collect ${COMBO_NEED} for +${COMBO_POINTS} league points</span>`}</div>`;
-    const beta = document.body.classList.contains('beta-updates');   // Beta Updates (Appearance): drag & drop layout
-    if(actN && !beta) html += `<div class="cards-active-note">${actN}/${CARDS_MAX_ACTIVE} cards active for your next game</div>`;
     html += hand.length
-        ? (beta ? cb2Html(hand, team) : `<div class="cards-grid">${hand.map(h=>cardTileHtml(h, team, true)).join('')}</div>`)
+        ? cb2Html(hand, team)
         : `<div class="cards-empty"><i class="fas fa-clone"></i><p>No cards in your hand right now.</p></div>`;
-    if(canEditCards() && !isFullAdmin()) html += `<button type="button" class="cd-btn on" style="width:100%;margin-top:14px;" onclick="cardsToggleInfo()"><i class="fas fa-pen"></i> Edit the cards of the game</button>`;
     box.innerHTML = html;
 }
-// ---------------- Beta Updates: drag & drop Cards page ----------------
+// ---------------- drag & drop Cards page ----------------
 // A box on top (the cards you will play in your next game) and, under it, your cards side by side in one row.
 // Drag a card up into the box = "Use in next game"; drag it back down (or tap its ✕) = deactivate. Tap a card to enlarge it.
 // It only changes how the same actions are asked for — every rule is still enforced by cardsAct() / the Worker.
@@ -370,7 +355,7 @@ function cb2Btn(ev, what, uid){
         } else back();
     }
     document.addEventListener('pointerdown', e=>{
-        if(!document.body.classList.contains('beta-updates') || (e.button && e.button!==0)) return;
+        if(e.button && e.button!==0) return;
         const c = e.target.closest && e.target.closest('.cb2-card'); if(!c || e.target.closest('.cb2-mini')) return;
         cb2Drag = { el:c, id:e.pointerId, uid:c.dataset.uid, card:c.dataset.card, x0:e.clientX, y0:e.clientY, started:false, fromSlot:c.classList.contains('in'), ghost:null, ox:0, oy:0 };
     });
@@ -397,7 +382,8 @@ function cb2Btn(ev, what, uid){
 })();
 
 // ---- "i": how cards work + every card in the game ----
-let cardsInfoOpen = false;
+let cardsInfoOpen = false, cardsEditOpen = false;
+function cardsCanEdit(){ return canEditCards() && !isFullAdmin(); }   // a team account that was given the cards tool (Bayern edits in the admin panel)
 function cardsRulesHtml(){
     return `<div class="cards-rules" dir="rtl"><b>کارت‌ها چطور کار می‌کنند</b>
         <ul><li>هر فصل با ${CARDS_START_NO} کارت «No» و ${CARDS_WEEKLY_DRAW} کارت تصادفی شروع می‌شود — به‌صورت خودکار پخش می‌شود.</li>
@@ -419,25 +405,34 @@ function renderCardsInfo(){
     box.innerHTML = `<div class="cards-fa" dir="rtl">` + cardsRulesHtml()
         + `<div class="flow-section-title" style="margin:14px 0 8px;text-align:center;">همهٔ کارت‌های بازی</div>`
         + `<div class="cards-info-grid">` + deck.map((c,i)=>`<div class="cards-info-cell" style="--i:${i}" onclick="cardsZoom('${c.id}',true)"><img src="${cardImgUrl(c)}" alt="" onerror="this.src='${cardPlaceholderSvg(c.name).replace(/'/g,'%27')}'"><span dir="auto">${escapeHtml(c.name)}</span></div>`).join('') + `</div>`
-        + ((canEditCards() && !isFullAdmin()) ? `<div class="cards-editor-block"><p class="mba-admin-hint" style="margin-top:14px"><i class="fas fa-pen ml-1"></i> شما می‌توانید کارت بسازید، ویرایش کنید و حذف کنید. پخش، فعال‌سازی و استفاده از کارت‌ها همچنان خودکار است.</p>${cardsDeckEditorHtml(true)}</div>` : '')
         + `</div>`;
 }
-function cardsApplyInfoChrome(){
-    const b = document.getElementById('cards-info-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
-    if(b){ b.classList.toggle('on', cardsInfoOpen); b.innerHTML = cardsInfoOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-info"></i>'; }
-    if(t) t.textContent = cardsInfoOpen ? 'راهنمای کارت‌ها' : 'Cards';
-    if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید' : (document.body.classList.contains('beta-updates') ? 'Drag a card up into the box to use it · tap to enlarge' : 'Your hand · tap a card to enlarge it');
+// The deck editor — its own page, opened with the pencil next to the "i" (only for a team that was given the cards tool)
+function renderCardsEdit(){
+    const box = document.getElementById('cards-body'); if(!box) return;
+    box.innerHTML = `<div class="cards-fa" dir="rtl"><div class="cards-editor-block"><p class="mba-admin-hint"><i class="fas fa-pen ml-1"></i> شما می‌توانید کارت بسازید، ویرایش کنید و حذف کنید. پخش، فعال‌سازی و استفاده از کارت‌ها همچنان خودکار است.</p>${cardsDeckEditorHtml(true)}</div></div>`;
 }
-// "i" → the page slides away to the side and the guide (or the hand) slides in; the title, subtitle and button switch with it
-function cardsToggleInfo(){
+function cardsApplyInfoChrome(){
+    const b = document.getElementById('cards-info-btn'), e = document.getElementById('cards-edit-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
+    if(b){ b.classList.toggle('on', cardsInfoOpen); b.innerHTML = cardsInfoOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-info"></i>'; }
+    if(e){ e.style.display = cardsCanEdit() ? 'flex' : 'none'; e.classList.toggle('on', cardsEditOpen); e.innerHTML = cardsEditOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-pencil"></i>'; }
+    if(t) t.textContent = cardsInfoOpen ? 'راهنمای کارت‌ها' : (cardsEditOpen ? 'ویرایش کارت‌ها' : 'Cards');
+    if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید'
+        : (cardsEditOpen ? 'ساخت، ویرایش و حذف کارت‌های بازی'
+        : (typeof harfsT==='function' ? harfsT('cards_sub') : 'Drag a card up into the box to use it · tap to enlarge'));
+}
+// "i" / pencil → the page slides away to the side and the guide / editor (or the hand) slides in; the title, subtitle and button switch with it
+function cardsToggleInfo(){ cardsSwitchView(cardsInfoOpen ? 'hand' : 'info'); }
+function cardsToggleEdit(){ if(cardsCanEdit()) cardsSwitchView(cardsEditOpen ? 'hand' : 'edit'); }
+function cardsSwitchView(target){      // target: 'hand' | 'info' | 'edit'
     haptic([6]);
     const box = document.getElementById('cards-body');
     const heads = ['cards-title','cards-subtitle'].map(id=>document.getElementById(id)).filter(Boolean);
-    const btn = document.getElementById('cards-info-btn');
+    const btn = document.getElementById((target==='edit' || (target==='hand' && cardsEditOpen)) ? 'cards-edit-btn' : 'cards-info-btn');
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const swap = ()=>{ cardsInfoOpen = !cardsInfoOpen; cardsApplyInfoChrome(); renderCardsSheet(); if(box) box.scrollTop = 0; };
+    const swap = ()=>{ cardsInfoOpen = target==='info'; cardsEditOpen = target==='edit'; cardsApplyInfoChrome(); renderCardsSheet(); if(box) box.scrollTop = 0; };
     if(!box || !box.animate || reduce){ swap(); return; }
-    const dir = cardsInfoOpen ? -1 : 1;                       // opening the guide: current page leaves to the left, guide comes from the right
+    const dir = target==='hand' ? -1 : 1;                     // going into the guide / editor: current page leaves to the left, the new one comes from the right
     if(btn) btn.animate([{transform:'rotate(0) scale(1)'},{transform:`rotate(${180*dir}deg) scale(.8)`},{transform:`rotate(${360*dir}deg) scale(1)`}],{duration:460,easing:'cubic-bezier(.4,0,.2,1)'});
     heads.forEach(h=>h.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateY(-6px)`}],{duration:140,fill:'forwards'}));
     box.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-34*dir}px) scale(.96)`}],{duration:170,easing:'ease-in',fill:'forwards'}).finished.then(()=>{
@@ -449,15 +444,15 @@ function cardsToggleInfo(){
 }
 async function openCardsSheet(){
     haptic([8]);
-    if(!document.body.classList.contains('beta-updates')) document.body.classList.add('cards-open');   // the HARFS capsule fades out while the sheet is open (css/effects.css) — with Beta Updates it stays, and the sheet sits below it
-    cardsInfoOpen = false; cardsApplyInfoChrome();
+    // the HARFS capsule stays visible while the sheet is open: the sheet starts below it (css/effects.css, 1.29)
+    cardsInfoOpen = false; cardsEditOpen = false; cardsApplyInfoChrome();
     document.getElementById('cards-sheet').classList.add('open');
     renderCardsSheet();
     await cardsLoad(true);
     renderCardsSheet();
     if(await cardsSync()) renderCardsAll();         // deals anything that is due (nobody has to press a button)
 }
-function closeCardsSheet(){ document.getElementById('cards-sheet').classList.remove('open'); document.body.classList.remove('cards-open'); cardsZoomClose(); }
+function closeCardsSheet(){ document.getElementById('cards-sheet').classList.remove('open'); cardsZoomClose(); }
 function renderCardsAll(){
     renderCardsSheet(); renderCardsAdmin(); cardsTileRender();
     const mp = document.getElementById('mba-result-cards');

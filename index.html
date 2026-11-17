@@ -134,15 +134,6 @@
             </div>
         </div>
 
-        <div class="perf-option-row beta-row">
-            <div class="perf-option-icon"><i class="fas fa-flask"></i></div>
-            <div class="perf-option-textcol">
-                <span class="perf-option-title">Beta Updates <span class="beta-tag">BETA</span></span>
-                <span class="perf-option-sub">Early features: drag &amp; drop Cards page · the bottom bar fades away inside the Magazine</span>
-            </div>
-            <div class="perf-toggle" id="perf-toggle-beta" onclick="toggleBeta()"></div>
-        </div>
-
         </div>
 
         <div class="ap-card ap-lang-card">
@@ -1010,9 +1001,10 @@
         <div class="team-picker-panel hero-modal cards-modal">
             <div class="modal-x-close" onclick="closeCardsSheet()"><i class="fas fa-times"></i></div>
             <button type="button" id="cards-info-btn" class="cards-info-btn" onclick="cardsToggleInfo()" aria-label="راهنمای کارت‌ها"><i class="fas fa-info"></i></button>
+            <button type="button" id="cards-edit-btn" class="cards-info-btn cards-edit-btn" style="display:none" onclick="cardsToggleEdit()" aria-label="ویرایش کارت‌ها"><i class="fas fa-pencil"></i></button>
             <div class="team-picker-handle"></div>
             <h4 class="text-xl font-black text-white mb-0.5" id="cards-title" style="text-align:center;">Cards</h4>
-            <div id="cards-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Your hand · tap a card to enlarge it</div>
+            <div id="cards-subtitle" style="text-align:center;color:var(--primary);font-size:0.65rem;margin-bottom:10px;">Drag a card up into the box to use it · tap to enlarge</div>
             <div id="cards-body" class="team-panel-scroll" style="flex:1;min-height:0;"></div>
         </div>
     </div>

@@ -2635,7 +2635,8 @@ body[data-palette="graphite"] .profile-icon-badge{ color:#0b1220; }
 
 /* 1.27 — Bottom navigation bubble (Home · Season · Assistant · Profile): inside the Magazine it fades away softly (it sinks a little and
    shrinks a touch while it goes); when you come back it settles into its place again with a slower, softer fade-in.
-   Since 1.28 this only happens while "Beta Updates" is on (Appearance); otherwise the bar stays put like before. */
+   Kept but switched off: it only applies under body.beta-updates, and nothing sets that class any more (the Beta Updates switch was removed in 1.30),
+   so the bar stays put like before. Add the class back (or drop the prefix) to bring the fade back. */
 body.beta-updates #bottom-navigation.bottom-nav{
     transition:opacity .85s cubic-bezier(.22,1,.36,1) .12s, transform .95s cubic-bezier(.22,1,.36,1) .12s;
 }
@@ -2648,11 +2649,8 @@ body.beta-updates.perf-no-anim #bottom-navigation.bottom-nav, body.beta-updates.
 
 
 /* =====================================================
-   1.28 — "Beta Updates" (Appearance): switch row + drag & drop Cards page (body.beta-updates only; off = the old grid, untouched)
+   1.28 — drag & drop Cards page (since 1.30 it is the normal Cards page — the "Beta Updates" switch is gone)
    ===================================================== */
-.beta-tag{ display:inline-block; margin-left:6px; padding:2px 7px; border-radius:99px; font-size:.5rem; font-weight:900; letter-spacing:1.2px; vertical-align:middle; color:#fff;
-    background:linear-gradient(135deg,#f472b6,#a855f7); box-shadow:0 0 10px rgba(168,85,247,.55); }
-.beta-row{ margin-top:10px; }
 
 .cb2{ display:flex; flex-direction:column; gap:12px; }
 /* the box: cards dropped here are played in the next game */
@@ -2700,10 +2698,15 @@ body.beta-updates.perf-no-anim #bottom-navigation.bottom-nav, body.beta-updates.
 body.perf-no-anim .cb2-slot, body.perf-no-anim .cb2-row, body.perf-no-anim .cb2-card{ transition:none; }
 
 
-/* 1.29 — Beta Updates: the HARFS capsule no longer fades away behind the Cards page (cards.js doesn't set .cards-open then), so the Cards panel —
-   the hand AND the guide ("i"), they are the same panel — starts below the capsule and the two bubbles never overlap. */
-body.beta-updates .team-picker-sheet.as-modal:has(.cards-modal){ align-items:flex-start; padding-top:calc(env(safe-area-inset-top,0px) + 102px); padding-bottom:20px; }
-body.beta-updates .team-picker-sheet.as-modal:has(.cards-modal) .team-picker-panel.cards-modal{
+/* 1.29 — the HARFS capsule no longer fades away behind the Cards page (cards.js doesn't set .cards-open any more), so the Cards panel —
+   the hand, the guide ("i") and the editor (pencil) are all the same panel — starts below the capsule and the two bubbles never overlap. */
+.team-picker-sheet.as-modal:has(.cards-modal){ align-items:flex-start; padding-top:calc(env(safe-area-inset-top,0px) + 102px); padding-bottom:20px; }
+.team-picker-sheet.as-modal:has(.cards-modal) .team-picker-panel.cards-modal{
     max-height:calc(100vh - 102px - env(safe-area-inset-top,0px) - 24px);
     max-height:calc(100dvh - 102px - env(safe-area-inset-top,0px) - 24px);
 }
+
+
+/* 1.30 — Cards: the pencil (edit the deck) sits right next to the "i" at the top-left of the Cards page */
+.cards-info-btn.cards-edit-btn{ left:52px; }
+.cards-editor-block .mba-admin-hint{ margin:2px 0 12px; }
