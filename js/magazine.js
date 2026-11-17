@@ -1068,11 +1068,23 @@ setTimeout(magTileInit, 700);
     const screen = document.getElementById('magazine-screen'); if(!screen) return;
     const inner = screen.querySelector('.magazine-inner'), fab = document.getElementById('mag-top-fab'), ifill = document.getElementById('isl-prog-fill');
     if(!inner) return;
+    // Reading bar under the MAGAZINE bubble: 0 at the top of the issue, full once the "Records & full league stats" card has come into view.
+    // The closing line and the comments below it are not part of the issue, so they don't count. Measured with bounding rects (same unit for
+    // scrolled distance and distance left) so it stays right when the Magazine font-size zoom is on.
+    function readProgress(y){
+        const end = inner.querySelector('.magazine-records-link-wrap') || document.getElementById('mag-comments');
+        if(!end || !inner.clientHeight) return 0;
+        const ir = inner.getBoundingClientRect(), er = end.getBoundingClientRect();
+        const k = ir.height / inner.clientHeight, sc = y * k;
+        const remain = (end === document.getElementById('mag-comments') ? er.top : er.bottom) - ir.bottom;   // px until the end card's bottom edge reaches the bottom of the screen
+        if(remain <= 0) return sc > 0 ? 1 : 0;
+        return Math.min(1, Math.max(0, sc / (sc + remain)));
+    }
     function update(){
         const y = inner.scrollTop;
+        if(ifill) ifill.style.transform = 'scaleX(' + readProgress(y).toFixed(4) + ')';
         inner.style.setProperty('--magfade', Math.min(document.body.classList.contains('island') ? 64 : 46, y) + 'px');
         const isl=document.getElementById('mag-isl');
-        if(ifill){ const mx = inner.scrollHeight - inner.clientHeight; ifill.style.transform = 'scaleX(' + (mx > 8 ? Math.min(1, Math.max(0, y / mx)) : 0).toFixed(4) + ')'; }   // how much of the issue is behind you
         if(isl) islFollow(isl, y);   // --p: 0 = bubbles in the row under HARFS, 1 = side bubbles beside HARFS (eased in time, see islFollow)
         if(fab) fab.classList.toggle('show', y > 220 && screen.classList.contains('active'));
     }

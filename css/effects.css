@@ -2602,3 +2602,11 @@ body.perf-no-anim .isl-prog i{ transition:none; }
    Now it shrinks around its own centre, and pressing it only takes it down a little. */
 .isl-title{ left:0; right:0; margin:0 auto; transform:scale(calc(1 - 0.3 * var(--p))); }
 .isl-title:active{ scale:.97; }
+
+
+/* 1.24 — the reading bar now sits flush on the bottom edge of the MAGAZINE bubble. It is clipped by the bubble's own rounded corners
+   (the overlay covers the bubble's border box, radius 28px), so both ends of the bar curve up exactly like the bubble does. */
+.isl-title{ padding:0 14px 4px; }
+.isl-prog{ left:-1px; right:-1px; top:-1px; bottom:-1px; height:auto; border-radius:28px; background:none; overflow:hidden; }
+.isl-prog::before{ content:''; position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(255,255,255,0.14); }
+.isl-prog i{ position:absolute; left:0; right:0; bottom:0; width:auto; height:4px; border-radius:0; }
