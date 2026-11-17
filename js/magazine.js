@@ -1068,7 +1068,7 @@ setTimeout(magTileInit, 700);
         const y = inner.scrollTop;
         inner.style.setProperty('--magfade', Math.min(document.body.classList.contains('island') ? 64 : 46, y) + 'px');
         const isl=document.getElementById('mag-isl');
-        if(isl){ const p=Math.min(1,Math.max(0,y/70)); isl.style.setProperty('--p', (p*p*(3-2*p)).toFixed(3)); }   // 0 = bubbles in the row under HARFS, 1 = side bubbles beside HARFS
+        if(isl) islFollow(isl, y);   // --p: 0 = bubbles in the row under HARFS, 1 = side bubbles beside HARFS (eased in time, see islFollow)
         if(fab) fab.classList.toggle('show', y > 220 && screen.classList.contains('active'));
     }
     inner.addEventListener('scroll', update, { passive:true });
@@ -1103,12 +1103,40 @@ function magazineIslandSync(){
     } else if(on && layer.classList.contains('show') && !layer.classList.contains('leaving')){
         // Back was pressed: the bubbles slide back in under HARFS, then the layer goes away
         layer.classList.add('leaving');
-        layer._t = setTimeout(()=>{ layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0'); }, 950);
+        layer._t = setTimeout(()=>{ layer.classList.remove('show','leaving'); islSnap(layer); }, 950);
     } else if(!on){
-        layer.classList.remove('show','leaving'); layer.style.setProperty('--p','0');
+        layer.classList.remove('show','leaving'); islSnap(layer);
     }
 }
 magazineIslandSync();
+
+// ---- Island bubbles while scrolling: leaving the top of the page glides the three bubbles to their docked spots (and back when you return to the top)
+//      with ONE soft, timed ease instead of following the scroll distance 1:1, so a flick or a stuttering scroll can't make them jitter. ----
+function islSetP(layer, v){ layer._pv = v; layer.style.setProperty('--p', v.toFixed(4)); }
+function islSnap(layer){ if(layer._raf){ cancelAnimationFrame(layer._raf); layer._raf = 0; } layer._pt = 0; islSetP(layer, 0); }
+function islFollow(layer, y){
+    if(layer.classList.contains('leaving')) return;
+    let tgt = layer._pt || 0;
+    if(y > 28) tgt = 1; else if(y < 6) tgt = 0;   // scrollTop (px) that docks / undocks them; in between they keep their state
+    // (no top-level const here: the scroll IIFE above runs update() before this part of the file is evaluated)
+    const cur = layer._pv || 0;
+    const still = document.body.classList.contains('perf-no-anim') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if(!layer.classList.contains('show') || still){   // opening the Magazine, or motion switched off: just set it
+        if(layer._raf){ cancelAnimationFrame(layer._raf); layer._raf = 0; }
+        layer._pt = tgt; islSetP(layer, tgt); return;
+    }
+    if(tgt === layer._pt && (layer._raf || cur === tgt)) return;   // already there, or already on its way
+    layer._pt = tgt;
+    if(layer._raf) cancelAnimationFrame(layer._raf);
+    const from = cur, dur = Math.max(280, 760 * Math.abs(tgt - from)), t0 = performance.now();
+    const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;   // ease-in-out cubic: soft start, soft landing
+    const step = now => {
+        const t = Math.min(1, (now - t0) / dur);
+        islSetP(layer, from + (tgt - from) * ease(t));
+        layer._raf = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    layer._raf = requestAnimationFrame(step);
+}
 
 
 // ---- Reading progress: a blue bar in the header fills from the right as you scroll down the issue (no text, no number) ----
