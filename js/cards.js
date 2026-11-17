@@ -449,7 +449,7 @@ function cardsToggleInfo(){
 }
 async function openCardsSheet(){
     haptic([8]);
-    document.body.classList.add('cards-open');      // the HARFS capsule fades out while the sheet is open (css/effects.css)
+    if(!document.body.classList.contains('beta-updates')) document.body.classList.add('cards-open');   // the HARFS capsule fades out while the sheet is open (css/effects.css) — with Beta Updates it stays, and the sheet sits below it
     cardsInfoOpen = false; cardsApplyInfoChrome();
     document.getElementById('cards-sheet').classList.add('open');
     renderCardsSheet();

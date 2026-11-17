@@ -2698,3 +2698,12 @@ body.beta-updates.perf-no-anim #bottom-navigation.bottom-nav, body.beta-updates.
 .cb2-ghost{ position:fixed; left:0; top:0; z-index:100000; pointer-events:none; opacity:.97; filter:drop-shadow(0 14px 22px rgba(0,0,0,.55)); will-change:transform; transform-origin:50% 50%; }
 .cb2-ghost .cb2-name{ display:none; }
 body.perf-no-anim .cb2-slot, body.perf-no-anim .cb2-row, body.perf-no-anim .cb2-card{ transition:none; }
+
+
+/* 1.29 — Beta Updates: the HARFS capsule no longer fades away behind the Cards page (cards.js doesn't set .cards-open then), so the Cards panel —
+   the hand AND the guide ("i"), they are the same panel — starts below the capsule and the two bubbles never overlap. */
+body.beta-updates .team-picker-sheet.as-modal:has(.cards-modal){ align-items:flex-start; padding-top:calc(env(safe-area-inset-top,0px) + 102px); padding-bottom:20px; }
+body.beta-updates .team-picker-sheet.as-modal:has(.cards-modal) .team-picker-panel.cards-modal{
+    max-height:calc(100vh - 102px - env(safe-area-inset-top,0px) - 24px);
+    max-height:calc(100dvh - 102px - env(safe-area-inset-top,0px) - 24px);
+}
