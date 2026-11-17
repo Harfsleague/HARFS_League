@@ -2528,3 +2528,28 @@ body.island #magazine-screen .magazine-inner{ padding-top:166px; }
 }
 body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back, body.perf-no-anim .isl-layer .isl-numslot{ animation:none !important; }
 @media (prefers-reduced-motion:reduce){ .isl-layer .isl-title, .isl-layer .isl-back, .isl-layer .isl-numslot{ animation:none !important; } }
+
+
+/* =====================================================
+   1.19 — Island: much bigger MAGAZINE lettering; Back now really animates (all three bubbles slide back in under HARFS).
+   The old return re-used the "islEmerge" animation name, so the browser never restarted it and the bubbles just vanished —
+   the return now has its own keyframes.
+   ===================================================== */
+.isl-title{
+    height:58px; padding:0 14px; border-radius:28px; width:min(244px,calc(100% - 132px));
+    top:calc(93px - 9px * var(--p)); --ey:calc(-66px + 9px * var(--p));
+}
+.isl-title .isl-t-main{ font-size:1.5rem; letter-spacing:3px; padding-left:3px; line-height:1.12; }
+.isl-title .isl-t-sub{ font-size:.62rem; letter-spacing:5px; padding-left:5px; }
+body.island #magazine-screen .magazine-inner{ padding-top:170px; }
+
+.isl-layer.leaving .isl-title, .isl-layer.leaving .isl-back, .isl-layer.leaving .isl-numslot{
+    animation:islSubmerge .85s cubic-bezier(.55,0,.35,1) 0s both;
+}
+@keyframes islSubmerge{
+    0%{ opacity:1; translate:0px 0px; scale:1; }
+    65%{ opacity:1; }
+    100%{ opacity:0; translate:var(--ex,0px) var(--ey,-66px); scale:.3; }
+}
+body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back, body.perf-no-anim .isl-layer .isl-numslot{ animation:none !important; }
+@media (prefers-reduced-motion:reduce){ .isl-layer .isl-title, .isl-layer .isl-back, .isl-layer .isl-numslot{ animation:none !important; } }
