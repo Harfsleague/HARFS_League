@@ -236,7 +236,7 @@ async function cardsDiscardAsk(team, uid){
 // The card that was tapped last (recorded before its own onclick runs) — the zoom grows out of it and shrinks back into it.
 let cardsZoomSrc = null;
 document.addEventListener('click', e=>{
-    const w = e.target.closest && e.target.closest('.cards-info-cell, .cd-img-wrap, .cb-item');
+    const w = e.target.closest && e.target.closest('.cards-info-cell, .cd-img-wrap, .cb-item, .cb2-img');
     cardsZoomSrc = w ? (w.querySelector('img') || w) : null;
 }, true);
 function cardsZoomMotionOk(){
@@ -299,13 +299,103 @@ function renderCardsSheet(){
     let html = `<div class="cards-team"><img src="${teamLogoUrl(team)}" alt=""><span dir="auto">${escapeHtml(TEAM_DISPLAY_NAMES[team]||team)}</span><b>${keep}/${CARDS_MAX_KEEP}</b></div>`;
     if(over) html += `<div class="cards-warn"><i class="fas fa-triangle-exclamation"></i> You hold ${keep} cards — discard ${over}, the limit is ${CARDS_MAX_KEEP}.</div>`;
     if(comboN) html += `<div class="cards-combo"><span>🃏 Combo point: <b>${comboN}</b> / ${COMBO_NEED}</span>${comboN>=COMBO_NEED?`<button class="cd-btn on" onclick="cardsComboRedeem()">Redeem → +${COMBO_POINTS} pts</button>`:`<span class="cards-combo-hint">collect ${COMBO_NEED} for +${COMBO_POINTS} league points</span>`}</div>`;
-    if(actN) html += `<div class="cards-active-note">${actN}/${CARDS_MAX_ACTIVE} cards active for your next game</div>`;
+    const beta = document.body.classList.contains('beta-updates');   // Beta Updates (Appearance): drag & drop layout
+    if(actN && !beta) html += `<div class="cards-active-note">${actN}/${CARDS_MAX_ACTIVE} cards active for your next game</div>`;
     html += hand.length
-        ? `<div class="cards-grid">${hand.map(h=>cardTileHtml(h, team, true)).join('')}</div>`
+        ? (beta ? cb2Html(hand, team) : `<div class="cards-grid">${hand.map(h=>cardTileHtml(h, team, true)).join('')}</div>`)
         : `<div class="cards-empty"><i class="fas fa-clone"></i><p>No cards in your hand right now.</p></div>`;
     if(canEditCards() && !isFullAdmin()) html += `<button type="button" class="cd-btn on" style="width:100%;margin-top:14px;" onclick="cardsToggleInfo()"><i class="fas fa-pen"></i> Edit the cards of the game</button>`;
     box.innerHTML = html;
 }
+// ---------------- Beta Updates: drag & drop Cards page ----------------
+// A box on top (the cards you will play in your next game) and, under it, your cards side by side in one row.
+// Drag a card up into the box = "Use in next game"; drag it back down (or tap its ✕) = deactivate. Tap a card to enlarge it.
+// It only changes how the same actions are asked for — every rule is still enforced by cardsAct() / the Worker.
+function cb2CardHtml(h, team, inSlot){
+    const def = cardDef(h.card), name = def ? def.name : h.card, isCombo = h.card===CARD_COMBO_ID;
+    const btns = inSlot
+        ? `<button type="button" class="cb2-mini cb2-out" onclick="cb2Btn(event,'out','${h.uid}')" aria-label="Back to my hand"><i class="fas fa-xmark"></i></button>`
+        : `${isCombo ? '' : `<button type="button" class="cb2-mini cb2-use" onclick="cb2Btn(event,'use','${h.uid}')" aria-label="Use in next game"><i class="fas fa-arrow-up"></i></button>`}<button type="button" class="cb2-mini cb2-del" onclick="cb2Btn(event,'del','${h.uid}')" aria-label="Discard"><i class="fas fa-trash"></i></button>`;
+    return `<div class="cb2-card${inSlot?' in':''}" data-uid="${h.uid}" data-card="${h.card}">
+        <div class="cb2-img" onclick="cb2Tap('${h.card}')"><img src="${cardImgUrl(def)}" alt="" draggable="false" onerror="this.src='${cardPlaceholderSvg(name).replace(/'/g,'%27')}'">${btns}</div>
+        <span class="cb2-name" dir="auto">${escapeHtml(name)}</span>
+    </div>`;
+}
+function cb2Html(hand, team){
+    const inSlot = hand.filter(h=>h.active && h.card!==CARD_COMBO_ID), inRow = hand.filter(h=>!(h.active && h.card!==CARD_COMBO_ID));
+    return `<div class="cb2">
+        <div class="cb2-slot${inSlot.length?' has':''}${inSlot.length>=CARDS_MAX_ACTIVE?' full':''}" id="cb2-slot">
+            <span class="cb2-count">${inSlot.length}/${CARDS_MAX_ACTIVE}</span>
+            ${inSlot.length ? inSlot.map(h=>cb2CardHtml(h, team, true)).join('') : `<div class="cb2-hint"><i class="fas fa-hand-pointer"></i><span>Drag a card here to use it in your next game</span></div>`}
+        </div>
+        <div class="cb2-row" id="cb2-row">
+            ${inRow.length ? inRow.map(h=>cb2CardHtml(h, team, false)).join('') : `<div class="cb2-hint cb2-hint-row"><span>Drag a card back here to keep it</span></div>`}
+        </div>
+    </div>`;
+}
+let cb2Block = 0, cb2Drag = null;
+function cb2Tap(cardId){ if(performance.now() < cb2Block) return; cardsZoom(cardId); }
+async function cb2Do(team, action, uid, el){
+    if(el) el.classList.add('busy');
+    await cardsAct(team, action, uid);        // checks the limits, asks the Worker, then redraws the page
+}
+function cb2Btn(ev, what, uid){
+    ev.stopPropagation();
+    const team = loggedInTeam; if(!team) return;
+    if(what==='del') cardsDiscardAsk(team, uid);
+    else cb2Do(team, what==='use' ? 'activate' : 'deactivate', uid, ev.currentTarget.closest('.cb2-card'));
+}
+(function cb2Setup(){
+    const inside = (r, x, y, pad)=> x>=r.left-pad && x<=r.right+pad && y>=r.top-pad && y<=r.bottom+pad;
+    const clear = ()=>{ document.querySelectorAll('.cb2-slot.over,.cb2-row.over').forEach(n=>n.classList.remove('over')); };
+    function finish(e, cancelled){
+        const d = cb2Drag; if(!d) return; cb2Drag = null;
+        try{ d.el.releasePointerCapture(d.id); }catch(_){}
+        if(!d.started) return;
+        cb2Block = performance.now() + 350;      // the click that follows a drag must not open the zoom
+        const slot = document.getElementById('cb2-slot'), row = document.getElementById('cb2-row');
+        const overSlot = !cancelled && !d.fromSlot && slot && inside(slot.getBoundingClientRect(), e.clientX, e.clientY, 10);
+        const overRow  = !cancelled && d.fromSlot && row && inside(row.getBoundingClientRect(), e.clientX, e.clientY, 14);
+        clear(); d.el.classList.remove('dragging');
+        const g = d.ghost, fade = ()=>{ if(!g.animate){ g.remove(); return; } g.animate([{opacity:.97},{opacity:0, transform:g.style.transform+' scale(.8)'}],{duration:170,easing:'ease-in'}).onfinish = ()=>g.remove(); };
+        const back = ()=>{
+            if(!g.animate || !d.el.isConnected){ g.remove(); return; }
+            const r = d.el.getBoundingClientRect();
+            g.animate([{transform:g.style.transform},{transform:`translate(${r.left}px,${r.top}px)`}],{duration:240,easing:'cubic-bezier(.22,1,.36,1)'}).onfinish = ()=>g.remove();
+        };
+        if(overSlot || overRow){
+            if(overSlot && d.card===CARD_COMBO_ID){ showToast(`Combo point cards aren’t played — collect ${COMBO_NEED} and redeem them for +${COMBO_POINTS} points.`,'info',3600); back(); return; }
+            fade();
+            cb2Do(loggedInTeam, overSlot ? 'activate' : 'deactivate', d.uid, d.el);
+        } else back();
+    }
+    document.addEventListener('pointerdown', e=>{
+        if(!document.body.classList.contains('beta-updates') || (e.button && e.button!==0)) return;
+        const c = e.target.closest && e.target.closest('.cb2-card'); if(!c || e.target.closest('.cb2-mini')) return;
+        cb2Drag = { el:c, id:e.pointerId, uid:c.dataset.uid, card:c.dataset.card, x0:e.clientX, y0:e.clientY, started:false, fromSlot:c.classList.contains('in'), ghost:null, ox:0, oy:0 };
+    });
+    document.addEventListener('pointermove', e=>{
+        const d = cb2Drag; if(!d || e.pointerId!==d.id) return;
+        if(!d.started){
+            if(Math.hypot(e.clientX-d.x0, e.clientY-d.y0) < 7) return;
+            d.started = true;
+            try{ d.el.setPointerCapture(d.id); }catch(_){}   // captured only once it is really a drag, so a plain tap still clicks the picture
+            const r = d.el.getBoundingClientRect(); d.ox = e.clientX - r.left; d.oy = e.clientY - r.top;
+            const g = d.el.cloneNode(true); g.classList.add('cb2-ghost'); g.classList.remove('in'); g.style.width = r.width+'px';
+            g.querySelectorAll('.cb2-mini').forEach(n=>n.remove());
+            document.body.appendChild(g); d.ghost = g; d.el.classList.add('dragging'); haptic([6]);
+        }
+        const x = e.clientX - d.ox, y = e.clientY - d.oy;
+        d.ghost.style.transform = `translate(${x}px,${y}px) scale(1.08) rotate(-3deg)`;
+        const slot = document.getElementById('cb2-slot'), row = document.getElementById('cb2-row');
+        if(slot) slot.classList.toggle('over', !d.fromSlot && inside(slot.getBoundingClientRect(), e.clientX, e.clientY, 10));
+        if(row)  row.classList.toggle('over', d.fromSlot && inside(row.getBoundingClientRect(), e.clientX, e.clientY, 14));
+        e.preventDefault();
+    }, { passive:false });
+    document.addEventListener('pointerup', e=>{ if(cb2Drag && e.pointerId===cb2Drag.id) finish(e, false); });
+    document.addEventListener('pointercancel', e=>{ if(cb2Drag && e.pointerId===cb2Drag.id) finish(e, true); });
+})();
+
 // ---- "i": how cards work + every card in the game ----
 let cardsInfoOpen = false;
 function cardsRulesHtml(){
@@ -336,7 +426,7 @@ function cardsApplyInfoChrome(){
     const b = document.getElementById('cards-info-btn'), t = document.getElementById('cards-title'), s = document.getElementById('cards-subtitle');
     if(b){ b.classList.toggle('on', cardsInfoOpen); b.innerHTML = cardsInfoOpen ? '<i class="fas fa-arrow-left"></i>' : '<i class="fas fa-info"></i>'; }
     if(t) t.textContent = cardsInfoOpen ? 'راهنمای کارت‌ها' : 'Cards';
-    if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید' : 'Your hand · tap a card to enlarge it';
+    if(s) s.textContent = cardsInfoOpen ? 'قوانین و همهٔ کارت‌ها · برای بزرگ‌نمایی روی تصویر بزنید' : (document.body.classList.contains('beta-updates') ? 'Drag a card up into the box to use it · tap to enlarge' : 'Your hand · tap a card to enlarge it');
 }
 // "i" → the page slides away to the side and the guide (or the hand) slides in; the title, subtitle and button switch with it
 function cardsToggleInfo(){

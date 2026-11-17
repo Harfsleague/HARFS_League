@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.27";
+const HARFS_VERSION_LABEL = "1.28";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -209,6 +209,7 @@ function applyAppearance(){
     syncAppearanceUI();
     if(typeof applyAppLanguage==='function') applyAppLanguage();
     document.body.classList.add('island');
+    document.body.classList.toggle('beta-updates', harfsBeta);
 }
 // target: 'app' | 'magazine'
 function selectFont(target, id){
@@ -288,7 +289,21 @@ function renderPaletteGrid(){
         </div>`;
     grid.innerHTML = html;
 }
+// ---- Beta Updates: features that are still being tried out. Off by default; the switch lives in Appearance. While it is off the app looks and works exactly as before. ----
+let harfsBeta = localStorage.getItem('harfsBetaUpdates')==='1';
+function applyBeta(){
+    document.body.classList.toggle('beta-updates', harfsBeta);
+    const t=document.getElementById('perf-toggle-beta'); if(t) t.classList.toggle('on', harfsBeta);
+    if(typeof cardsApplyInfoChrome==='function'){ try{ cardsApplyInfoChrome(); renderCardsSheet(); }catch(e){} }   // re-draw the Cards page in the right layout
+}
+function toggleBeta(){
+    haptic([6]);
+    harfsBeta=!harfsBeta;
+    localStorage.setItem('harfsBetaUpdates', harfsBeta?'1':'0');
+    applyBeta();
+}
 function syncAppearanceUI(){
+    { const bt=document.getElementById('perf-toggle-beta'); if(bt) bt.classList.toggle('on', harfsBeta); }
     document.querySelectorAll('#perf-segmented .segmented-btn').forEach(b=>{
         b.classList.toggle('active', b.dataset.value === performancePreset);
     });
@@ -992,6 +1007,8 @@ const HARFS_I18N = {
         role_pres:'Federation President', role_owner:'Team Owner', role_fan:'Fan',
         tp_trophies:'Trophy Cabinet', tp_records:'League Records',
         cards_title:'Cards', cards_sub:'Your hand · tap a card to enlarge it',
+        cards_sub_beta:'Drag a card up into the box to use it · tap to enlarge',
+        ap_beta_sub:'Early features: drag & drop Cards page · the bottom bar fades away inside the Magazine',
         pl_title:'Playlist',
         te_title:'Edit Profile', te_name:'Name', te_photos:'Photos', te_reset:'Reset', te_save:'Save',
         sess_title:'Devices & Sessions', sess_sub:'Where you are signed in',
@@ -1034,6 +1051,8 @@ const HARFS_I18N = {
         role_pres:'رئیس فدراسیون', role_owner:'مالک تیم', role_fan:'هوادار',
         tp_trophies:'ویترین افتخارات', tp_records:'رکوردهای لیگ',
         cards_title:'کارت‌ها', cards_sub:'کارت‌های در دست شما · برای بزرگ‌نمایی روی کارت بزنید',
+        cards_sub_beta:'کارت را به بالا داخل کادر بکشید تا استفاده شود · برای بزرگ‌نمایی بزنید',
+        ap_beta_sub:'ویژگی‌های آزمایشی: صفحهٔ کارت‌ها با کشیدن و رها کردن · محو شدن نوار پایین در مجله',
         pl_title:'لیست پخش موزیک',
         te_title:'ویرایش پروفایل', te_name:'نام تیم', te_photos:'تصاویر پروفایل', te_reset:'بازنشانی', te_save:'ذخیره',
         sess_title:'دستگاه‌ها و نشست‌ها', sess_sub:'دستگاه‌هایی که با این حساب وارد شده‌اند',
@@ -1076,6 +1095,8 @@ const HARFS_I18N = {
         role_pres:'Presidente de la Federación', role_owner:'Propietario de Equipo', role_fan:'Aficionado',
         tp_trophies:'Vitrina de Trofeos', tp_records:'Récords de la Liga',
         cards_title:'Cartas', cards_sub:'Tu mano · toca una carta para ampliarla',
+        cards_sub_beta:'Arrastra una carta hacia el recuadro para usarla · toca para ampliar',
+        ap_beta_sub:'Funciones en prueba: Cartas con arrastrar y soltar · la barra inferior se desvanece en la Revista',
         pl_title:'Lista de Reproducción',
         te_title:'Editar Perfil', te_name:'Nombre', te_photos:'Fotos', te_reset:'Restablecer', te_save:'Guardar',
         sess_title:'Dispositivos y Sesiones', sess_sub:'Dónde has iniciado sesión',
@@ -1122,6 +1143,8 @@ const HARFS_DYNAMIC_PHRASES = {
         ['Active ✓', 'فعال ✓'],
         ['Use in next game', 'استفاده در بازی بعد'],
         ['No cards in your hand right now.', 'در حال حاضر کارتی در دست شما نیست.'],
+        ['Drag a card here to use it in your next game', 'کارت را اینجا بکشید تا در بازی بعدی استفاده شود'],
+        ['Drag a card back here to keep it', 'برای نگه‌داشتن، کارت را به اینجا برگردانید'],
         ['Log in with your team to see your cards.', 'برای مشاهده کارت‌ها با حساب تیم خود وارد شوید.'],
         ['Verify & Repair', 'بررسی و تعمیر خودکار'],
         ['Danger zone', 'بخش حساس (خطر)'],
@@ -1182,6 +1205,8 @@ const HARFS_DYNAMIC_PHRASES = {
         ['Active ✓', 'Activa ✓'],
         ['Use in next game', 'Usar en el próximo partido'],
         ['No cards in your hand right now.', 'No tienes cartas en tu mano ahora mismo.'],
+        ['Drag a card here to use it in your next game', 'Arrastra una carta aquí para usarla en tu próximo partido'],
+        ['Drag a card back here to keep it', 'Arrastra una carta de vuelta aquí para guardarla'],
         ['Log in with your team to see your cards.', 'Inicia sesión con tu equipo para ver tus cartas.'],
         ['Verify & Repair', 'Verificar y Reparar'],
         ['Danger zone', 'Zona de peligro'],
@@ -1415,6 +1440,7 @@ function applyAppLanguage(){
                 rows[2].querySelector('.perf-option-title').textContent = harfsT('ap_motion');
                 rows[2].querySelector('.perf-option-sub').textContent = harfsT('ap_motion_sub');
             }
+            { const bsub = apCards[0].querySelector('.beta-row .perf-option-sub'); if(bsub) bsub.textContent = harfsT('ap_beta_sub'); }
         }
         setTxt('#ap-lang-title', 'sec_language');
         setTxt('#ap-lang-sub', 'ap_lang_sub');
@@ -1438,7 +1464,7 @@ function applyAppLanguage(){
         if(tpSecTitles[0]) tpSecTitles[0].innerHTML = `<i class="fas fa-trophy"></i> ${harfsT('tp_trophies')}`;
         if(tpSecTitles[1]) tpSecTitles[1].innerHTML = `<i class="fas fa-crown"></i> ${harfsT('tp_records')}`;
         setTxt('#cards-title', 'cards_title');
-        setTxt('#cards-subtitle', 'cards_sub');
+        setTxt('#cards-subtitle', harfsBeta ? 'cards_sub_beta' : 'cards_sub');
         setTxt('#playlist-sheet h4', 'pl_title');
         setTxt('#team-edit-sheet h4', 'te_title');
         setTxt('#sessions-sheet h4', 'sess_title');
