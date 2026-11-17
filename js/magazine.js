@@ -1035,7 +1035,11 @@ function magTileShow(issue){
         img.onerror = ()=>{ if(img.src !== fallback){ img.src = fallback; } else { img.style.display = 'none'; } };
         img.src = url;
     }
-    (ttl.querySelector('.ov-intro-txt') || ttl).textContent = issue.coverSubtitle || issue.issueTitle || 'This week’s issue';   // the magazine's intro line (cut with … when it does not fit)
+    // No new issue for a whole week (newest one is more than 8 days old: weekly + a day of slack) → "FIFADay Break" instead of the intro line
+    const lastT = Date.parse(issue.generatedAt || (issue.issueDate ? `${issue.issueDate}T23:59:59Z` : ''));
+    const onBreak = !Number.isNaN(lastT) && (Date.now() - lastT) > 8 * 864e5;
+    ttl.dataset.break = onBreak ? '1' : '';   // appearance.js leaves the text alone while this is set
+    (ttl.querySelector('.ov-intro-txt') || ttl).textContent = onBreak ? 'FIFADay Break' : (issue.coverSubtitle || issue.issueTitle || 'This week’s issue');   // the magazine's intro line (cut with … when it does not fit)
 }
 async function magTileInit(){
     if(magTileDone) return; magTileDone = true;

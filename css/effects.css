@@ -2580,7 +2580,6 @@ body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back,
     background:#f8fafc; box-shadow:0 0 0 1px rgba(255,255,255,0.55), 0 2px 8px rgba(0,0,0,0.38);
 }
 .toast.play .toast-icon-bubble i, .toast.pause .toast-icon-bubble i{ color:#0b1220; font-size:0.74rem; }
-.toast.play .toast-icon-bubble i{ margin-left:2px; }   /* the triangle's visual centre sits a little left of its box */
 .toast.play .toast-label, .toast.pause .toast-label{ color:var(--primary); }
 
 /* 3) progress bar inside the MAGAZINE bubble (bubble is a little taller to make room; everything else keeps its size) */
@@ -2596,3 +2595,10 @@ body.island #magazine-screen .magazine-inner{ padding-top:172px; }
     transition:transform .12s linear;
 }
 body.perf-no-anim .isl-prog i{ transition:none; }
+
+
+/* 1.23 — MAGAZINE bubble: centred with margin:auto instead of left:50% + translateX(-50%).
+   The old translate sat INSIDE the scale, so any scale (pressing it, or the emerge/return animation) pushed the bubble towards the right.
+   Now it shrinks around its own centre, and pressing it only takes it down a little. */
+.isl-title{ left:0; right:0; margin:0 auto; transform:scale(calc(1 - 0.3 * var(--p))); }
+.isl-title:active{ scale:.97; }
