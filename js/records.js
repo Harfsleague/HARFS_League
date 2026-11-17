@@ -370,14 +370,14 @@ function recordsRender(){
 function openRecordsSheet(){
     haptic([8]);
     const sh = document.getElementById('records-sheet'); if(!sh) return;
-    document.body.classList.add('cards-open');
+    // the HARFS capsule stays visible: the sheet starts below it (css/effects.css, 1.31)
     recordsSyncScopeUI();
     recordsRender();
     recordsBindScroll();
     sh.classList.remove('open'); void sh.offsetWidth; sh.classList.add('open');
     requestAnimationFrame(recordsSyncScopeUI);
 }
-function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); document.body.classList.remove('cards-open'); }
+function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); }
 
 function recordsForTeam(team){
     const L = recL();

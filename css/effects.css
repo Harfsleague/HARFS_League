@@ -2710,3 +2710,39 @@ body.perf-no-anim .cb2-slot, body.perf-no-anim .cb2-row, body.perf-no-anim .cb2-
 /* 1.30 — Cards: the pencil (edit the deck) sits right next to the "i" at the top-left of the Cards page */
 .cards-info-btn.cards-edit-btn{ left:52px; }
 .cards-editor-block .mba-admin-hint{ margin:2px 0 12px; }
+
+
+/* =====================================================
+   1.31 — Records
+   · the HARFS capsule stays on screen (records.js no longer sets .cards-open) and the sheet starts below it, so the two never overlap
+   · the record cards sit THREE PER ROW with all their details (icon, title, note, leader logo(s) + name, value + unit, extra line, every team's bar);
+     the two "match" cards (biggest win / highest-scoring game) keep a full row because of their scoreline
+   ===================================================== */
+.team-picker-sheet.as-modal:has(.records-modal){ align-items:flex-start; padding-top:calc(env(safe-area-inset-top,0px) + 102px); padding-bottom:20px; }
+.team-picker-sheet.as-modal:has(.records-modal) .team-picker-panel.records-modal{
+    max-height:calc(100vh - 102px - env(safe-area-inset-top,0px) - 24px);
+    max-height:calc(100dvh - 102px - env(safe-area-inset-top,0px) - 24px);
+}
+.records-modal #records-list{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; align-items:stretch; }
+.records-modal #records-list > .rec-match, .records-modal #records-list > .rec-empty{ grid-column:1 / -1; }
+.records-modal #records-list .rec-card:not(.rec-match){ padding:9px 6px 8px; border-radius:15px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-head{ flex-direction:column; align-items:center; text-align:center; gap:2px; margin-bottom:6px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-ico{ font-size:1.2rem; line-height:1; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-title{ font-size:.6rem; line-height:1.2; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-note{ font-size:.48rem; line-height:1.25; margin-top:0; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-hero{ flex-direction:column; align-items:center; text-align:center; gap:4px; margin-bottom:6px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-logos{ justify-content:center; flex-wrap:wrap; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-logo-wrap{ width:38px; height:38px; padding:2px; margin-left:-9px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-logo-wrap:first-child{ margin-left:0; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-team{ font-size:.64rem; line-height:1.2; overflow-wrap:anywhere; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-team em{ display:block; font-size:.46rem; letter-spacing:.4px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-val{ justify-content:center; flex-wrap:wrap; gap:3px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-val .rec-count{ font-size:1.25rem; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-val small{ font-size:.46rem; letter-spacing:.3px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-extra{ font-size:.5rem; line-height:1.25; overflow-wrap:anywhere; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-bars{ gap:3px; margin-top:auto; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-bar-row{ gap:4px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-mini{ width:13px; height:13px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-bar{ height:5px; }
+.records-modal #records-list .rec-card:not(.rec-match) .rec-bar-row b{ min-width:15px; font-size:.54rem; }
+.records-modal #records-list .rec-card:not(.rec-match){ display:flex; flex-direction:column; }
