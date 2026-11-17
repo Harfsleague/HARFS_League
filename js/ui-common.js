@@ -122,9 +122,13 @@ function _npxStart(){
     if(_npxStill()) return;
     _npxTimer=setInterval(()=>{
         if(document.hidden) return;
-        _npxLvl=_npxLvl.map(l=>Math.max(1,Math.min(NPX_ROWS,l+Math.floor(Math.random()*3)-1)));
+        _npxLvl=_npxLvl.map(l=>{
+            let d=Math.floor(Math.random()*5)-2; if(d===0) d=Math.random()<.5?-1:1;   // always moves, by 1 or 2 rows
+            let n=l+d; if(n<1||n>NPX_ROWS) n=l-d;
+            return Math.max(1,Math.min(NPX_ROWS,n));
+        });
         _npxPaint(box);
-    },170);
+    },85);
 }
 function _processNotifQueue(){
     if(_notifShowing || _notifQueue.length===0) return;
