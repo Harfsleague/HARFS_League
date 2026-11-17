@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.21";
+const HARFS_VERSION_LABEL = "1.22";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -554,11 +554,12 @@ function renderPlaylistSheet(){
         container.innerHTML=PLAYLIST.map((t,i)=>{
             const isPlaying = i===currentTrackIndex && backgroundMusicStarted && !musicMuted;
             return `<div class="playlist-track-item ${isPlaying?'playing':''} ${i===playlistPicked?'picked':''}" style="--i:${Math.min(i,8)}" onclick="selectPlaylistTrack(${i})">
-                <div class="playlist-track-icon">${isPlaying ? '<span class="pl-eq"><i></i><i></i><i></i></span>' : '<i class="fas fa-music"></i>'}</div>
+                <div class="playlist-track-icon ${isPlaying?'px-on':''}">${isPlaying ? '<span class="pl-px"></span>' : '<i class="fas fa-music"></i>'}</div>
                 <div class="playlist-track-title">${escapeHtml(t.title)}</div>
             </div>`;
         }).join('');
         container.scrollTop=keep;
+        if(typeof npxMountIn==='function') npxMountIn(container);   // the playing row gets the same pixel equaliser as the Now Playing bubble
     });
 }
 function selectPlaylistTrack(index){

@@ -66,7 +66,7 @@ function toggleMusic(){
         }
         backgroundMusicStarted = true;
     }
-    showToast(musicMuted ? 'Music off' : 'Music on', 'info', 1800);
+    showToast(musicMuted ? 'Music off' : 'Music on', musicMuted ? 'pause' : 'play', 1800);
 }
 
 // The HARFS capsule in the header is purely decorative now — Settings
@@ -86,6 +86,8 @@ const TOAST_META = {
     success: { icon:'fa-check-circle',   label:'Success' },
     error:   { icon:'fa-exclamation-circle', label:'Error' },
     info:    { icon:'fa-info-circle',    label:'Info' },
+    play:    { icon:'fa-play',           label:'Info' },   // "Music on"
+    pause:   { icon:'fa-pause',          label:'Info' },   // "Music off"
     music:   { icon:'fa-music',          label:'Now Playing' },
 };
 const NOTIF_SWAP_MS = 380; // must match .hero-capsule-face's transition duration in css, plus a little slack
@@ -96,20 +98,20 @@ function showToast(msg, type='info', dur=2800){
     _notifQueue.push({msg, type, dur});
     _processNotifQueue();
 }
-// ---- "Now Playing": a small circle beside the song name with a few tiny moving pixels (same idea as the player in Profile, just much smaller) ----
+// ---- Pixel equaliser: the little 4x4 pixel square used beside the song name in the "Now Playing" bubble AND on the playing row in the playlist.
+//      One shared timer moves every mounted box (each box keeps its own levels); the timer stops when no box is left on screen. ----
 const NPX_COLS=4, NPX_ROWS=4;
-let _npxTimer=0, _npxLvl=[2,4,3,1];
+const _npxBoxes=new Set(); let _npxTimer=0;
 function _npxStill(){
     return document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || document.documentElement.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
 function _npxPaint(box){
+    const lv=box._lvl; if(!lv) return;
     box.querySelectorAll('.npx-col').forEach((col,c)=>{
-        [...col.children].forEach((cell,r)=>cell.classList.toggle('on', r<_npxLvl[c]));
+        [...col.children].forEach((cell,r)=>cell.classList.toggle('on', r<lv[c]));
     });
 }
-function _npxStop(){ if(_npxTimer){ clearInterval(_npxTimer); _npxTimer=0; } }
-function _npxStart(){
-    const box=document.getElementById('hero-notif-px'); if(!box) return;
+function _npxBuild(box){
     if(!box.firstChild){
         for(let c=0;c<NPX_COLS;c++){
             const col=document.createElement('div'); col.className='npx-col';
@@ -117,19 +119,33 @@ function _npxStart(){
             box.appendChild(col);
         }
     }
-    _npxStop();
-    _npxLvl=[2,4,3,1]; _npxPaint(box);
-    if(_npxStill()) return;
-    _npxTimer=setInterval(()=>{
-        if(document.hidden) return;
-        _npxLvl=_npxLvl.map(l=>{
+    box._lvl=[2,4,3,1]; _npxPaint(box);
+}
+function _npxStopTimer(){ if(_npxTimer){ clearInterval(_npxTimer); _npxTimer=0; } }
+function _npxTick(){
+    if(document.hidden) return;
+    _npxBoxes.forEach(box=>{
+        if(!box.isConnected){ _npxBoxes.delete(box); return; }   // the playlist was re-rendered: forget the old box
+        box._lvl=box._lvl.map(l=>{
             let d=Math.random()<.5?-1:1;   // always moves, one row at a time
             let n=l+d; if(n<1||n>NPX_ROWS) n=l-d;
             return Math.max(1,Math.min(NPX_ROWS,n));
         });
         _npxPaint(box);
-    },170);
+    });
+    if(!_npxBoxes.size) _npxStopTimer();
 }
+function npxAttach(box){
+    if(!box) return;
+    _npxBuild(box);
+    if(_npxStill()) return;
+    _npxBoxes.add(box);
+    if(!_npxTimer) _npxTimer=setInterval(_npxTick,170);
+}
+function npxDetach(box){ if(box) _npxBoxes.delete(box); if(!_npxBoxes.size) _npxStopTimer(); }
+function npxMountIn(root){ if(root) root.querySelectorAll('.pl-px').forEach(npxAttach); }
+function _npxStart(){ npxAttach(document.getElementById('hero-notif-px')); }
+function _npxStop(){ npxDetach(document.getElementById('hero-notif-px')); }
 function _processNotifQueue(){
     if(_notifShowing || _notifQueue.length===0) return;
     const capsule = document.getElementById('hero-logo-container');

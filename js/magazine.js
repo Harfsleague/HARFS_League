@@ -1062,16 +1062,18 @@ setTimeout(magTileInit, 700);
 //      • an arrow-only "back to top" button appears after a little scrolling ----
 (function magazineScrollFx(){
     const screen = document.getElementById('magazine-screen'); if(!screen) return;
-    const inner = screen.querySelector('.magazine-inner'), fab = document.getElementById('mag-top-fab');
+    const inner = screen.querySelector('.magazine-inner'), fab = document.getElementById('mag-top-fab'), ifill = document.getElementById('isl-prog-fill');
     if(!inner) return;
     function update(){
         const y = inner.scrollTop;
         inner.style.setProperty('--magfade', Math.min(document.body.classList.contains('island') ? 64 : 46, y) + 'px');
         const isl=document.getElementById('mag-isl');
+        if(ifill){ const mx = inner.scrollHeight - inner.clientHeight; ifill.style.transform = 'scaleX(' + (mx > 8 ? Math.min(1, Math.max(0, y / mx)) : 0).toFixed(4) + ')'; }   // how much of the issue is behind you
         if(isl) islFollow(isl, y);   // --p: 0 = bubbles in the row under HARFS, 1 = side bubbles beside HARFS (eased in time, see islFollow)
         if(fab) fab.classList.toggle('show', y > 220 && screen.classList.contains('active'));
     }
     inner.addEventListener('scroll', update, { passive:true });
+    window.addEventListener('resize', update);
     new MutationObserver(()=>{ update(); magazineIslandSync(); }).observe(screen, { attributes:true, attributeFilter:['class'] });
     update();
 })();
