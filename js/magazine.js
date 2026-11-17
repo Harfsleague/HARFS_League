@@ -1094,7 +1094,7 @@ function magazineIslandSync(){
     if(typeof closeMagazineIssuePicker==='function') closeMagazineIssuePicker();
     if(!layer) return;
     const show = on && !!screen && screen.classList.contains('active');
-    clearTimeout(layer._t);
+    if(show || !on) clearTimeout(layer._t);   // a repeat call during the return animation must not cancel its clean-up
     if(show){
         // how far the side bubbles have to travel to hide behind the middle of the HARFS capsule
         layer.style.setProperty('--isl-dx', Math.max(60, layer.clientWidth/2 - 34) + 'px');

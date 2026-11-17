@@ -2237,9 +2237,6 @@ html.lite-mode .fed-ring, html.lite-mode .fed-ring circle, html.lite-mode .fed-l
 /* =====================================================
    1.11 — HARFS Island (BETA). Everything below only applies while body.island is on (Appearance → HARFS Island).
    ===================================================== */
-.beta-tag{ display:inline-block; margin-left:6px; padding:2px 7px; border-radius:99px; font-size:.5rem; font-weight:900; letter-spacing:1.2px; vertical-align:middle; color:#fff;
-    background:linear-gradient(135deg,#f472b6,#a855f7); box-shadow:0 0 10px rgba(168,85,247,.55); }
-.island-row{ margin-top:10px; }
 .mip-num{ font-weight:inherit; }
 
 /* 1) Intro: the bubble at the centre is already the header bubble — same size, same big HARFS lettering, same glass — and only its
@@ -2553,3 +2550,8 @@ body.island #magazine-screen .magazine-inner{ padding-top:170px; }
 }
 body.perf-no-anim .isl-layer .isl-title, body.perf-no-anim .isl-layer .isl-back, body.perf-no-anim .isl-layer .isl-numslot{ animation:none !important; }
 @media (prefers-reduced-motion:reduce){ .isl-layer .isl-title, .isl-layer .isl-back, .isl-layer .isl-numslot{ animation:none !important; } }
+
+
+/* 1.20 — Island: once the bubbles have slid back under HARFS the layer disappears at once. It used to fade out over .25s while the bubbles
+   had already lost their animation, which flashed them all on screen for a moment. */
+.isl-layer{ transition:none; }

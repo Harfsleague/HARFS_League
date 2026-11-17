@@ -123,12 +123,12 @@ function _npxStart(){
     _npxTimer=setInterval(()=>{
         if(document.hidden) return;
         _npxLvl=_npxLvl.map(l=>{
-            let d=Math.floor(Math.random()*5)-2; if(d===0) d=Math.random()<.5?-1:1;   // always moves, by 1 or 2 rows
+            let d=Math.random()<.5?-1:1;   // always moves, one row at a time
             let n=l+d; if(n<1||n>NPX_ROWS) n=l-d;
             return Math.max(1,Math.min(NPX_ROWS,n));
         });
         _npxPaint(box);
-    },85);
+    },170);
 }
 function _processNotifQueue(){
     if(_notifShowing || _notifQueue.length===0) return;

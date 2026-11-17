@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.19";
+const HARFS_VERSION_LABEL = "1.20";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -208,7 +208,7 @@ function applyAppearance(){
     syncSettingsUI();
     syncAppearanceUI();
     if(typeof applyAppLanguage==='function') applyAppLanguage();
-    document.body.classList.toggle('island', harfsIsland);
+    document.body.classList.add('island');
 }
 // target: 'app' | 'magazine'
 function selectFont(target, id){
@@ -288,21 +288,7 @@ function renderPaletteGrid(){
         </div>`;
     grid.innerHTML = html;
 }
-// ---- HARFS Island (BETA): off for everybody until switched on in Appearance ----
-let harfsIsland = localStorage.getItem('harfsIsland')==='1';
-function applyIsland(){
-    document.body.classList.toggle('island', harfsIsland);
-    const t=document.getElementById('perf-toggle-island'); if(t) t.classList.toggle('on', harfsIsland);
-    if(typeof magazineIslandSync==='function') magazineIslandSync();
-}
-function toggleIsland(){
-    haptic([6]);
-    harfsIsland=!harfsIsland;
-    localStorage.setItem('harfsIsland', harfsIsland?'1':'0');
-    applyIsland();
-}
 function syncAppearanceUI(){
-    { const it=document.getElementById('perf-toggle-island'); if(it) it.classList.toggle('on', harfsIsland); }
     document.querySelectorAll('#perf-segmented .segmented-btn').forEach(b=>{
         b.classList.toggle('active', b.dataset.value === performancePreset);
     });
@@ -999,7 +985,6 @@ const HARFS_I18N = {
         ap_glass:'Liquid Glass', ap_glass_sub:'Frosted blur, specular rims & lens depth',
         ap_bg:'Background Effects', ap_bg_sub:'Floating orbs & shimmer',
         ap_motion:'Motion', ap_motion_sub:'Slide/fade transitions between screens',
-        ap_island_sub:'Bubbles that flow out of the HARFS capsule — intro & Magazine',
         ap_palette:'Palette', ap_primary:'Primary', ap_accent:'Accent', ap_background:'Background',
         ap_app_font:'App Font', ap_mag_font:'Magazine Font',
         fed_title:'Federation & Owners', fed_sub:'The people behind HARFS · tap a photo to view',
@@ -1042,7 +1027,6 @@ const HARFS_I18N = {
         ap_glass:'شیشه مایع (Liquid Glass)', ap_glass_sub:'مات‌شدگی شیشه‌ای، لبه‌های نوری و عمق لنز',
         ap_bg:'جلوه‌های پس‌زمینه', ap_bg_sub:'گوی‌های نوری شناور و درخشش محیطی',
         ap_motion:'انیمیشن و حرکت', ap_motion_sub:'انتقال نرم بین صفحات و پنل‌ها',
-        ap_island_sub:'حباب‌های پویا از دل کپسول HARFS — اینترو و مجله',
         ap_palette:'پالت رنگی', ap_primary:'رنگ اصلی', ap_accent:'رنگ مکمل', ap_background:'پس‌زمینه',
         ap_app_font:'فونت برنامه', ap_mag_font:'فونت مجله',
         fed_title:'فدراسیون و مالکین', fed_sub:'اعضای اصلی HARFS · برای بزرگ‌نمایی روی عکس بزنید',
@@ -1085,7 +1069,6 @@ const HARFS_I18N = {
         ap_glass:'Liquid Glass', ap_glass_sub:'Desenfoque esmerilado, bordes especulares y lente',
         ap_bg:'Efectos de Fondo', ap_bg_sub:'Orbes flotantes y brillo ambiental',
         ap_motion:'Movimiento', ap_motion_sub:'Transiciones suaves entre pantallas',
-        ap_island_sub:'Burbujas dinámicas desde la cápsula HARFS — intro y Revista',
         ap_palette:'Paleta de Colores', ap_primary:'Primario', ap_accent:'Acento', ap_background:'Fondo',
         ap_app_font:'Fuente de la App', ap_mag_font:'Fuente de la Revista',
         fed_title:'Federación y Propietarios', fed_sub:'Las personas detrás de HARFS · toca una foto para ver',
@@ -1431,8 +1414,6 @@ function applyAppLanguage(){
                 rows[2].querySelector('.perf-option-title').textContent = harfsT('ap_motion');
                 rows[2].querySelector('.perf-option-sub').textContent = harfsT('ap_motion_sub');
             }
-            const islSub = apCards[0].querySelector('.island-row .perf-option-sub');
-            if(islSub) islSub.textContent = harfsT('ap_island_sub');
         }
         setTxt('#ap-lang-title', 'sec_language');
         setTxt('#ap-lang-sub', 'ap_lang_sub');
