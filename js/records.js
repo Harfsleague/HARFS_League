@@ -340,6 +340,7 @@ function recordsRender(){
         const names = ldr.teams.map(t=>escapeHtml(recordsTeamLabel(t))).join(' & ');
         return `
         <div class="rec-tile${c.special?' rec-special':''}" style="--d:${(i++)*55}ms" role="button" tabindex="0" onclick="recordsOpenDetail('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();recordsOpenDetail('${c.id}')}">
+            <div class="rt-ico">${c.badge || c.icon}</div>
             <div class="rt-title"><span>${c.title}</span></div>
             <div class="rt-logos">${ldr.teams.length ? shown : '<span class="rt-none">—</span>'}</div>
             <div class="rt-name">${ldr.teams.length ? names : '—'}</div>
