@@ -2794,20 +2794,15 @@ body.perf-no-anim .rec-detail-ov, body.perf-no-anim .rec-detail{ transition:none
    "RECORDS & ACHIEVEMENTS" lettering). The header keeps its amber on every palette on purpose: gold / silver / bronze are the fixed "medal"
    colours of the app. Everything else on the page (tabs, tiles, detail page) follows the theme.
    ===================================================== */
-.records-modal .rec-banner-big.rec-hdr{ display:block; height:150px; padding:0; background:#000; border-bottom:1px solid color-mix(in srgb,var(--primary) 30%,rgba(255,255,255,0.08)); }
-.records-modal .rec-banner-big.rec-hdr::before, .records-modal .rec-banner-big.rec-hdr::after{ display:none; }
-.rec-hdr-bg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
-.rec-hdr-row{ position:absolute; inset:0; display:flex; align-items:center; gap:10px; padding:0 14px; box-sizing:border-box; direction:ltr; pointer-events:none; }
-.rec-hdr-trophy{ flex:none; width:76px; height:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.65)); }
-.rec-hdr-title{
-    display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.1; font-weight:900; text-transform:uppercase;
-    font-size:clamp(.84rem,4.6vw,1.1rem);
-    background:linear-gradient(180deg,#ffffff 0%,#d6d9dd 55%,#8d9298 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 2px 6px rgba(0,0,0,.75));
+.records-modal .rec-banner-big.rec-hdr{
+    display:block; height:auto; aspect-ratio:1280 / 674; padding:0; background:#000 center / cover no-repeat;
+    border-bottom:1px solid color-mix(in srgb,var(--primary) 30%,rgba(255,255,255,0.08));
 }
-.rec-hdr-title span{ display:block; unicode-bidi:plaintext; white-space:nowrap; }
+.records-modal .rec-banner-big.rec-hdr::before, .records-modal .rec-banner-big.rec-hdr::after{ display:none; }
+/* the empty band between the header and the tabs is gone: the tabs sit right under the header */
+.team-picker-sheet.as-modal .records-modal .profile-body{ padding-top:10px; }
 .records-modal .profile-body > h4{ display:none; }   /* the title now lives in the header */
-.records-modal #records-sub{ color:#94a3b8 !important; font-size:.64rem !important; font-weight:600; margin:10px 0 12px !important; }
+.records-modal #records-sub{ color:#94a3b8 !important; font-size:.64rem !important; font-weight:600; margin:0 0 9px !important; }
 
 /* League tabs (All-time | Latest season): same bubble as the Season League | Cup switch — glass bar + sliding theme-coloured pill */
 .records-modal .rec-scope{
@@ -2823,8 +2818,9 @@ body.perf-no-anim .rec-detail-ov, body.perf-no-anim .rec-detail{ transition:none
     background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 38%,rgba(8,12,24,0.55)),color-mix(in srgb,var(--accent) 24%,rgba(8,12,24,0.72)));
     border:1px solid color-mix(in srgb,var(--primary) 50%,transparent);
     box-shadow:0 2px 8px rgba(0,0,0,0.25), 0 0 10px -3px var(--primary-glow);
-    transition:transform .5s cubic-bezier(.34,1.25,.5,1), width .5s cubic-bezier(.34,1.25,.5,1);
+    transition:transform .6s cubic-bezier(.22,1,.36,1), width .6s cubic-bezier(.22,1,.36,1);
 }
+.records-modal .rec-scope button{ transition:color .35s ease; }
 body.perf-no-anim .records-modal .rec-scope-pill{ transition:none; }
 
 /* tiles + detail page follow the theme (the Treble stays gold: it is a medal) */
@@ -2876,3 +2872,15 @@ body.perf-no-anim .records-modal .rec-scope-pill{ transition:none; }
 .rf-val small{ font-size:.5rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rf-extra{ margin-top:8px; min-height:26px; font-size:.54rem; font-weight:700; line-height:1.35; color:#cbd5e1; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; unicode-bidi:plaintext; overflow-wrap:anywhere; }
 .rec-feat:not(.rec-special){ border-color:color-mix(in srgb,var(--primary) 40%,transparent); box-shadow:0 10px 22px -10px rgba(0,0,0,.65), 0 0 16px -6px var(--primary-glow); }
+
+
+/* =====================================================
+   1.35 — Records: softer motion. Longer, gentler easings (no bounce) for the tiles, the bars, the detail page and the tab pill.
+   ===================================================== */
+@keyframes recSoftIn{ from{ opacity:0; transform:translateY(14px) scale(.985); } to{ opacity:1; transform:none; } }
+.rec-tile{ animation:recSoftIn .75s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--d,0ms); transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease; }
+.rec-tile:active{ transform:scale(.975); }
+.rec-bar i, .tp-rec-bar i{ animation-duration:1.4s; animation-timing-function:cubic-bezier(.22,1,.36,1); }
+.rec-detail-ov{ transition:opacity .4s cubic-bezier(.22,1,.36,1); }
+.rec-detail{ transform:translateY(22px) scale(.96); transition:transform .65s cubic-bezier(.22,1,.36,1); }
+@media (prefers-reduced-motion:reduce){ .rec-tile{ animation:none; } .rec-bar i, .tp-rec-bar i{ animation:none; width:var(--w); } .rec-detail-ov, .rec-detail{ transition:none; } }
