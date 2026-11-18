@@ -27,7 +27,9 @@ const REC_I18N = {
         high_match:'Highest-Scoring Match',
         u_trebles:'trebles', u_goals:'goals', u_clean:'clean sheets', u_row:'in a row', u_wins:'wins',
         u_wrate:'of games won', u_gd:'goal diff', u_games:'games', u_points:'points', u_defeats:'defeats',
-        u_silvers:'silvers', u_titles:'titles', u_weeks:'weeks',
+        u_silvers:'silvers', u_titles:'titles', u_weeks:'weeks', u_draws:'draws', vs:'vs',
+        t_draws:'Most Draws', n_draws:'All-time, every season',
+        t_mgoals:'Most Goals in a Match', n_mgoals:'The most goals one team scored in a single game',
         t_treble:'The Treble', n_treble:'League + CUP + Super Cup in the same season',
         t_goals:'Most Goals Scored', n_goals:'All-time, every season',
         t_conc:'Most Goals Conceded', n_conc:'All-time — the leakiest defence', n_conc_s:s=>`${s} — the leakiest defence`,
@@ -70,7 +72,9 @@ const REC_I18N = {
         high_match:'پرگل‌ترین مسابقه',
         u_trebles:'سه‌گانه', u_goals:'گل', u_clean:'کلین‌شیت', u_row:'پیاپی', u_wins:'برد',
         u_wrate:'درصد برد', u_gd:'تفاضل گل', u_games:'بازی', u_points:'امتیاز', u_defeats:'شکست',
-        u_silvers:'نقره', u_titles:'قهرمانی', u_weeks:'هفته',
+        u_silvers:'نقره', u_titles:'قهرمانی', u_weeks:'هفته', u_draws:'مساوی', vs:'مقابل',
+        t_draws:'بیشترین مساوی', n_draws:'در کل تاریخ تمام فصول',
+        t_mgoals:'بیشترین گل در یک بازی', n_mgoals:'بیشترین گل زده‌ی یک تیم در یک مسابقه',
         t_treble:'سه‌گانه قهرمانی (Treble)', n_treble:'قهرمانی هم‌زمان لیگ + جام حذفی + سوپرجام در یک فصل',
         t_goals:'بیشترین گل زده', n_goals:'در کل تاریخ تمام فصول',
         t_conc:'بیشترین گل خورده', n_conc:'در کل تاریخ — آسیب‌پذیرترین خط دفاع', n_conc_s:s=>`${s} — بیشترین گل دریافتی`,
@@ -113,7 +117,9 @@ const REC_I18N = {
         high_match:'Partido con Más Goles',
         u_trebles:'tripletes', u_goals:'goles', u_clean:'porterías imbatidas', u_row:'seguidos', u_wins:'victorias',
         u_wrate:'de victorias', u_gd:'dif. goles', u_games:'partidos', u_points:'puntos', u_defeats:'derrotas',
-        u_silvers:'platas', u_titles:'títulos', u_weeks:'semanas',
+        u_silvers:'platas', u_titles:'títulos', u_weeks:'semanas', u_draws:'empates', vs:'vs',
+        t_draws:'Más Empates', n_draws:'Histórico, todas las temporadas',
+        t_mgoals:'Más Goles en un Partido', n_mgoals:'Más goles de un equipo en un solo partido',
         t_treble:'El Triplete', n_treble:'Liga + Copa + Supercopa en la misma temporada',
         t_goals:'Más Goles Anotados', n_goals:'Histórico, todas las temporadas',
         t_conc:'Más Goles Recibidos', n_conc:'Histórico — la defensa más goleada', n_conc_s:s=>`${s} — la defensa más goleada`,
@@ -156,10 +162,12 @@ function recordsComputeAll(){
     (matchHistory||[]).forEach(m=>logs.push(m));
     const clean = {}; TEAM_NAMES.forEach(t=>clean[t]=0);
     let biggest = null, highest = null;
+    const bestGoals = {}; TEAM_NAMES.forEach(t=>bestGoals[t]={ v:0, opp:'', gf:0, ga:0 });   // most goals one team scored in a single game
     logs.forEach(m=>{
         const sc = recordsParseScore(m); if(!sc || !TEAM_NAMES.includes(m.home) || !TEAM_NAMES.includes(m.away)) return;
         if(sc.b===0) clean[m.home]++;
         if(sc.a===0) clean[m.away]++;
+        [[m.home,sc.a,sc.b,m.away],[m.away,sc.b,sc.a,m.home]].forEach(([t,gf,ga,opp])=>{ if(bestGoals[t] && gf>bestGoals[t].v) bestGoals[t]={ v:gf, opp, gf, ga }; });
         const margin = Math.abs(sc.a-sc.b), total = sc.a+sc.b;
         if(margin>0 && (!biggest || margin>biggest.margin || (margin===biggest.margin && total>biggest.total))) biggest = { m, sc, margin, total };
         if(!highest || total>highest.total) highest = { m, sc, margin, total };
@@ -202,6 +210,8 @@ function recordsComputeAll(){
         { id:'treble', special:true, icon:'\ud83c\udfc6', badge:RECORDS_TREBLE_BADGE, title:L.t_treble, note:L.n_treble, list:bars(t=>treble[t].n), unit:L.u_trebles,
           extra:t=> treble[t].seasons.length ? L.seasons_list(treble[t].seasons) : '' },
         { id:'goals',   icon:'⚽', title:L.t_goals,   note:L.n_goals,                     list:bars(t=>stats[t].GF), unit:L.u_goals },
+        { id:'mgoals',  icon:'🥅', title:L.t_mgoals,  note:L.n_mgoals, list:bars(t=>bestGoals[t].v), unit:L.u_goals,
+          extra:t=> bestGoals[t].v ? `${bestGoals[t].gf}–${bestGoals[t].ga} ${L.vs} ${recordsTeamLabel(bestGoals[t].opp)}` : '' },
         { id:'conc',    icon:'🧱', title:L.t_conc,    note:L.n_conc,                      list:bars(t=>stats[t].GA), unit:L.u_goals },
         { id:'clean',   icon:'🧤', title:L.t_clean,   note:L.from_n_games(logs.length),   list:bars(t=>clean[t]), unit:L.u_clean },
         { id:'reign',   icon:'👑', title:L.t_reign,   note:L.n_reign,                     list:bars(t=>reign[t].len), unit:L.u_row,
@@ -216,6 +226,7 @@ function recordsComputeAll(){
         { id:'bpts',    icon:'⭐', title:L.t_bpts,    note:L.n_bpts,                      list:bars(t=>seasonBest.pts[t].v), unit:L.u_points, extra:t=>seasonBest.pts[t].s },
         { id:'bgf',     icon:'💫', title:L.t_bgf,     note:L.n_bgf,                       list:bars(t=>seasonBest.gf[t].v), unit:L.u_goals, extra:t=>seasonBest.gf[t].s },
         { id:'defeats', icon:'💔', title:L.t_defeats, note:L.n_defeats,                   list:bars(t=>stats[t].L), unit:L.u_defeats },
+        { id:'draws',   icon:'🤝', title:L.t_draws,   note:L.n_draws,                     list:bars(t=>stats[t].D), unit:L.u_draws },
         { id:'silver',  icon:'🥈', title:L.t_silver,  note:L.n_silver,                    list:bars(t=>trophies[t].silver||0), unit:L.u_silvers },
         { id:'played',  icon:'🏟️', title:L.t_played,  note:L.n_played,                    list:bars(t=>stats[t].P), unit:L.u_games },
         { id:'decor',   icon:'🏆', title:L.t_decor,   note:L.n_decor,                     list:bars(t=>(trophies[t].leagueGold||0)+(trophies[t].cup||0)+(trophies[t].superCup||0)), unit:L.u_titles,
@@ -241,10 +252,12 @@ function recordsComputeSeason(){
     const logs = src.logs.filter(m=>recordsParseScore(m) && TEAM_NAMES.includes(m.home) && TEAM_NAMES.includes(m.away));
     const clean = {}, winRun = {}, unbRun = {}; TEAM_NAMES.forEach(t=>{ clean[t]=0; winRun[t]={cur:0,best:0}; unbRun[t]={cur:0,best:0}; });
     let biggest = null, highest = null;
+    const bestGoals = {}; TEAM_NAMES.forEach(t=>bestGoals[t]={ v:0, opp:'', gf:0, ga:0 });   // most goals one team scored in a single game
     [...logs].sort((x,y)=>String(x.timestamp||'').localeCompare(String(y.timestamp||''))).forEach(m=>{
         const sc = recordsParseScore(m);
         if(sc.b===0) clean[m.home]++;
         if(sc.a===0) clean[m.away]++;
+        [[m.home,sc.a,sc.b,m.away],[m.away,sc.b,sc.a,m.home]].forEach(([t,gf,ga,opp])=>{ if(bestGoals[t] && gf>bestGoals[t].v) bestGoals[t]={ v:gf, opp, gf, ga }; });
         [[m.home,sc.a,sc.b],[m.away,sc.b,sc.a]].forEach(([t,gf,ga])=>{
             winRun[t].cur = gf>ga ? winRun[t].cur+1 : 0;  winRun[t].best = Math.max(winRun[t].best, winRun[t].cur);
             unbRun[t].cur = gf>=ga ? unbRun[t].cur+1 : 0; unbRun[t].best = Math.max(unbRun[t].best, unbRun[t].cur);
@@ -262,6 +275,8 @@ function recordsComputeSeason(){
     const n = logs.length;
     const cards = [
         { id:'goals',   icon:'⚽', title:L.t_goals,   note:src.label,                        list:bars(t=>g(t,'GF')), unit:L.u_goals },
+        { id:'mgoals',  icon:'🥅', title:L.t_mgoals,  note:src.label, list:bars(t=>bestGoals[t].v), unit:L.u_goals,
+          extra:t=> bestGoals[t].v ? `${bestGoals[t].gf}–${bestGoals[t].ga} ${L.vs} ${recordsTeamLabel(bestGoals[t].opp)}` : '' },
         { id:'conc',    icon:'🧱', title:L.t_conc,    note:L.n_conc_s(src.label),            list:bars(t=>g(t,'GA')), unit:L.u_goals },
         { id:'clean',   icon:'🧤', title:L.t_clean,   note:L.n_clean_s(src.label, n),        list:bars(t=>clean[t]), unit:L.u_clean },
         { id:'wins',    icon:'🔥', title:L.t_wins,    note:src.label,                        list:bars(t=>g(t,'W')), unit:L.u_wins },
@@ -274,6 +289,7 @@ function recordsComputeSeason(){
         { id:'wstreak', icon:'🚀', title:L.t_wstreak, note:L.n_wstreak_s(src.label),         list:bars(t=>winRun[t].best), unit:L.u_row },
         { id:'unb',     icon:'🛡️', title:L.t_unb,     note:L.n_unb_s(src.label),             list:bars(t=>unbRun[t].best), unit:L.u_games },
         { id:'defeats', icon:'💔', title:L.t_defeats, note:L.n_defeats_s(src.label),         list:bars(t=>g(t,'L')), unit:L.u_defeats },
+        { id:'draws',   icon:'🤝', title:L.t_draws,   note:src.label,                        list:bars(t=>g(t,'D')), unit:L.u_draws },
         { id:'played',  icon:'🏟️', title:L.t_played,  note:src.label,                        list:bars(t=>g(t,'P')), unit:L.u_games },
     ];
     return { cards, biggest, highest, label:src.label };
@@ -316,31 +332,18 @@ function recordsRender(){
     const { cards, biggest, highest } = recordsCompute();
     let i = 0;
     if(!cards.length){ box.innerHTML = `<div class="rec-empty" style="text-align:center;padding:24px 0;">${L.no_season_games}</div>`; return; }
-    const rows = cards.map(c=>{
+    recordsShown = cards;
+    // the full card (what used to be in the list) now lives in the detail page that a tile opens
+    const tiles = cards.map((c,k)=>{
         const ldr = recordsLeaders(c.list);
-        const max = Math.max(1, ldr.best);
-        const logos = ldr.teams.map(t=>`<span class="rec-logo-wrap">${recordsLogo(t,'rec-logo')}</span>`).join('');
+        const shown = ldr.teams.slice(0,2).map(t=>`<span class="rec-logo-wrap">${recordsLogo(t,'rec-logo')}</span>`).join('') + (ldr.teams.length>2 ? `<span class="rt-more">+${ldr.teams.length-2}</span>` : '');
         const names = ldr.teams.map(t=>escapeHtml(recordsTeamLabel(t))).join(' & ');
-        const extra = ldr.teams.length===1 && c.extra ? c.extra(ldr.teams[0]) : '';
-        const bars = c.list.map(x=>`
-            <div class="rec-bar-row${ldr.teams.includes(x.team)?' lead':''}">
-                ${recordsLogo(x.team,'rec-mini')}
-                <div class="rec-bar"><i style="--w:${Math.round(Math.max(0,x.value)/max*100)}%"></i></div>
-                <b>${c.fmt ? c.fmt(x.value) : x.value}</b>
-            </div>`).join('');
         return `
-        <div class="rec-card${c.special?' rec-special':''}" style="--d:${(i++)*90}ms">
-            <div class="rec-head"><span class="rec-ico">${c.badge || c.icon}</span><div><div class="rec-title">${c.title}</div><div class="rec-note">${escapeHtml(c.note)}</div></div></div>
-            ${ldr.teams.length ? `
-            <div class="rec-hero">
-                <div class="rec-logos">${logos}</div>
-                <div class="rec-hero-txt">
-                    <div class="rec-team">${names}${ldr.teams.length>1?` <em>${L.shared}</em>`:''}</div>
-                    <div class="rec-val"><span class="rec-count" data-to="${ldr.best}" data-pre="${c.id==='gd'?'+':''}" data-suf="${c.id==='wrate'?'%':''}">0</span><small>${c.unit}</small></div>
-                    ${extra ? `<div class="rec-extra">${escapeHtml(extra)}</div>` : ''}
-                </div>
-            </div>` : `<div class="rec-empty">${L.no_record_yet}</div>`}
-            <div class="rec-bars">${bars}</div>
+        <div class="rec-tile${c.special?' rec-special':''}" style="--d:${(i++)*55}ms" role="button" tabindex="0" onclick="recordsOpenDetail('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();recordsOpenDetail('${c.id}')}">
+            <div class="rt-title"><span>${c.title}</span></div>
+            <div class="rt-logos">${ldr.teams.length ? shown : '<span class="rt-none">—</span>'}</div>
+            <div class="rt-name">${ldr.teams.length ? names : '—'}</div>
+            <div class="rt-val">${ldr.teams.length ? `<span class="rec-count" data-to="${ldr.best}" data-pre="${c.id==='gd'?'+':''}" data-suf="${c.id==='wrate'?'%':''}">0</span><small>${c.unit}</small>` : '<span class="rt-dash">—</span>'}</div>
         </div>`;
     });
     const match = (id, icon, title, data)=> data ? `
@@ -352,9 +355,14 @@ function recordsRender(){
                 <div class="rec-side">${recordsLogo(data.m.away,'rec-logo')}<span>${escapeHtml(recordsTeamLabel(data.m.away))}</span></div>
             </div>
         </div>` : '';
-    box.innerHTML = rows.join('') + match('big','💥',L.big_win,biggest) + match('high','🎯',L.high_match,highest);
+    box.innerHTML = `<div class="rec-grid">${tiles.join('')}</div>` + match('big','💥',L.big_win,biggest) + match('high','🎯',L.high_match,highest);
+    recordsAnimateCounts(box);
+    const sh = document.getElementById('records-sheet'), pn = sh && sh.querySelector('.records-modal'); if(pn) pn.scrollTop = 0;
+}
+// counts the numbers up (used by the tiles and by the detail page)
+function recordsAnimateCounts(root){
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
-    box.querySelectorAll('.rec-count').forEach((el,k)=>{
+    root.querySelectorAll('.rec-count').forEach((el,k)=>{
         const to = +el.dataset.to, pre = el.dataset.pre||'', suf = el.dataset.suf||''; if(reduce || to<=0){ el.textContent = pre+to+suf; return; }
         const t0 = performance.now() + 220 + k*40, dur = 900;
         const tick = now=>{
@@ -365,8 +373,56 @@ function recordsRender(){
         };
         requestAnimationFrame(tick);
     });
-    const sh = document.getElementById('records-sheet'), pn = sh && sh.querySelector('.records-modal'); if(pn) pn.scrollTop = 0;
 }
+
+let recordsShown = [];
+// detail page of one record: the whole old card (title + note, leader(s), value, extra line, a bar for every team)
+function recordsFullCardHtml(c){
+    const L = recL();
+    const ldr = recordsLeaders(c.list), max = Math.max(1, ldr.best);
+    const logos = ldr.teams.map(t=>`<span class="rec-logo-wrap">${recordsLogo(t,'rec-logo')}</span>`).join('');
+    const names = ldr.teams.map(t=>escapeHtml(recordsTeamLabel(t))).join(' & ');
+    const extra = ldr.teams.length===1 && c.extra ? c.extra(ldr.teams[0]) : '';
+    const bars = c.list.map(x=>`
+        <div class="rec-bar-row${ldr.teams.includes(x.team)?' lead':''}">
+            ${recordsLogo(x.team,'rec-mini')}
+            <div class="rec-bar"><i style="--w:${Math.round(Math.max(0,x.value)/max*100)}%"></i></div>
+            <b>${c.fmt ? c.fmt(x.value) : x.value}</b>
+        </div>`).join('');
+    return `
+    <div class="rec-card${c.special?' rec-special':''}" style="--d:0ms">
+        <div class="rec-head"><span class="rec-ico">${c.badge || c.icon}</span><div><div class="rec-title">${c.title}</div><div class="rec-note">${escapeHtml(c.note)}</div></div></div>
+        ${ldr.teams.length ? `
+        <div class="rec-hero">
+            <div class="rec-logos">${logos}</div>
+            <div class="rec-hero-txt">
+                <div class="rec-team">${names}${ldr.teams.length>1?` <em>${L.shared}</em>`:''}</div>
+                <div class="rec-val"><span class="rec-count" data-to="${ldr.best}" data-pre="${c.id==='gd'?'+':''}" data-suf="${c.id==='wrate'?'%':''}">0</span><small>${c.unit}</small></div>
+                ${extra ? `<div class="rec-extra">${escapeHtml(extra)}</div>` : ''}
+            </div>
+        </div>` : `<div class="rec-empty">${L.no_record_yet}</div>`}
+        <div class="rec-bars">${bars}</div>
+    </div>`;
+}
+function recordsOpenDetail(id){
+    const c = recordsShown.find(x=>x.id===id); if(!c) return;
+    haptic([6]);
+    recordsCloseDetail(true);
+    const ov = document.createElement('div');
+    ov.className = 'rec-detail-ov'; ov.id = 'rec-detail-ov';
+    ov.onclick = e=>{ if(e.target===ov) recordsCloseDetail(); };
+    ov.innerHTML = `<div class="rec-detail"><button type="button" class="rec-detail-x" onclick="recordsCloseDetail()" aria-label="Close"><i class="fas fa-times"></i></button>${recordsFullCardHtml(c)}</div>`;
+    document.body.appendChild(ov);
+    void ov.offsetWidth; ov.classList.add('open');
+    recordsAnimateCounts(ov);
+}
+function recordsCloseDetail(now){
+    const ov = document.getElementById('rec-detail-ov'); if(!ov) return;
+    if(now===true){ ov.remove(); return; }
+    ov.classList.remove('open');
+    setTimeout(()=>ov.remove(), 260);
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') recordsCloseDetail(); });
 function openRecordsSheet(){
     haptic([8]);
     const sh = document.getElementById('records-sheet'); if(!sh) return;
@@ -377,7 +433,7 @@ function openRecordsSheet(){
     sh.classList.remove('open'); void sh.offsetWidth; sh.classList.add('open');
     requestAnimationFrame(recordsSyncScopeUI);
 }
-function closeRecordsSheet(){ const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); }
+function closeRecordsSheet(){ recordsCloseDetail(true); const sh = document.getElementById('records-sheet'); if(sh) sh.classList.remove('open'); }
 
 function recordsForTeam(team){
     const L = recL();
