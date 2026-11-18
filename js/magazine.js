@@ -647,7 +647,7 @@ function renderMagazine(issue) {
         ${renderNextWeekSection(issue, ranksNow)}
 
         <div class="magazine-page magazine-records-link-wrap">
-            <button type="button" class="magazine-records-link" onclick="if(typeof openRecordsSheet==='function')openRecordsSheet()">
+            <button type="button" class="magazine-records-link" onclick="if(typeof openRecordsSheet==='function')openRecordsSheet('season')">
                 <span class="mrl-ico"><i class="fas fa-medal"></i></span>
                 <span class="mrl-txt"><b>رکوردها و آمار کامل لیگ</b><small>بیشترین گل، کلین‌شیت، طولانی‌ترین رشته‌ها و …</small></span>
                 <i class="fas fa-chevron-left mrl-arrow"></i>

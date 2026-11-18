@@ -2800,9 +2800,8 @@ body.perf-no-anim .rec-detail-ov, body.perf-no-anim .rec-detail{ transition:none
 }
 .records-modal .rec-banner-big.rec-hdr::before, .records-modal .rec-banner-big.rec-hdr::after{ display:none; }
 /* the empty band between the header and the tabs is gone: the tabs sit right under the header */
-.team-picker-sheet.as-modal .records-modal .profile-body{ padding-top:10px; }
+.team-picker-sheet.as-modal .records-modal .profile-body{ padding-top:8px; }
 .records-modal .profile-body > h4{ display:none; }   /* the title now lives in the header */
-.records-modal #records-sub{ color:#94a3b8 !important; font-size:.64rem !important; font-weight:600; margin:0 0 9px !important; }
 
 /* League tabs (All-time | Latest season): same bubble as the Season League | Cup switch — glass bar + sliding theme-coloured pill */
 .records-modal .rec-scope{

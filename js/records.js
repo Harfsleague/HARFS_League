@@ -351,11 +351,6 @@ function recordsSyncScopeUI(){
     });
     const on = btns.find(b=>b.classList.contains('on')), pill = document.getElementById('rec-scope-pill');
     if(on && pill){ pill.style.width = on.offsetWidth+'px'; pill.style.transform = `translateX(${on.offsetLeft}px)`; }
-    const sub = document.getElementById('records-sub');
-    if(sub){
-        const lab = recordsScope==='season' ? (recordsSeasonSource()||{}).label : '';
-        sub.textContent = recordsScope==='season' ? L.sub_season(lab) : L.sub_all;
-    }
 }
 function recordsTeamLabel(t){ return (typeof TEAM_DISPLAY_NAMES!=='undefined' && TEAM_DISPLAY_NAMES[t]) || t; }
 function recordsLogo(t, cls){ return `<img class="${cls||''}" src="${teamLogoUrl(t)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">`; }
@@ -488,7 +483,9 @@ function recordsCloseDetail(now){
     setTimeout(()=>ov.remove(), 450);
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') recordsCloseDetail(); });
-function openRecordsSheet(){
+// scope: 'season' opens straight on the latest season (the Magazine's button does that); without it the page opens on all-time.
+function openRecordsSheet(scope){
+    recordsScope = (scope==='season' && recordsSeasonSource()) ? 'season' : 'all';
     recordsApplyHeaderImg();
     haptic([8]);
     const sh = document.getElementById('records-sheet'); if(!sh) return;
