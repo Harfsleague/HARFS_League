@@ -2790,22 +2790,57 @@ body.perf-no-anim .rec-detail-ov, body.perf-no-anim .rec-detail{ transition:none
 
 
 /* =====================================================
-   1.33 — Records header, more formal: no confetti / sparks / rays / side shields / floating animation — a calm header with one still trophy,
-   a thin gold rule, a plain upper-case title, a muted subtitle and squarer tabs.
+   1.33 — Records: header like the supplied picture (black, glowing amber facets, a low-poly winged figure, silver trophy with laurels, silver
+   "RECORDS & ACHIEVEMENTS" lettering). The header keeps its amber on every palette on purpose: gold / silver / bronze are the fixed "medal"
+   colours of the app. Everything else on the page (tabs, tiles, detail page) follows the theme.
    ===================================================== */
-.records-modal .rec-banner-big{
-    height:92px;
-    background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 16%,transparent),transparent 85%);
+.records-modal .rec-banner-big.rec-hdr{ display:block; height:150px; padding:0; background:#000; border-bottom:1px solid color-mix(in srgb,var(--primary) 30%,rgba(255,255,255,0.08)); }
+.records-modal .rec-banner-big.rec-hdr::before, .records-modal .rec-banner-big.rec-hdr::after{ display:none; }
+.rec-hdr-bg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.rec-hdr-row{ position:absolute; inset:0; display:flex; align-items:center; gap:10px; padding:0 14px; box-sizing:border-box; direction:ltr; pointer-events:none; }
+.rec-hdr-trophy{ flex:none; width:76px; height:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.65)); }
+.rec-hdr-title{
+    display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.1; font-weight:900; text-transform:uppercase;
+    font-size:clamp(.84rem,4.6vw,1.1rem);
+    background:linear-gradient(180deg,#ffffff 0%,#d6d9dd 55%,#8d9298 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.75));
 }
-.records-modal .rec-banner-big::before{ display:none; }
-.records-modal .rec-banner-big::after{
-    content:''; position:absolute; left:16%; right:16%; bottom:0; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(251,191,36,.75),transparent);
+.rec-hdr-title span{ display:block; unicode-bidi:plaintext; white-space:nowrap; }
+.records-modal .profile-body > h4{ display:none; }   /* the title now lives in the header */
+.records-modal #records-sub{ color:#94a3b8 !important; font-size:.64rem !important; font-weight:600; margin:10px 0 12px !important; }
+
+/* League tabs (All-time | Latest season): same bubble as the Season League | Cup switch — glass bar + sliding theme-coloured pill */
+.records-modal .rec-scope{
+    width:min(268px,100%); padding:4px; border-radius:999px;
+    background:rgba(3,7,14,0.94);
+    border:1.5px solid color-mix(in srgb,var(--primary) 70%,rgba(255,255,255,0.5));
+    box-shadow:0 0 0 6px color-mix(in srgb,var(--bg-mid) 94%,#040710), 0 0 18px color-mix(in srgb,var(--primary) 28%,transparent), inset 0 1px 0 rgba(255,255,255,0.14);
 }
-.records-modal .rec-rays, .records-modal .rec-confetti, .records-modal .rec-spark, .records-modal .rec-art-stars, .records-modal .rec-art-side{ display:none; }
-.records-modal .rec-art{ width:auto; height:74px; filter:none; }
-.records-modal .rec-art-cup{ animation:none; }
-.records-modal .profile-body > h4{ margin-top:6px; font-size:1rem; font-weight:800; text-transform:uppercase; color:#f8fafc; }
-.records-modal #records-sub{ color:#94a3b8 !important; font-size:.62rem !important; font-weight:600; margin-bottom:12px !important; }
-.records-modal .rec-scope{ border-radius:10px; }
-.records-modal .rec-scope button, .records-modal .rec-scope-pill{ border-radius:8px; }
+.records-modal .rec-scope button{ height:32px; border-radius:999px; font-weight:800; color:#94a3b8; }
+.records-modal .rec-scope button.on{ color:color-mix(in srgb,var(--primary) 22%,#fff); }
+.records-modal .rec-scope-pill{
+    top:4px; bottom:4px; border-radius:999px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 38%,rgba(8,12,24,0.55)),color-mix(in srgb,var(--accent) 24%,rgba(8,12,24,0.72)));
+    border:1px solid color-mix(in srgb,var(--primary) 50%,transparent);
+    box-shadow:0 2px 8px rgba(0,0,0,0.25), 0 0 10px -3px var(--primary-glow);
+    transition:transform .5s cubic-bezier(.34,1.25,.5,1), width .5s cubic-bezier(.34,1.25,.5,1);
+}
+body.perf-no-anim .records-modal .rec-scope-pill{ transition:none; }
+
+/* tiles + detail page follow the theme (the Treble stays gold: it is a medal) */
+.rec-tile, .rec-detail .rec-card:not(.rec-special){
+    border-top-color:color-mix(in srgb,var(--primary) 45%,transparent);
+    background-image:radial-gradient(90% 80% at 100% 0%,color-mix(in srgb,var(--primary) 15%,transparent),transparent 70%), linear-gradient(165deg,rgba(255,255,255,0.05),transparent 45%,rgba(0,0,0,0.3));
+}
+.rec-tile:not(.rec-special):active{ box-shadow:0 8px 18px -8px rgba(0,0,0,0.6), 0 0 14px -4px var(--primary-glow); }
+.rt-name, .rec-detail .rec-card:not(.rec-special) .rec-team{
+    background:linear-gradient(90deg,color-mix(in srgb,var(--primary) 30%,#fff),var(--primary),var(--accent));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+.rt-more{ color:var(--primary); }
+.rt-val .rec-count, .rec-detail .rec-card:not(.rec-special) .rec-val .rec-count{ text-shadow:0 0 12px var(--primary-glow); }
+.rec-tile:not(.rec-special) .rec-logo-wrap, .rec-detail .rec-card:not(.rec-special) .rec-logo-wrap{
+    background:conic-gradient(from 0deg,var(--primary),color-mix(in srgb,var(--primary) 40%,#fff),var(--accent),var(--primary)); box-shadow:0 0 16px var(--primary-glow);
+}
+.rec-detail .rec-card:not(.rec-special) .rec-bar-row.lead .rec-bar i{ background:linear-gradient(90deg,var(--accent),var(--primary)); box-shadow:0 0 10px var(--primary-glow); }
+.rec-detail .rec-card:not(.rec-special) .rec-bar-row.lead b{ color:var(--primary); }

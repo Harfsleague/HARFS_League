@@ -5,7 +5,7 @@ const RECORDS_TREBLE_BADGE = '<svg class="rec-treble-badge" viewBox="0 0 48 52" 
 
 const REC_I18N = {
     en: {
-        header:'League Records',
+        header:'League Records', banner1:'RECORDS &', banner2:'ACHIEVEMENTS',
         sub_all:'The best (and worst) of every team',
         sub_season:s=>s ? `${s} — only this season's games` : 'No season data yet',
         tab_all:'All-time',
@@ -50,7 +50,7 @@ const REC_I18N = {
         t_decor:'Most Decorated', n_decor:'League + CUP + Super Cup titles'
     },
     fa: {
-        header:'رکوردهای لیگ',
+        header:'رکوردهای لیگ', banner1:'رکوردها و', banner2:'دستاوردها',
         sub_all:'بهترین (و بدترین) آمار تاریخ هر تیم',
         sub_season:s=>s ? `${s} — فقط بازی‌های این فصل` : 'هنوز داده‌ای برای این فصل ثبت نشده',
         tab_all:'کل تاریخ',
@@ -95,7 +95,7 @@ const REC_I18N = {
         t_decor:'پرافتخارترین تیم', n_decor:'مجموع قهرمانی‌های لیگ + جام حذفی + سوپرجام'
     },
     es: {
-        header:'Récords de la Liga',
+        header:'Récords de la Liga', banner1:'RÉCORDS Y', banner2:'LOGROS',
         sub_all:'Lo mejor (y peor) de cada equipo',
         sub_season:s=>s ? `${s} — solo partidos de esta temporada` : 'Aún no hay datos de la temporada',
         tab_all:'Histórico',
@@ -317,6 +317,9 @@ function recordsSyncScopeUI(){
     });
     const on = btns.find(b=>b.classList.contains('on')), pill = document.getElementById('rec-scope-pill');
     if(on && pill){ pill.style.width = on.offsetWidth+'px'; pill.style.transform = `translateX(${on.offsetLeft}px)`; }
+    const h1 = document.getElementById('rec-hdr-1'), h2 = document.getElementById('rec-hdr-2');
+    if(h1) h1.textContent = L.banner1;
+    if(h2) h2.textContent = L.banner2;
     const sub = document.getElementById('records-sub');
     if(sub){
         const lab = recordsScope==='season' ? (recordsSeasonSource()||{}).label : '';
