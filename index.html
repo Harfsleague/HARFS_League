@@ -392,7 +392,7 @@
                             <th class="th-gf">GF</th>
                             <th class="th-ga">GA</th>
                             <th>GD</th>
-                            <th class="th-pts" style="text-align:right;padding-right:6px;">PT</th>
+                            <th class="th-pts">PT</th>
                         </tr>
                     </thead>
                     <tbody id="league-table-body"></tbody>
@@ -956,6 +956,24 @@
             </div>
         </div>
     </div>
+    <!-- ============ ALL-TIME TABLE (hold the "Season" title for 2 s) ============ -->
+    <div id="alltable-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeAllTableSheet()">
+        <div class="team-picker-panel hero-modal alltable-modal">
+            <div class="modal-x-close" onclick="closeAllTableSheet()"><i class="fas fa-times"></i></div>
+            <div class="profile-body">
+                <h4 class="at-title">All-time table</h4>
+                <div class="at-sub" id="alltable-sub">Every season combined</div>
+                <div class="at-card">
+                    <table class="season-table at-table">
+                        <colgroup><col class="c-rank"><col class="c-team"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-pts"></colgroup>
+                        <thead><tr><th>#</th><th class="th-team">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th class="th-gf">GF</th><th class="th-ga">GA</th><th>GD</th><th class="th-pts">PT</th></tr></thead>
+                        <tbody id="alltable-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ RECORDS (Home → Records) ============ -->
     <div id="records-sheet" class="team-picker-sheet as-modal" onclick="if(event.target===this)closeRecordsSheet()">
         <div class="team-picker-panel hero-modal records-modal">

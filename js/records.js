@@ -48,6 +48,7 @@ const REC_I18N = {
         t_bgf:'Best Season — Goals', n_bgf:'Most goals scored in one season',
         t_defeats:'Most Defeats', n_defeats:'All-time — the hard-luck record', n_defeats_s:s=>`${s} — the hard-luck record`,
         t_silver:'Most Silver Medals', n_silver:'Always the bridesmaid (league + CUP)',
+        t_bronze:'Most Bronze Medals', n_bronze:'Third place finishes (league + CUP)', u_bronzes:'bronzes',
         t_played:'Most Games Played', n_played:'The league’s veteran',
         t_decor:'Most Decorated', n_decor:'League + CUP + Super Cup titles'
     },
@@ -95,6 +96,7 @@ const REC_I18N = {
         t_bgf:'بهترین فصل — گل زده', n_bgf:'بیشترین گل زده در یک فصل',
         t_defeats:'بیشترین شکست', n_defeats:'در کل تاریخ — بدشانس‌ترین رکورد', n_defeats_s:s=>`${s} — بیشترین باخت`,
         t_silver:'بیشترین مدال نقره (نایب‌قهرمانی)', n_silver:'مجموع نایب‌قهرمانی‌های لیگ و جام حذفی',
+        t_bronze:'بیشترین مدال برنز', n_bronze:'مجموع سوم‌شدن‌های لیگ و جام حذفی', u_bronzes:'برنز',
         t_played:'بیشترین بازی انجام‌شده', n_played:'باتجربه‌ترین تیم لیگ',
         t_decor:'پرافتخارترین تیم', n_decor:'مجموع قهرمانی‌های لیگ + جام حذفی + سوپرجام'
     },
@@ -142,6 +144,7 @@ const REC_I18N = {
         t_bgf:'Mejor Temporada — Goles', n_bgf:'Más goles anotados en una temporada',
         t_defeats:'Más Derrotas', n_defeats:'Histórico — récord de mala fortuna', n_defeats_s:s=>`${s} — más derrotas`,
         t_silver:'Más Medallas de Plata', n_silver:'Subcampeonatos (Liga + Copa)',
+        t_bronze:'Más Medallas de Bronce', n_bronze:'Terceros puestos (Liga + Copa)', u_bronzes:'bronces',
         t_played:'Más Partidos Jugados', n_played:'El veterano de la liga',
         t_decor:'Más Laureado', n_decor:'Títulos de Liga + Copa + Supercopa'
     }
@@ -258,7 +261,7 @@ function recordsComputeAll(){
           extra:t=> L.games_n(stats[t].P) },
         { id:'draws',   icon:'🤝', title:L.t_draws,   note:L.n_draws,                     list:bars(t=>stats[t].D), unit:L.u_draws },
         { id:'silver',  icon:'🥈', title:L.t_silver,  note:L.n_silver,                    list:bars(t=>trophies[t].silver||0), unit:L.u_silvers },
-        { id:'played',  icon:'🏟️', title:L.t_played,  note:L.n_played,                    list:bars(t=>stats[t].P), unit:L.u_games },
+        { id:'bronze',  icon:'🥉', title:L.t_bronze,  note:L.n_bronze,                    list:bars(t=>trophies[t].bronze||0), unit:L.u_bronzes },
         { id:'decor',   icon:'🏆', title:L.t_decor,   note:L.n_decor,                     list:bars(t=>(trophies[t].leagueGold||0)+(trophies[t].cup||0)+(trophies[t].superCup||0)), unit:L.u_titles,
           extra:t=>{ const x=trophies[t]; return L.decor_parts(x.leagueGold, x.cup, x.superCup); } },
     ];
@@ -408,7 +411,7 @@ function recordsRender(){
                 <div class="rec-side">${recordsLogo(data.m.away,'rec-logo')}<span>${escapeHtml(recordsTeamLabel(data.m.away))}</span></div>
             </div>
         </div>` : '';
-    box.innerHTML = tiles.join('') + match('big','💥',L.big_win,biggest) + match('high','🎯',L.high_match,highest);
+    box.innerHTML = tiles[0] + match('high','🎯',L.high_match,highest) + tiles[1] + match('big','💥',L.big_win,biggest);   // featured row, then the highest-scoring match, then the 3-per-row tiles, biggest win last
     recordsAnimateCounts(box);
     const sh = document.getElementById('records-sheet'), pn = sh && sh.querySelector('.records-modal'); if(pn) pn.scrollTop = 0;
 }

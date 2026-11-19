@@ -335,3 +335,62 @@ async function loadMainLeagueDataFromGitHub(onCached){
     return mainLeagueData;
 }
 
+
+
+// ============================================================
+// ALL-TIME TABLE — hold the "Season" title for 2 seconds (like the HARFS capsule): the title glows while you hold, then a table grows out of it
+// with every point, game and goal of every season (archived seasons + the current one) added together.
+// ============================================================
+function seasonAllTimeRows(){
+    const stats = computeAllTimeStats(), pts = {};
+    TEAM_NAMES.forEach(t=>pts[t]=0);
+    (archivedSeasons||[]).forEach(se=>(se.table||[]).forEach(r=>{ if(r && r.name in pts) pts[r.name] += Number(r.Pts)||0; }));
+    TEAM_NAMES.forEach(t=>{ const r = leagueData && leagueData[t]; if(r) pts[t] += Number(r.Pts)||0; });
+    return TEAM_NAMES.map(t=>({ name:t, ...stats[t], Pts:pts[t] }))
+        .sort((a,b)=>(b.Pts-a.Pts) || ((b.GF-b.GA)-(a.GF-a.GA)) || (b.GF-a.GF) || a.name.localeCompare(b.name));
+}
+function renderAllTimeTable(){
+    const rows = seasonAllTimeRows();
+    const body = document.getElementById('alltable-body'); if(!body) return;
+    body.innerHTML = rows.map((t,i)=>{
+        const gd = t.GF - t.GA, gdStr = gd>0 ? `+${gd}` : String(gd), gdClass = gd>0 ? 'gd-pos' : (gd<0 ? 'gd-neg' : 'gd-zero');
+        const rowClass = i===0 ? 'rank-1-row' : (i===1 ? 'rank-2-row' : (i===2 ? 'rank-3-row' : 'rank-4-row'));
+        return `<tr class="${rowClass}" style="animation-delay:${i*55}ms">
+            <td class="td-rank"><span class="rk-pill rk-${i+1}">${i+1}</span></td>
+            <td class="td-team"><div class="td-team-inner"><img src="${teamLogoUrl(t.name)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'"><span style="${i===0?'color:#fef3c7;':''}">${teamShort(t.name)}</span></div></td>
+            <td>${t.P}</td><td class="td-w">${t.W}</td><td>${t.D}</td><td class="td-l">${t.L}</td>
+            <td class="td-gf">${t.GF}</td><td class="td-ga">${t.GA}</td><td class="td-gd ${gdClass}">${gdStr}</td>
+            <td class="td-pts"><span class="pts-pill">${t.Pts}</span></td>
+        </tr>`;
+    }).join('');
+    const sub = document.getElementById('alltable-sub');
+    if(sub){
+        const n = (archivedSeasons||[]).length + (TEAM_NAMES.some(t=>leagueData && leagueData[t] && leagueData[t].P>0) ? 1 : 0);
+        sub.textContent = n ? `${n} season${n===1?'':'s'} combined` : 'Every season combined';
+    }
+}
+function openAllTableSheet(){
+    haptic([8]);
+    renderAllTimeTable();
+    const sh = document.getElementById('alltable-sheet'); if(!sh) return;
+    sh.classList.add('open');
+    const src = document.getElementById('season-screen-title');
+    if(src && typeof fxExpand==='function') fxExpand(sh, sh.querySelector('.alltable-modal'), src.getBoundingClientRect(), sh.querySelectorAll('.at-title, .at-sub, .at-card'));
+}
+function closeAllTableSheet(){ const sh = document.getElementById('alltable-sheet'); if(sh) sh.classList.remove('open'); }
+(function seasonTitleHold(){
+    const el = document.getElementById('season-screen-title'); if(!el) return;
+    const HOLD_MS = 2000;
+    let timer = null, sx = 0, sy = 0;
+    function cancel(){ clearTimeout(timer); timer = null; el.classList.remove('holding'); }
+    el.addEventListener('pointerdown', e=>{
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        cancel();
+        sx = e.clientX; sy = e.clientY;
+        el.classList.add('holding');
+        timer = setTimeout(()=>{ timer = null; el.classList.remove('holding'); haptic([14,40,14]); openAllTableSheet(); }, HOLD_MS);
+    });
+    el.addEventListener('pointermove', e=>{ if(timer && Math.hypot(e.clientX-sx, e.clientY-sy) > 14) cancel(); });
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, cancel));
+    el.addEventListener('contextmenu', e=>e.preventDefault());
+})();

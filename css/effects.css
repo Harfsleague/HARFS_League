@@ -2883,3 +2883,33 @@ body.perf-no-anim .records-modal .rec-scope-pill{ transition:none; }
 .rec-detail-ov{ transition:opacity .4s cubic-bezier(.22,1,.36,1); }
 .rec-detail{ transform:translateY(22px) scale(.96); transition:transform .65s cubic-bezier(.22,1,.36,1); }
 @media (prefers-reduced-motion:reduce){ .rec-tile{ animation:none; } .rec-bar i, .tp-rec-bar i{ animation:none; width:var(--w); } .rec-detail-ov, .rec-detail{ transition:none; } }
+
+
+/* =====================================================
+   1.36 — Season: PT column header centred over the points pills; hold the "Season" title → all-time table
+   ===================================================== */
+.season-table thead th.th-pts{ text-align:center !important; padding-left:0 !important; padding-right:0 !important; }
+.season-table td.td-pts{ text-align:center !important; padding-left:0 !important; padding-right:0 !important; }
+#season-screen-title{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+#season-screen-title.holding{ animation:heroHold 2s linear forwards; }
+body.perf-no-anim #season-screen-title.holding{ animation:none; }
+
+/* the all-time table panel: starts below the HARFS capsule (like Cards / Records) */
+.team-picker-sheet.as-modal:has(.alltable-modal){ align-items:flex-start; padding-top:calc(env(safe-area-inset-top,0px) + 102px); padding-bottom:20px; }
+.team-picker-sheet.as-modal:has(.alltable-modal) .team-picker-panel.alltable-modal{
+    max-height:calc(100vh - 102px - env(safe-area-inset-top,0px) - 24px);
+    max-height:calc(100dvh - 102px - env(safe-area-inset-top,0px) - 24px);
+    overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none;
+}
+.alltable-modal .profile-body{ padding:46px 12px 16px; }
+.at-title{ margin:0; text-align:center; font-size:1rem; font-weight:800; text-transform:uppercase; color:#f8fafc; }
+.at-sub{ margin:2px 0 12px; text-align:center; font-size:.64rem; font-weight:600; color:#94a3b8; }
+.at-card{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); }
+.alltable-modal .season-table{ table-layout:fixed; width:100%; }
+.alltable-modal .season-table col.c-rank{ width:28px; }
+.alltable-modal .season-table col.c-num{ width:25px; }
+.alltable-modal .season-table col.c-pts{ width:40px; }
+.alltable-modal .season-table th, .alltable-modal .season-table td{ padding-left:1px; padding-right:1px; font-size:.7rem; text-align:center; }
+.alltable-modal .season-table th.th-team, .alltable-modal .season-table td.td-team{ text-align:left; }
+.alltable-modal .season-table td.td-team .td-team-inner{ gap:5px; min-width:0; }
+.alltable-modal .season-table td.td-team .td-team-inner span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.7rem; }
