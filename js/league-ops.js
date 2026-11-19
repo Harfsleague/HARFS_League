@@ -103,6 +103,8 @@ function openTeamPanel(team){
             || '<div class="team-panel-empty">No trophies yet</div>');
 
     document.getElementById('team-panel-records').innerHTML = (typeof recordsTeamPanelHtml==='function') ? recordsTeamPanelHtml(team) : renderRecordBadgesFor(team);
+    const gamesEl = document.getElementById('team-panel-games');
+    if(gamesEl){ gamesEl.innerHTML = (typeof recordsTeamGamesHtml==='function') ? recordsTeamGamesHtml(team) : ''; const gsec = gamesEl.closest('.team-panel-section'); if(gsec) gsec.style.display = isSymbolicTeam(team) ? 'none' : ''; }
 
     // A symbolic team plays no league, so its records section stays hidden.
     const recEl = document.getElementById('team-panel-records');

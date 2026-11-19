@@ -369,26 +369,27 @@ function renderAllTimeTable(){
         sub.textContent = n ? `${n} season${n===1?'':'s'} combined` : 'Every season combined';
     }
 }
-function openAllTableSheet(){
+function openAllTableSheet(srcEl){
     haptic([8]);
     renderAllTimeTable();
     const sh = document.getElementById('alltable-sheet'); if(!sh) return;
     sh.classList.add('open');
-    const src = document.getElementById('season-screen-title');
+    const src = srcEl || document.getElementById('season-screen-title');
     if(src && typeof fxExpand==='function') fxExpand(sh, sh.querySelector('.alltable-modal'), src.getBoundingClientRect(), sh.querySelectorAll('.at-title, .at-sub, .at-card'));
 }
 function closeAllTableSheet(){ const sh = document.getElementById('alltable-sheet'); if(sh) sh.classList.remove('open'); }
 (function seasonTitleHold(){
-    const el = document.getElementById('season-screen-title'); if(!el) return;
+    const el = document.querySelector('#league-table-screen > .league-header'); if(!el) return;   // the whole "Season" header bubble
     const HOLD_MS = 2000;
     let timer = null, sx = 0, sy = 0;
     function cancel(){ clearTimeout(timer); timer = null; el.classList.remove('holding'); }
     el.addEventListener('pointerdown', e=>{
+        if(e.target.closest && e.target.closest('button, select, a, .season-icon-btn')) return;   // the back / schedule buttons keep working normally
         if(e.pointerType==='mouse' && e.button!==0) return;
         cancel();
         sx = e.clientX; sy = e.clientY;
         el.classList.add('holding');
-        timer = setTimeout(()=>{ timer = null; el.classList.remove('holding'); haptic([14,40,14]); openAllTableSheet(); }, HOLD_MS);
+        timer = setTimeout(()=>{ timer = null; el.classList.remove('holding'); haptic([14,40,14]); openAllTableSheet(el); }, HOLD_MS);
     });
     el.addEventListener('pointermove', e=>{ if(timer && Math.hypot(e.clientX-sx, e.clientY-sy) > 14) cancel(); });
     ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, cancel));

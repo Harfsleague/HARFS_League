@@ -990,7 +990,7 @@ const HARFS_I18N = {
         ap_app_font:'App Font', ap_mag_font:'Magazine Font',
         fed_title:'Federation & Owners', fed_sub:'The people behind HARFS · tap a photo to view',
         role_pres:'Federation President', role_owner:'Team Owner', role_fan:'Fan',
-        tp_trophies:'Trophy Cabinet', tp_records:'League Records',
+        tp_trophies:'Trophy Cabinet', tp_games:'Match Highlights', tp_records:'League Records',
         cards_title:'Cards', cards_sub:'Drag a card up into the box to use it · tap to enlarge',
         pl_title:'Playlist',
         te_title:'Edit Profile', te_name:'Name', te_photos:'Photos', te_reset:'Reset', te_save:'Save',
@@ -1032,7 +1032,7 @@ const HARFS_I18N = {
         ap_app_font:'فونت برنامه', ap_mag_font:'فونت مجله',
         fed_title:'فدراسیون و مالکین', fed_sub:'اعضای اصلی HARFS · برای بزرگ‌نمایی روی عکس بزنید',
         role_pres:'رئیس فدراسیون', role_owner:'مالک تیم', role_fan:'هوادار',
-        tp_trophies:'ویترین افتخارات', tp_records:'رکوردهای لیگ',
+        tp_trophies:'ویترین افتخارات', tp_games:'نتایج برجسته', tp_records:'رکوردهای لیگ',
         cards_title:'کارت‌ها', cards_sub:'کارت را به بالا داخل کادر بکشید تا استفاده شود · برای بزرگ‌نمایی بزنید',
         pl_title:'لیست پخش موزیک',
         te_title:'ویرایش پروفایل', te_name:'نام تیم', te_photos:'تصاویر پروفایل', te_reset:'بازنشانی', te_save:'ذخیره',
@@ -1074,7 +1074,7 @@ const HARFS_I18N = {
         ap_app_font:'Fuente de la App', ap_mag_font:'Fuente de la Revista',
         fed_title:'Federación y Propietarios', fed_sub:'Las personas detrás de HARFS · toca una foto para ver',
         role_pres:'Presidente de la Federación', role_owner:'Propietario de Equipo', role_fan:'Aficionado',
-        tp_trophies:'Vitrina de Trofeos', tp_records:'Récords de la Liga',
+        tp_trophies:'Vitrina de Trofeos', tp_games:'Partidos Destacados', tp_records:'Récords de la Liga',
         cards_title:'Cartas', cards_sub:'Arrastra una carta hacia el recuadro para usarla · toca para ampliar',
         pl_title:'Lista de Reproducción',
         te_title:'Editar Perfil', te_name:'Nombre', te_photos:'Fotos', te_reset:'Restablecer', te_save:'Guardar',
@@ -1440,7 +1440,8 @@ function applyAppLanguage(){
         setTxt('#people-sheet .people-sub', 'fed_sub');
         const tpSecTitles = document.querySelectorAll('#team-panel-overlay .team-panel-section-title');
         if(tpSecTitles[0]) tpSecTitles[0].innerHTML = `<i class="fas fa-trophy"></i> ${harfsT('tp_trophies')}`;
-        if(tpSecTitles[1]) tpSecTitles[1].innerHTML = `<i class="fas fa-crown"></i> ${harfsT('tp_records')}`;
+        if(tpSecTitles[1]) tpSecTitles[1].innerHTML = `<i class="fas fa-futbol"></i> ${harfsT('tp_games')}`;
+        if(tpSecTitles[2]) tpSecTitles[2].innerHTML = `<i class="fas fa-crown"></i> ${harfsT('tp_records')}`;
         setTxt('#cards-title', 'cards_title');
         setTxt('#cards-subtitle', 'cards_sub');
         setTxt('#playlist-sheet h4', 'pl_title');
@@ -1470,6 +1471,8 @@ function applyAppLanguage(){
         if(document.getElementById('team-panel-overlay')?.classList.contains('open') && typeof teamPanelCurrent !== 'undefined' && teamPanelCurrent && typeof recordsTeamPanelHtml === 'function'){
             const recBox = document.getElementById('team-panel-records');
             if(recBox) recBox.innerHTML = recordsTeamPanelHtml(teamPanelCurrent);
+            const gamesBox = document.getElementById('team-panel-games');
+            if(gamesBox && typeof recordsTeamGamesHtml === 'function') gamesBox.innerHTML = recordsTeamGamesHtml(teamPanelCurrent);
         }
 
         // Translate dynamic containers (Federation, CUP, Schedule, Cards, Notifications, Sessions, Lite)

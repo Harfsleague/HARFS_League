@@ -2913,3 +2913,39 @@ body.perf-no-anim #season-screen-title.holding{ animation:none; }
 .alltable-modal .season-table th.th-team, .alltable-modal .season-table td.td-team{ text-align:left; }
 .alltable-modal .season-table td.td-team .td-team-inner{ gap:5px; min-width:0; }
 .alltable-modal .season-table td.td-team .td-team-inner span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.7rem; }
+
+
+/* =====================================================
+   1.37 — Records order / motion, Season hold on the whole header, roomier all-time table, team panel "Match Highlights"
+   ===================================================== */
+/* the biggest-win / highest-scoring cards load exactly like the tiles around them */
+.rec-card.rec-match{ animation:recSoftIn .75s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--d,0ms); }
+body.perf-no-anim .rec-card.rec-match, html.lite-mode .rec-card.rec-match{ animation:none; }
+@media (prefers-reduced-motion:reduce){ .rec-card.rec-match{ animation:none; } }
+
+/* Season: the whole header bubble glows while it is held */
+#league-table-screen > .league-header{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+#league-table-screen > .league-header.holding .season-title{ animation:heroHold 2s linear forwards; }
+body.perf-no-anim #league-table-screen > .league-header.holding .season-title{ animation:none; }
+#season-screen-title.holding{ animation:none; }
+
+/* all-time table: wider panel, roomier rows (the points column stays visible on a phone) */
+.team-picker-sheet.as-modal .team-picker-panel.alltable-modal{ width:min(96vw,440px); max-width:min(96vw,440px); }
+.alltable-modal .profile-body{ padding:46px 8px 16px; }
+.alltable-modal .season-table col.c-rank{ width:30px; }
+.alltable-modal .season-table col.c-num{ width:28px; }
+.alltable-modal .season-table col.c-pts{ width:46px; }
+.alltable-modal .season-table th, .alltable-modal .season-table td{ padding-top:9px; padding-bottom:9px; font-size:.74rem; }
+.alltable-modal .season-table td.td-team .td-team-inner span{ font-size:.74rem; }
+.alltable-modal .season-table thead th{ padding-top:10px; padding-bottom:8px; }
+
+/* team panel: Match Highlights (biggest win · highest-scoring match · worst defeat) */
+#team-panel-games .tp-game:first-child{ margin-top:0; }
+#team-panel-games .tp-game{ animation:recSoftIn .6s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--d,0ms); }
+.tp-game-side{ display:flex; align-items:center; gap:5px; min-width:0; flex:1; font-size:.66rem; font-weight:700; color:#cbd5e1; }
+.tp-game-side:last-child{ flex-direction:row-reverse; text-align:right; }
+.tp-game-side > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tp-game-side.me{ color:#fff; font-weight:900; }
+.tp-game-logo{ width:20px; height:20px; border-radius:50%; object-fit:cover; flex:none; background:rgba(255,255,255,.06); }
+.tp-game-s b{ flex:none; }
+body.perf-no-anim #team-panel-games .tp-game{ animation:none; }

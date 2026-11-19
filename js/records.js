@@ -24,12 +24,11 @@ const REC_I18N = {
         no_team_records:'No records yet',
         no_held_now:'No league record held right now',
         big_win:'Biggest Win',
-        high_match:'Highest-Scoring Match',
+        high_match:'Highest-Scoring Match', worst_defeat:'Worst Defeat', no_games:'No results yet',
         u_trebles:'trebles', u_goals:'goals', u_clean:'clean sheets', u_row:'in a row', u_wins:'wins',
         u_wrate:'of games won', u_gd:'goal diff', u_games:'games', u_points:'points', u_defeats:'defeats',
         u_silvers:'silvers', u_titles:'titles', u_weeks:'weeks', u_draws:'draws',
         t_draws:'Most Draws', n_draws:'All-time, every season',
-        t_ppg:'Points per Goal', n_ppg:'Points won for every goal scored (min. 10 goals)', n_ppg_s:'Points won for every goal scored (min. 5 goals)', u_ppg:'pts / goal', pts_from_goals:(p,g)=>`${p} points from ${g} goals`,
         t_fewest:'Fewest Goals Conceded', n_fewest:'The tightest defence of all time', n_fewest_s:l=>`${l} — the tightest defence`, games_n:n=>`${n} games`,
         t_achv:'Most Achievements', n_achv:'The team holding the most league records', u_records:'records', of_records:n=>`of ${n} records`,
         t_treble:'The Treble', n_treble:'League + CUP + Super Cup in the same season',
@@ -39,7 +38,7 @@ const REC_I18N = {
         t_reign:'Longest Reign at the Top', n_reign:'League titles won in a row',
         t_wins:'Most Wins', n_wins:'All-time, every season',
         t_pts:'Most Points',
-        t_top:'Most Weeks on Top', n_top_s:s=>`${s} — matchweeks in first place`,
+        t_top:'Most Weeks on Top', n_top:'Matchweeks spent in first place, all seasons', n_top_s:s=>`${s} — matchweeks in first place`,
         t_wrate:'Best Win Rate', n_wrate:'Share of games won (5+ games played)', n_wrate_s:s=>`${s} (3+ games played)`,
         t_gd:'Best Goal Difference', n_gd:'Goals scored minus goals conceded, all-time',
         t_wstreak:'Longest Winning Streak', n_wstreak:n=>`Wins in a row, from the ${n} games on record`, n_wstreak_s:s=>`${s} — wins in a row`,
@@ -72,12 +71,11 @@ const REC_I18N = {
         no_team_records:'هنوز رکوردی ثبت نشده است',
         no_held_now:'در حال حاضر رکورددار انفرادی لیگ نیست',
         big_win:'بهترین برد (بیشترین اختلاف گل)',
-        high_match:'پرگل‌ترین مسابقه',
+        high_match:'پرگل‌ترین مسابقه', worst_defeat:'بدترین شکست', no_games:'هنوز نتیجه‌ای ثبت نشده است',
         u_trebles:'سه‌گانه', u_goals:'گل', u_clean:'کلین‌شیت', u_row:'پیاپی', u_wins:'برد',
         u_wrate:'درصد برد', u_gd:'تفاضل گل', u_games:'بازی', u_points:'امتیاز', u_defeats:'شکست',
         u_silvers:'نقره', u_titles:'قهرمانی', u_weeks:'هفته', u_draws:'مساوی',
         t_draws:'بیشترین مساوی', n_draws:'در کل تاریخ تمام فصول',
-        t_ppg:'امتیاز به ازای هر گل', n_ppg:'امتیازی که تیم به ازای هر گل زده کسب کرده (حداقل ۱۰ گل)', n_ppg_s:'امتیازی که تیم به ازای هر گل زده کسب کرده (حداقل ۵ گل)', u_ppg:'امتیاز / گل', pts_from_goals:(p,g)=>`${p} امتیاز از ${g} گل`,
         t_fewest:'کمترین گل خورده', n_fewest:'محکم‌ترین دفاع تاریخ لیگ', n_fewest_s:l=>`${l} — محکم‌ترین دفاع`, games_n:n=>`${n} بازی`,
         t_achv:'بیشترین دستاورد', n_achv:'تیمی که بیشترین رکوردهای لیگ را در اختیار دارد', u_records:'رکورد', of_records:n=>`از ${n} رکورد`,
         t_treble:'سه‌گانه قهرمانی (Treble)', n_treble:'قهرمانی هم‌زمان لیگ + جام حذفی + سوپرجام در یک فصل',
@@ -87,7 +85,7 @@ const REC_I18N = {
         t_reign:'طولانی‌ترین دوران صدرنشینی', n_reign:'قهرمانی‌های متوالی در لیگ',
         t_wins:'بیشترین برد', n_wins:'در کل تاریخ تمام فصول',
         t_pts:'بیشترین امتیاز',
-        t_top:'بیشترین هفته صدرنشینی', n_top_s:s=>`${s} — هفته‌های حضور در رتبه اول`,
+        t_top:'بیشترین هفته صدرنشینی', n_top:'هفته‌های حضور در صدر جدول در تمام فصل‌ها', n_top_s:s=>`${s} — هفته‌های حضور در رتبه اول`,
         t_wrate:'بهترین درصد برد', n_wrate:'نسبت بردها (حداقل ۵ بازی)', n_wrate_s:s=>`${s} (حداقل ۳ بازی)`,
         t_gd:'بهترین تفاضل گل', n_gd:'گل زده منهای گل خورده در کل تاریخ',
         t_wstreak:'طولانی‌ترین نوار برد متوالی', n_wstreak:n=>`بردهای پیاپی از ${n} بازی ثبت‌شده`, n_wstreak_s:s=>`${s} — بردهای پیاپی`,
@@ -120,12 +118,11 @@ const REC_I18N = {
         no_team_records:'Sin récords aún',
         no_held_now:'Actualmente no posee ningún récord de liga',
         big_win:'Mayor Goleada',
-        high_match:'Partido con Más Goles',
+        high_match:'Partido con Más Goles', worst_defeat:'Peor Derrota', no_games:'Aún no hay resultados',
         u_trebles:'tripletes', u_goals:'goles', u_clean:'porterías imbatidas', u_row:'seguidos', u_wins:'victorias',
         u_wrate:'de victorias', u_gd:'dif. goles', u_games:'partidos', u_points:'puntos', u_defeats:'derrotas',
         u_silvers:'platas', u_titles:'títulos', u_weeks:'semanas', u_draws:'empates',
         t_draws:'Más Empates', n_draws:'Histórico, todas las temporadas',
-        t_ppg:'Puntos por Gol', n_ppg:'Puntos logrados por cada gol marcado (mín. 10 goles)', n_ppg_s:'Puntos logrados por cada gol marcado (mín. 5 goles)', u_ppg:'pts / gol', pts_from_goals:(p,g)=>`${p} puntos con ${g} goles`,
         t_fewest:'Menos Goles Encajados', n_fewest:'La defensa más sólida de la historia', n_fewest_s:l=>`${l} — la defensa más sólida`, games_n:n=>`${n} partidos`,
         t_achv:'Más Logros', n_achv:'El equipo que posee más récords de la liga', u_records:'récords', of_records:n=>`de ${n} récords`,
         t_treble:'El Triplete', n_treble:'Liga + Copa + Supercopa en la misma temporada',
@@ -135,7 +132,7 @@ const REC_I18N = {
         t_reign:'Reinado Más Largo en la Cima', n_reign:'Títulos de liga ganados consecutivamente',
         t_wins:'Más Victorias', n_wins:'Histórico, todas las temporadas',
         t_pts:'Más Puntos',
-        t_top:'Más Semanas como Líder', n_top_s:s=>`${s} — jornadas en primer lugar`,
+        t_top:'Más Semanas como Líder', n_top:'Jornadas en primer lugar, todas las temporadas', n_top_s:s=>`${s} — jornadas en primer lugar`,
         t_wrate:'Mejor % de Victorias', n_wrate:'Porcentaje de victorias (mín. 5 partidos)', n_wrate_s:s=>`${s} (mín. 3 partidos)`,
         t_gd:'Mejor Diferencia de Goles', n_gd:'Goles a favor menos goles en contra',
         t_wstreak:'Mayor Racha de Victorias', n_wstreak:n=>`Victorias seguidas en ${n} partidos`, n_wstreak_s:s=>`${s} — victorias seguidas`,
@@ -233,10 +230,14 @@ function recordsComputeAll(){
     });
     const bars = (fn)=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
     const lowBars = (fn, ok)=>TEAM_NAMES.filter(ok).map(t=>({ team:t, value:fn(t) })).sort((x,y)=>x.value-y.value);
-    const ptsAll = {}; TEAM_NAMES.forEach(t=>ptsAll[t]=0);
-    (archivedSeasons||[]).forEach(se=>(se.table||[]).forEach(r=>{ if(r && r.name in ptsAll) ptsAll[r.name] += Number(r.Pts)||0; }));
-    TEAM_NAMES.forEach(t=>{ const r = leagueData && leagueData[t]; if(r) ptsAll[t] += Number(r.Pts)||0; });
-    const ppg = t=> stats[t].GF >= 10 ? Math.round(ptsAll[t] / stats[t].GF * 100) / 100 : 0;
+    // every matchweek a team sat first in the table, over all archived seasons + the current one
+    let topAll = null;
+    if(typeof magComputeRankHistory==='function'){
+        const ok = lg=>(lg||[]).filter(m=>recordsParseScore(m) && TEAM_NAMES.includes(m.home) && TEAM_NAMES.includes(m.away));
+        const add = lg=>{ let h = null; try{ h = magComputeRankHistory(ok(lg)); }catch(e){} if(!h) return; topAll = topAll || {}; TEAM_NAMES.forEach(t=>{ topAll[t] = (topAll[t]||0) + h.ranks[t].filter(r=>r===1).length; }); };
+        (archivedSeasons||[]).forEach(se=>add(se.history));
+        add(matchHistory);
+    }
     const cards = [
         { id:'treble', special:true, icon:'\ud83c\udfc6', badge:RECORDS_TREBLE_BADGE, title:L.t_treble, note:L.n_treble, list:bars(t=>treble[t].n), unit:L.u_trebles,
           extra:t=> treble[t].seasons.length ? L.seasons_list(treble[t].seasons) : '' },
@@ -255,8 +256,7 @@ function recordsComputeAll(){
         { id:'bpts',    icon:'⭐', title:L.t_bpts,    note:L.n_bpts,                      list:bars(t=>seasonBest.pts[t].v), unit:L.u_points, extra:t=>seasonBest.pts[t].s },
         { id:'bgf',     icon:'💫', title:L.t_bgf,     note:L.n_bgf,                       list:bars(t=>seasonBest.gf[t].v), unit:L.u_goals, extra:t=>seasonBest.gf[t].s },
         { id:'defeats', icon:'💔', title:L.t_defeats, note:L.n_defeats,                   list:bars(t=>stats[t].L), unit:L.u_defeats },
-        { id:'ppg',     icon:'🎯', title:L.t_ppg,     note:L.n_ppg,                       list:bars(ppg), unit:L.u_ppg, dec:2, fmt:v=>v.toFixed(2),
-          extra:t=> stats[t].GF >= 10 ? L.pts_from_goals(ptsAll[t], stats[t].GF) : '' },
+        ...(topAll ? [{ id:'top', icon:'🔝', title:L.t_top, note:L.n_top, list:bars(t=>topAll[t]||0), unit:L.u_weeks }] : []),
         { id:'fewest',  icon:'🧤', title:L.t_fewest,  note:L.n_fewest,                    list:lowBars(t=>stats[t].GA, t=>stats[t].P>0), low:true, unit:L.u_goals,
           extra:t=> L.games_n(stats[t].P) },
         { id:'draws',   icon:'🤝', title:L.t_draws,   note:L.n_draws,                     list:bars(t=>stats[t].D), unit:L.u_draws },
@@ -305,7 +305,6 @@ function recordsComputeSeason(){
     }
     const bars = fn=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
     const lowBars = (fn, ok)=>TEAM_NAMES.filter(ok).map(t=>({ team:t, value:fn(t) })).sort((x,y)=>x.value-y.value);
-    const ppg = t=> g(t,'GF') >= 5 ? Math.round(g(t,'Pts') / g(t,'GF') * 100) / 100 : 0;
     const n = logs.length;
     const cards = [
         { id:'goals',   icon:'⚽', title:L.t_goals,   note:src.label,                        list:bars(t=>g(t,'GF')), unit:L.u_goals },
@@ -321,8 +320,6 @@ function recordsComputeSeason(){
         { id:'wstreak', icon:'🚀', title:L.t_wstreak, note:L.n_wstreak_s(src.label),         list:bars(t=>winRun[t].best), unit:L.u_row },
         { id:'unb',     icon:'🛡️', title:L.t_unb,     note:L.n_unb_s(src.label),             list:bars(t=>unbRun[t].best), unit:L.u_games },
         { id:'defeats', icon:'💔', title:L.t_defeats, note:L.n_defeats_s(src.label),         list:bars(t=>g(t,'L')), unit:L.u_defeats },
-        { id:'ppg',     icon:'🎯', title:L.t_ppg,     note:L.n_ppg_s,                        list:bars(ppg), unit:L.u_ppg, dec:2, fmt:v=>v.toFixed(2),
-          extra:t=> g(t,'GF') >= 5 ? L.pts_from_goals(g(t,'Pts'), g(t,'GF')) : '' },
         { id:'fewest',  icon:'🧤', title:L.t_fewest,  note:L.n_fewest_s(src.label),          list:lowBars(t=>g(t,'GA'), t=>g(t,'P')>0), low:true, unit:L.u_goals,
           extra:t=> L.games_n(g(t,'P')) },
         { id:'draws',   icon:'🤝', title:L.t_draws,   note:src.label,                        list:bars(t=>g(t,'D')), unit:L.u_draws },
@@ -400,10 +397,12 @@ function recordsRender(){
             <div class="rt-val">${ldr.teams.length ? `${countHtml(c, ldr)}<small>${c.unit}</small>` : '<span class="rt-dash">—</span>'}</div>
         </div>`;
     };
-    const feat = cards.filter(c=>c.feat || c.special).sort((a,b)=>(b.special?1:0)-(a.special?1:0)), rest = cards.filter(c=>!(c.feat || c.special));
+    const REC_ORDER = ['goals','bgf','gd', 'clean','conc','fewest', 'wins','wrate','wstreak', 'unb','draws','defeats', 'reign','bpts','top','pts', 'silver','bronze','decor', 'played'];   // scoring · defending · winning · results · the table · medals
+    const ord = c=>{ const k = REC_ORDER.indexOf(c.id); return k<0 ? 99 : k; };
+    const feat = cards.filter(c=>c.feat || c.special).sort((a,b)=>(b.special?1:0)-(a.special?1:0)), rest = cards.filter(c=>!(c.feat || c.special)).sort((a,b)=>ord(a)-ord(b));
     const tiles = [ feat.length ? `<div class="rec-grid rec-grid-feat${feat.length===1?' solo':''}">${feat.map(featTile).join('')}</div>` : '', `<div class="rec-grid">${rest.map(tile).join('')}</div>` ];
     const match = (id, icon, title, data)=> data ? `
-        <div class="rec-card rec-match" style="--d:${(i++)*90}ms">
+        <div class="rec-card rec-match" style="--d:${Math.min(i++,20)*45}ms">
             <div class="rec-head"><span class="rec-ico">${icon}</span><div><div class="rec-title">${title}</div><div class="rec-note">${data.m.timestamp ? new Date(data.m.timestamp).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) : ''}</div></div></div>
             <div class="rec-scoreline">
                 <div class="rec-side">${recordsLogo(data.m.home,'rec-logo')}<span>${escapeHtml(recordsTeamLabel(data.m.home))}</span></div>
@@ -411,7 +410,7 @@ function recordsRender(){
                 <div class="rec-side">${recordsLogo(data.m.away,'rec-logo')}<span>${escapeHtml(recordsTeamLabel(data.m.away))}</span></div>
             </div>
         </div>` : '';
-    box.innerHTML = tiles[0] + match('high','🎯',L.high_match,highest) + tiles[1] + match('big','💥',L.big_win,biggest);   // featured row, then the highest-scoring match, then the 3-per-row tiles, biggest win last
+    box.innerHTML = tiles[0] + match('big','💥',L.big_win,biggest) + tiles[1] + match('high','🎯',L.high_match,highest);   // featured row, then the biggest win, then the 3-per-row tiles, highest-scoring match last
     recordsAnimateCounts(box);
     const sh = document.getElementById('records-sheet'), pn = sh && sh.querySelector('.records-modal'); if(pn) pn.scrollTop = 0;
 }
@@ -513,21 +512,36 @@ function recordsForTeam(team){
                  pct: c.low ? recordsBarPct(c, me.value, ldr.best) : (ldr.best>0 ? Math.round(Math.max(0,me.value)/ldr.best*100) : 0),
                  extra: c.extra ? c.extra(team) : '' };
     }).filter(Boolean);
+    return { rows };
+}
+// The team's three notable results (all seasons): biggest win, highest-scoring match, worst defeat
+function recordsTeamGames(team){
+    const L = recL();
     const logs = [];
     (archivedSeasons||[]).forEach(se=>(se.history||[]).forEach(m=>logs.push({ m, label:L.season_n(se.seasonId) })));
     (matchHistory||[]).forEach(m=>logs.push({ m, label:L.this_season }));
-    let bigWin = null, topGame = null;
+    let bigWin = null, topGame = null, worst = null;
     logs.forEach(({m,label})=>{
         const sc = recordsParseScore(m); if(!sc || (m.home!==team && m.away!==team)) return;
         const mine = m.home===team ? sc.a : sc.b, theirs = m.home===team ? sc.b : sc.a, total = mine+theirs;
         if(mine>theirs && (!bigWin || (mine-theirs)>bigWin.margin || ((mine-theirs)===bigWin.margin && total>bigWin.total))) bigWin = { m, sc, label, margin:mine-theirs, total };
         if(!topGame || total>topGame.total) topGame = { m, sc, label, total };
+        if(mine<theirs && (!worst || (theirs-mine)>worst.margin || ((theirs-mine)===worst.margin && theirs>worst.conceded))) worst = { m, sc, label, margin:theirs-mine, total, conceded:theirs };
     });
-    return { rows, bigWin, topGame };
+    return { bigWin, topGame, worst };
+}
+function recordsTeamGamesHtml(team){
+    const L = recL();
+    const { bigWin, topGame, worst } = recordsTeamGames(team);
+    if(!bigWin && !topGame && !worst) return `<div class="team-panel-empty">${L.no_games}</div>`;
+    const side = t=>`<span class="tp-game-side${t===team?' me':''}">${recordsLogo(t,'tp-game-logo')}<span>${escapeHtml(recordsTeamLabel(t))}</span></span>`;
+    const game = (icon,title,g,k)=> g ? `<div class="tp-game" style="--d:${k*60}ms"><div class="tp-game-h"><span>${icon}</span>${title}<em>${escapeHtml(g.label)}</em></div>
+        <div class="tp-game-s">${side(g.m.home)}<b>${g.sc.a} – ${g.sc.b}</b>${side(g.m.away)}</div></div>` : '';
+    return game('💥',L.big_win,bigWin,0) + game('🎯',L.high_match,topGame,1) + game('💔',L.worst_defeat,worst,2);
 }
 function recordsTeamPanelHtml(team){
     const L = recL();
-    const { rows, bigWin, topGame } = recordsForTeam(team);
+    const { rows } = recordsForTeam(team);
     if(!rows.length) return `<div class="team-panel-empty">${L.no_team_records}</div>`;
     const held = rows.filter(r=>r.holds);
     const heldHtml = held.length
@@ -545,9 +559,7 @@ function recordsTeamPanelHtml(team){
             <span class="tp-rec-rank">${r.holds ? '👑' : '#'+r.rank}</span>
         </div>`;
     }).join('');
-    const game = (icon,title,g)=> g ? `<div class="tp-game"><div class="tp-game-h"><span>${icon}</span>${title}<em>${escapeHtml(g.label)}</em></div>
-        <div class="tp-game-s"><span>${escapeHtml(recordsTeamLabel(g.m.home))}</span><b>${g.sc.a} – ${g.sc.b}</b><span>${escapeHtml(recordsTeamLabel(g.m.away))}</span></div></div>` : '';
-    return heldHtml + `<div class="tp-rec-list">${list}</div>` + game('💥',L.big_win,bigWin) + game('🎯',L.high_match,topGame);
+    return heldHtml + `<div class="tp-rec-list">${list}</div>`;
 }
 
 let recordsScrollBound = false;
