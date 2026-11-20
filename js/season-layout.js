@@ -18,6 +18,11 @@
 // ============================================================
 
 const SEASON_VIEW_TITLES = { main:'Season', schedule:'Schedule' };
+// The header title follows the app language (it used to fall back to English every time the page was re-opened).
+function seasonViewTitle(view){
+    const key = view==='schedule' ? 'schedule_title' : 'season_title';
+    return (typeof window.harfsT==='function') ? window.harfsT(key) : SEASON_VIEW_TITLES[view];
+}
 let seasonView = 'main';
 let seasonTab = 'league';
 let seasonSwapTimer = null;
@@ -64,7 +69,7 @@ function seasonSetTab(tab, opts){
 function seasonApplyView(view, prev, keepTitle){
     const $ = id => document.getElementById(id);
     document.body.dataset.seasonView = view;
-    if(!keepTitle){ const title = $('season-screen-title'); if(title) title.textContent = SEASON_VIEW_TITLES[view]; }
+    if(!keepTitle){ const title = $('season-screen-title'); if(title) title.textContent = seasonViewTitle(view); }
     const back = $('season-back-btn');
     if(back){ back.style.display = view==='main' ? 'none' : 'flex'; if(view!=='main' && seasonMotionOk()) seasonPlay(back,'sv-fade',320); }
     const actions = $('season-header-actions');
@@ -117,7 +122,7 @@ function seasonShowView(view, opts){
     box.style.setProperty('--sx', (dir*30)+'px');
     clearTimeout(seasonSwapTimer);
     seasonPlay(box, 'sv-out');
-    seasonAnimateTitle(SEASON_VIEW_TITLES[view], 150);
+    seasonAnimateTitle(seasonViewTitle(view), 150);
     seasonSwapTimer = setTimeout(()=>{
         // The heavy part (rendering the timetable / history) runs while the box is still invisible (sv-out keeps it
         // at opacity 0). The slide-in and the header morph only start AFTER the new content has been laid out and

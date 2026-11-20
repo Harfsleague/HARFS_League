@@ -234,7 +234,7 @@ function recordsComputeAll(){
     let topAll = null;
     if(typeof magComputeRankHistory==='function'){
         const ok = lg=>(lg||[]).filter(m=>recordsParseScore(m) && TEAM_NAMES.includes(m.home) && TEAM_NAMES.includes(m.away));
-        const add = lg=>{ let h = null; try{ h = magComputeRankHistory(ok(lg)); }catch(e){} if(!h) return; topAll = topAll || {}; TEAM_NAMES.forEach(t=>{ topAll[t] = (topAll[t]||0) + h.ranks[t].filter(r=>r===1).length; }); };
+        const add = lg=>{ let h = null; try{ h = magComputeRankHistory(recordsWithRounds(ok(lg))); }catch(e){} if(!h) return; topAll = topAll || {}; TEAM_NAMES.forEach(t=>{ topAll[t] = (topAll[t]||0) + h.ranks[t].filter(r=>r===1).length; }); };
         (archivedSeasons||[]).forEach(se=>add(se.history));
         add(matchHistory);
     }
@@ -268,6 +268,16 @@ function recordsComputeAll(){
     cards.unshift(recordsAchievementsCard(cards.slice(), L, bars, L.n_achv));
     return { cards, biggest, highest };
 }
+// Older archived seasons were saved without a matchweek number on each game, so "weeks on top" could not be worked out for them
+// (and the record vanished whenever the latest season was an archived one). When the numbers are missing the games are grouped
+// into matchweeks in the order they were played: every week = one game per team.
+function recordsWithRounds(list){
+    const arr = list || [];
+    if(arr.every(m=>Number.isFinite(+m.round) && +m.round>0)) return arr;
+    const per = Math.max(1, Math.floor(TEAM_NAMES.length/2));
+    return [...arr].sort((x,y)=>String(x.timestamp||'').localeCompare(String(y.timestamp||'')))
+        .map((m,i)=>({ ...m, round:Math.floor(i/per)+1 }));
+}
 function recordsSeasonSource(){
     const L = recL();
     if((matchHistory||[]).length){
@@ -300,7 +310,7 @@ function recordsComputeSeason(){
     });
     let top = null;
     if(typeof magComputeRankHistory==='function'){
-        const h = magComputeRankHistory(logs);
+        const h = magComputeRankHistory(recordsWithRounds(logs));
         if(h){ top = {}; TEAM_NAMES.forEach(t=>{ top[t] = h.ranks[t].filter(r=>r===1).length; }); }
     }
     const bars = fn=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
@@ -331,12 +341,46 @@ function recordsComputeSeason(){
 let recordsScope = 'all';
 function recordsCompute(){ return recordsScope==='season' ? recordsComputeSeason() : recordsComputeAll(); }
 function setRecordsScope(sc){
-    recordsScope = sc==='season' ? 'season' : 'all';
+    const next = sc==='season' ? 'season' : 'all';
+    if(next===recordsScope){ recordsSyncScopeUI(); return; }
+    // all-time sits on the left, latest season on the right: the list slides in from the side it is on
+    const dir = next==='season' ? 1 : -1;
+    recordsScope = next;
     haptic([6]);
     recordsSyncScopeUI();
     const box = document.getElementById('records-list');
-    if(box && box.animate) box.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});
     recordsRender();
+    if(box && box.animate) box.animate([{opacity:0,transform:`translateX(${dir*46}px)`},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.22,1,.36,1)'});
+}
+// swipe the records page sideways (or scroll it sideways with a trackpad) to flip between All-time and Latest season
+let recordsSwipeBound = false;
+function recordsBindSwipe(){
+    if(recordsSwipeBound) return;
+    const pn = document.querySelector('#records-sheet .records-modal'); if(!pn) return;
+    recordsSwipeBound = true;
+    const flip = dx=>{
+        if(document.getElementById('rec-detail-ov')) return;
+        if(dx<0 && recordsScope==='all' && recordsSeasonSource()) setRecordsScope('season');
+        else if(dx>0 && recordsScope==='season') setRecordsScope('all');
+    };
+    let sx = 0, sy = 0, live = false;
+    pn.addEventListener('touchstart', e=>{
+        live = e.touches.length===1; if(!live) return;
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive:true });
+    pn.addEventListener('touchend', e=>{
+        if(!live) return; live = false;
+        const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+        if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.4) flip(dx);
+    }, { passive:true });
+    pn.addEventListener('touchcancel', ()=>{ live = false; }, { passive:true });
+    let wheelLock = 0;
+    pn.addEventListener('wheel', e=>{
+        if(Math.abs(e.deltaX) < 24 || Math.abs(e.deltaX) < Math.abs(e.deltaY)*1.4) return;
+        const now = Date.now(); if(now < wheelLock) return;
+        wheelLock = now + 700;
+        flip(e.deltaX > 0 ? -1 : 1);
+    }, { passive:true });
 }
 function recordsSyncScopeUI(){
     const L = recL();
@@ -495,6 +539,7 @@ function openRecordsSheet(scope){
     recordsSyncScopeUI();
     recordsRender();
     recordsBindScroll();
+    recordsBindSwipe();
     sh.classList.remove('open'); void sh.offsetWidth; sh.classList.add('open');
     requestAnimationFrame(recordsSyncScopeUI);
 }

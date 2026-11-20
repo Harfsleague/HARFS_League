@@ -7,7 +7,9 @@
 // ============================================================
 // RENDER — SEASON TABLE  (uses <table> now — no grid bug)
 // ============================================================
-function renderLeagueTable(dataToRender, historyForForm){
+function renderLeagueTable(dataToRender, historyForForm, opts){
+    // While the table is in "All Time" mode every refresh keeps showing the combined table (opts.force = the morph itself)
+    if(!(opts && opts.force) && window.seasonAllTime){ dataToRender = seasonAllTimeData(); historyForForm = historyForForm || matchHistory; }
     const loadingEl=document.getElementById('loading-message');
     if(loadingEl)loadingEl.style.display='none';
     // last-5 form comes from the history of the season being shown (current by default, the archived one when browsing the archive)
@@ -21,7 +23,7 @@ function renderLeagueTable(dataToRender, historyForForm){
         const gdStr=gd>0?`+${gd}`:String(gd);
         const gdClass=gd>0?'gd-pos':(gd<0?'gd-neg':'gd-zero');
         const delay=i*55;
-        return`<tr class="${rowClass}" style="animation-delay:${delay}ms">
+        return`<tr class="${rowClass}" data-team="${escapeHtml(t.name)}" style="animation-delay:${delay}ms">
             <td class="td-rank"><span class="rk-pill rk-${i+1}">${i+1}</span></td>
             <td class="td-team">
                 <div class="td-team-inner">
@@ -209,7 +211,11 @@ let currentSeasonIdx=0; // index into seasonOptions
 function syncSeasonPill(){
     const opt=seasonOptions[currentSeasonIdx];
     const lbl=document.getElementById('season-pill-label');
-    if(lbl)lbl.textContent=opt?opt.label:'Current Season';
+    if(lbl && !seasonPillTyping){
+        if(window.seasonAllTime) lbl.textContent=seasonT('season_alltime','All Time');
+        else if(opt && opt.value==='current') lbl.textContent=seasonT('season_current','Current Season');
+        else lbl.textContent=opt?opt.label:seasonT('season_current','Current Season');
+    }
     const prevBtn=document.getElementById('season-prev-btn');
     const nextBtn=document.getElementById('season-next-btn');
     if(prevBtn)prevBtn.style.opacity=currentSeasonIdx===0?'0.3':'1';
@@ -220,6 +226,7 @@ function navigateSeason(dir){
     haptic([6]);
     const newIdx=currentSeasonIdx+dir;
     if(newIdx<0||newIdx>=seasonOptions.length)return;
+    seasonLeaveAllTime();
     currentSeasonIdx=newIdx;
     syncSeasonPill();
     const opt=seasonOptions[currentSeasonIdx];
@@ -247,6 +254,7 @@ function closeSeasonPicker(){
 
 function selectSeasonFromPicker(idx){
     haptic([8]);
+    seasonLeaveAllTime();
     currentSeasonIdx=idx;
     syncSeasonPill();
     const opt=seasonOptions[idx];
@@ -282,6 +290,7 @@ async function loadArchiveDropdown(){
     }catch(e){console.log("No archives yet");}
 }
 function loadSelectedSeason(val){
+    seasonLeaveAllTime();
     if(val==='current'){
         isViewingArchive=false;
         updateCurrentDateTime();
@@ -338,8 +347,9 @@ async function loadMainLeagueDataFromGitHub(onCached){
 
 
 // ============================================================
-// ALL-TIME TABLE — hold the "Season" title for 2 seconds (like the HARFS capsule): the title glows while you hold, then a table grows out of it
-// with every point, game and goal of every season (archived seasons + the current one) added together.
+// ALL-TIME TABLE — hold the "Season" header for 3 seconds: it glows while you hold, then the SAME table on the Season page turns into the
+// all-time table: the numbers count up smoothly, the rows glide into their new ranks and the "Current Season" bubble erases itself and
+// types "All Time". Hold again (or pick another season) to go back.
 // ============================================================
 function seasonAllTimeRows(){
     const stats = computeAllTimeStats(), pts = {};
@@ -349,38 +359,109 @@ function seasonAllTimeRows(){
     return TEAM_NAMES.map(t=>({ name:t, ...stats[t], Pts:pts[t] }))
         .sort((a,b)=>(b.Pts-a.Pts) || ((b.GF-b.GA)-(a.GF-a.GA)) || (b.GF-a.GF) || a.name.localeCompare(b.name));
 }
-function renderAllTimeTable(){
-    const rows = seasonAllTimeRows();
-    const body = document.getElementById('alltable-body'); if(!body) return;
-    body.innerHTML = rows.map((t,i)=>{
-        const gd = t.GF - t.GA, gdStr = gd>0 ? `+${gd}` : String(gd), gdClass = gd>0 ? 'gd-pos' : (gd<0 ? 'gd-neg' : 'gd-zero');
-        const rowClass = i===0 ? 'rank-1-row' : (i===1 ? 'rank-2-row' : (i===2 ? 'rank-3-row' : 'rank-4-row'));
-        return `<tr class="${rowClass}" style="animation-delay:${i*55}ms">
-            <td class="td-rank"><span class="rk-pill rk-${i+1}">${i+1}</span></td>
-            <td class="td-team"><div class="td-team-inner"><img src="${teamLogoUrl(t.name)}" alt="" onerror="this.style.opacity='0.3'" onload="this.style.opacity='1'"><span style="${i===0?'color:#fef3c7;':''}">${teamShort(t.name)}</span></div></td>
-            <td>${t.P}</td><td class="td-w">${t.W}</td><td>${t.D}</td><td class="td-l">${t.L}</td>
-            <td class="td-gf">${t.GF}</td><td class="td-ga">${t.GA}</td><td class="td-gd ${gdClass}">${gdStr}</td>
-            <td class="td-pts"><span class="pts-pill">${t.Pts}</span></td>
-        </tr>`;
-    }).join('');
-    const sub = document.getElementById('alltable-sub');
-    if(sub){
-        const n = (archivedSeasons||[]).length + (TEAM_NAMES.some(t=>leagueData && leagueData[t] && leagueData[t].P>0) ? 1 : 0);
-        sub.textContent = n ? `${n} season${n===1?'':'s'} combined` : 'Every season combined';
+
+function seasonT(key, fallback){ return (typeof window.harfsT==='function') ? window.harfsT(key) : fallback; }
+window.seasonAllTime = false;
+let seasonPillTyping = false, seasonMorphTok = 0, seasonTypeTimer = null;
+
+// all-time rows as the {team: row} object renderLeagueTable() expects
+function seasonAllTimeData(){
+    const o = {}; seasonAllTimeRows().forEach(r=>{ o[r.name] = r; }); return o;
+}
+// the table of whichever season the pill points at (what we go back to)
+function seasonSelectedData(){
+    const opt = seasonOptions[currentSeasonIdx];
+    if(opt && opt.value!=='current'){
+        const s = (archivedSeasons||[]).find(x=>String(x.seasonId)===String(opt.value));
+        if(s){ const d = {}; (s.table||[]).forEach(t=>{ d[t.name] = t; }); return { data:d, form:s.history||[] }; }
+    }
+    return { data:leagueData, form:matchHistory };
+}
+function seasonLeaveAllTime(){
+    window.seasonAllTime = false; seasonMorphTok++;
+    clearInterval(seasonTypeTimer); seasonPillTyping = false;
+    document.body.classList.remove('season-alltime');
+}
+
+// erase the old pill text letter by letter, then write the new one (smooth, ~1.2 s in total)
+function seasonTypePill(text){
+    const lbl = document.getElementById('season-pill-label'); if(!lbl) return;
+    clearInterval(seasonTypeTimer);
+    if(!seasonMotionOk()){ lbl.textContent = text; seasonPillTyping = false; return; }
+    seasonPillTyping = true;
+    let phase = 'erase', cur = lbl.textContent || '', k = cur.length;
+    const t0 = performance.now(), eraseMs = 520, typeMs = 560;
+    lbl.style.minWidth = lbl.offsetWidth + 'px';       // the pill does not jitter while the letters change
+    seasonTypeTimer = setInterval(()=>{
+        const el = performance.now() - t0;
+        if(phase==='erase'){
+            const left = Math.max(0, Math.round(cur.length * (1 - el/eraseMs)));
+            lbl.textContent = cur.slice(0, left);
+            if(left===0){ phase = 'type'; k = 0; seasonTypeT0 = performance.now(); }
+        } else {
+            const n = Math.min(text.length, Math.round(text.length * ((performance.now()-seasonTypeT0)/typeMs)));
+            lbl.textContent = text.slice(0, n);
+            if(n>=text.length){ clearInterval(seasonTypeTimer); seasonPillTyping = false; lbl.style.minWidth = ''; lbl.textContent = text; syncSeasonPill(); }
+        }
+    }, 30);
+}
+let seasonTypeT0 = 0;
+
+// Turns the table that is on screen into `targetData`: rows glide to their new rank, every number counts from its old to its new value.
+function seasonMorphTable(targetData, formSource){
+    const tok = ++seasonMorphTok;
+    const num = el=>{ const v = parseInt(String(el.textContent).replace('+','').replace('−','-'),10); return isNaN(v) ? 0 : v; };
+    // the nine animated cells of a row: rank pill, P W D L GF GA GD, points pill
+    const cellsOf = tr=>{ const c = tr.children; return [c[0].firstElementChild || c[0], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10].firstElementChild || c[10]]; };
+    const snap = {};
+    document.querySelectorAll('#league-table-body tr[data-team]').forEach(tr=>{
+        snap[tr.dataset.team] = { top:tr.getBoundingClientRect().top, vals:cellsOf(tr).map(num) };
+    });
+    renderLeagueTable(targetData, formSource, { force:true });
+    const rows = [...document.querySelectorAll('#league-table-body tr[data-team]')];
+    rows.forEach(tr=>{ tr.style.animation = 'none'; });         // no fade-in: the old rows turn into the new ones
+    if(!seasonMotionOk()) return;
+    const DUR = 1500, ease = t=> t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+    const cells = rows.map(tr=>{
+        const b = snap[tr.dataset.team], targets = cellsOf(tr);
+        const end = targets.map(num);
+        if(b){
+            const dy = b.top - tr.getBoundingClientRect().top;
+            if(dy && tr.animate) tr.animate([{ transform:`translateY(${dy}px)` },{ transform:'none' }], { duration:DUR, easing:'cubic-bezier(.22,1,.36,1)' });
+        }
+        return { targets, end, start: b ? b.vals : end.map(()=>0) };
+    });
+    const t0 = performance.now();
+    const fmt = (i,v)=> i===7 ? (v>0 ? '+'+v : String(v)) : String(v);
+    (function step(now){
+        if(tok!==seasonMorphTok) return;
+        const e = ease(Math.min(1,(now-t0)/DUR));
+        cells.forEach(r=>r.targets.forEach((el,i)=>{ el.textContent = fmt(i, Math.round(r.start[i] + (r.end[i]-r.start[i])*e)); }));
+        if(e<1) requestAnimationFrame(step);
+    })(t0);
+}
+
+function seasonToggleAllTime(){
+    if(typeof seasonView!=='undefined' && seasonView!=='main') return;
+    if(typeof seasonTab!=='undefined' && seasonTab!=='league') return;
+    haptic([14,40,14]);
+    if(!window.seasonAllTime){
+        window.seasonAllTime = true;
+        document.body.classList.add('season-alltime');
+        seasonMorphTable(seasonAllTimeData(), matchHistory);
+        seasonTypePill(seasonT('season_alltime','All Time'));
+    } else {
+        const back = seasonSelectedData();
+        seasonLeaveAllTime();
+        seasonMorphTable(back.data, back.form);
+        const opt = seasonOptions[currentSeasonIdx];
+        seasonTypePill(opt && opt.value!=='current' ? opt.label : seasonT('season_current','Current Season'));
     }
 }
-function openAllTableSheet(srcEl){
-    haptic([8]);
-    renderAllTimeTable();
-    const sh = document.getElementById('alltable-sheet'); if(!sh) return;
-    sh.classList.add('open');
-    const src = srcEl || document.getElementById('season-screen-title');
-    if(src && typeof fxExpand==='function') fxExpand(sh, sh.querySelector('.alltable-modal'), src.getBoundingClientRect(), sh.querySelectorAll('.at-title, .at-sub, .at-card'));
-}
-function closeAllTableSheet(){ const sh = document.getElementById('alltable-sheet'); if(sh) sh.classList.remove('open'); }
+
 (function seasonTitleHold(){
     const el = document.querySelector('#league-table-screen > .league-header'); if(!el) return;   // the whole "Season" header bubble
-    const HOLD_MS = 2000;
+    const HOLD_MS = 3000;
     let timer = null, sx = 0, sy = 0;
     function cancel(){ clearTimeout(timer); timer = null; el.classList.remove('holding'); }
     el.addEventListener('pointerdown', e=>{
@@ -389,7 +470,7 @@ function closeAllTableSheet(){ const sh = document.getElementById('alltable-shee
         cancel();
         sx = e.clientX; sy = e.clientY;
         el.classList.add('holding');
-        timer = setTimeout(()=>{ timer = null; el.classList.remove('holding'); haptic([14,40,14]); openAllTableSheet(el); }, HOLD_MS);
+        timer = setTimeout(()=>{ timer = null; el.classList.remove('holding'); seasonToggleAllTime(); }, HOLD_MS);
     });
     el.addEventListener('pointermove', e=>{ if(timer && Math.hypot(e.clientX-sx, e.clientY-sy) > 14) cancel(); });
     ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, cancel));

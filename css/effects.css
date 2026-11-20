@@ -2891,7 +2891,7 @@ body.perf-no-anim .records-modal .rec-scope-pill{ transition:none; }
 .season-table thead th.th-pts{ text-align:center !important; padding-left:0 !important; padding-right:0 !important; }
 .season-table td.td-pts{ text-align:center !important; padding-left:0 !important; padding-right:0 !important; }
 #season-screen-title{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
-#season-screen-title.holding{ animation:heroHold 2s linear forwards; }
+#season-screen-title.holding{ animation:heroHold 3s linear forwards; }
 body.perf-no-anim #season-screen-title.holding{ animation:none; }
 
 /* the all-time table panel: starts below the HARFS capsule (like Cards / Records) */
@@ -2925,7 +2925,7 @@ body.perf-no-anim .rec-card.rec-match, html.lite-mode .rec-card.rec-match{ anima
 
 /* Season: the whole header bubble glows while it is held */
 #league-table-screen > .league-header{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
-#league-table-screen > .league-header.holding .season-title{ animation:heroHold 2s linear forwards; }
+#league-table-screen > .league-header.holding .season-title{ animation:heroHold 3s linear forwards; }
 body.perf-no-anim #league-table-screen > .league-header.holding .season-title{ animation:none; }
 #season-screen-title.holding{ animation:none; }
 

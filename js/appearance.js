@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.19";
+const HARFS_VERSION_LABEL = "1.30";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -973,7 +973,7 @@ const HARFS_I18N = {
         ov_podium_label:'Overall Ranking and Trophies',
         ov_mag_intro:'This week’s issue',
         tile_magazine:'Magazine', tile_cards:'Cards', tile_chat:'Chat', tile_moments:'Moments', tile_game:'Game', tile_records:'Records',
-        season_title:'Season', season_current:'Current Season', match_history:'Match History', filter_all:'All',
+        season_title:'Season', season_current:'Current Season', season_alltime:'All Time', schedule_title:'Schedule', match_history:'Match History', filter_all:'All',
         th_team:'Team', th_p:'P', th_w:'W', th_d:'D', th_l:'L', th_gf:'GF', th_ga:'GA', th_gd:'GD', th_pt:'PT',
         moments_title:'⭐ Golden Moments ⭐',
         profile_title:'Profile', account_sub:'HARFS League Account',
@@ -1015,7 +1015,7 @@ const HARFS_I18N = {
         ov_podium_label:'رده‌بندی کل و جام‌های قهرمانی',
         ov_mag_intro:'شمارهٔ این هفته',
         tile_magazine:'مجله', tile_cards:'کارت‌ها', tile_chat:'چت', tile_moments:'لحظات', tile_game:'بازی', tile_records:'رکوردها',
-        season_title:'فصل مسابقات', season_current:'فصل جاری', match_history:'تاریخچه بازی‌ها', filter_all:'همه',
+        season_title:'فصل مسابقات', season_current:'فصل جاری', season_alltime:'تمام دوران', schedule_title:'برنامه بازی‌ها', match_history:'تاریخچه بازی‌ها', filter_all:'همه',
         th_team:'تیم', th_p:'ب', th_w:'ب', th_d:'م', th_l:'ش', th_gf:'گ‌ز', th_ga:'گ‌خ', th_gd:'ت‌گ', th_pt:'امتیاز',
         moments_title:'⭐ لحظات طلایی ⭐',
         profile_title:'پروفایل', account_sub:'حساب کاربری لیگ HARFS',
@@ -1057,7 +1057,7 @@ const HARFS_I18N = {
         ov_podium_label:'Clasificación General y Trofeos',
         ov_mag_intro:'Edición de esta semana',
         tile_magazine:'Revista', tile_cards:'Cartas', tile_chat:'Chat', tile_moments:'Momentos', tile_game:'Juegos', tile_records:'Récords',
-        season_title:'Temporada', season_current:'Temporada Actual', match_history:'Historial de Partidos', filter_all:'Todos',
+        season_title:'Temporada', season_current:'Temporada Actual', season_alltime:'Histórico', schedule_title:'Calendario', match_history:'Historial de Partidos', filter_all:'Todos',
         th_team:'Equipo', th_p:'PJ', th_w:'G', th_d:'E', th_l:'P', th_gf:'GF', th_ga:'GC', th_gd:'DG', th_pt:'PTS',
         moments_title:'⭐ Momentos Dorados ⭐',
         profile_title:'Perfil', account_sub:'Cuenta de Liga HARFS',
@@ -1350,8 +1350,10 @@ function applyAppLanguage(){
 
         // 3. Season & Standings Table & Match History
         const sTitle = document.getElementById('season-screen-title');
-        if(sTitle && document.body.getAttribute('data-season-view') !== 'schedule' && document.body.getAttribute('data-season-tab') !== 'cup'){
-            sTitle.textContent = harfsT('season_title');
+        if(sTitle && document.body.getAttribute('data-season-tab') !== 'cup'){
+            sTitle.textContent = (typeof seasonViewTitle === 'function')
+                ? seasonViewTitle(document.body.getAttribute('data-season-view') === 'schedule' ? 'schedule' : 'main')
+                : harfsT('season_title');
         }
         const ths = document.querySelectorAll('#league-table-screen .season-table thead th');
         if(ths.length >= 11){
@@ -1366,7 +1368,9 @@ function applyAppLanguage(){
             ths[10].textContent = harfsT('th_pt');
         }
         const pillLbl = document.getElementById('season-pill-label');
-        if(pillLbl && (typeof currentSeasonIdx === 'undefined' || currentSeasonIdx === 0)){
+        if(pillLbl && window.seasonAllTime){
+            pillLbl.textContent = harfsT('season_alltime');
+        } else if(pillLbl && (typeof currentSeasonIdx === 'undefined' || currentSeasonIdx === 0)){
             pillLbl.textContent = harfsT('season_current');
         }
         const histTitle = document.getElementById('season-history-title');
