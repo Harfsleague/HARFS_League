@@ -1020,12 +1020,13 @@ body:not(.lite-mode) .flow-block{
 .ov-ext-poster img{ width:100%; height:100%; object-fit:cover; object-position:center 25%; display:block; opacity:0; transition:opacity .5s ease; }
 .ov-ext-poster img.loaded{ opacity:1; }
 .ov-ext-intro{
-    position:absolute; z-index:2; left:24px; right:0; bottom:0;   /* sits on the floor of the bubble: the poster area stays exactly as it was, only the gap under the title is gone */
-    padding:5px 12px 6px 17px; border-radius:0 0 22px 0;
-    background:rgba(6,10,20,0.78); border:none; border-top:1px solid rgba(255,255,255,0.1);
-    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
-    font-size:0.6rem; font-weight:700; line-height:1.4; color:#f1f5f9; text-align:start;
-    overflow:hidden;
+    position:absolute; z-index:2; left:24px; right:0; bottom:0;
+    padding:30px 12px 5px 17px; border-radius:0 0 22px 0;   /* tall, see-through at the top so the poster shows; the text sits on the dark floor */
+    background:linear-gradient(to top, rgba(4,7,16,0.94) 0%, rgba(4,7,16,0.8) 34%, rgba(4,7,16,0.38) 68%, rgba(4,7,16,0) 100%);
+    border:none;
+    font-size:0.52rem; font-weight:700; line-height:1.35; color:#f1f5f9; text-align:start;
+    text-shadow:0 1px 3px rgba(0,0,0,0.7);
+    overflow:hidden; pointer-events:none;
 }
 .ov-intro-txt{
     display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2;   /* number of intro lines shown before the "…" */
@@ -2973,3 +2974,10 @@ body.perf-no-anim #team-panel-games .tp-game{ animation:none; }
 .tp-rec-wrap.open .tp-rec-collapse{ grid-template-rows:1fr; opacity:1; }
 .tp-rec-inner{ min-height:0; overflow:hidden; padding-top:8px; }
 body.perf-no-anim .tp-rec-collapse, body.perf-no-anim .tp-rec-toggle i{ transition:none; }
+
+/* Records page: softer, slower entrance */
+@keyframes recSoftIn2{ from{ opacity:0; transform:translateY(18px) scale(.975); filter:blur(3px); } to{ opacity:1; transform:none; filter:blur(0); } }
+.rec-tile, .rec-card.rec-match{ animation:recSoftIn2 .95s cubic-bezier(.16,1,.3,1) both; animation-delay:var(--d,0ms); }
+.rec-bar i, .tp-rec-bar i{ animation-duration:1.4s; }
+body.perf-no-anim .rec-tile, body.perf-no-anim .rec-card.rec-match, html.lite-mode .rec-tile, html.lite-mode .rec-card.rec-match{ animation:none; }
+@media (prefers-reduced-motion:reduce){ .rec-tile, .rec-card.rec-match{ animation:none; } }

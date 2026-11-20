@@ -384,7 +384,7 @@ function setRecordsScope(sc){
     recordsSyncScopeUI();
     const box = document.getElementById('records-list');
     recordsRender();
-    if(box && box.animate) box.animate([{opacity:0,transform:`translateX(${dir*46}px)`},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.22,1,.36,1)'});
+    if(box && box.animate) box.animate([{opacity:0,transform:`translateX(${dir*46}px)`},{opacity:1,transform:'none'}],{duration:520,easing:'cubic-bezier(.16,1,.3,1)'});
 }
 // swipe the records page sideways (or scroll it sideways with a trackpad) to flip between All-time and Latest season
 let recordsSwipeBound = false;
@@ -452,7 +452,7 @@ function recordsRender(){
     const featTile = c=>{
         const h = holderParts(c), ldr = h.ldr, extra = ldr.teams.length===1 && c.extra ? c.extra(ldr.teams[0]) : '';
         return `
-        <div class="rec-tile rec-feat${c.special?' rec-special':''}" style="--d:${Math.min(i++,20)*45}ms" ${open(c)}>
+        <div class="rec-tile rec-feat${c.special?' rec-special':''}" style="--d:${Math.min(i++,14)*38}ms" ${open(c)}>
             <div class="rf-head"><span class="rf-ico">${c.badge || c.icon}</span><div class="rf-ttl"><b>${c.title}</b><em>${escapeHtml(c.note)}</em></div></div>
             <div class="rf-main">
                 <div class="rf-logos">${ldr.teams.length ? h.logos : '<span class="rt-none">—</span>'}</div>
@@ -467,7 +467,7 @@ function recordsRender(){
     const tile = c=>{
         const h = holderParts(c), ldr = h.ldr;
         return `
-        <div class="rec-tile" style="--d:${Math.min(i++,20)*45}ms" ${open(c)}>
+        <div class="rec-tile" style="--d:${Math.min(i++,14)*38}ms" ${open(c)}>
             <div class="rt-ico">${c.icon}</div>
             <div class="rt-title"><span>${c.title}</span></div>
             <div class="rt-logos">${ldr.teams.length ? h.logos : '<span class="rt-none">—</span>'}</div>
@@ -480,7 +480,7 @@ function recordsRender(){
     const feat = cards.filter(c=>c.feat || c.special).sort((a,b)=>(b.special?1:0)-(a.special?1:0)), rest = cards.filter(c=>!(c.feat || c.special)).sort((a,b)=>ord(a)-ord(b));
     const tiles = [ feat.length ? `<div class="rec-grid rec-grid-feat${feat.length===1?' solo':''}">${feat.map(featTile).join('')}</div>` : '', `<div class="rec-grid">${rest.map(tile).join('')}</div>` ];
     const match = (id, icon, title, data)=> data ? `
-        <div class="rec-card rec-match" style="--d:${Math.min(i++,20)*45}ms">
+        <div class="rec-card rec-match" style="--d:${id==='big' ? 40 : 120}ms">
             <div class="rec-head"><span class="rec-ico">${icon}</span><div><div class="rec-title">${title}</div><div class="rec-note">${data.m.timestamp ? new Date(data.m.timestamp).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) : ''}</div></div></div>
             <div class="rec-scoreline">
                 <div class="rec-side">${recordsLogo(data.m.home,'rec-logo')}<span>${escapeHtml(recordsTeamLabel(data.m.home))}</span></div>
@@ -497,7 +497,7 @@ function recordsAnimateCounts(root){
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
     root.querySelectorAll('.rec-count').forEach((el,k)=>{
         const to = +el.dataset.to, dec = +el.dataset.dec||0, pre = el.dataset.pre||'', suf = el.dataset.suf||''; if(reduce || to<=0){ el.textContent = pre+to.toFixed(dec)+suf; return; }
-        const t0 = performance.now() + 260 + k*30, dur = 1300;
+        const t0 = performance.now() + 300 + Math.min(k,12)*34, dur = 1500;
         const tick = now=>{
             if(now<t0){ requestAnimationFrame(tick); return; }
             const p = Math.min(1,(now-t0)/dur), e = 1-Math.pow(1-p,4);   // ease-out quart: a long, soft landing
