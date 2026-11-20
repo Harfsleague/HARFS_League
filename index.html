@@ -1288,10 +1288,11 @@
             <div class="mp-modal-body">
                 <label class="mp-file-drop" for="mp-up-file">
                     <i class="fas fa-file-audio"></i>
-                    <span id="mp-up-file-label">Tap to choose an audio file (MP3, M4A, WAV, OGG)</span>
-                    <input type="file" id="mp-up-file" accept=".mp3,.m4a,.wav,.ogg,.aac,audio/*" style="display:none;" onchange="mpOnUploadFilePicked(this)">
+                    <span id="mp-up-file-label">Tap to choose one or multiple audio files (MP3, M4A, WAV, OGG)</span>
+                    <input type="file" id="mp-up-file" accept=".mp3,.m4a,.wav,.ogg,.aac,audio/*" multiple style="display:none;" onchange="mpOnUploadFilePicked(this)">
                 </label>
-                <div class="mp-field">
+                <div class="mp-up-queue" id="mp-up-queue" style="display:none;"></div>
+                <div class="mp-field" id="mp-up-title-wrap">
                     <label id="mp-up-title-lbl" for="mp-up-title">Song Title</label>
                     <input type="text" id="mp-up-title" dir="auto" placeholder="e.g. Khatereha">
                 </div>

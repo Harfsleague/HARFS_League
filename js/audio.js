@@ -315,7 +315,7 @@ let mpTab = 'benyamin';
 let mpSelectedAlbum = 'all';
 let mpSelectedUploader = 'all';
 let mpSearchQuery = '';
-let mpUploadPickedFile = null;
+let mpUploadPickedFiles = [];
 let mpQueue = [];
 
 function mpTrackReactId(filename){
@@ -771,16 +771,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
     updateHomeMusicTile();
 });
 
-// ---- Upload Modal (open for any logged-in user) ----
+// ---- Upload Modal (single OR multi-file batch album upload for any logged-in user) ----
 function openMusicUploadModal(defaultSection, defaultAlbum){
     if(!loggedInTeam || !harfsSessionToken){
         showToast(GH_LOGIN_MSG, 'info', 2400);
         return;
     }
     mpApplyStaticLabels();
-    mpUploadPickedFile = null;
+    mpUploadPickedFiles = [];
     const fIn = document.getElementById('mp-up-file'); if(fIn) fIn.value = '';
     const fLbl = document.getElementById('mp-up-file-label'); if(fLbl) fLbl.textContent = mpT('upFile');
+    const qEl = document.getElementById('mp-up-queue'); if(qEl){ qEl.style.display = 'none'; qEl.innerHTML = ''; }
+    const tWrap = document.getElementById('mp-up-title-wrap'); if(tWrap) tWrap.style.display = '';
     const tIn = document.getElementById('mp-up-title'); if(tIn) tIn.value = '';
     const sec = document.getElementById('mp-up-section');
     if(sec) sec.value = defaultSection || (mpTab === 'community' ? 'community' : 'benyamin');
@@ -804,36 +806,57 @@ function mpOnUploadSectionChange(){
     const aIn = document.getElementById('mp-up-artist');
     if(aIn && sec === 'benyamin' && !aIn.value.trim()) aIn.value = mpLang()==='fa' ? 'بنیامین بهادری' : 'Benyamin Bahadori';
 }
+function mpRenderUploadQueue(statuses){
+    const qEl = document.getElementById('mp-up-queue');
+    if(!qEl) return;
+    if(mpUploadPickedFiles.length <= 1){ qEl.style.display = 'none'; qEl.innerHTML = ''; return; }
+    qEl.style.display = 'flex';
+    qEl.innerHTML = mpUploadPickedFiles.map((f, i)=>{
+        const st = (statuses && statuses[i]) || '⏳';
+        const sz = typeof formatBytes==='function' ? formatBytes(f.size) : Math.round(f.size/1024)+' KB';
+        return `<div class="mp-uq-row"><span class="mp-uq-st" id="mp-uq-st-${i}">${st}</span><span class="mp-uq-name" dir="auto">${escapeHtml(filenameToTitle(f.name))}</span><span class="mp-uq-sz">${sz}</span></div>`;
+    }).join('');
+}
 function mpOnUploadFilePicked(input){
-    const f = input.files && input.files[0];
-    if(!f) return;
-    if(!AUDIO_EXTENSIONS.some(ext => f.name.toLowerCase().endsWith(ext))){
-        showToast(f.name + ' is not a supported audio file', 'error', 2600);
+    const picked = Array.from(input.files || []);
+    if(!picked.length) return;
+    const valid = picked.filter(f => AUDIO_EXTENSIONS.some(ext => f.name.toLowerCase().endsWith(ext)));
+    const skipped = picked.length - valid.length;
+    if(!valid.length){
+        showToast('No supported audio files selected', 'error', 2600);
         input.value = '';
         return;
     }
-    mpUploadPickedFile = f;
+    if(skipped > 0) showToast(`${skipped} unsupported file(s) skipped`, 'info', 2200);
+    mpUploadPickedFiles = valid;
     const fLbl = document.getElementById('mp-up-file-label');
-    if(fLbl) fLbl.textContent = `${f.name} (${typeof formatBytes==='function' ? formatBytes(f.size) : Math.round(f.size/1024)+' KB'})`;
+    const tWrap = document.getElementById('mp-up-title-wrap');
     const tIn = document.getElementById('mp-up-title');
-    if(tIn && !tIn.value.trim()) tIn.value = filenameToTitle(f.name);
+    if(valid.length === 1){
+        const f = valid[0];
+        if(fLbl) fLbl.textContent = `${f.name} (${typeof formatBytes==='function' ? formatBytes(f.size) : Math.round(f.size/1024)+' KB'})`;
+        if(tWrap) tWrap.style.display = '';
+        if(tIn) tIn.value = filenameToTitle(f.name);
+    } else {
+        const totalBytes = valid.reduce((a, f) => a + (f.size || 0), 0);
+        const totalStr = typeof formatBytes==='function' ? formatBytes(totalBytes) : Math.round(totalBytes/1024)+' KB';
+        if(fLbl) fLbl.textContent = mpLang()==='fa'
+            ? `${valid.length} آهنگ انتخاب شد (${totalStr})`
+            : `${valid.length} songs selected (${totalStr})`;
+        if(tWrap) tWrap.style.display = 'none';
+        if(tIn) tIn.value = '';
+    }
+    mpRenderUploadQueue();
 }
 async function mpSubmitUpload(){
-    if(!mpUploadPickedFile){ showToast('Choose an audio file first', 'info', 2200); return; }
+    if(!mpUploadPickedFiles.length){ showToast('Choose at least one audio file first', 'info', 2200); return; }
     const token = ghAuthHeader();
     if(!token){ showToast(GH_LOGIN_MSG, 'error', 2400); return; }
-    const title = (document.getElementById('mp-up-title')?.value || '').trim() || filenameToTitle(mpUploadPickedFile.name);
     const section = document.getElementById('mp-up-section')?.value || 'community';
     const albumId = section === 'benyamin' ? (document.getElementById('mp-up-album')?.value || 'benyamin-singles') : null;
     const artist = (document.getElementById('mp-up-artist')?.value || '').trim() || (section === 'benyamin' ? 'بنیامین بهادری' : '');
-
-    const extMatch = mpUploadPickedFile.name.match(/\.[^/.]+$/);
-    const ext = extMatch ? extMatch[0].toLowerCase() : '.mp3';
-    const safeBase = title.replace(/[\\/:*?"<>|#%]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70) || ('track_' + Date.now());
-    const prefix = section === 'benyamin' ? 'Benyamin - ' : '';
-    let finalName = (prefix && !/^benyamin|بنیامین/i.test(safeBase) ? prefix : '') + safeBase + ext;
+    const customSingleTitle = (document.getElementById('mp-up-title')?.value || '').trim();
     const existingNames = new Set((PLAYLIST || []).map(t => mpExtractFilename(t.src)));
-    if(existingNames.has(finalName)) finalName = finalName.replace(ext, ` (${Date.now().toString().slice(-4)})${ext}`);
 
     const btn = document.getElementById('mp-up-submit');
     const prog = document.getElementById('mp-up-prog');
@@ -842,39 +865,74 @@ async function mpSubmitUpload(){
     const txtEl = document.getElementById('mp-up-prog-txt');
     if(btn) btn.disabled = true;
     if(prog) prog.style.display = 'block';
-    if(txtEl) txtEl.textContent = mpT('uploading');
     if(fill) fill.style.width = '0%';
     if(pctEl) pctEl.textContent = '0%';
 
+    const total = mpUploadPickedFiles.length;
+    let uploadedCount = 0, failedCount = 0, lastErr = '';
+    if(!musicMeta || !musicMeta.tracks) musicMeta = { v:1, tracks:{} };
+
     try{
-        const base64 = await fileToBase64(mpUploadPickedFile);
-        const ok = await uploadMusicFile(finalName, base64, frac => {
-            const p = Math.round(frac * 100);
-            if(fill) fill.style.width = p + '%';
-            if(pctEl) pctEl.textContent = p + '%';
-        });
-        if(!ok){
-            const err = lastSaveFileError || 'Upload failed';
-            if(/403|forbidden|permission/i.test(err)){
+        for(let i = 0; i < total; i++){
+            const file = mpUploadPickedFiles[i];
+            const title = (total === 1 && customSingleTitle) ? customSingleTitle : filenameToTitle(file.name);
+            const extMatch = file.name.match(/\.[^/.]+$/);
+            const ext = extMatch ? extMatch[0].toLowerCase() : '.mp3';
+            const safeBase = title.replace(/[\\/:*?"<>|#%]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70) || ('track_' + Date.now());
+            const prefix = section === 'benyamin' ? 'Benyamin - ' : '';
+            let finalName = (prefix && !/^benyamin|بنیامین/i.test(safeBase) ? prefix : '') + safeBase + ext;
+            if(existingNames.has(finalName)) finalName = finalName.replace(ext, ` (${Date.now().toString().slice(-4)}_${i+1})${ext}`);
+            existingNames.add(finalName);
+
+            const stEl = document.getElementById(`mp-uq-st-${i}`);
+            if(stEl) stEl.textContent = '⬆️';
+            if(txtEl) txtEl.textContent = total > 1 ? `${mpT('uploading')} (${i+1}/${total})` : mpT('uploading');
+
+            try{
+                const base64 = await fileToBase64(file);
+                const ok = await uploadMusicFile(finalName, base64, frac => {
+                    const overall = Math.round(((i + frac) / total) * 100);
+                    if(fill) fill.style.width = overall + '%';
+                    if(pctEl) pctEl.textContent = overall + '%';
+                });
+                if(ok){
+                    uploadedCount++;
+                    if(stEl) stEl.textContent = '✅';
+                    musicMeta.tracks[finalName] = { title, artist, section, albumId, uploader: loggedInTeam, ts: Date.now() + i };
+                    const newSrc = MUSIC_RAW_BASE + encodeURIComponent(finalName);
+                    if(!PLAYLIST.some(x => x.src === newSrc)) PLAYLIST.push({ title, src: newSrc });
+                } else {
+                    failedCount++;
+                    lastErr = lastSaveFileError || 'Upload failed';
+                    if(stEl) stEl.textContent = '❌';
+                    if(/403|forbidden|permission/i.test(lastErr)) break;
+                }
+            }catch(err){
+                failedCount++;
+                lastErr = err.message || 'error';
+                if(stEl) stEl.textContent = '❌';
+            }
+        }
+
+        if(uploadedCount > 0){
+            if(txtEl) txtEl.textContent = mpLang()==='fa' ? 'در حال ثبت لیست آلبوم...' : 'Saving album metadata...';
+            await saveMusicMetaToGitHub(total > 1 ? `Batch upload ${uploadedCount} tracks` : 'Add music metadata');
+            await idbSet('playlist', 'v', PLAYLIST);
+            const okMsg = mpLang()==='fa'
+                ? (failedCount ? `${uploadedCount} آهنگ آپلود شد (${failedCount} ناموفق)` : `${uploadedCount} آهنگ با موفقیت آپلود شد!`)
+                : (failedCount ? `${uploadedCount} uploaded (${failedCount} failed)` : `${uploadedCount} song(s) uploaded!`);
+            showToast(okMsg, failedCount ? 'info' : 'success', 2800);
+            closeMusicUploadModal();
+            mpTab = section;
+            if(albumId) mpSelectedAlbum = albumId;
+            mpSetTab(section);
+        } else {
+            if(/403|forbidden|permission/i.test(lastErr)){
                 showToast('Upload blocked by Worker permissions — allow music/ writes for signed-in users', 'error', 4200);
             } else {
-                showToast('Upload failed: ' + err, 'error', 3400);
+                showToast('Upload failed: ' + (lastErr || 'unknown error'), 'error', 3400);
             }
-            return;
         }
-        if(!musicMeta || !musicMeta.tracks) musicMeta = { v:1, tracks:{} };
-        musicMeta.tracks[finalName] = { title, artist, section, albumId, uploader: loggedInTeam, ts: Date.now() };
-        await saveMusicMetaToGitHub('Add music metadata: ' + title);
-        const newSrc = MUSIC_RAW_BASE + encodeURIComponent(finalName);
-        if(!PLAYLIST.some(x => x.src === newSrc)) PLAYLIST.push({ title, src: newSrc });
-        await idbSet('playlist', 'v', PLAYLIST);
-        showToast(title + ' uploaded!', 'success', 2400);
-        closeMusicUploadModal();
-        mpTab = section;
-        if(albumId) mpSelectedAlbum = albumId;
-        mpSetTab(section);
-    }catch(e){
-        showToast('Upload error: ' + (e.message || 'failed'), 'error', 3200);
     }finally{
         if(btn) btn.disabled = false;
     }
