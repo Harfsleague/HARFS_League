@@ -138,10 +138,13 @@ function closeReportSheet(){
 // to fetch fresh data over the network and update both the in-memory state
 // and the cache. If the network fails (or there's no connection at all),
 // the cached copy — if any — is what stays on screen; see setSyncStatus().
-async function loadLeagueDataFromGitHub(){
+async function loadLeagueDataFromGitHub(onCached){
     if(!Object.keys(leagueData).length)initializeLeagueData();
     const cached = await idbGet('leagueData','v');
-    if(cached) Object.keys(cached).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...cached[k]};});
+    if(cached){
+        Object.keys(cached).forEach(k=>{if(leagueData[k])leagueData[k]={...leagueData[k],...cached[k]};});
+        if(typeof onCached==='function'){ try{ onCached(leagueData); }catch(e){} }
+    }
     if(!navigator.onLine){ setSyncStatus('offline'); return leagueData; }
     setSyncStatus('syncing');
     try{
@@ -156,9 +159,12 @@ async function loadLeagueDataFromGitHub(){
     }catch(e){ setSyncStatus(cached?'offline':'error'); }
     return leagueData;
 }
-async function loadMatchHistoryFromGitHub(){
+async function loadMatchHistoryFromGitHub(onCached){
     const cached = await idbGet('matchHistory','v');
-    if(cached) matchHistory = cached;
+    if(cached){
+        matchHistory = cached;
+        if(typeof onCached==='function'){ try{ onCached(matchHistory); }catch(e){} }
+    }
     if(!navigator.onLine){ setSyncStatus('offline'); return matchHistory; }
     try{
         const j=await ghFetchJson(GITHUB_MATCHES_FILE,{maxAgeMs:25000});

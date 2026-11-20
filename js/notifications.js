@@ -173,4 +173,4 @@ if('serviceWorker' in navigator){
         }
     });
 }
-window.addEventListener('load', ()=>{ setTimeout(()=>{ notifResync(); }, 3000); });
+window.addEventListener('load', ()=>{ setTimeout(()=>{ notifResync(); }, 6000); });

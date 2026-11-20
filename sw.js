@@ -21,7 +21,7 @@
 // browser running a MIX of old-cached JS files alongside a freshly loaded
 // index.html (or vice versa) for a while after a patch — exactly the kind
 // of inconsistency that looks like "random things broke" after an update.
-const CACHE_VERSION = 'harfs-shell-v100';
+const CACHE_VERSION = 'harfs-shell-v101';
 const GAME_CACHE_VERSION = 'harfs-games-v1';
 const GAME_CACHE_HOSTS = ['sj2005zarisfi-source.github.io'];
 // Runtime cache for static images pulled from other origins: HARFS team
@@ -178,11 +178,13 @@ self.addEventListener('fetch', event => {
   // js/snapshot.js asks for it with cache:'no-cache'; serving it from this cache would hand out old league data.
   if (url.pathname.endsWith('/data/snapshot.json')) return;
 
+  const isNav = req.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('/index.html');
   event.respondWith(
     caches.match(req).then(cached => {
-      // 'no-cache' = always revalidate with the server (a cheap 304 when
-      // nothing changed) instead of trusting the HTTP cache, so the
-      // background refresh really picks up a new deploy.
+      // Static shell assets (JS/CSS/fonts/icons) are versioned via CACHE_VERSION and precached on install:
+      // serve cache-first with zero background requests so startup never fires ~49 competing revalidations.
+      // Only HTML navigations revalidate in the background.
+      if (cached && !isNav) return cached;
       const network = fetch(req, { cache:'no-cache' }).then(res => {
         if (res && res.ok) {
           const copy = res.clone();

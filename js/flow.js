@@ -84,7 +84,10 @@ function flowParseScore(s){ const p=String(s||'').split('-'); return [parseInt(p
 async function loadFlowFromGitHub(){
     if(flowBusy) return flowData;
     const cached = await idbGet('flowData','v');
-    if(cached) flowData = cached;
+    if(cached){
+        flowData = cached;
+        renderFlowViews();
+    }
     if(navigator.onLine){
         try{
             const j = await ghFetchJson(GITHUB_FLOW_FILE,{maxAgeMs:25000});

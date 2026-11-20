@@ -314,7 +314,7 @@ async function liteBuildStandalone(onStep){
     // styles: local ones inlined, the two CDN sheets replaced by the offline vendor CSS
     const vendor = await get('css/lite-vendor.css');
     const head = doc.head;
-    head.querySelectorAll('noscript, link[rel="manifest"], link[rel="icon"], link[rel="apple-touch-icon"], link[rel="preconnect"]').forEach(n=>n.remove());
+    head.querySelectorAll('noscript, link[rel="manifest"], link[rel="icon"], link[rel="apple-touch-icon"], link[rel="preconnect"], link[rel="preload"]').forEach(n=>n.remove());
     const vs = doc.createElement('style'); vs.textContent = vendor; head.insertBefore(vs, head.firstChild);
     const styleLinks = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
     await Promise.all(styleLinks.map(async l=>{
@@ -330,7 +330,7 @@ async function liteBuildStandalone(onStep){
         if(/^https?:/.test(src)){ s.remove(); return; }
         let code = await get(src);
         if(/appearance\.js$/.test(src)) code = code.split("url('fonts/${f.file}')").join("url('${(window.HARFS_LITE_FONTS && window.HARFS_LITE_FONTS.files[f.file]) || 'fonts/'+f.file}')");
-        s.removeAttribute('src'); s.textContent = code.replace(/<\/script/gi, '<\\/script');
+        s.removeAttribute('src'); s.removeAttribute('defer'); s.textContent = code.replace(/<\/script/gi, '<\\/script');
     }));
     step('Packing the data…');
     const pkg = await liteExportPackage({ chat:false });

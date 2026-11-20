@@ -124,12 +124,22 @@ function navigate(route){
     const target=document.getElementById(targetId);
     if(target){target.style.display='flex';requestAnimationFrame(()=>requestAnimationFrame(()=>target.classList.add('active')));}
 
-    if(route==='main-league')loadMainLeagueDataFromGitHub().then(renderMainLeagueTable);
-    if(route==='league')Promise.all([loadLeagueDataFromGitHub(),loadMatchHistoryFromGitHub()]).then(([d,h])=>{
-        const sel=document.getElementById('season-selector');if(sel)sel.value='current';
-        isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
-        renderSeasonHistoryList(h);
-    });
+    if(route==='main-league'){
+        if(Object.keys(mainLeagueData).length) renderMainLeagueTable();
+        loadMainLeagueDataFromGitHub(renderMainLeagueTable).then(renderMainLeagueTable);
+    }
+    if(route==='league'){
+        const renderLeagueNow = (d, h)=>{
+            const sel=document.getElementById('season-selector');if(sel)sel.value='current';
+            isViewingArchive=false;updateCurrentDateTime();renderLeagueTable(d);
+            renderSeasonHistoryList(h);
+        };
+        if(Object.keys(leagueData).length) renderLeagueNow(leagueData, matchHistory);
+        Promise.all([
+            loadLeagueDataFromGitHub(d=>renderLeagueNow(d, matchHistory)),
+            loadMatchHistoryFromGitHub(h=>renderLeagueNow(leagueData, h)),
+        ]).then(([d,h])=>renderLeagueNow(d, h));
+    }
     if(route==='league' && typeof loadMbaDataFromGitHub === 'function') loadMbaDataFromGitHub().then(()=>{ if(typeof loadFlowFromGitHub==='function') loadFlowFromGitHub(); });
     updateSeasonFabs(route);
     if(typeof seasonSyncSubnav==='function') seasonSyncSubnav(route);

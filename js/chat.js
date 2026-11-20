@@ -1227,8 +1227,12 @@ window.addEventListener('online', ()=>{
 window.addEventListener('offline', ()=>{
     gameUpdateHudUI();
 });
-if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>gameSyncOffline({ manual:false, silent:true }), 2500));
-} else {
-    setTimeout(()=>gameSyncOffline({ manual:false, silent:true }), 2500);
-}
+const _scheduleGameSync = ()=>{
+    const run = ()=>gameSyncOffline({ manual:false, silent:true });
+    setTimeout(()=>{
+        if(typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout:5000 });
+        else run();
+    }, 10000);
+};
+if(document.readyState === 'complete') _scheduleGameSync();
+else window.addEventListener('load', _scheduleGameSync, { once:true });

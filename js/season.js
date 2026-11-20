@@ -267,25 +267,32 @@ function selectSeasonFromPicker(idx){
 // ============================================================
 // GITHUB LOADERS
 // ============================================================
+function renderArchiveDropdownOptions(){
+    const sel=document.getElementById('season-selector');
+    if(!sel) return;
+    sel.innerHTML='<option value="current">Current Season</option>';
+    // Build seasonOptions for pill nav (current first, then archived newest→oldest)
+    seasonOptions=[{value:'current',label:'Current Season'}];
+    [...(archivedSeasons||[])].reverse().forEach(s=>{
+        sel.innerHTML+=`<option value="${s.seasonId}">Season ${s.seasonId}</option>`;
+        seasonOptions.push({value:String(s.seasonId),label:`Season ${s.seasonId}`});
+    });
+    currentSeasonIdx=0;
+    syncSeasonPill();
+}
 async function loadArchiveDropdown(){
     const cached=await idbGet('archivedSeasons','v');
-    if(cached) archivedSeasons=cached;
+    if(cached){
+        archivedSeasons=cached;
+        renderArchiveDropdownOptions();
+    }
     try{
         const j=await ghFetchJson(GITHUB_ARCHIVE_FILE,{maxAgeMs:60000});
         if(j.ok){
             archiveSha=j.sha;
             archivedSeasons=j.data;
             await idbSet('archivedSeasons','v',archivedSeasons);
-            const sel=document.getElementById('season-selector');
-            sel.innerHTML='<option value="current">Current Season</option>';
-            // Build seasonOptions for pill nav (current first, then archived newest→oldest)
-            seasonOptions=[{value:'current',label:'Current Season'}];
-            [...archivedSeasons].reverse().forEach(s=>{
-                sel.innerHTML+=`<option value="${s.seasonId}">Season ${s.seasonId}</option>`;
-                seasonOptions.push({value:String(s.seasonId),label:`Season ${s.seasonId}`});
-            });
-            currentSeasonIdx=0;
-            syncSeasonPill();
+            renderArchiveDropdownOptions();
         }
     }catch(e){console.log("No archives yet");}
 }

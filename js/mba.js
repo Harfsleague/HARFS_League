@@ -80,7 +80,11 @@ function normalizeMbaData(){
 async function loadMbaDataFromGitHub(){
     if(mbaBusy) return; // never overwrite a save that's still in flight
     const cached = await idbGet('mbaData','v');
-    if(cached) mbaData = cached;
+    if(cached){
+        mbaData = cached;
+        normalizeMbaData();
+        renderMbaSeasonView();
+    }
     try{
         const j = await ghFetchJson(GITHUB_MBA_FILE,{maxAgeMs:25000});
         if(j.ok){

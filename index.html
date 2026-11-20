@@ -8,6 +8,7 @@
          cdnjs.cloudflare.com — two foreign hosts less to reach on a slow / filtered connection. It still loads in the
          background with the media="print" trick so it never blocks the first paint (css/styles.css stays render-blocking).
          Re-run scripts/build-lite-vendor.mjs whenever you start using new Tailwind classes or icons. -->
+    <link rel="preload" href="data/snapshot.json" as="fetch" crossorigin>
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
     <link rel="preconnect" href="https://api.github.com" crossorigin>
     <link rel="preconnect" href="https://harfs-auth.borobiron12.workers.dev" crossorigin>
@@ -1224,42 +1225,42 @@
 
 <audio id="background-music" style="display:none;"></audio>
 
-<script src="js/config.js"></script>
-<script src="js/offline.js"></script>
-<script src="js/snapshot.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/sessions.js"></script>
-<script src="js/offline-gh.js"></script>
-<script src="js/notifications.js"></script>
-<script src="js/appearance.js"></script>
-<script src="js/ui-common.js"></script>
-<script src="js/memories.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/overall.js"></script>
-<script src="js/season.js"></script>
-<script src="js/shop.js"></script>
-<script src="js/league-ops.js"></script>
-<script src="js/records.js"></script>
-<script src="js/profile-photos.js"></script>
-<script src="js/access.js"></script>
-<script src="js/reactions.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/magazine.js"></script>
-<script src="js/gif-encoder.js"></script>
-<script src="js/magazine-comments.js"></script>
-<script src="js/ai-chat.js"></script>
-<script src="js/mba.js"></script>
-<script src="js/flow.js"></script>
-<script src="js/cards.js"></script>
-<script src="js/season-layout.js"></script>
-<script src="js/verify.js"></script>
-<script src="js/admin-music.js"></script>
-<script src="js/chat.js"></script>
-<script src="js/lite-net.js"></script>
-<script src="js/vendor/qrcode.min.js"></script>
-<script src="js/lite-ui.js"></script>
-<script src="js/match-history-fx.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js" defer></script>
+<script src="js/offline.js" defer></script>
+<script src="js/snapshot.js" defer></script>
+<script src="js/auth.js" defer></script>
+<script src="js/sessions.js" defer></script>
+<script src="js/offline-gh.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/appearance.js" defer></script>
+<script src="js/ui-common.js" defer></script>
+<script src="js/memories.js" defer></script>
+<script src="js/admin.js" defer></script>
+<script src="js/overall.js" defer></script>
+<script src="js/season.js" defer></script>
+<script src="js/shop.js" defer></script>
+<script src="js/league-ops.js" defer></script>
+<script src="js/records.js" defer></script>
+<script src="js/profile-photos.js" defer></script>
+<script src="js/access.js" defer></script>
+<script src="js/reactions.js" defer></script>
+<script src="js/audio.js" defer></script>
+<script src="js/magazine.js" defer></script>
+<script src="js/gif-encoder.js" defer></script>
+<script src="js/magazine-comments.js" defer></script>
+<script src="js/ai-chat.js" defer></script>
+<script src="js/mba.js" defer></script>
+<script src="js/flow.js" defer></script>
+<script src="js/cards.js" defer></script>
+<script src="js/season-layout.js" defer></script>
+<script src="js/verify.js" defer></script>
+<script src="js/admin-music.js" defer></script>
+<script src="js/chat.js" defer></script>
+<script src="js/lite-net.js" defer></script>
+<script src="js/vendor/qrcode.min.js" defer></script>
+<script src="js/lite-ui.js" defer></script>
+<script src="js/match-history-fx.js" defer></script>
+<script src="js/main.js" defer></script>
 
 <script>
 if('serviceWorker' in navigator){

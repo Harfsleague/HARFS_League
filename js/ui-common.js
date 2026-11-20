@@ -226,11 +226,11 @@ function startApp(cacheReady){
         logo.classList.add('box-forming');
     }));
 
-    // Phase 2 — after 550ms entrance + 1000ms center pause = 1550ms, glide smoothly to header
+    // Phase 2 — snappy entrance + brief pause (700ms), then glide smoothly to header (450ms)
     setTimeout(()=>{
         logo.classList.remove('box-forming');
         logo.classList.add('in-header');
-        const ready = cacheReady ? Promise.race([cacheReady, new Promise(r=>setTimeout(r,4000))]) : Promise.resolve();
+        const ready = cacheReady ? Promise.race([cacheReady, new Promise(r=>setTimeout(r,1200))]) : Promise.resolve();
         setTimeout(async()=>{
             await ready;
             document.getElementById('bottom-navigation').classList.add('active');
@@ -240,8 +240,8 @@ function startApp(cacheReady){
                 navigate('main-league');
                 if(typeof harfsConsumePendingOpen==='function') harfsConsumePendingOpen();   // opened from a notification
             }
-        }, 700);
-    }, 1550);
+        }, 450);
+    }, 700);
 }
 
 // (Swiping left/right between pages was removed on purpose — pages change only through the bottom navigation.)
