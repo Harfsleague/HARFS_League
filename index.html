@@ -287,18 +287,10 @@
             <div id="main-loading-message" class="text-center mt-10 text-sm flex items-center justify-center gap-2" style="color:var(--primary);">
                 <span class="spinner"></span> Loading...
             </div>
-            <!-- Home Widgets Edit Toolbar (shown only in widget edit mode) -->
-            <div class="ov-edit-bar" id="ov-edit-bar" hidden>
-                <span class="ov-edit-bar-lbl" id="ov-edit-bar-lbl"><i class="fas fa-sliders"></i> Edit Widgets</span>
-                <div class="ov-edit-bar-btns">
-                    <button type="button" class="ov-edit-btn" id="ov-edit-reset" onclick="ovResetWidgets()">Reset</button>
-                    <button type="button" class="ov-edit-btn primary" id="ov-edit-done" onclick="ovSetEditMode(false)">Done</button>
-                </div>
-            </div>
-
-            <!-- Overall customizable widgets (long-press any widget or tap Customize to reorder & resize S/M/L) -->
-            <div class="ov-tiles" id="ov-tiles">
-                <div class="ov-wide ov-widget ov-wide-mag" data-widget="mag" data-size="L" onclick="ovWidgetTap('mag',openMagazinePanel)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('mag',openMagazinePanel);}" role="button" tabindex="0" aria-label="HARFS Weekly Magazine">
+            <!-- Overall shortcuts: rounded-square icons in one row -->
+            <div class="ov-tiles">
+                <!-- Row 1: Magazine — the tile + an extension that slides out from under it to the end of the row (this week's poster + title). Tapping anywhere on it opens the magazine. -->
+                <div class="ov-wide ov-wide-mag" onclick="openMagazinePanel()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMagazinePanel();}" role="button" tabindex="0" aria-label="HARFS Weekly Magazine">
                     <button class="ov-tile ov-tile-mag" tabindex="-1" aria-hidden="true">
                         <i class="fas fa-newspaper"></i><span>Magazine</span>
                     </button>
@@ -307,44 +299,31 @@
                         <div class="ov-ext-intro" id="ov-mag-title" dir="auto"><span class="ov-intro-txt">This week’s issue</span></div>
                     </div>
                 </div>
-
-                <div class="ov-wide ov-widget ov-wide-cards" data-widget="cards" data-size="M" onclick="ovWidgetTap('cards',openCardsSheet)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('cards',openCardsSheet);}" role="button" tabindex="0" aria-label="Cards">
+                <!-- Row 2: Cards (two options wide: tile + an extension showing a few of your cards) and Chat -->
+                <div class="ov-wide ov-wide-cards" onclick="openCardsSheet()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCardsSheet();}" role="button" tabindex="0" aria-label="Cards">
                     <button class="ov-tile ov-tile-cards" tabindex="-1" aria-hidden="true">
                         <i class="fas fa-clone"></i><span>Cards</span>
                     </button>
                     <div class="ov-ext ov-ext-cards" id="ov-cards-ext"></div>
                 </div>
-
-                <div class="ov-wide ov-widget ov-wide-chat" data-widget="chat" data-size="S" onclick="ovWidgetTap('chat',openChatPage)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('chat',openChatPage);}" role="button" tabindex="0" aria-label="Chat">
-                    <button class="ov-tile ov-tile-chat" tabindex="-1" aria-hidden="true">
-                        <i class="fas fa-comments"></i><span>Chat</span>
-                        <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
-                    </button>
-                    <div class="ov-ext ov-ext-rich" id="ov-chat-ext"></div>
-                </div>
-
-                <div class="ov-wide ov-widget ov-wide-moments" data-widget="moments" data-size="S" onclick="ovWidgetTap('moments',()=>navigate('weird'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('moments',()=>navigate('weird'));}" role="button" tabindex="0" aria-label="Golden Moments">
-                    <button class="ov-tile ov-tile-moments" tabindex="-1" aria-hidden="true">
-                        <i class="fas fa-camera"></i><span>Moments</span>
-                    </button>
-                    <div class="ov-ext ov-ext-rich" id="ov-moments-ext"></div>
-                </div>
-
-                <div class="ov-wide ov-widget ov-wide-game" data-widget="game" data-size="S" onclick="ovWidgetTap('game',openGamePage)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('game',openGamePage);}" role="button" tabindex="0" aria-label="Game">
-                    <button class="ov-tile ov-tile-game" tabindex="-1" aria-hidden="true">
-                        <i class="fas fa-gamepad"></i><span>Game</span>
-                    </button>
-                    <div class="ov-ext ov-ext-rich" id="ov-game-ext"></div>
-                </div>
-
-                <div class="ov-wide ov-widget ov-wide-records" data-widget="records" data-size="S" onclick="ovWidgetTap('records',openRecordsSheet)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('records',openRecordsSheet);}" role="button" tabindex="0" aria-label="Records">
-                    <button class="ov-tile ov-tile-records" id="ov-tile-records" tabindex="-1" aria-hidden="true">
-                        <i class="fas fa-medal"></i><span>Records</span>
-                    </button>
-                    <div class="ov-ext ov-ext-rich" id="ov-records-ext"></div>
-                </div>
-
-                <div class="ov-wide ov-widget ov-wide-music" data-widget="music" data-size="L" onclick="ovWidgetTap('music',openMusicPage)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ovWidgetTap('music',openMusicPage);}" role="button" tabindex="0" aria-label="HARFS Music Player">
+                <button class="ov-tile ov-tile-chat" onclick="openChatPage()" aria-label="Chat">
+                    <i class="fas fa-comments"></i><span>Chat</span>
+                    <b class="ov-badge" id="chat-tile-badge" hidden>0</b>
+                </button>
+                <!-- Row 3 -->
+                <button class="ov-tile ov-tile-moments" onclick="navigate('weird')" aria-label="Golden Moments">
+                    <i class="fas fa-camera"></i><span>Moments</span>
+                </button>
+                <button class="ov-tile ov-tile-game" onclick="openGamePage()" aria-label="Game">
+                    <i class="fas fa-gamepad"></i><span>Game</span>
+                </button>
+                
+                <!-- Records (Federation now opens by holding the HARFS capsule at the top for 2 seconds) -->
+                <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
+                    <i class="fas fa-medal"></i><span>Records</span>
+                </button>
+                <!-- Row 4: Music Player (Benyamin Bahadori & Community Uploads + Reactions) -->
+                <div class="ov-wide ov-wide-music" onclick="openMusicPage()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMusicPage();}" role="button" tabindex="0" aria-label="HARFS Music Player">
                     <button class="ov-tile ov-tile-music" tabindex="-1" aria-hidden="true">
                         <i class="fas fa-music"></i><span>Music</span>
                     </button>
@@ -354,19 +333,8 @@
                             <div class="ov-music-title" id="ov-music-title" dir="auto">HARFS Music</div>
                             <div class="ov-music-sub" id="ov-music-sub" dir="auto">Benyamin Bahadori &amp; Community</div>
                         </div>
-                        <div class="ov-music-mini-ctrls" onclick="event.stopPropagation()">
-                            <button type="button" class="ov-mc-btn" onclick="mpPrev()" aria-label="Prev"><i class="fas fa-backward-step"></i></button>
-                            <button type="button" class="ov-mc-btn play" id="ov-mc-play" onclick="mpTogglePlay()" aria-label="Play/Pause"><i class="fas fa-play"></i></button>
-                            <button type="button" class="ov-mc-btn" onclick="mpNext()" aria-label="Next"><i class="fas fa-forward-step"></i></button>
-                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="ov-customize-wrap">
-                <button type="button" class="ov-customize-btn" id="ov-customize-btn" onclick="ovSetEditMode(true)">
-                    <i class="fas fa-sliders"></i><span id="ov-customize-lbl">Customize Widgets</span>
-                </button>
             </div>
         </div>
     </div>
