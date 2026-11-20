@@ -560,7 +560,7 @@ function renderMagazine(issue) {
                     <div class="mi-bubble">${x.stage ? `<em class="mi-stage">(${escapeHtml(magNoEmoji(String(x.stage).replace(/^\(|\)$/g, '')))})</em>` : ''}${escapeHtml(magNoEmoji(x.answer))}</div>
                 </div>`;
                 }).join('')}
-                ${iv.walkedOut ? `<div class="mi-exit" style="--i:${qa.length * 2}"><span>${escapeHtml(magNoEmoji(iv.exitNote) || 'مصاحبه‌شونده عصبانی شد و جلسه را ترک کرد.')}</span></div>` : ''}
+                ${iv.walkedOut ? `<div class="mi-exit" style="--i:${qa.length * 2}"><span>${escapeHtml(magNoEmoji(iv.exitNote) || (iv.team==='Yellow' ? 'خانم سرمربی مؤدبانه از حاضرین تشکر کرد و جلسه را به پایان رساند.' : 'مصاحبه‌شونده عصبانی شد و جلسه را ترک کرد.'))}</span></div>` : ''}
             </div>
         </div>` : '';
 

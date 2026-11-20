@@ -927,13 +927,21 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 
 در lineupSuggestions برای هر چهار تیم یک پیشنهاد ترکیب بده (مثلاً تیمی که زیاد گل خورده 5-3-2 یا 4-5-1، تیمی که کم گل زده 4-2-3-1 یا 4-3-3). فقط بر اساس دیتا استدلال کن و نام بازیکن نساز. این پیشنهاد در بخش «توصیه‌های این هفته» نمایش داده می‌شود.
 
+دربارهٔ سرمربی NMIYA: هر وقت در هر بخشی از مجله (گزارش، تحلیل، مصاحبه، توصیه‌ها و غیره) از سرمربی یا مربی تیم NMIYA حرف می‌زنی، او همیشه یک «خانم» است و باید با ضمیر و صفت‌های مؤنث و عنوان‌هایی مثل «خانم سرمربی» به او اشاره شود. شخصیتش همیشه منطقی، آرام، مؤدب و محترمانه است: حتی بعد از باخت یا در سؤال تلخ، با استدلال و ادب حرف می‌زند و هرگز بی‌ادبی، داد و فریاد یا تهمت نمی‌زند. اگر او مصاحبه‌شونده باشد و walkout برابر true باشد، به‌جای عصبانیت و قهر، جلسه را آرام و مؤدبانه و با ذکر دلیل تمام می‌کند (مثلاً به‌خاطر جلسهٔ تحلیل بازی). نام این شخصیت را خودت می‌سازی (یک نام زنانهٔ فارسی) و در طول یک شماره ثابت نگه می‌داری.
+
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
 // One-shot interview line. It is NOT part of SYSTEM_PROMPT: it is attached only while no earlier issue has used it
 // (interview.grievanceUsed in the archive). Once an interview has used it, it disappears from the prompt for good.
 const GRIEVANCE_PROMPT = `نکتهٔ یک‌بارمصرف دربارهٔ مصاحبه (فقط چون interviewContext.refGrievance در دیتا هست): در همین مصاحبه، فقط یک بار و به‌صورت طبیعی (نه اغراق‌آمیز و نه در چند پاسخ) مصاحبه‌شونده گله کند که ۲۵ تا موقعیت پنالتی داشتیم و برامون نگرفتن، و بعد اضافه کند که ۲ تا میله هم زدیم. این دو جمله را فقط در یک پاسخ بیاور و در بقیهٔ پاسخ‌ها یا حاشیهٔ صحنه تکرار نکن.`;
+// Azar's (internal name: Bayern) interview always contains one famous Johan Cruyff line. The two wordings below are real, well-known
+// quotes — the model must use one of them as written (no invented quotes), and credit Cruyff by name.
+const CRUYFF_PROMPT = `نکتهٔ مصاحبهٔ Azar (چون interviewTeam برابر Bayern است): در این مصاحبه، مصاحبه‌شونده باید دقیقاً یک بار، در یکی از پاسخ‌ها و به‌صورت طبیعی، یک جملهٔ معروف از یوهان کرویف (Johan Cruyff) را نقل کند و صریحاً بگوید که از کرویف است (مثلاً «به قول یوهان کرویف…»). فقط یکی از این دو جمله را، بدون تغییر در معنی، استفاده کن و جملهٔ دیگری به کرویف نسبت نده: (الف) «فوتبال بازی کردن خیلی ساده است، اما ساده بازی کردن سخت‌ترین کار دنیاست.» (ب) «کیفیت بدون نتیجه بی‌معناست، و نتیجه بدون کیفیت کسل‌کننده است.» اگر در previousIssuesSummary مصاحبهٔ قبلی Azar یکی از این دو را آورده بود، دیگری را انتخاب کن. جمله را به گفتگو و وضعیت واقعی تیم (نتایج همین هفته در interviewContext) گره بزن.`;
 function systemPromptFor(data) {
-  return data && data.interviewContext && data.interviewContext.refGrievance ? `${SYSTEM_PROMPT}\n\n${GRIEVANCE_PROMPT}` : SYSTEM_PROMPT;
+  const extra = [];
+  if (data && data.interviewTeam === "Bayern") extra.push(CRUYFF_PROMPT);
+  if (data && data.interviewContext && data.interviewContext.refGrievance) extra.push(GRIEVANCE_PROMPT);
+  return extra.length ? `${SYSTEM_PROMPT}\n\n${extra.join("\n\n")}` : SYSTEM_PROMPT;
 }
 
 
