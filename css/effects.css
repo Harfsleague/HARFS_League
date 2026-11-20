@@ -2997,6 +2997,7 @@ body.perf-no-anim .season-history-collapse, body.perf-no-anim .season-history-to
    HARFS MUSIC PLAYER & HOME WIDE TILE (v102)
    ===================================================== */
 .ov-wide-music{ grid-column:1 / -1; --tile-accent:#ec4899; }
+body.music-panel-disabled .ov-wide-music{ display:none !important; }
 .ov-wide-music .ov-tile{ width:calc((100% - 20px) / 3); }
 .ov-tile-music{ --tile-accent:#ec4899; color:#f472b6; }
 .ov-ext-music{ display:flex; align-items:center; gap:10px; }
@@ -3105,6 +3106,7 @@ body.perf-no-anim .season-history-collapse, body.perf-no-anim .season-history-to
 .mp-empty p{ font-size:.8rem; margin:0; }
 
 .mp-modal-overlay{ position:fixed; inset:0; z-index:9500; background:rgba(2,6,23,0.78); display:none; align-items:center; justify-content:center; padding:16px; }
+.mp-modal-overlay[hidden]{ display:none !important; }
 .mp-modal-overlay.open{ display:flex; }
 .mp-modal{ width:100%; max-width:420px; border-radius:24px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); box-shadow:0 24px 48px rgba(0,0,0,0.7); overflow:hidden; }
 .mp-modal-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.08); }

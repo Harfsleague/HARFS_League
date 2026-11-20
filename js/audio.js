@@ -407,6 +407,7 @@ async function saveMusicMetaToGitHub(msg){
 }
 
 function openMusicPage(){
+    if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled) return;
     navigate('music');
 }
 
@@ -718,7 +719,7 @@ function mpSyncPlayerUI(){
         const m = (typeof playbackMode !== 'undefined' && playbackMode) ? playbackMode : 'shuffle';
         modeBtn.innerHTML = m === 'single' ? '<i class="fas fa-repeat"></i><b class="mp-mode-1">1</b>' : (m === 'sequential' ? '<i class="fas fa-repeat"></i>' : '<i class="fas fa-shuffle"></i>');
     }
-    const vol = document.getElementById('mp-vol');
+    const vol = document.getElementById('hmp-vol');
     if(vol && bgMusic) vol.value = Math.round((bgMusic.volume || 0) * 100);
     updateHomeMusicTile();
 }
@@ -736,7 +737,7 @@ function updateHomeMusicTile(){
 // Wire audio progress, seek bar, volume slider & track events
 if(bgMusic){
     bgMusic.addEventListener('timeupdate', ()=>{
-        const seek = document.getElementById('mp-seek');
+        const seek = document.getElementById('hmp-seek');
         const cur = document.getElementById('mp-time-cur');
         const dur = document.getElementById('mp-time-dur');
         if(cur) cur.textContent = mpFmtTime(bgMusic.currentTime);
@@ -752,13 +753,13 @@ if(bgMusic){
 }
 document.addEventListener('harfs-track', mpSyncPlayerUI);
 document.addEventListener('DOMContentLoaded', ()=>{
-    const seek = document.getElementById('mp-seek');
+    const seek = document.getElementById('hmp-seek');
     if(seek) seek.addEventListener('input', ()=>{
         if(bgMusic && isFinite(bgMusic.duration) && bgMusic.duration > 0){
             bgMusic.currentTime = (Number(seek.value) / 100) * bgMusic.duration;
         }
     });
-    const vol = document.getElementById('mp-vol');
+    const vol = document.getElementById('hmp-vol');
     if(vol) vol.addEventListener('input', ()=>{
         const v = Math.max(0, Math.min(1, Number(vol.value) / 100));
         if(bgMusic){ bgMusic.volume = v; bgMusic.muted = false; }
@@ -788,11 +789,11 @@ function openMusicUploadModal(defaultSection, defaultAlbum){
     const prog = document.getElementById('mp-up-prog'); if(prog) prog.style.display = 'none';
     mpOnUploadSectionChange();
     const ov = document.getElementById('music-upload-modal');
-    if(ov) ov.classList.add('open');
+    if(ov){ ov.hidden = false; ov.classList.add('open'); }
 }
 function closeMusicUploadModal(){
     const ov = document.getElementById('music-upload-modal');
-    if(ov) ov.classList.remove('open');
+    if(ov){ ov.classList.remove('open'); ov.hidden = true; }
 }
 function mpOnUploadSectionChange(){
     const sec = document.getElementById('mp-up-section')?.value || 'benyamin';

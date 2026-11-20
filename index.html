@@ -705,6 +705,10 @@
                         <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-wand-magic-sparkles"></i>HARFS Assistant</span>
                         <div class="perf-toggle on" id="ai-assistant-toggle"></div>
                     </div>
+                    <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleMusicPanelVisibility()">
+                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-music"></i><span id="music-panel-toggle-lbl">Music Panel</span></span>
+                        <div class="perf-toggle on" id="music-panel-toggle"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1207,7 +1211,7 @@
                 </div>
                 <div class="mp-seek-row">
                     <span class="mp-time" id="mp-time-cur">0:00</span>
-                    <input type="range" id="mp-seek" class="mp-seek" min="0" max="100" value="0" step="0.5" aria-label="Seek">
+                    <input type="range" id="hmp-seek" class="mp-seek" min="0" max="100" value="0" step="0.5" aria-label="Seek">
                     <span class="mp-time" id="mp-time-dur">0:00</span>
                 </div>
                 <div class="mp-controls">
@@ -1219,7 +1223,7 @@
                 </div>
                 <div class="mp-vol-row">
                     <i class="fas fa-volume-low"></i>
-                    <input type="range" id="mp-vol" class="mp-vol" min="0" max="100" value="40" aria-label="Volume">
+                    <input type="range" id="hmp-vol" class="mp-vol" min="0" max="100" value="40" aria-label="Volume">
                     <i class="fas fa-volume-high"></i>
                 </div>
             </div>
@@ -1243,7 +1247,7 @@
     </div>
 
     <!-- ============ MUSIC UPLOAD MODAL ============ -->
-    <div id="music-upload-modal" class="mp-modal-overlay" onclick="if(event.target===this)closeMusicUploadModal()">
+    <div id="music-upload-modal" class="mp-modal-overlay" hidden onclick="if(event.target===this)closeMusicUploadModal()">
         <div class="mp-modal">
             <div class="mp-modal-head">
                 <h4 id="mp-up-heading"><i class="fas fa-cloud-arrow-up"></i> Upload Song</h4>

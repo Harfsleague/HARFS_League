@@ -450,6 +450,7 @@ function syncSettingsUI(){
     }
     if(typeof renderMusicPlayerUI==='function') renderMusicPlayerUI();
     syncAiAssistantUI();
+    syncMusicPanelUI();
 }
 
 // ============================================================
@@ -470,6 +471,30 @@ function toggleAiAssistant(){
     showToast(aiAssistantEnabled ? 'HARFS Assistant on' : 'HARFS Assistant off', 'info', 1600);
 }
 syncAiAssistantUI(); // apply the saved choice on startup
+
+// ============================================================
+// MUSIC PANEL on/off — hides the Home Music tile when switched off. Saved on this device.
+// ============================================================
+let musicPanelEnabled = localStorage.getItem('musicPanel') !== 'off';
+function syncMusicPanelUI(){
+    document.body.classList.toggle('music-panel-disabled', !musicPanelEnabled);
+    const t = document.getElementById('music-panel-toggle');
+    if(t) t.classList.toggle('on', musicPanelEnabled);
+}
+function toggleMusicPanelVisibility(){
+    haptic([8]);
+    musicPanelEnabled = !musicPanelEnabled;
+    localStorage.setItem('musicPanel', musicPanelEnabled ? 'on' : 'off');
+    syncMusicPanelUI();
+    const l = (typeof getAppLanguage==='function') ? getAppLanguage() : 'en';
+    const msg = l==='fa'
+        ? (musicPanelEnabled ? 'پنل موزیک فعال شد' : 'پنل موزیک غیرفعال شد')
+        : l==='es'
+            ? (musicPanelEnabled ? 'Panel de música activado' : 'Panel de música desactivado')
+            : (musicPanelEnabled ? 'Music Panel on' : 'Music Panel off');
+    showToast(msg, 'info', 1600);
+}
+syncMusicPanelUI(); // apply the saved choice on startup
 
 // Populates the Settings screen each time it's navigated to: team
 // badge, admin tile visibility (Bayern only), current toggle states.
@@ -977,7 +1002,7 @@ const HARFS_I18N = {
         th_team:'Team', th_p:'P', th_w:'W', th_d:'D', th_l:'L', th_gf:'GF', th_ga:'GA', th_gd:'GD', th_pt:'PT',
         moments_title:'⭐ Golden Moments ⭐',
         profile_title:'Profile', account_sub:'HARFS League Account',
-        sec_appearance:'Appearance & Sound', btn_appearance:'Appearance & Performance', btn_assistant:'HARFS Assistant',
+        sec_appearance:'Appearance & Sound', btn_appearance:'Appearance & Performance', btn_assistant:'HARFS Assistant', btn_music_panel:'Music Panel',
         sec_language:'Language', ap_lang_sub:'Tap to choose app language',
         sec_quick:'Quick Access', q_emergency:'Emergency', q_notif:'Notifications', q_devices:'Devices', q_tools:'Tools',
         sec_account:'Account', btn_logout:'Log Out', btn_login:'Log In / Pick a Team',
@@ -1019,7 +1044,7 @@ const HARFS_I18N = {
         th_team:'تیم', th_p:'ب', th_w:'ب', th_d:'م', th_l:'ش', th_gf:'گ‌ز', th_ga:'گ‌خ', th_gd:'ت‌گ', th_pt:'امتیاز',
         moments_title:'⭐ لحظات طلایی ⭐',
         profile_title:'پروفایل', account_sub:'حساب کاربری لیگ HARFS',
-        sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر و عملکرد برنامه', btn_assistant:'دستیار هوشمند HARFS',
+        sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر و عملکرد برنامه', btn_assistant:'دستیار هوشمند HARFS', btn_music_panel:'پنل موزیک',
         sec_language:'زبان برنامه', ap_lang_sub:'برای انتخاب زبان برنامه ضربه بزنید',
         sec_quick:'دسترسی سریع', q_emergency:'اضطراری', q_notif:'اعلان‌ها', q_devices:'دستگاه‌ها', q_tools:'ابزارها',
         sec_account:'حساب کاربری', btn_logout:'خروج از حساب', btn_login:'ورود / انتخاب تیم',
@@ -1061,7 +1086,7 @@ const HARFS_I18N = {
         th_team:'Equipo', th_p:'PJ', th_w:'G', th_d:'E', th_l:'P', th_gf:'GF', th_ga:'GC', th_gd:'DG', th_pt:'PTS',
         moments_title:'⭐ Momentos Dorados ⭐',
         profile_title:'Perfil', account_sub:'Cuenta de Liga HARFS',
-        sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia y Rendimiento', btn_assistant:'Asistente HARFS',
+        sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia y Rendimiento', btn_assistant:'Asistente HARFS', btn_music_panel:'Panel de Música',
         sec_language:'Idioma', ap_lang_sub:'Toca para elegir el idioma de la app',
         sec_quick:'Acceso Rápido', q_emergency:'Emergencia', q_notif:'Alertas', q_devices:'Dispositivos', q_tools:'Herramientas',
         sec_account:'Cuenta', btn_logout:'Cerrar Sesión', btn_login:'Iniciar Sesión / Elegir Equipo',
@@ -1366,6 +1391,7 @@ function applyAppLanguage(){
         setTxt('.ov-tile-game span', 'tile_game');
         setTxt('.ov-tile-records span', 'tile_records');
         setTxt('.ov-tile-music span', 'tile_music');
+        setTxt('#music-panel-toggle-lbl', 'btn_music_panel');
         if(typeof renderMusicPage==='function' && document.getElementById('music-screen')?.classList.contains('active')) renderMusicPage();
         if(typeof updateHomeMusicTile==='function') updateHomeMusicTile();
 
