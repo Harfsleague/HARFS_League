@@ -135,13 +135,16 @@ function reactionRowHtml(id){
         const teams = who[e];
         const stack = teams.slice(0,3).map(reactAvatar).join('');
         const more = teams.length>3 ? `<span class="react-more">+${teams.length-3}</span>` : '';
+        const qId = JSON.stringify(String(id)).replace(/"/g, '&quot;');
         return `<button class="react-chip${mine===e?' mine':''}${held===e?' who-open':''}" data-react-id="${escapeHtml(String(id))}" data-react-emoji="${e}"
-            onclick="reactChipClick(${id},'${e}')">
+            onclick="reactChipClick(${qId},'${e}')">
             <span class="react-emoji">${e}</span><span class="react-avs">${stack}${more}</span></button>`;
     }).join('');
-    const add = `<button class="react-chip react-add${reactionPickerFor===id?' open':''}" aria-label="React" onclick="toggleReactionPicker(${id})"><i class="far fa-face-smile"></i></button>`;
-    const picker = reactionPickerFor === id
-        ? `<div class="react-picker">${reactionAllowed.map(e=>`<button class="${mine===e?'mine':''}" onclick="reactToMoment(${id},'${e}')">${e}</button>`).join('')}</div>` : '';
+    const qIdAdd = JSON.stringify(String(id)).replace(/"/g, '&quot;');
+    const isPickerOpen = String(reactionPickerFor) === String(id);
+    const add = `<button class="react-chip react-add${isPickerOpen?' open':''}" aria-label="React" onclick="toggleReactionPicker(${qIdAdd})"><i class="far fa-face-smile"></i></button>`;
+    const picker = isPickerOpen
+        ? `<div class="react-picker">${reactionAllowed.map(e=>`<button class="${mine===e?'mine':''}" onclick="reactToMoment(${qIdAdd},'${e}')">${e}</button>`).join('')}</div>` : '';
     return `<div class="react-chips">${chips}${add}</div>${picker}`;
 }
 

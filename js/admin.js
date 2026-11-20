@@ -103,7 +103,7 @@ function navigate(route){
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-main',
         'settings':'nav-settings','admin':'nav-settings',
-        'magazine':'nav-main','ai-chat':'nav-admin','chat':'nav-main','game':'nav-main'
+        'magazine':'nav-main','ai-chat':'nav-admin','chat':'nav-main','game':'nav-main','music':'nav-main'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');
@@ -112,7 +112,7 @@ function navigate(route){
         'main-league':'main-league-screen','league':'league-table-screen',
         'weird':'weird-screen','admin':'admin-screen',
         'settings':'settings-screen','magazine':'magazine-screen',
-        'ai-chat':'ai-chat-screen','chat':'chat-screen','game':'game-screen'
+        'ai-chat':'ai-chat-screen','chat':'chat-screen','game':'game-screen','music':'music-screen'
     };
     const targetId=idMap[route];
     document.querySelectorAll('.page-screen').forEach(s=>{
@@ -144,6 +144,7 @@ function navigate(route){
     updateSeasonFabs(route);
     if(typeof seasonSyncSubnav==='function') seasonSyncSubnav(route);
     if(route==='weird'){loadWeirdEventsFromGitHub().then(renderWeirdEvents);loadMomentReactions();}
+    if(route==='music' && typeof onMusicPageEntered==='function') onMusicPageEntered();
     if(route==='settings')renderSettingsScreen();
     if(route==='admin'){
         // There's no separate PIN gate anymore.

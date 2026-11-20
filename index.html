@@ -322,6 +322,19 @@
                 <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
                     <i class="fas fa-medal"></i><span>Records</span>
                 </button>
+                <!-- Row 4: Music Player (Benyamin Bahadori & Community Uploads + Reactions) -->
+                <div class="ov-wide ov-wide-music" onclick="openMusicPage()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMusicPage();}" role="button" tabindex="0" aria-label="HARFS Music Player">
+                    <button class="ov-tile ov-tile-music" tabindex="-1" aria-hidden="true">
+                        <i class="fas fa-music"></i><span>Music</span>
+                    </button>
+                    <div class="ov-ext ov-ext-music" id="ov-music-ext">
+                        <div class="ov-music-eq" id="ov-music-eq" aria-hidden="true"><i></i><i></i><i></i></div>
+                        <div class="ov-music-meta">
+                            <div class="ov-music-title" id="ov-music-title" dir="auto">HARFS Music</div>
+                            <div class="ov-music-sub" id="ov-music-sub" dir="auto">Benyamin Bahadori &amp; Community</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1164,6 +1177,121 @@
         </div>
     </div>
     <div id="chat-viewer" onclick="chatCloseViewer()"><div class="chat-viewer-x"><i class="fas fa-times"></i></div><div id="chat-viewer-body"></div></div>
+
+
+    <!-- ============ MUSIC PLAYER (Overall -> Music) ============ -->
+    <div id="music-screen" class="page-screen">
+        <div class="mp-wrap">
+            <div class="mp-topbar">
+                <button type="button" class="mp-icon-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+                <div class="mp-topbar-title">
+                    <i class="fas fa-headphones"></i>
+                    <span id="mp-header-title">HARFS Music</span>
+                </div>
+                <button type="button" class="mp-upload-trigger" id="mp-upload-btn" onclick="openMusicUploadModal()">
+                    <i class="fas fa-cloud-arrow-up"></i><span id="mp-upload-btn-lbl">Upload</span>
+                </button>
+            </div>
+
+            <!-- Now Playing Deck -->
+            <div class="mp-player-card" id="mp-player-card">
+                <div class="mp-now-top">
+                    <div class="mp-disc" id="mp-disc">
+                        <div class="mp-disc-inner"><i class="fas fa-music"></i></div>
+                    </div>
+                    <div class="mp-now-info">
+                        <div class="mp-now-badge" id="mp-now-badge">HARFS MUSIC</div>
+                        <div class="mp-now-title" id="mp-now-title" dir="auto">Select a song to play</div>
+                        <div class="mp-now-artist" id="mp-now-artist" dir="auto">Benyamin Bahadori &amp; Community</div>
+                    </div>
+                </div>
+                <div class="mp-seek-row">
+                    <span class="mp-time" id="mp-time-cur">0:00</span>
+                    <input type="range" id="mp-seek" class="mp-seek" min="0" max="100" value="0" step="0.5" aria-label="Seek">
+                    <span class="mp-time" id="mp-time-dur">0:00</span>
+                </div>
+                <div class="mp-controls">
+                    <button type="button" class="mp-ctrl-btn" id="mp-mode-btn" onclick="mpCycleMode()" title="Playback mode"><i class="fas fa-shuffle"></i></button>
+                    <button type="button" class="mp-ctrl-btn" onclick="mpPrev()" title="Previous"><i class="fas fa-backward-step"></i></button>
+                    <button type="button" class="mp-ctrl-play" id="mp-play-btn" onclick="mpTogglePlay()" title="Play / Pause"><i class="fas fa-play"></i></button>
+                    <button type="button" class="mp-ctrl-btn" onclick="mpNext()" title="Next"><i class="fas fa-forward-step"></i></button>
+                    <button type="button" class="mp-ctrl-btn" id="mp-mute-btn" onclick="mpToggleMute()" title="Mute / Unmute"><i class="fas fa-volume-high"></i></button>
+                </div>
+                <div class="mp-vol-row">
+                    <i class="fas fa-volume-low"></i>
+                    <input type="range" id="mp-vol" class="mp-vol" min="0" max="100" value="40" aria-label="Volume">
+                    <i class="fas fa-volume-high"></i>
+                </div>
+            </div>
+
+            <!-- Section Tabs: Benyamin Bahadori | Community | All -->
+            <div class="mp-tabs" id="mp-tabs">
+                <button type="button" class="mp-tab active" data-tab="benyamin" onclick="mpSetTab('benyamin')"><i class="fas fa-star"></i><span id="mp-tab-benyamin">Benyamin Bahadori</span></button>
+                <button type="button" class="mp-tab" data-tab="community" onclick="mpSetTab('community')"><i class="fas fa-users"></i><span id="mp-tab-community">Community</span></button>
+                <button type="button" class="mp-tab" data-tab="all" onclick="mpSetTab('all')"><i class="fas fa-list-ul"></i><span id="mp-tab-all">All</span></button>
+            </div>
+
+            <!-- Search bar -->
+            <div class="mp-search-wrap">
+                <i class="fas fa-search"></i>
+                <input type="search" id="mp-search" class="mp-search" placeholder="Search song or artist..." oninput="mpOnSearch(this.value)">
+            </div>
+
+            <!-- Dynamic Body (Benyamin Albums + Tracks / Community Tracks / All Tracks) -->
+            <div id="mp-body" class="mp-body"></div>
+        </div>
+    </div>
+
+    <!-- ============ MUSIC UPLOAD MODAL ============ -->
+    <div id="music-upload-modal" class="mp-modal-overlay" onclick="if(event.target===this)closeMusicUploadModal()">
+        <div class="mp-modal">
+            <div class="mp-modal-head">
+                <h4 id="mp-up-heading"><i class="fas fa-cloud-arrow-up"></i> Upload Song</h4>
+                <button type="button" class="mp-icon-btn" onclick="closeMusicUploadModal()" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mp-modal-body">
+                <label class="mp-file-drop" for="mp-up-file">
+                    <i class="fas fa-file-audio"></i>
+                    <span id="mp-up-file-label">Tap to choose an audio file (MP3, M4A, WAV, OGG)</span>
+                    <input type="file" id="mp-up-file" accept=".mp3,.m4a,.wav,.ogg,.aac,audio/*" style="display:none;" onchange="mpOnUploadFilePicked(this)">
+                </label>
+                <div class="mp-field">
+                    <label id="mp-up-title-lbl" for="mp-up-title">Song Title</label>
+                    <input type="text" id="mp-up-title" dir="auto" placeholder="e.g. Khatereha">
+                </div>
+                <div class="mp-field">
+                    <label id="mp-up-section-lbl" for="mp-up-section">Section</label>
+                    <select id="mp-up-section" onchange="mpOnUploadSectionChange()">
+                        <option value="benyamin">Benyamin Bahadori</option>
+                        <option value="community">Community (User Picks)</option>
+                    </select>
+                </div>
+                <div class="mp-field" id="mp-up-album-wrap">
+                    <label id="mp-up-album-lbl" for="mp-up-album">Benyamin Album</label>
+                    <select id="mp-up-album">
+                        <option value="benyamin-85">آلبوم ۸۵ (Benyamin 85 · 1385)</option>
+                        <option value="benyamin-88">آلبوم ۸۸ (Benyamin 88 · 1388)</option>
+                        <option value="benyamin-93">آلبوم ۹۳ (Benyamin 93 · 1392)</option>
+                        <option value="benyamin-94">آلبوم ۹۴ (Benyamin 94 · 1394)</option>
+                        <option value="benyamin-tl">آلبوم تی‌ال (TL)</option>
+                        <option value="benyamin-mah">آلبوم ماه مهربون (Mahe Mehraboon)</option>
+                        <option value="benyamin-singles">تک‌آهنگ‌ها (Singles)</option>
+                    </select>
+                </div>
+                <div class="mp-field">
+                    <label id="mp-up-artist-lbl" for="mp-up-artist">Artist</label>
+                    <input type="text" id="mp-up-artist" dir="auto" placeholder="Artist name">
+                </div>
+                <div class="mp-up-prog" id="mp-up-prog" style="display:none;">
+                    <div class="mp-up-prog-top"><span id="mp-up-prog-txt">Uploading...</span><span id="mp-up-prog-pct">0%</span></div>
+                    <div class="mp-up-prog-bar"><div id="mp-up-prog-fill"></div></div>
+                </div>
+                <button type="button" class="mp-submit-btn" id="mp-up-submit" onclick="mpSubmitUpload()">
+                    <i class="fas fa-upload"></i> <span id="mp-up-submit-lbl">Upload to Music Library</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ============ GAME — Offline-Capable Multi-Game Hub (Overall → Game) ============ -->
     <div id="game-screen" class="page-screen">

@@ -972,7 +972,7 @@ const HARFS_I18N = {
         subnav_league:'League', subnav_cup:'Cup',
         ov_podium_label:'Overall Ranking and Trophies',
         ov_mag_intro:'This week’s issue',
-        tile_magazine:'Magazine', tile_cards:'Cards', tile_chat:'Chat', tile_moments:'Moments', tile_game:'Game', tile_records:'Records',
+        tile_magazine:'Magazine', tile_cards:'Cards', tile_chat:'Chat', tile_moments:'Moments', tile_game:'Game', tile_records:'Records', tile_music:'Music',
         season_title:'Season', season_current:'Current Season', season_alltime:'All Time', schedule_title:'Schedule', match_history:'Match History', mh_show:'Show match history', mh_hide:'Hide match history', filter_all:'All',
         th_team:'Team', th_p:'P', th_w:'W', th_d:'D', th_l:'L', th_gf:'GF', th_ga:'GA', th_gd:'GD', th_pt:'PT',
         moments_title:'⭐ Golden Moments ⭐',
@@ -1014,7 +1014,7 @@ const HARFS_I18N = {
         subnav_league:'لیگ', subnav_cup:'جام حذفی',
         ov_podium_label:'رده‌بندی کل و جام‌های قهرمانی',
         ov_mag_intro:'شمارهٔ این هفته',
-        tile_magazine:'مجله', tile_cards:'کارت‌ها', tile_chat:'چت', tile_moments:'لحظات', tile_game:'بازی', tile_records:'رکوردها',
+        tile_magazine:'مجله', tile_cards:'کارت‌ها', tile_chat:'چت', tile_moments:'لحظات', tile_game:'بازی', tile_records:'رکوردها', tile_music:'موزیک',
         season_title:'فصل مسابقات', season_current:'فصل جاری', season_alltime:'تمام دوران', schedule_title:'برنامه بازی‌ها', match_history:'تاریخچه بازی‌ها', mh_show:'نمایش تاریخچه بازی‌ها', mh_hide:'پنهان کردن تاریخچه بازی‌ها', filter_all:'همه',
         th_team:'تیم', th_p:'ب', th_w:'ب', th_d:'م', th_l:'ش', th_gf:'گ‌ز', th_ga:'گ‌خ', th_gd:'ت‌گ', th_pt:'امتیاز',
         moments_title:'⭐ لحظات طلایی ⭐',
@@ -1056,7 +1056,7 @@ const HARFS_I18N = {
         subnav_league:'Liga', subnav_cup:'Copa',
         ov_podium_label:'Clasificación General y Trofeos',
         ov_mag_intro:'Edición de esta semana',
-        tile_magazine:'Revista', tile_cards:'Cartas', tile_chat:'Chat', tile_moments:'Momentos', tile_game:'Juegos', tile_records:'Récords',
+        tile_magazine:'Revista', tile_cards:'Cartas', tile_chat:'Chat', tile_moments:'Momentos', tile_game:'Juegos', tile_records:'Récords', tile_music:'Música',
         season_title:'Temporada', season_current:'Temporada Actual', season_alltime:'Histórico', schedule_title:'Calendario', match_history:'Historial de Partidos', mh_show:'Mostrar historial de partidos', mh_hide:'Ocultar historial de partidos', filter_all:'Todos',
         th_team:'Equipo', th_p:'PJ', th_w:'G', th_d:'E', th_l:'P', th_gf:'GF', th_ga:'GC', th_gd:'DG', th_pt:'PTS',
         moments_title:'⭐ Momentos Dorados ⭐',
@@ -1365,6 +1365,9 @@ function applyAppLanguage(){
         setTxt('.ov-tile-moments span', 'tile_moments');
         setTxt('.ov-tile-game span', 'tile_game');
         setTxt('.ov-tile-records span', 'tile_records');
+        setTxt('.ov-tile-music span', 'tile_music');
+        if(typeof renderMusicPage==='function' && document.getElementById('music-screen')?.classList.contains('active')) renderMusicPage();
+        if(typeof updateHomeMusicTile==='function') updateHomeMusicTile();
 
         // 3. Season & Standings Table & Match History
         const sTitle = document.getElementById('season-screen-title');
