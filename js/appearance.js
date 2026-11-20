@@ -476,12 +476,20 @@ syncAiAssistantUI(); // apply the saved choice on startup
 // MUSIC PANEL on/off — hides the Home Music tile when switched off. Saved on this device.
 // ============================================================
 let musicPanelEnabled = localStorage.getItem('musicPanel') !== 'off';
+function isMusicAdmin(){
+    return (typeof loggedInTeam !== 'undefined' && loggedInTeam === 'Bayern') || (typeof harfsIsAdmin !== 'undefined' && !!harfsIsAdmin);
+}
 function syncMusicPanelUI(){
-    document.body.classList.toggle('music-panel-disabled', !musicPanelEnabled);
+    const allowed = isMusicAdmin();
+    document.body.classList.toggle('music-admin-allowed', allowed);
+    document.body.classList.toggle('music-panel-disabled', !allowed || !musicPanelEnabled);
+    const row = document.getElementById('music-panel-toggle-row');
+    if(row) row.style.display = allowed ? 'flex' : 'none';
     const t = document.getElementById('music-panel-toggle');
     if(t) t.classList.toggle('on', musicPanelEnabled);
 }
 function toggleMusicPanelVisibility(){
+    if(!isMusicAdmin()) return;
     haptic([8]);
     musicPanelEnabled = !musicPanelEnabled;
     localStorage.setItem('musicPanel', musicPanelEnabled ? 'on' : 'off');

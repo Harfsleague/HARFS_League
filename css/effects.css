@@ -2997,7 +2997,7 @@ body.perf-no-anim .season-history-collapse, body.perf-no-anim .season-history-to
    HARFS MUSIC PLAYER & HOME WIDE TILE (v102)
    ===================================================== */
 .ov-wide-music{ grid-column:1 / -1; --tile-accent:#ec4899; }
-body.music-panel-disabled .ov-wide-music{ display:none !important; }
+body:not(.music-admin-allowed) .ov-wide-music, body.music-panel-disabled .ov-wide-music{ display:none !important; }
 .ov-wide-music .ov-tile{ width:calc((100% - 20px) / 3); }
 .ov-tile-music{ --tile-accent:#ec4899; color:#f472b6; }
 .ov-ext-music{ display:flex; align-items:center; gap:10px; }

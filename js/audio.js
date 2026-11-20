@@ -407,11 +407,13 @@ async function saveMusicMetaToGitHub(msg){
 }
 
 function openMusicPage(){
+    if(typeof isMusicAdmin === 'function' && !isMusicAdmin()) return;
     if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled) return;
     navigate('music');
 }
 
 async function onMusicPageEntered(){
+    if(typeof isMusicAdmin === 'function' && !isMusicAdmin()){ navigate('main-league'); return; }
     mpApplyStaticLabels();
     renderMusicPage();
     mpSyncPlayerUI();
