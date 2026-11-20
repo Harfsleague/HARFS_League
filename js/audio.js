@@ -732,6 +732,8 @@ function updateHomeMusicTile(){
     const subEl = document.getElementById('ov-music-sub');
     if(titleEl) titleEl.textContent = (window.nowPlayingTitle && bgMusic && bgMusic.src) ? window.nowPlayingTitle : mpT('title');
     if(subEl) subEl.textContent = mpT('homeSub');
+    const playIc = document.getElementById('ov-mc-play');
+    if(playIc) playIc.innerHTML = `<i class="fas fa-${playing?'pause':'play'}"></i>`;
 }
 
 // Wire audio progress, seek bar, volume slider & track events

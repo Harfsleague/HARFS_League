@@ -1394,6 +1394,7 @@ function applyAppLanguage(){
         setTxt('#music-panel-toggle-lbl', 'btn_music_panel');
         if(typeof renderMusicPage==='function' && document.getElementById('music-screen')?.classList.contains('active')) renderMusicPage();
         if(typeof updateHomeMusicTile==='function') updateHomeMusicTile();
+        if(typeof ovRefreshWidgetDetails==='function') ovRefreshWidgetDetails();
 
         // 3. Season & Standings Table & Match History
         const sTitle = document.getElementById('season-screen-title');
