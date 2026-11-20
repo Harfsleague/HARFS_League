@@ -184,18 +184,15 @@ function ovLoadWidgetState(){
         const raw = localStorage.getItem(OV_WIDGET_LS_KEY);
         if(raw){
             const p = JSON.parse(raw);
-            if(p && Array.isArray(p.order) && p.sizes && typeof p.sizes === 'object'){
-                const valid = new Set(OV_WIDGET_DEFAULTS.order);
-                const order = p.order.filter(k => valid.has(k));
-                OV_WIDGET_DEFAULTS.order.forEach(k => { if(!order.includes(k)) order.push(k); });
+            if(p && p.sizes && typeof p.sizes === 'object'){
                 const sizes = { ...OV_WIDGET_DEFAULTS.sizes };
                 Object.keys(sizes).forEach(k => { if(['S','M','L'].includes(p.sizes[k])) sizes[k] = p.sizes[k]; });
-                ovWidgetState = { order, sizes };
+                ovWidgetState = { sizes };
                 return ovWidgetState;
             }
         }
     }catch(e){}
-    ovWidgetState = { order: [...OV_WIDGET_DEFAULTS.order], sizes: { ...OV_WIDGET_DEFAULTS.sizes } };
+    ovWidgetState = { sizes: { ...OV_WIDGET_DEFAULTS.sizes } };
     return ovWidgetState;
 }
 function ovSaveWidgetState(){
@@ -216,10 +213,7 @@ function ovEnsureWidgetControls(){
         const ctrl = document.createElement('div');
         ctrl.className = 'ov-w-ctrl';
         ctrl.onclick = e => e.stopPropagation();
-        ctrl.innerHTML = `
-            <button type="button" class="ov-wc-btn" onclick="ovMoveWidget('${key}',-1)" aria-label="Move back"><i class="fas fa-chevron-left"></i></button>
-            <button type="button" class="ov-wc-size" onclick="ovCycleWidgetSize('${key}')" aria-label="Resize">${el.dataset.size || 'S'}</button>
-            <button type="button" class="ov-wc-btn" onclick="ovMoveWidget('${key}',1)" aria-label="Move forward"><i class="fas fa-chevron-right"></i></button>`;
+        ctrl.innerHTML = `<button type="button" class="ov-wc-size" onclick="ovCycleWidgetSize('${key}')" aria-label="Resize">${el.dataset.size || 'S'}</button>`;
         el.appendChild(ctrl);
     });
 }
@@ -231,14 +225,13 @@ function ovApplyWidgetLayout(){
     ovEnsureWidgetControls();
     const map = {};
     grid.querySelectorAll('.ov-widget').forEach(el => { map[el.dataset.widget] = el; });
-    ovWidgetState.order.forEach(k => {
+    OV_WIDGET_DEFAULTS.order.forEach(k => {
         const el = map[k];
         if(!el) return;
         const sz = ovWidgetState.sizes[k] || 'S';
         el.dataset.size = sz;
         const szBtn = el.querySelector('.ov-wc-size');
         if(szBtn) szBtn.textContent = sz;
-        grid.appendChild(el);
     });
     ovRefreshWidgetDetails();
 }
@@ -253,21 +246,9 @@ function ovCycleWidgetSize(key){
     ovApplyWidgetLayout();
 }
 
-function ovMoveWidget(key, dir){
-    if(!ovWidgetState) ovLoadWidgetState();
-    const arr = ovWidgetState.order;
-    const idx = arr.indexOf(key);
-    const next = idx + dir;
-    if(idx < 0 || next < 0 || next >= arr.length) return;
-    [arr[idx], arr[next]] = [arr[next], arr[idx]];
-    haptic([8]);
-    ovSaveWidgetState();
-    ovApplyWidgetLayout();
-}
-
 function ovResetWidgets(){
     haptic([10]);
-    ovWidgetState = { order: [...OV_WIDGET_DEFAULTS.order], sizes: { ...OV_WIDGET_DEFAULTS.sizes } };
+    ovWidgetState = { sizes: { ...OV_WIDGET_DEFAULTS.sizes } };
     ovSaveWidgetState();
     ovApplyWidgetLayout();
     showToast(ovWL().resetMsg, 'info', 1800);
@@ -348,20 +329,15 @@ function ovRefreshWidgetDetails(){
     }
 }
 
-// ---- Long-press to enter Edit Mode + Pointer Drag-and-Drop Reorder ----
+// ---- Long-press to enter Edit Mode (resize S / M / L only) ----
 (function bindHomeWidgetGestures(){
-    let holdTimer = null, dragKey = null, startX = 0, startY = 0;
+    let holdTimer = null, startX = 0, startY = 0;
     const cancelHold = ()=>{ if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; } };
 
     document.addEventListener('pointerdown', e => {
         const w = e.target.closest && e.target.closest('#ov-tiles .ov-widget');
-        if(!w || e.target.closest('.ov-w-ctrl, .ov-music-mini-ctrls')) return;
+        if(!w || ovEditMode || e.target.closest('.ov-w-ctrl, .ov-music-mini-ctrls')) return;
         startX = e.clientX; startY = e.clientY;
-        if(ovEditMode){
-            dragKey = w.dataset.widget;
-            w.classList.add('is-dragging');
-            return;
-        }
         cancelHold();
         holdTimer = setTimeout(()=>{
             holdTimer = null;
@@ -372,30 +348,9 @@ function ovRefreshWidgetDetails(){
 
     document.addEventListener('pointermove', e => {
         if(holdTimer && Math.hypot(e.clientX - startX, e.clientY - startY) > 12) cancelHold();
-        if(!dragKey || !ovEditMode) return;
-        const under = document.elementFromPoint(e.clientX, e.clientY);
-        const target = under && under.closest && under.closest('#ov-tiles .ov-widget');
-        if(!target || target.dataset.widget === dragKey) return;
-        const arr = ovWidgetState.order;
-        const from = arr.indexOf(dragKey), to = arr.indexOf(target.dataset.widget);
-        if(from < 0 || to < 0 || from === to) return;
-        arr.splice(to, 0, arr.splice(from, 1)[0]);
-        haptic([6]);
-        ovSaveWidgetState();
-        ovApplyWidgetLayout();
-        const moved = document.querySelector(`#ov-tiles .ov-widget[data-widget="${dragKey}"]`);
-        if(moved) moved.classList.add('is-dragging');
     });
 
-    const endDrag = ()=>{
-        cancelHold();
-        if(dragKey){
-            document.querySelectorAll('#ov-tiles .ov-widget.is-dragging').forEach(el => el.classList.remove('is-dragging'));
-            dragKey = null;
-            ovSuppressTapUntil = Date.now() + 250;
-        }
-    };
-    ['pointerup','pointercancel'].forEach(ev => document.addEventListener(ev, endDrag));
+    ['pointerup','pointercancel'].forEach(ev => document.addEventListener(ev, cancelHold));
 
     const init = ()=>{ ovLoadWidgetState(); ovApplyWidgetLayout(); };
     if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true });

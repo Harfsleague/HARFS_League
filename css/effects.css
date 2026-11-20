@@ -3185,11 +3185,9 @@ body.ov-edit-mode .ov-customize-wrap{ display:none; }
 /* Edit Mode overlay controls & subtle iOS wiggle */
 .ov-w-ctrl{ display:none; position:absolute; top:-8px; right:6px; z-index:12; align-items:center; gap:3px; padding:3px 4px; border-radius:999px; background:#0f172a; border:1px solid rgba(251,191,36,0.55); box-shadow:0 6px 14px rgba(0,0,0,0.6); }
 body.ov-edit-mode .ov-w-ctrl{ display:inline-flex; }
-.ov-wc-btn,.ov-wc-size{ height:22px; min-width:22px; padding:0 5px; border-radius:999px; border:none; background:rgba(255,255,255,0.1); color:#f8fafc; font-size:.62rem; font-weight:900; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
-.ov-wc-size{ background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#0f172a; padding:0 7px; }
-body.ov-edit-mode .ov-widget{ touch-action:none; animation:ovWiggle .32s ease-in-out infinite alternate; }
+.ov-wc-size{ height:22px; min-width:24px; padding:0 8px; border-radius:999px; border:none; background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#0f172a; font-size:.64rem; font-weight:900; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+body.ov-edit-mode .ov-widget{ animation:ovWiggle .32s ease-in-out infinite alternate; }
 body.ov-edit-mode .ov-widget:nth-child(2n){ animation-delay:-.14s; }
-body.ov-edit-mode .ov-widget.is-dragging{ opacity:.72; transform:scale(1.03); z-index:20; animation:none; }
 @keyframes ovWiggle{ from{ transform:rotate(-.7deg); } to{ transform:rotate(.7deg); } }
 body.perf-no-anim.ov-edit-mode .ov-widget{ animation:none; }
 @media (prefers-reduced-motion:reduce){ body.ov-edit-mode .ov-widget{ animation:none; } }
