@@ -2981,3 +2981,14 @@ body.perf-no-anim .tp-rec-collapse, body.perf-no-anim .tp-rec-toggle i{ transiti
 .rec-bar i, .tp-rec-bar i{ animation-duration:1.4s; }
 body.perf-no-anim .rec-tile, body.perf-no-anim .rec-card.rec-match, html.lite-mode .rec-tile, html.lite-mode .rec-card.rec-match{ animation:none; }
 @media (prefers-reduced-motion:reduce){ .rec-tile, .rec-card.rec-match{ animation:none; } }
+
+/* Season → Match History: folded by default, opens with a soft slide */
+.season-history-toggle{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 12px; margin:0 0 4px; border-radius:14px; cursor:pointer; font-family:inherit; font-size:.72rem; font-weight:800; color:#e2e8f0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); -webkit-tap-highlight-color:transparent; transition:background .25s ease, transform .15s ease; }
+.season-history-toggle:active{ transform:scale(.98); background:rgba(255,255,255,0.1); }
+.season-history-toggle i{ font-size:.62rem; color:#94a3b8; transition:transform .5s cubic-bezier(.22,1,.36,1); }
+.season-history-toggle.open i{ transform:rotate(180deg); }
+.season-history-collapse{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1), opacity .4s ease; }
+.season-history-collapse.open{ grid-template-rows:1fr; opacity:1; }
+.season-history-inner{ min-height:0; overflow:hidden; padding-top:6px; }
+body.perf-no-anim .season-history-collapse, body.perf-no-anim .season-history-toggle i, html.lite-mode .season-history-collapse{ transition:none; }
+@media (prefers-reduced-motion:reduce){ .season-history-collapse, .season-history-toggle i{ transition:none; } }

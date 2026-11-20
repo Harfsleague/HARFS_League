@@ -137,3 +137,20 @@ function seasonShowView(view, opts){
 document.body.dataset.seasonTab = 'league';
 seasonSetTab('league', { silent:true });   // League is selected by default
 seasonShowView('main', { silent:true });
+
+// ---- Match History: folded behind a button (opens / closes with a soft slide) ----
+let seasonHistOpen = false;
+function seasonHistSyncLabel(){
+    const lbl = document.getElementById('season-history-toggle-lbl'); if(!lbl) return;
+    const t = (typeof window.harfsT==='function') ? window.harfsT : null;
+    lbl.textContent = t ? t(seasonHistOpen ? 'mh_hide' : 'mh_show') : (seasonHistOpen ? 'Hide match history' : 'Show match history');
+}
+function seasonHistToggle(){
+    if(typeof haptic==='function') haptic([6]);
+    seasonHistOpen = !seasonHistOpen;
+    const box = document.getElementById('season-history-collapse'), btn = document.getElementById('season-history-toggle');
+    if(box) box.classList.toggle('open', seasonHistOpen);
+    if(btn){ btn.classList.toggle('open', seasonHistOpen); btn.setAttribute('aria-expanded', seasonHistOpen ? 'true' : 'false'); }
+    seasonHistSyncLabel();
+    if(seasonHistOpen){ [180,520].forEach(ms=>setTimeout(()=>window.dispatchEvent(new Event('scroll')), ms)); }   // lets the on-scroll reveal of the rows run once they are on screen
+}
