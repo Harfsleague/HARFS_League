@@ -38,6 +38,9 @@ const REC_I18N = {
         t_reign:'Longest Reign at the Top', n_reign:'League titles won in a row',
         t_wins:'Most Wins', n_wins:'All-time, every season',
         t_pts:'Most Points',
+        t_reign_s:'Longest Stay on Top', n_reign_s:s=>`${s} — most matchweeks in a row in first place`, n_treble_s:s=>`${s} — League + CUP + Super Cup`, n_medals_s:s=>`${s} — league + CUP`,
+        champ_title:'Champion Seasons', champ_sub:'When this team lifted a trophy', champ_league:'League', champ_cup:'CUP', champ_super:'Super Cup', champ_none:'No title yet', cup_n:n=>`CUP ${n}`,
+        show_all_recs:'Show all records', hide_all_recs:'Hide records',
         t_top:'Most Weeks on Top', n_top:'Matchweeks spent in first place, all seasons', n_top_s:s=>`${s} — matchweeks in first place`,
         t_wrate:'Best Win Rate', n_wrate:'Share of games won (5+ games played)', n_wrate_s:s=>`${s} (3+ games played)`,
         t_gd:'Best Goal Difference', n_gd:'Goals scored minus goals conceded, all-time',
@@ -85,6 +88,9 @@ const REC_I18N = {
         t_reign:'طولانی‌ترین دوران صدرنشینی', n_reign:'قهرمانی‌های متوالی در لیگ',
         t_wins:'بیشترین برد', n_wins:'در کل تاریخ تمام فصول',
         t_pts:'بیشترین امتیاز',
+        t_reign_s:'طولانی‌ترین ماندن در صدر', n_reign_s:s=>`${s} — بیشترین هفته‌های پشت‌سرهم در رتبه اول`, n_treble_s:s=>`${s} — لیگ + جام + سوپرجام`, n_medals_s:s=>`${s} — لیگ + جام`,
+        champ_title:'فصل‌های قهرمانی', champ_sub:'کدام فصل‌ها این تیم قهرمان شده است', champ_league:'لیگ', champ_cup:'جام', champ_super:'سوپرجام', champ_none:'هنوز قهرمانی‌ای ندارد', cup_n:n=>`جام ${n}`,
+        show_all_recs:'نمایش کامل رکوردها', hide_all_recs:'پنهان کردن رکوردها',
         t_top:'بیشترین هفته صدرنشینی', n_top:'هفته‌های حضور در صدر جدول در تمام فصل‌ها', n_top_s:s=>`${s} — هفته‌های حضور در رتبه اول`,
         t_wrate:'بهترین درصد برد', n_wrate:'نسبت بردها (حداقل ۵ بازی)', n_wrate_s:s=>`${s} (حداقل ۳ بازی)`,
         t_gd:'بهترین تفاضل گل', n_gd:'گل زده منهای گل خورده در کل تاریخ',
@@ -132,6 +138,9 @@ const REC_I18N = {
         t_reign:'Reinado Más Largo en la Cima', n_reign:'Títulos de liga ganados consecutivamente',
         t_wins:'Más Victorias', n_wins:'Histórico, todas las temporadas',
         t_pts:'Más Puntos',
+        t_reign_s:'Racha más larga en el liderato', n_reign_s:s=>`${s} — más jornadas seguidas en primer lugar`, n_treble_s:s=>`${s} — Liga + Copa + Supercopa`, n_medals_s:s=>`${s} — liga + copa`,
+        champ_title:'Temporadas campeón', champ_sub:'Cuándo este equipo levantó un trofeo', champ_league:'Liga', champ_cup:'Copa', champ_super:'Supercopa', champ_none:'Aún sin títulos', cup_n:n=>`Copa ${n}`,
+        show_all_recs:'Mostrar todos los récords', hide_all_recs:'Ocultar récords',
         t_top:'Más Semanas como Líder', n_top:'Jornadas en primer lugar, todas las temporadas', n_top_s:s=>`${s} — jornadas en primer lugar`,
         t_wrate:'Mejor % de Victorias', n_wrate:'Porcentaje de victorias (mín. 5 partidos)', n_wrate_s:s=>`${s} (mín. 3 partidos)`,
         t_gd:'Mejor Diferencia de Goles', n_gd:'Goles a favor menos goles en contra',
@@ -287,7 +296,7 @@ function recordsSeasonSource(){
     const last = [...(archivedSeasons||[])].filter(x=>x && x.table && x.table.length).sort((a,b)=>(b.seasonId||0)-(a.seasonId||0))[0];
     if(!last) return null;
     const rows = {}; last.table.forEach(r=>{ rows[r.name] = r; });
-    return { label:L.season_n(last.seasonId), rows, logs:last.history || [] };
+    return { label:L.season_n(last.seasonId), rows, logs:last.history || [], season:last };
 }
 function recordsComputeSeason(){
     const L = recL();
@@ -316,7 +325,36 @@ function recordsComputeSeason(){
     const bars = fn=>TEAM_NAMES.map(t=>({ team:t, value:fn(t) })).sort((x,y)=>y.value-x.value);
     const lowBars = (fn, ok)=>TEAM_NAMES.filter(ok).map(t=>({ team:t, value:fn(t) })).sort((x,y)=>x.value-y.value);
     const n = logs.length;
+    // Same record list as All-time (so both tabs always show the same number of records). Honours are only known once a season has ended:
+    // for the running season they stay at 0 until it is archived.
+    const med = {}; TEAM_NAMES.forEach(t=>med[t]={ gold:0, silver:0, bronze:0, league:0, cup:0, sup:0, treble:0 });
+    const se = src.season;
+    if(se && se.table){
+        [['gold',0],['silver',1],['bronze',2]].forEach(([k,i])=>{ const r = se.table[i]; if(r && med[r.name]) med[r.name][k]++; });
+        const lg = se.table[0] && se.table[0].name;
+        if(lg && med[lg]) med[lg].league++;
+        if(se.superCup && se.superCup.winner && med[se.superCup.winner]){ med[se.superCup.winner].sup++; }
+        const ed = (typeof mbaEditionForSeason==='function') ? mbaEditionForSeason(se) : null;
+        const rec = ed!=null ? ((mbaData && mbaData.completed) || []).find(r=>r.edition===ed) : null;
+        if(rec){
+            [['gold',rec.gold],['silver',rec.silver],['bronze',rec.bronze]].forEach(([k,t])=>{ if(t && med[t]) med[t][k]++; });
+            if(rec.gold && med[rec.gold]) med[rec.gold].cup++;
+        }
+        if(lg && med[lg] && se.superCup && se.superCup.winner===lg && rec && rec.gold===lg) med[lg].treble = 1;
+    }
+    // longest unbroken stay in first place (matchweeks in a row)
+    let stay = null;
+    if(typeof magComputeRankHistory==='function'){
+        const h = magComputeRankHistory(recordsWithRounds(logs));
+        if(h){ stay = {}; TEAM_NAMES.forEach(t=>{ let cur = 0, best = 0; h.ranks[t].forEach(r=>{ cur = r===1 ? cur+1 : 0; if(cur>best) best = cur; }); stay[t] = best; }); }
+    }
     const cards = [
+        { id:'treble', special:true, icon:'\ud83c\udfc6', badge:RECORDS_TREBLE_BADGE, title:L.t_treble, note:L.n_treble_s(src.label), list:bars(t=>med[t].treble), unit:L.u_trebles },
+        { id:'reign', icon:'👑', title:L.t_reign_s, note:L.n_reign_s(src.label), list:bars(t=>stay ? stay[t] : 0), unit:L.u_row },
+        { id:'silver',  icon:'🥈', title:L.t_silver,  note:L.n_medals_s(src.label), list:bars(t=>med[t].silver), unit:L.u_silvers },
+        { id:'bronze',  icon:'🥉', title:L.t_bronze,  note:L.n_medals_s(src.label), list:bars(t=>med[t].bronze), unit:L.u_bronzes },
+        { id:'decor',   icon:'🏆', title:L.t_decor,   note:L.n_medals_s(src.label), list:bars(t=>med[t].league+med[t].cup+med[t].sup), unit:L.u_titles,
+          extra:t=>L.decor_parts(med[t].league, med[t].cup, med[t].sup) },
         { id:'goals',   icon:'⚽', title:L.t_goals,   note:src.label,                        list:bars(t=>g(t,'GF')), unit:L.u_goals },
         { id:'conc',    icon:'🧱', title:L.t_conc,    note:L.n_conc_s(src.label),            list:bars(t=>g(t,'GA')), unit:L.u_goals },
         { id:'clean',   icon:'🧤', title:L.t_clean,   note:L.n_clean_s(src.label, n),        list:bars(t=>clean[t]), unit:L.u_clean },
@@ -584,10 +622,40 @@ function recordsTeamGamesHtml(team){
         <div class="tp-game-s">${side(g.m.home)}<b>${g.sc.a} – ${g.sc.b}</b>${side(g.m.away)}</div></div>` : '';
     return game('💥',L.big_win,bigWin,0) + game('🎯',L.high_match,topGame,1) + game('💔',L.worst_defeat,worst,2);
 }
+// When this team won something: league seasons, CUP editions and Super Cups (from the archive + the finished CUPs)
+function recordsTeamTitles(team){
+    const league = [], sup = [], cup = [];
+    [...(archivedSeasons||[])].sort((a,b)=>(a.seasonId||0)-(b.seasonId||0)).forEach(se=>{
+        if(se && se.table && se.table[0] && se.table[0].name===team) league.push(se.seasonId);
+        if(se && se.superCup && se.superCup.winner===team) sup.push(se.seasonId);
+    });
+    [...((mbaData && mbaData.completed) || [])].sort((a,b)=>(a.edition||0)-(b.edition||0)).forEach(r=>{ if(r.gold===team) cup.push(r.edition); });
+    return { league, sup, cup };
+}
+let recordsTpOpen = false;   // the full record list under the champion bubble starts folded each time a team panel opens
+function recordsTpToggle(btn){
+    haptic([6]);
+    recordsTpOpen = !recordsTpOpen;
+    const L = recL(), wrap = btn.closest('.tp-rec-wrap');
+    if(wrap) wrap.classList.toggle('open', recordsTpOpen);
+    btn.querySelector('span').textContent = recordsTpOpen ? L.hide_all_recs : L.show_all_recs;
+}
+function recordsTeamChampHtml(team){
+    const L = recL(), T = recordsTeamTitles(team);
+    const grp = (icon, label, chips)=> `<div class="tp-champ-row"><div class="tp-champ-lbl"><span>${icon}</span>${escapeHtml(label)}</div><div class="tp-champ-chips">${
+        chips.length ? chips.map(c=>`<b class="tp-champ-chip">${escapeHtml(c)}</b>`).join('') : `<em class="tp-champ-none">—</em>`}</div></div>`;
+    const any = T.league.length || T.cup.length || T.sup.length;
+    return `<div class="tp-champ">
+        <div class="tp-champ-h"><span class="tp-champ-ic">🏆</span><div><div class="tp-champ-t">${escapeHtml(L.champ_title)}</div><div class="tp-champ-s">${escapeHtml(L.champ_sub)}</div></div></div>
+        ${any ? grp('🏆', L.champ_league, T.league.map(L.season_n)) + grp('🥇', L.champ_cup, T.cup.map(L.cup_n)) + grp('⭐', L.champ_super, T.sup.map(L.season_n))
+              : `<div class="tp-champ-empty">${escapeHtml(L.champ_none)}</div>`}
+    </div>`;
+}
 function recordsTeamPanelHtml(team){
     const L = recL();
     const { rows } = recordsForTeam(team);
-    if(!rows.length) return `<div class="team-panel-empty">${L.no_team_records}</div>`;
+    const champ = recordsTeamChampHtml(team);
+    if(!rows.length) return champ + `<div class="team-panel-empty">${L.no_team_records}</div>`;
     const held = rows.filter(r=>r.holds);
     const heldHtml = held.length
         ? `<div class="tp-held">${held.map(r=>`<span class="tp-held-chip"><span>${r.icon}</span><b>${escapeHtml(r.title)}</b><em>${r.shown}${r.shared?` · ${L.shared}`:''}</em></span>`).join('')}</div>`
@@ -604,7 +672,10 @@ function recordsTeamPanelHtml(team){
             <span class="tp-rec-rank">${r.holds ? '👑' : '#'+r.rank}</span>
         </div>`;
     }).join('');
-    return heldHtml + `<div class="tp-rec-list">${list}</div>`;
+    return `<div class="tp-rec-wrap${recordsTpOpen?' open':''}">${champ}
+        <button type="button" class="tp-rec-toggle" onclick="recordsTpToggle(this)"><span>${recordsTpOpen ? L.hide_all_recs : L.show_all_recs}</span><i class="fas fa-chevron-down"></i></button>
+        <div class="tp-rec-collapse"><div class="tp-rec-inner">${heldHtml}<div class="tp-rec-list">${list}</div></div></div>
+    </div>`;
 }
 
 let recordsScrollBound = false;

@@ -1038,8 +1038,10 @@ function magTileShow(issue){
     // No new issue for a whole week (newest one is more than 8 days old: weekly + a day of slack) → "FIFADay Break" instead of the intro line
     const lastT = Date.parse(issue.generatedAt || (issue.issueDate ? `${issue.issueDate}T23:59:59Z` : ''));
     const onBreak = !Number.isNaN(lastT) && (Date.now() - lastT) > 8 * 864e5;
+    const issueName = issue.issueTitle || issue.coverSubtitle || '';
     ttl.dataset.break = onBreak ? '1' : '';   // appearance.js leaves the text alone while this is set
-    (ttl.querySelector('.ov-intro-txt') || ttl).textContent = onBreak ? 'FIFADay Break' : (issue.coverSubtitle || issue.issueTitle || 'This week’s issue');   // the magazine's intro line (cut with … when it does not fit)
+    ttl.dataset.issue = (!onBreak && issueName) ? '1' : '';   // …and while the magazine's own title is shown (it used to be overwritten by "This week's issue" on every language refresh)
+    (ttl.querySelector('.ov-intro-txt') || ttl).textContent = onBreak ? 'FIFADay Break' : (issueName || 'This week’s issue');   // the magazine's title (cut with … when it does not fit)   // the magazine's intro line (cut with … when it does not fit)
 }
 async function magTileInit(){
     if(magTileDone) return; magTileDone = true;

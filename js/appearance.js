@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.30";
+const HARFS_VERSION_LABEL = "1.31";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -1340,7 +1340,7 @@ function applyAppLanguage(){
         // 2. Home screen
         const ovLbl = document.querySelector('#main-league-screen .ov-label span');
         if(ovLbl) ovLbl.innerHTML = `<i class="fas fa-trophy"></i>${harfsT('ov_podium_label')}`;
-        { const mt=document.getElementById('ov-mag-title'); if(!(mt && mt.dataset.break==='1')) setTxt('#ov-mag-title .ov-intro-txt', 'ov_mag_intro'); }   // "FIFADay Break" stays when there is no new issue this week
+        { const mt=document.getElementById('ov-mag-title'); if(!(mt && (mt.dataset.break==='1' || mt.dataset.issue==='1'))) setTxt('#ov-mag-title .ov-intro-txt', 'ov_mag_intro'); }   // "FIFADay Break" stays when there is no new issue this week
         setTxt('.ov-tile-mag span', 'tile_magazine');
         setTxt('.ov-tile-cards span', 'tile_cards');
         setTxt('.ov-tile-chat span', 'tile_chat');
