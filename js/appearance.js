@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.31";
+const HARFS_VERSION_LABEL = "1.32";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -1236,11 +1236,29 @@ function toggleLanguageOptions(force){
     const chev = document.getElementById('ap-lang-chevron');
     if(!grid || !btn) return;
     const willOpen = force !== undefined ? force : grid.hidden;
-    grid.hidden = !willOpen;
     btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     btn.classList.toggle('open', willOpen);
-    if(chev) chev.style.transform = willOpen ? 'rotate(180deg)' : '';
-    if(willOpen) renderLanguageGrid();
+    if(chev){ chev.style.transition = 'transform .45s cubic-bezier(.22,1,.36,1)'; chev.style.transform = willOpen ? 'rotate(180deg)' : ''; }
+    const motion = !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) && grid.animate;
+    grid.getAnimations && grid.getAnimations().forEach(a=>a.cancel());
+    if(willOpen){
+        renderLanguageGrid();
+        grid.hidden = false;
+        if(!motion) return;
+        // the list unrolls from the button: height + fade, then the language cards pop in one after another
+        const h = grid.scrollHeight;
+        grid.style.overflow = 'hidden';
+        const a = grid.animate([{ height:'0px', opacity:0, transform:'translateY(-10px)' },{ height:h+'px', opacity:1, transform:'none' }], { duration:460, easing:'cubic-bezier(.22,1,.36,1)' });
+        a.onfinish = a.oncancel = ()=>{ grid.style.overflow = ''; };
+        [...grid.children].forEach((c,i)=>c.animate([{ opacity:0, transform:'translateY(12px) scale(.95)' },{ opacity:1, transform:'none' }], { duration:420, delay:70+i*45, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' }));
+    } else {
+        if(!motion){ grid.hidden = true; return; }
+        const h = grid.offsetHeight;
+        grid.style.overflow = 'hidden';
+        const a = grid.animate([{ height:h+'px', opacity:1, transform:'none' },{ height:'0px', opacity:0, transform:'translateY(-8px)' }], { duration:320, easing:'cubic-bezier(.4,0,.2,1)' });
+        a.onfinish = ()=>{ grid.hidden = true; grid.style.overflow = ''; };
+        a.oncancel = ()=>{ grid.style.overflow = ''; };
+    }
 }
 
 function renderLanguageGrid(){

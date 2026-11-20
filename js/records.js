@@ -39,7 +39,7 @@ const REC_I18N = {
         t_wins:'Most Wins', n_wins:'All-time, every season',
         t_pts:'Most Points',
         t_reign_s:'Longest Stay on Top', n_reign_s:s=>`${s} — most matchweeks in a row in first place`, n_treble_s:s=>`${s} — League + CUP + Super Cup`, n_medals_s:s=>`${s} — league + CUP`,
-        champ_title:'Champion Seasons', champ_sub:'When this team lifted a trophy', champ_league:'League', champ_cup:'CUP', champ_super:'Super Cup', champ_none:'No title yet', cup_n:n=>`CUP ${n}`,
+        champ_title:'Champion Seasons', champ_sub:'Team honours history', champ_silver:'Silver', champ_bronze:'Bronze', champ_none_all:'No honours yet', champ_league:'League', champ_cup:'CUP', champ_super:'Super Cup', champ_none:'No title yet', cup_n:n=>`CUP ${n}`,
         show_all_recs:'Show all records', hide_all_recs:'Hide records',
         t_top:'Most Weeks on Top', n_top:'Matchweeks spent in first place, all seasons', n_top_s:s=>`${s} — matchweeks in first place`,
         t_wrate:'Best Win Rate', n_wrate:'Share of games won (5+ games played)', n_wrate_s:s=>`${s} (3+ games played)`,
@@ -89,7 +89,7 @@ const REC_I18N = {
         t_wins:'بیشترین برد', n_wins:'در کل تاریخ تمام فصول',
         t_pts:'بیشترین امتیاز',
         t_reign_s:'طولانی‌ترین ماندن در صدر', n_reign_s:s=>`${s} — بیشترین هفته‌های پشت‌سرهم در رتبه اول`, n_treble_s:s=>`${s} — لیگ + جام + سوپرجام`, n_medals_s:s=>`${s} — لیگ + جام`,
-        champ_title:'فصل‌های قهرمانی', champ_sub:'کدام فصل‌ها این تیم قهرمان شده است', champ_league:'لیگ', champ_cup:'جام', champ_super:'سوپرجام', champ_none:'هنوز قهرمانی‌ای ندارد', cup_n:n=>`جام ${n}`,
+        champ_title:'فصل‌های قهرمانی', champ_sub:'تاریخچه افتخارات تیم', champ_silver:'نقره', champ_bronze:'برنز', champ_none_all:'هنوز افتخاری ثبت نشده', champ_league:'لیگ', champ_cup:'جام', champ_super:'سوپرجام', champ_none:'هنوز قهرمانی‌ای ندارد', cup_n:n=>`جام ${n}`,
         show_all_recs:'نمایش کامل رکوردها', hide_all_recs:'پنهان کردن رکوردها',
         t_top:'بیشترین هفته صدرنشینی', n_top:'هفته‌های حضور در صدر جدول در تمام فصل‌ها', n_top_s:s=>`${s} — هفته‌های حضور در رتبه اول`,
         t_wrate:'بهترین درصد برد', n_wrate:'نسبت بردها (حداقل ۵ بازی)', n_wrate_s:s=>`${s} (حداقل ۳ بازی)`,
@@ -139,7 +139,7 @@ const REC_I18N = {
         t_wins:'Más Victorias', n_wins:'Histórico, todas las temporadas',
         t_pts:'Más Puntos',
         t_reign_s:'Racha más larga en el liderato', n_reign_s:s=>`${s} — más jornadas seguidas en primer lugar`, n_treble_s:s=>`${s} — Liga + Copa + Supercopa`, n_medals_s:s=>`${s} — liga + copa`,
-        champ_title:'Temporadas campeón', champ_sub:'Cuándo este equipo levantó un trofeo', champ_league:'Liga', champ_cup:'Copa', champ_super:'Supercopa', champ_none:'Aún sin títulos', cup_n:n=>`Copa ${n}`,
+        champ_title:'Temporadas campeón', champ_sub:'Historial de honores del equipo', champ_silver:'Plata', champ_bronze:'Bronce', champ_none_all:'Aún sin honores', champ_league:'Liga', champ_cup:'Copa', champ_super:'Supercopa', champ_none:'Aún sin títulos', cup_n:n=>`Copa ${n}`,
         show_all_recs:'Mostrar todos los récords', hide_all_recs:'Ocultar récords',
         t_top:'Más Semanas como Líder', n_top:'Jornadas en primer lugar, todas las temporadas', n_top_s:s=>`${s} — jornadas en primer lugar`,
         t_wrate:'Mejor % de Victorias', n_wrate:'Porcentaje de victorias (mín. 5 partidos)', n_wrate_s:s=>`${s} (mín. 3 partidos)`,
@@ -351,10 +351,6 @@ function recordsComputeSeason(){
     const cards = [
         { id:'treble', special:true, icon:'\ud83c\udfc6', badge:RECORDS_TREBLE_BADGE, title:L.t_treble, note:L.n_treble_s(src.label), list:bars(t=>med[t].treble), unit:L.u_trebles },
         { id:'reign', icon:'👑', title:L.t_reign_s, note:L.n_reign_s(src.label), list:bars(t=>stay ? stay[t] : 0), unit:L.u_row },
-        { id:'silver',  icon:'🥈', title:L.t_silver,  note:L.n_medals_s(src.label), list:bars(t=>med[t].silver), unit:L.u_silvers },
-        { id:'bronze',  icon:'🥉', title:L.t_bronze,  note:L.n_medals_s(src.label), list:bars(t=>med[t].bronze), unit:L.u_bronzes },
-        { id:'decor',   icon:'🏆', title:L.t_decor,   note:L.n_medals_s(src.label), list:bars(t=>med[t].league+med[t].cup+med[t].sup), unit:L.u_titles,
-          extra:t=>L.decor_parts(med[t].league, med[t].cup, med[t].sup) },
         { id:'goals',   icon:'⚽', title:L.t_goals,   note:src.label,                        list:bars(t=>g(t,'GF')), unit:L.u_goals },
         { id:'conc',    icon:'🧱', title:L.t_conc,    note:L.n_conc_s(src.label),            list:bars(t=>g(t,'GA')), unit:L.u_goals },
         { id:'clean',   icon:'🧤', title:L.t_clean,   note:L.n_clean_s(src.label, n),        list:bars(t=>clean[t]), unit:L.u_clean },
@@ -632,6 +628,20 @@ function recordsTeamTitles(team){
     [...((mbaData && mbaData.completed) || [])].sort((a,b)=>(a.edition||0)-(b.edition||0)).forEach(r=>{ if(r.gold===team) cup.push(r.edition); });
     return { league, sup, cup };
 }
+// Silver / bronze finishes (league seasons + CUP editions) — shown for teams that have never been champion
+function recordsTeamMedals(team){
+    const silver = [], bronze = [];
+    [...(archivedSeasons||[])].sort((a,b)=>(a.seasonId||0)-(b.seasonId||0)).forEach(se=>{
+        const t = (se && se.table) || [];
+        if(t[1] && t[1].name===team) silver.push({ kind:'league', n:se.seasonId });
+        if(t[2] && t[2].name===team) bronze.push({ kind:'league', n:se.seasonId });
+    });
+    [...((mbaData && mbaData.completed) || [])].sort((a,b)=>(a.edition||0)-(b.edition||0)).forEach(r=>{
+        if(r.silver===team) silver.push({ kind:'cup', n:r.edition });
+        if(r.bronze===team) bronze.push({ kind:'cup', n:r.edition });
+    });
+    return { silver, bronze };
+}
 let recordsTpOpen = false;   // the full record list under the champion bubble starts folded each time a team panel opens
 function recordsTpToggle(btn){
     haptic([6]);
@@ -645,10 +655,20 @@ function recordsTeamChampHtml(team){
     const grp = (icon, label, chips)=> `<div class="tp-champ-row"><div class="tp-champ-lbl"><span>${icon}</span>${escapeHtml(label)}</div><div class="tp-champ-chips">${
         chips.length ? chips.map(c=>`<b class="tp-champ-chip">${escapeHtml(c)}</b>`).join('') : `<em class="tp-champ-none">—</em>`}</div></div>`;
     const any = T.league.length || T.cup.length || T.sup.length;
+    let body;
+    if(any){
+        body = grp('🏆', L.champ_league, T.league.map(L.season_n)) + grp('🥇', L.champ_cup, T.cup.map(L.cup_n)) + grp('⭐', L.champ_super, T.sup.map(L.season_n));
+    } else {
+        // never been champion: show when (and where) the team finished second or third instead
+        const M = recordsTeamMedals(team);
+        const chip = m=> m.kind==='cup' ? L.cup_n(m.n) : `${L.season_n(m.n)} · ${L.champ_league}`;
+        body = (M.silver.length || M.bronze.length)
+            ? (M.silver.length ? grp('🥈', L.champ_silver, M.silver.map(chip)) : '') + (M.bronze.length ? grp('🥉', L.champ_bronze, M.bronze.map(chip)) : '')
+            : `<div class="tp-champ-empty">${escapeHtml(L.champ_none_all)}</div>`;
+    }
     return `<div class="tp-champ">
         <div class="tp-champ-h"><span class="tp-champ-ic">🏆</span><div><div class="tp-champ-t">${escapeHtml(L.champ_title)}</div><div class="tp-champ-s">${escapeHtml(L.champ_sub)}</div></div></div>
-        ${any ? grp('🏆', L.champ_league, T.league.map(L.season_n)) + grp('🥇', L.champ_cup, T.cup.map(L.cup_n)) + grp('⭐', L.champ_super, T.sup.map(L.season_n))
-              : `<div class="tp-champ-empty">${escapeHtml(L.champ_none)}</div>`}
+        ${body}
     </div>`;
 }
 function recordsTeamPanelHtml(team){
