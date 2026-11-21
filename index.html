@@ -442,10 +442,10 @@
         <section id="ssec-history" data-sec="history">
         <!-- Match history — merged into Season, works for current + archived seasons alike -->
         <div class="w-full px-3" id="season-history-section">
+            <!-- Folded until the page is pulled down far enough (the progress circle at the bottom shows how far) -->
+            <div class="season-history-collapse" id="season-history-collapse"><div class="season-history-inner">
             <div class="season-history-card">
                 <h3 class="season-history-title" id="season-history-title"><i class="fas fa-history"></i> Match History</h3>
-                <button type="button" class="season-history-toggle" id="season-history-toggle" aria-expanded="false" onclick="seasonHistToggle()"><span id="season-history-toggle-lbl">Show match history</span><i class="fas fa-chevron-down"></i></button>
-                <div class="season-history-collapse" id="season-history-collapse"><div class="season-history-inner">
                 <div class="chip-bar w-full" id="season-history-filter-bar">
                     <div class="chip active" onclick="filterSeasonHistory('all',this)">All</div>
                 </div>
@@ -454,8 +454,9 @@
                         <span class="spinner"></span> Loading...
                     </div>
                 </div>
-                </div></div>
             </div>
+            </div></div>
+            <div class="season-history-room" id="season-history-room" aria-hidden="true"></div>
         </div>
 
         </section>
@@ -845,8 +846,10 @@
          appears once the user scrolls down into the match history.
          Sibling of the .page-screens (not nested inside one) so it stays a
          true non-scrolling overlay — see the .season-fab comment in the CSS. -->
-    <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="scrollSeasonToTop()" role="button" aria-label="Back to top">
-        <i class="fas fa-arrow-up"></i>
+    <div class="season-fab back-to-top-fab" id="back-to-top-fab" onclick="seasonFabTap()" role="button" aria-label="Back to top">
+        <svg class="fab-ring" viewBox="0 0 42 42" aria-hidden="true"><circle class="fab-ring-bg" cx="21" cy="21" r="19"/><circle class="fab-ring-fg" id="fab-ring-fg" cx="21" cy="21" r="19"/></svg>
+        <i class="fas fa-chevron-down fab-ic-down"></i>
+        <i class="fas fa-arrow-up fab-ic-up"></i>
     </div>
 
     <!-- ============ CUP — RESULT EDITOR (record / edit a game) ============ -->

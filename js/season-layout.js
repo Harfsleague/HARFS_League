@@ -59,6 +59,7 @@ function seasonSetTab(tab, opts){
     document.body.dataset.seasonTab = tab;
     document.querySelectorAll('#season-subnav .nav-item').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
     if(tab==='cup' && typeof renderMbaSeasonView==='function') renderMbaSeasonView();
+    if(typeof seasonFabSync==='function') setTimeout(seasonFabSync, 30);
     if(changed && !opts.silent){
         if(seasonMotionOk()) seasonPlay(document.getElementById('season-sections'), 'sv-tab', 320);
         try{ window.scrollTo({ top:0 }); const sc=document.getElementById('league-table-screen'); if(sc) sc.scrollTop = 0; }catch(e){}
@@ -69,6 +70,7 @@ function seasonSetTab(tab, opts){
 function seasonApplyView(view, prev, keepTitle){
     const $ = id => document.getElementById(id);
     document.body.dataset.seasonView = view;
+    if(typeof seasonFabSync==='function') setTimeout(seasonFabSync, 30);
     if(!keepTitle){ const title = $('season-screen-title'); if(title) title.textContent = seasonViewTitle(view); }
     const back = $('season-back-btn');
     if(back){ back.style.display = view==='main' ? 'none' : 'flex'; if(view!=='main' && seasonMotionOk()) seasonPlay(back,'sv-fade',320); }
@@ -137,20 +139,3 @@ function seasonShowView(view, opts){
 document.body.dataset.seasonTab = 'league';
 seasonSetTab('league', { silent:true });   // League is selected by default
 seasonShowView('main', { silent:true });
-
-// ---- Match History: folded behind a button (opens / closes with a soft slide) ----
-let seasonHistOpen = false;
-function seasonHistSyncLabel(){
-    const lbl = document.getElementById('season-history-toggle-lbl'); if(!lbl) return;
-    const t = (typeof window.harfsT==='function') ? window.harfsT : null;
-    lbl.textContent = t ? t(seasonHistOpen ? 'mh_hide' : 'mh_show') : (seasonHistOpen ? 'Hide match history' : 'Show match history');
-}
-function seasonHistToggle(){
-    if(typeof haptic==='function') haptic([6]);
-    seasonHistOpen = !seasonHistOpen;
-    const box = document.getElementById('season-history-collapse'), btn = document.getElementById('season-history-toggle');
-    if(box) box.classList.toggle('open', seasonHistOpen);
-    if(btn){ btn.classList.toggle('open', seasonHistOpen); btn.setAttribute('aria-expanded', seasonHistOpen ? 'true' : 'false'); }
-    seasonHistSyncLabel();
-    if(seasonHistOpen){ [180,520].forEach(ms=>setTimeout(()=>window.dispatchEvent(new Event('scroll')), ms)); }   // lets the on-scroll reveal of the rows run once they are on screen
-}

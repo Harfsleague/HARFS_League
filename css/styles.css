@@ -575,12 +575,12 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 
 .season-table tbody tr {
     border-bottom:1px solid rgba(255,255,255,0.05);
-    animation:rowIn 0.3s ease both;
+    animation:rowIn 0.62s cubic-bezier(.22,1,.36,1) both;
 }
 .season-table tbody tr:last-child{border-bottom:none;}
 .season-table tbody tr.rank-1-row{background:var(--table-rank1-bg);}
 
-@keyframes rowIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+@keyframes rowIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:translateX(0);}}
 
 .season-table td {
     padding:12px 0;
@@ -628,12 +628,12 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     border-radius:13px;
     padding:8px 10px;margin-bottom:6px;
     transition:opacity 0.2s ease,transform 0.2s ease;
-    animation:cardIn 0.35s ease both;
+    animation:cardIn 0.65s cubic-bezier(.22,1,.36,1) both;
 }
 .match-card-mini:last-child{margin-bottom:0;}
 .match-card-mini:active{transform:scale(0.98);}
 .match-card-mini.hidden-by-filter{display:none;}
-@keyframes cardIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 .mcm-date{
     display:flex;align-items:center;justify-content:center;gap:5px;
     font-size:0.6rem;color:#6b7280;font-family:monospace;
@@ -864,7 +864,7 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
     border-radius:22px;overflow:hidden;
     position:relative;margin-bottom:14px;
     transition:transform 0.2s;
-    animation:cardIn 0.4s ease both;
+    animation:cardIn 0.7s cubic-bezier(.22,1,.36,1) both;
     width:100%;
 }
 .weird-card:active{transform:scale(0.98);}

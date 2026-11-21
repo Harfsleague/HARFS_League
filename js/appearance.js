@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.36";
+const HARFS_VERSION_LABEL = "1.37";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -1430,7 +1430,6 @@ function applyAppLanguage(){
         }
         const histTitle = document.getElementById('season-history-title');
         if(histTitle) histTitle.innerHTML = `<i class="fas fa-history"></i> ${harfsT('match_history')}`;
-        if(typeof seasonHistSyncLabel === 'function') seasonHistSyncLabel();
         const allChip = document.querySelector('#season-history-filter-bar .chip');
         if(allChip) allChip.textContent = harfsT('filter_all');
         setTxt('#weird-screen .league-header h2', 'moments_title');
