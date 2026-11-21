@@ -6,7 +6,7 @@
 // ============================================================
 // ============================================================
 // SHARED HELPERS (used by many screens — keep them in this early-loaded file)
-// ============================================================
+// ===========================================================
 function escapeHtml(s){
     const d=document.createElement('div');
     d.textContent = s==null ? '' : String(s);
