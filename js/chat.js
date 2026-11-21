@@ -34,6 +34,9 @@ let chatSending = false;
 let chatUnread = 0;
 let chatReadTs = 0;               // newest ts we told the server we have read
 let chatNodes = new Map();        // id -> DOM node
+let chatEditing = null;           // own message being edited (the composer is in "edit" mode)
+let chatDraftHold = '';           // what was typed before the edit started — put back afterwards
+const chatMentionSeen = new Set();// messages that already raised a "mentioned you" banner
 let chatRec = null;               // { rec, stream, chunks, t0, timer, cancelled }
 let chatRenderedOnce = false;     // false until the first full render → later (new) bubbles spring in, the first screenful fades up
 
@@ -81,6 +84,7 @@ function openChatPage(){
     haptic([8]);
     navigate('chat');
     chatToggleMic();
+    chatDraftRestore();
     chatFirstLoad();
 }
 async function chatFirstLoad(){
@@ -126,7 +130,7 @@ async function chatPoll(){
 // logged out (or switched account): forget everything about the previous account
 function chatReset(){
     if(!chatLoaded && !chatUnread && !chatSeenVersion) return;
-    chatMsgs = []; chatLoaded = false; chatSeenVersion = ''; chatReadTs = 0; chatReply = null;
+    chatMsgs = []; chatLoaded = false; chatSeenVersion = ''; chatReadTs = 0; chatReply = null; chatEditing = null; chatMentionSeen.clear();
     chatNodes.clear(); chatRenderedOnce = false; const box = chatEl('chat-messages'); if(box) box.innerHTML = '';
     chatBlobsForget(); chatReacts = {}; chatReadAtOpen = null;
     chatSetUnread(0);
@@ -151,6 +155,7 @@ async function chatLoad(){
     chatReacts = d.reactions || {};
     chatLoaded = true;
     chatRender();
+    if(before) chatAnnounceMentions(chatMsgs.filter(m=>m.ts > before));
     const fresh = chatMsgs.filter(m=>m.ts > before && m.t !== loggedInTeam).length;
     if(nearBottom || !before) chatScrollBottom(false);
     else if(fresh) chatShowJump(fresh);
@@ -186,6 +191,30 @@ function chatFileIcon(name, mime){
     if(['zip','rar','7z','gz','tar'].includes(e)) return 'fa-file-zipper';
     return 'fa-file';
 }
+// ---------------- @mentions ----------------
+// A mention is written into the text as @DisplayName (max 250 chars, no extra server field needed) and drawn as a chip.
+function chatMentionNames(){ return [...new Set(Object.values(TEAM_DISPLAY_NAMES).map(String))].filter(Boolean).sort((a,b)=>b.length-a.length); }
+function chatMentionRe(){
+    const alt = chatMentionNames().map(n=>escapeHtml(n).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+    return alt ? new RegExp('(^|[\\s(\\[{«"\'.,:;!?،؛])@(' + alt + ')(?![\\p{L}\\p{N}_])', 'giu') : null;
+}
+function chatTeamOfName(name){ const k = Object.keys(TEAM_DISPLAY_NAMES).find(t=>String(TEAM_DISPLAY_NAMES[t]).toLowerCase() === String(name).toLowerCase()); return k || ''; }
+function chatMentionize(escaped){
+    const re = chatMentionRe(); if(!re) return escaped;
+    return escaped.replace(re, (all, pre, name)=>{
+        const team = chatTeamOfName(name.replace(/&amp;/g,'&'));
+        return `${pre}<span class="chat-mention${team && team===loggedInTeam ? ' me' : ''}" data-team="${escapeHtml(team)}">@${name}</span>`;
+    });
+}
+function chatMentionsMe(m){
+    if(!m || !m.x || !loggedInTeam) return false;
+    const re = chatMentionRe(); if(!re) return false;
+    const s = escapeHtml(m.x); let x;
+    while((x = re.exec(s))){ if(chatTeamOfName(x[2].replace(/&amp;/g,'&')) === loggedInTeam) return true; }
+    return false;
+}
+function chatTextHtml(m){ return m.x ? chatLinkify(chatMentionize(escapeHtml(m.x))) : ''; }
+function chatMetaHtml(m){ return (m.ed ? '<span class="chat-edited">edited</span>' : '') + chatTime(m.ts); }
 function chatLinkify(escaped){ return escaped.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'); }
 function chatPreviewText(m){
     if(m.x) return m.x.slice(0,60);
@@ -218,15 +247,24 @@ function chatBuildNode(m){
             ${mine ? '' : `<img class="chat-avatar" src="${teamLogoUrl(m.t)}" alt="" onerror="this.style.opacity='.3'">`}
             <div class="chat-col">
                 <div class="chat-bubble" onclick="chatBubbleTap(event,'${m.id}')">
-                    ${mine ? '' : `<div class="chat-name" style="color:${chatColor(m.t)}">${name}</div>`}
+                    ${mine ? '' : `<div class="chat-name" style="color:${chatColor(m.t)}" onclick="event.stopPropagation();chatMentionUser('${m.t}')">${name}</div>`}
                     ${quote}${media}
-                    ${m.x ? `<div class="chat-text" dir="auto">${chatLinkify(escapeHtml(m.x))}</div>` : ''}
-                    <div class="chat-meta">${chatTime(m.ts)}</div>
+                    <div class="chat-text" dir="auto"${m.x ? '' : ' hidden'}>${chatTextHtml(m)}</div>
+                    <div class="chat-meta">${chatMetaHtml(m)}</div>
                 </div>
                 <div class="chat-reacts react-chips"></div>
             </div>
         </div>`;
+    el.dataset.tsig = (m.x||'') + '|' + (m.ed||0);
+    el.classList.toggle('has-mention', !mine && chatMentionsMe(m));
     return el;
+}
+// a cached bubble whose text changed (edited here or on another device): repaint only the text + the time line
+function chatPaintText(node, m){
+    const t = node.querySelector('.chat-text'), meta = node.querySelector('.chat-meta');
+    if(t){ t.hidden = !m.x; t.innerHTML = chatTextHtml(m); }
+    if(meta) meta.innerHTML = chatMetaHtml(m);
+    node.classList.toggle('has-mention', m.t !== loggedInTeam && chatMentionsMe(m));
 }
 // reaction chips under a bubble — the same look as the Moments (emoji + the faces of who reacted)
 function chatReactsHtml(id){
@@ -274,6 +312,9 @@ function chatRender(){
         const joinNext = n && n.t === m.t && n.ts - m.ts < 180000 && chatDayKey(n.ts) === chatDayKey(m.ts) && !nNew;
         node.classList.toggle('g-top', !joinPrev); node.classList.toggle('g-bot', !joinNext);
         node.classList.toggle('g-join-prev', !!joinPrev); node.classList.toggle('g-join-next', !!joinNext);
+        // edited text
+        const tsig = (m.x||'') + '|' + (m.ed||0);
+        if(node.dataset.tsig !== tsig){ node.dataset.tsig = tsig; chatPaintText(node, m); node.classList.add('flash'); setTimeout(()=>node.classList.remove('flash'), 1200); }
         // reactions
         const sig = JSON.stringify(chatReacts[m.id] || {}), rx = node.querySelector('.chat-reacts');
         if(node.dataset.rx !== sig){ node.dataset.rx = sig; rx.innerHTML = chatReactsHtml(m.id); }
@@ -345,6 +386,7 @@ function chatTogglePop(id){
     pop.innerHTML = `<div class="react-picker chat-picker">${chatReactList().map(e=>`<button type="button" class="${mineReact===e?'mine':''}" onclick="event.stopPropagation();chatReact('${id}','${e}')">${e}</button>`).join('')}</div>
         <div class="chat-acts">
             <button type="button" onclick="event.stopPropagation();chatStartReply('${id}')"><i class="fas fa-reply"></i><span>Reply</span></button>
+            ${mine ? `<button type="button" onclick="event.stopPropagation();chatStartEdit('${id}')"><i class="fas fa-pen"></i><span>Edit</span></button>` : `<button type="button" onclick="event.stopPropagation();chatClosePop();chatMentionUser('${m.t}')"><i class="fas fa-at"></i><span>Mention</span></button>`}
             ${m.x ? `<button type="button" onclick="event.stopPropagation();chatCopy('${id}')"><i class="fas fa-copy"></i><span>Copy</span></button>` : ''}
             ${canDel ? `<button type="button" class="danger" onclick="event.stopPropagation();chatDelete('${id}')"><i class="fas fa-trash"></i><span>Delete</span></button>` : ''}
         </div>`;
@@ -427,7 +469,115 @@ function chatStartReply(id){
     chatClosePop();
     const i = chatEl('chat-input'); if(i) i.focus();
 }
-function chatCancelReply(){ chatReply = null; const b = chatEl('chat-replybar'); if(b) b.hidden = true; }
+function chatCancelReply(){
+    if(chatEditing){ chatCancelEdit(); return; }
+    chatReply = null; const b = chatEl('chat-replybar'); if(b) b.hidden = true;
+}
+// ---- edit one of my own messages ----
+function chatEditBar(on, m){
+    const b = chatEl('chat-replybar'), send = chatEl('chat-send'), comp = document.querySelector('.chat-compose'); if(!b) return;
+    const ic = b.querySelector('span > i');
+    b.classList.toggle('editing', on); if(comp) comp.classList.toggle('editing', on);
+    if(ic) ic.className = on ? 'fas fa-pen' : 'fas fa-reply';
+    chatEl('chat-reply-name').textContent = on ? 'Edit message' : '';
+    chatEl('chat-reply-text').textContent = on && m ? chatPreviewText(m) : '';
+    b.hidden = !on;
+    if(send) send.innerHTML = on ? '<i class="fas fa-check"></i>' : '<i class="fas fa-paper-plane"></i>';
+}
+function chatStartEdit(id){
+    const m = chatMsgs.find(x=>x.id===id); if(!m || m.t !== loggedInTeam) return;
+    if(chatPending.length){ showToast('Remove the attachments first','info',2000); return; }
+    chatClosePop(); chatToggleEmoji(false);
+    const i = chatEl('chat-input');
+    if(!chatEditing) chatDraftHold = i.value;
+    chatReply = null; chatEditing = m;
+    chatEditBar(true, m);
+    i.value = m.x || ''; chatAutoGrow(i); i.focus();
+    try{ i.setSelectionRange(i.value.length, i.value.length); }catch(e){}
+    const node = chatNodes.get(id); if(node) node.classList.add('is-editing');
+}
+function chatCancelEdit(){
+    const m = chatEditing; if(!m) return;
+    chatEditing = null;
+    const node = chatNodes.get(m.id); if(node) node.classList.remove('is-editing');
+    chatEditBar(false);
+    const i = chatEl('chat-input'); i.value = chatDraftHold || ''; chatDraftHold = ''; chatAutoGrow(i);
+}
+async function chatSubmitEdit(){
+    const m = chatEditing; if(!m || chatSending) return;
+    const input = chatEl('chat-input'), text = input.value.trim();
+    if(text === (m.x || '')){ chatCancelEdit(); return; }
+    if(!text && !m.mi){ showToast('A message can’t be empty — delete it instead','info',2400); return; }
+    chatSending = true; chatEl('chat-send').disabled = true;
+    try{
+        const d = await chatApi('/chat/edit','POST',{ id:m.id, text });
+        m.x = text; m.ed = (d && d.ed) || Date.now();
+        if(d && d.v) chatSeenVersion = d.v;
+        chatCancelEdit(); chatRender();
+    }catch(e){
+        showToast(/not found|404|unknown|unsupported/i.test(String(e && e.message)) ? 'Editing needs the updated Worker (see docs/WORKER_CHAT_EDIT.md)' : (e.message || 'Could not edit'), 'error', 3600);
+    }
+    chatSending = false; chatEl('chat-send').disabled = false;
+}
+
+// ---- @mention picker (typing "@" in the composer) + inserting one ----
+function chatMentionCandidates(q){
+    q = String(q||'').toLowerCase();
+    return Object.keys(TEAM_DISPLAY_NAMES).filter(t=>t !== loggedInTeam).map(t=>({ team:t, name:String(TEAM_DISPLAY_NAMES[t]) }))
+        .filter(c=>!q || c.name.toLowerCase().includes(q))
+        .sort((a,b)=>{ const sa = a.name.toLowerCase().startsWith(q) ? 0 : 1, sb = b.name.toLowerCase().startsWith(q) ? 0 : 1; return sa - sb; }).slice(0,5);
+}
+function chatMentionClose(){ const p = chatEl('chat-mention-pop'); if(p){ p.hidden = true; p.innerHTML = ''; } }
+function chatMentionCheck(el){
+    const p = chatEl('chat-mention-pop'); if(!p) return;
+    const before = el.value.slice(0, el.selectionStart || 0);
+    const hit = /(^|\s)@([^\s@]{0,20})$/.exec(before);
+    if(!hit){ chatMentionClose(); return; }
+    const list = chatMentionCandidates(hit[2]);
+    if(!list.length){ chatMentionClose(); return; }
+    p.innerHTML = list.map(c=>`<button type="button" onpointerdown="event.preventDefault();chatMentionPick('${c.team}')"><img src="${teamLogoUrl(c.team)}" alt="" onerror="this.style.opacity='.3'"><b style="color:${chatColor(c.team)}">${escapeHtml(c.name)}</b></button>`).join('');
+    p.hidden = false;
+}
+function chatMentionPick(team){
+    const el = chatEl('chat-input'), name = String(TEAM_DISPLAY_NAMES[team] || team);
+    const pos = el.selectionStart || el.value.length, before = el.value.slice(0, pos), after = el.value.slice(pos);
+    const cut = before.replace(/@[^\s@]{0,20}$/, '');
+    el.value = (cut + '@' + name + ' ' + after).slice(0, CHAT_MAX_TEXT);
+    const at = Math.min(el.value.length, (cut + '@' + name + ' ').length);
+    el.focus(); try{ el.setSelectionRange(at, at); }catch(e){}
+    chatMentionClose(); chatAutoGrow(el);
+}
+// tap a name / "Mention" in the action panel
+function chatMentionUser(team){
+    const el = chatEl('chat-input'); if(!el || team === loggedInTeam) return;
+    haptic([6]);
+    const name = String(TEAM_DISPLAY_NAMES[team] || team), tag = '@' + name + ' ';
+    if(el.value.toLowerCase().includes(tag.toLowerCase())){ el.focus(); return; }
+    const sep = el.value && !/\s$/.test(el.value) ? ' ' : '';
+    el.value = (el.value + sep + tag).slice(0, CHAT_MAX_TEXT);
+    el.focus(); try{ el.setSelectionRange(el.value.length, el.value.length); }catch(e){}
+    chatAutoGrow(el);
+}
+// "@X mentioned you" banner for a message that just arrived while the chat is open
+function chatAnnounceMentions(list){
+    list.forEach(m=>{
+        if(m.t === loggedInTeam || chatMentionSeen.has(m.id) || !chatMentionsMe(m)) return;
+        chatMentionSeen.add(m.id);
+        if(chatToastEnabled()) showToast(`🔔 ${TEAM_DISPLAY_NAMES[m.t]||m.t} mentioned you`, 'info', 2800);
+        haptic([10,40,10]);
+    });
+}
+// the unsent text is kept per account, so leaving the page / closing the app does not lose it
+const chatDraftKey = ()=> 'harfs_chat_draft_' + (loggedInTeam || '');
+let chatDraftTimer = null;
+function chatDraftSave(v){
+    clearTimeout(chatDraftTimer);
+    chatDraftTimer = setTimeout(()=>{ try{ if(v) localStorage.setItem(chatDraftKey(), v); else localStorage.removeItem(chatDraftKey()); }catch(e){} }, 400);
+}
+function chatDraftRestore(){
+    const i = chatEl('chat-input'); if(!i || i.value || chatEditing) return;
+    try{ const d = localStorage.getItem(chatDraftKey()); if(d){ i.value = d; chatAutoGrow(i); } }catch(e){}
+}
 async function chatCopy(id){
     chatClosePop();
     const m = chatMsgs.find(x=>x.id===id); if(!m || !m.x) return;
@@ -481,8 +631,14 @@ function chatInsertEmoji(e){
 }
 
 // ---------------- composing ----------------
-function chatAutoGrow(el){ el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; chatToggleMic(); }
-function chatKey(e){ if(e.key==='Enter' && !e.shiftKey && !e.isComposing && window.matchMedia('(hover:hover)').matches){ e.preventDefault(); chatSend(); } }
+function chatAutoGrow(el){
+    el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; chatToggleMic();
+    const left = CHAT_MAX_TEXT - el.value.length, c = chatEl('chat-count');
+    if(c){ c.hidden = left > 50; c.textContent = left; c.classList.toggle('low', left <= 15); }
+    if(!chatEditing) chatDraftSave(el.value);
+    chatMentionCheck(el);
+}
+function chatKey(e){ if(e.key==='Escape'){ if(!chatEl('chat-mention-pop').hidden){ chatMentionClose(); return; } if(chatEditing){ chatCancelEdit(); return; } } if(e.key==='Enter' && !e.shiftKey && !e.isComposing && window.matchMedia('(hover:hover)').matches){ e.preventDefault(); chatSend(); } }
 function chatToggleMic(){
     const has = !!(chatEl('chat-input').value.trim() || chatPending.length);
     chatEl('chat-mic').style.display = has ? 'none' : '';
@@ -559,6 +715,7 @@ async function chatPost(payload){
 }
 async function chatSend(){
     if(chatSending) return;
+    if(chatEditing) return chatSubmitEdit();
     const input = chatEl('chat-input');
     const text = input.value.trim();
     if(!text && !chatPending.length) return;
@@ -681,7 +838,8 @@ async function chatRefreshUnread(announce){
     const prev = chatUnread;
     chatSetUnread(d.count || 0);
     if(announce && !chatOpen && d.count > prev && d.last && chatToastEnabled()){
-        showToast(`💬 ${TEAM_DISPLAY_NAMES[d.last.t]||d.last.t}: ${d.last.p}`, 'info', 3200);
+        const asked = chatMentionsMe({ x:String(d.last.p||''), t:d.last.t });
+        showToast(`${asked ? '🔔' : '💬'} ${TEAM_DISPLAY_NAMES[d.last.t]||d.last.t}${asked ? ' mentioned you' : ''}: ${d.last.p}`, 'info', 3200);
     }
 }
 function chatSetUnread(n){

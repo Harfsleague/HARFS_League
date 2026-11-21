@@ -1170,10 +1170,12 @@
                         <button type="button" class="chat-send" onclick="chatRecSend()" aria-label="Send voice"><i class="fas fa-paper-plane"></i></button>
                     </div>
                     <div class="chat-emoji" id="chat-emoji" hidden></div>
+                    <div class="chat-mention-pop" id="chat-mention-pop" hidden></div>
                     <div class="chat-row" id="chat-row">
                         <button type="button" class="chat-icon-btn" id="chat-emoji-btn" onclick="chatToggleEmoji()" aria-label="Emoji"><i class="far fa-face-smile"></i></button>
                         <div class="chat-field">
-                            <textarea id="chat-input" rows="1" maxlength="250" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)" onfocus="chatToggleEmoji(false)"></textarea>
+                            <textarea id="chat-input" rows="1" maxlength="250" dir="auto" placeholder="پیام بنویس…" oninput="chatAutoGrow(this)" onkeydown="chatKey(event)" onfocus="chatToggleEmoji(false)" onclick="chatMentionCheck(this)"></textarea>
+                            <span class="chat-count" id="chat-count" hidden></span>
                             <label class="chat-clip" aria-label="Attach"><i class="fas fa-paperclip"></i><input type="file" id="chat-file" multiple onchange="chatPickFiles(event)" hidden></label>
                         </div>
                         <button type="button" class="chat-icon-btn chat-mic" id="chat-mic" onclick="chatRecStart()" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
