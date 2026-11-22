@@ -342,3 +342,49 @@ function slidingPill(navId, pillId){
 }
 slidingPill('bottom-navigation', 'nav-pill');
 slidingPill('season-subnav', 'subnav-pill');
+
+// ============================================================
+// Pull-to-reveal: a header with a small ring. While the header travels up the screen (the page is pulled down) the ring fills; when it is
+// full the folded content under the header unfolds. Tapping the header does the same. Used by Season → Match History and by
+// the League Records of a team.
+//   cfg = { scroller(), head(), collapse(), room(), ring(), applicable?() }
+// ============================================================
+function pullRevealMake(cfg){
+    const C = 2 * Math.PI * 19, S = { revealed:false, touched:false };
+    const motionOk = ()=> !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // keep enough scroll room below the header for it to travel up to the "full" line, even when the page is short
+    function measure(){
+        const sc = cfg.scroller(), h = cfg.head(), room = cfg.room(); if(!sc || !h || !room || S.revealed) return;
+        const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
+        const headTop = hr.top - sr.top + sc.scrollTop, base = sc.scrollHeight - room.offsetHeight;
+        room.style.height = Math.ceil(Math.max(40, headTop - vh*0.5 + vh - base + 12)) + 'px';
+    }
+    function set(on, instant){
+        S.revealed = !!on;
+        const box = cfg.collapse(), room = cfg.room(), h = cfg.head();
+        if(instant){ document.body.classList.add('pr-instant'); requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('pr-instant'))); }
+        if(box) box.classList.toggle('open', S.revealed);
+        if(h) h.classList.toggle('pr-done', S.revealed);
+        const ring = cfg.ring && cfg.ring();
+        if(ring) ring.style.strokeDashoffset = String(S.revealed ? 0 : C);
+        if(room && S.revealed) room.style.height = '0px';
+    }
+    function sync(){
+        if(S.revealed) return;
+        if(cfg.applicable && !cfg.applicable()) return;
+        const sc = cfg.scroller(), h = cfg.head(); if(!sc || !h) return;
+        const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
+        const start = sr.top + vh*0.9, end = sr.top + vh*0.5;
+        const p = Math.max(0, Math.min(1, (start - hr.top) / (start - end)));
+        const ring = cfg.ring && cfg.ring();
+        if(ring) ring.style.strokeDashoffset = String(C * (1 - p));
+        h.classList.toggle('pr-full', p >= 1);
+        if(sc.scrollTop > 4) S.touched = true;
+        if(p >= 1 && S.touched){
+            set(true, !motionOk());
+            if(typeof haptic === 'function') haptic([10]);
+        }
+    }
+    function reset(){ S.touched = false; set(false, true); [0, 350, 1100].forEach(ms=>setTimeout(()=>{ measure(); sync(); }, ms)); }
+    return { S, measure, set, sync, reset };
+}

@@ -2966,14 +2966,6 @@ body.perf-no-anim #team-panel-games .tp-game{ animation:none; }
 .tp-champ-none{ font-style:normal; color:#64748b; font-weight:800; }
 .tp-champ-empty{ padding:8px 0 2px; font-size:.72rem; font-weight:700; color:#94a3b8; text-align:center; }
 
-.tp-rec-toggle{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:9px 12px; margin:0 0 4px; border-radius:14px; cursor:pointer; font-family:inherit; font-size:.7rem; font-weight:800; color:#e2e8f0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); -webkit-tap-highlight-color:transparent; transition:background .2s ease, transform .15s ease; }
-.tp-rec-toggle:active{ transform:scale(.98); background:rgba(255,255,255,0.1); }
-.tp-rec-toggle i{ font-size:.62rem; color:var(--tp,#94a3b8); transition:transform .4s cubic-bezier(.22,1,.36,1); }
-.tp-rec-wrap.open .tp-rec-toggle i{ transform:rotate(180deg); }
-.tp-rec-collapse{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .5s cubic-bezier(.22,1,.36,1), opacity .35s ease; }
-.tp-rec-wrap.open .tp-rec-collapse{ grid-template-rows:1fr; opacity:1; }
-.tp-rec-inner{ min-height:0; overflow:hidden; padding-top:8px; }
-body.perf-no-anim .tp-rec-collapse, body.perf-no-anim .tp-rec-toggle i{ transition:none; }
 
 /* Records page: softer, slower entrance */
 @keyframes recSoftIn2{ from{ opacity:0; transform:translateY(18px) scale(.975); filter:blur(3px); } to{ opacity:1; transform:none; filter:blur(0); } }
@@ -2983,12 +2975,6 @@ body.perf-no-anim .rec-tile, body.perf-no-anim .rec-card.rec-match, html.lite-mo
 @media (prefers-reduced-motion:reduce){ .rec-tile, .rec-card.rec-match{ animation:none; } }
 
 
-/* ===== Season → Match History reveals itself when the page is pulled down (ring → back-to-top circle) ===== */
-.season-history-collapse{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows 1s cubic-bezier(.22,1,.36,1), opacity .7s ease .08s; }
-.season-history-collapse.open{ grid-template-rows:1fr; opacity:1; }
-.season-history-inner{ min-height:0; overflow:hidden; padding-top:6px; }
-body.perf-no-anim .season-history-collapse, body.perf-no-anim .season-history-toggle i, html.lite-mode .season-history-collapse{ transition:none; }
-@media (prefers-reduced-motion:reduce){ .season-history-collapse, .season-history-toggle i{ transition:none; } }
 
 /* ==============================================
    HARFS MUSIC PLAYER & HOME WIDE TILE (v102)
@@ -3127,31 +3113,7 @@ body:not(.music-admin-allowed) .ov-wide-music, body.music-panel-disabled .ov-wid
 .mp-submit-btn:disabled{ opacity:.55; cursor:not-allowed; }
 
 
-.season-history-inner{ min-height:0; overflow:hidden; transform:translateY(28px); transition:transform 1s cubic-bezier(.22,1,.36,1); }
-.season-history-collapse.open .season-history-inner{ transform:none; }
-.season-history-room{ height:170px; transition:height 1s cubic-bezier(.22,1,.36,1); pointer-events:none; }
-body.mh-instant .season-history-collapse, body.mh-instant .season-history-inner, body.mh-instant .season-history-room{ transition:none !important; }
-body[data-season-tab="cup"] .season-history-room{ display:none; }
 
-.season-fab.back-to-top-fab{ transition:opacity .3s ease, transform .6s cubic-bezier(.34,1.35,.5,1), background .5s ease, border-color .5s ease, box-shadow .5s ease; }
-.back-to-top-fab .fab-ring{ position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); opacity:0; transition:opacity .45s ease; pointer-events:none; }
-.back-to-top-fab .fab-ring circle{ fill:none; stroke-width:2.5; }
-.back-to-top-fab .fab-ring-bg{ stroke:rgba(255,255,255,0.14); }
-.back-to-top-fab .fab-ring-fg{ stroke:var(--primary,#38bdf8); stroke-linecap:round; stroke-dasharray:119.38; stroke-dashoffset:119.38; filter:drop-shadow(0 0 4px var(--primary-glow,rgba(56,189,248,.6))); }
-.back-to-top-fab .fab-ic-up, .back-to-top-fab .fab-ic-down{ position:absolute; transition:opacity .4s ease, transform .55s cubic-bezier(.22,1,.36,1); }
-.back-to-top-fab .fab-ic-down{ opacity:0; transform:translateY(-6px) scale(.7); font-size:.7rem; color:#cbd5e1; }
-/* pending: a small, quiet ring that fills up as you scroll */
-.season-fab.back-to-top-fab.fab-pending{ opacity:1; transform:scale(.8); background:rgba(15,23,42,0.55); border-color:transparent; box-shadow:none; pointer-events:auto; }
-.back-to-top-fab.fab-pending .fab-ring{ opacity:1; }
-.back-to-top-fab.fab-pending .fab-ic-up{ opacity:0; transform:translateY(8px) scale(.6); }
-.back-to-top-fab.fab-pending .fab-ic-down{ opacity:.9; transform:none; animation:fabNudge 1.8s ease-in-out infinite; }
-@keyframes fabNudge{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(3px); } }
-/* the moment the ring is full: it pops into the normal circle */
-.back-to-top-fab.fab-morph{ animation:fabPop .8s cubic-bezier(.34,1.4,.5,1); }
-@keyframes fabPop{ 0%{ transform:scale(.8); } 45%{ transform:scale(1.18); box-shadow:0 0 0 10px rgba(56,189,248,0.0), 0 0 22px var(--primary-glow,rgba(56,189,248,.6)); } 100%{ transform:scale(1); } }
-body[data-season-tab="cup"] .back-to-top-fab .fab-ring{ display:none; }
-body.perf-no-anim .back-to-top-fab, body.perf-no-anim .back-to-top-fab .fab-ic-up, body.perf-no-anim .back-to-top-fab .fab-ic-down{ transition:none; animation:none; }
-@media (prefers-reduced-motion:reduce){ .season-history-collapse, .season-history-inner, .season-history-room{ transition:none; } .back-to-top-fab .fab-ic-down{ animation:none; } }
 
 /* ===== Smoother scrolling everywhere ===== */
 .page-screen{ overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; scroll-padding-top:96px; }
@@ -3159,3 +3121,33 @@ body.perf-no-anim .back-to-top-fab, body.perf-no-anim .back-to-top-fab .fab-ic-u
 .team-picker-panel, .modal-overlay, .team-panel-scroll{ overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 .chip-bar, .admin-tabs{ -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; scroll-behavior:smooth; }
 .match-card-mini, .rec-card, .rec-tile{ backface-visibility:hidden; }
+
+/* ===== Pull-to-reveal header (ring inside the header) ===== */
+.pr-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.pr-head-t{ display:inline-flex; align-items:center; gap:8px; min-width:0; }
+.pr-ring{ position:relative; flex:none; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; transition:transform .5s cubic-bezier(.34,1.4,.5,1); }
+.pr-ring svg{ position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); overflow:visible; }
+.pr-ring circle{ fill:none; stroke-width:3; }
+.pr-ring-bg{ stroke:rgba(255,255,255,0.16); }
+.pr-ring-fg{ stroke:var(--primary,#38bdf8); stroke-linecap:round; stroke-dasharray:119.38; stroke-dashoffset:119.38; filter:drop-shadow(0 0 4px var(--primary-glow,rgba(56,189,248,.6))); }
+.pr-ring i{ position:absolute; font-size:.62rem; transition:opacity .35s ease, transform .5s cubic-bezier(.22,1,.36,1); }
+.pr-ic-down{ color:#cbd5e1; animation:prNudge 1.8s ease-in-out infinite; }
+.pr-ic-ok{ color:var(--primary,#38bdf8); opacity:0; transform:scale(.4) rotate(-40deg); }
+.pr-head.pr-full .pr-ring{ transform:scale(1.15); }
+.pr-head.pr-done .pr-ic-down{ opacity:0; animation:none; transform:translateY(6px) scale(.6); }
+.pr-head.pr-done .pr-ic-ok{ opacity:1; transform:none; }
+.pr-head.pr-done .pr-ring{ animation:prPop .7s cubic-bezier(.34,1.4,.5,1); }
+.pr-head.pr-done{ cursor:default; }
+@keyframes prNudge{ 0%,100%{ transform:translateY(-1px); } 50%{ transform:translateY(3px); } }
+@keyframes prPop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.3); } 100%{ transform:scale(1); } }
+/* the folded content: unfolds with a soft slide + fade */
+.pr-collapse{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows 1s cubic-bezier(.22,1,.36,1), opacity .7s ease .08s; }
+.pr-collapse.open{ grid-template-rows:1fr; opacity:1; }
+.pr-inner{ min-height:0; overflow:hidden; transform:translateY(24px); transition:transform 1s cubic-bezier(.22,1,.36,1); }
+.pr-collapse.open .pr-inner{ transform:none; }
+.pr-room{ height:0; transition:height 1s cubic-bezier(.22,1,.36,1); pointer-events:none; }
+body.pr-instant .pr-collapse, body.pr-instant .pr-inner, body.pr-instant .pr-room, body.pr-instant .pr-ring{ transition:none !important; animation:none !important; }
+body[data-season-tab="cup"] #season-history-section{ display:none; }
+body.perf-no-anim .pr-collapse, body.perf-no-anim .pr-inner, body.perf-no-anim .pr-room, body.perf-no-anim .pr-ic-down{ transition:none; animation:none; }
+@media (prefers-reduced-motion:reduce){ .pr-collapse, .pr-inner, .pr-room, .pr-ring{ transition:none; } .pr-ic-down{ animation:none; } }
+.tp-rec-wrap .pr-inner{ padding-top:6px; }

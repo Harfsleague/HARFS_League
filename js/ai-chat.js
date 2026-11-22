@@ -57,67 +57,25 @@ IMPORTANT: this data may not be attached to the CURRENT message if nothing chang
 - If the data needed to answer isn't in the context (e.g. asked about a season that hasn't been archived yet, or a stat that requires full mode while you were sent summary mode), say so plainly and suggest what would help (e.g. "turn on Send Full Data in Assistant Settings") instead of guessing.
 - Predictions and "who wins the league" takes are welcome — just frame them clearly as your read of the trends, not a guarantee, and never dress a guess up as a data-backed number.`;
 
-// ---- Season screen floating circle ----
-// Before the Match History is revealed it is a small progress ring: it fills while you pull the page down, and when it is full the
-// history unfolds and the ring turns into the usual "back to top" circle.
+// ---- Season screen: floating back-to-top circle + Match History that unfolds when its header ring has been filled ----
 const SEASON_FAB_SCROLL_THRESHOLD = 60;
-const SEASON_MH_THRESHOLD = 150;           // px of scrolling that reveals the match history
-const SEASON_MH_RING = 2 * Math.PI * 19;   // circumference of the ring (r = 19)
-let seasonMhRevealed = false;
-
 function seasonMhApplicable(){
     return document.body.dataset.seasonTab !== 'cup' && document.body.dataset.seasonView !== 'schedule';
 }
-// keep enough scroll room under the table for the ring to fill, even when the page is short
-function seasonMhMeasure(){
-    const screen = document.getElementById('league-table-screen'), room = document.getElementById('season-history-room');
-    if(!screen || !room || seasonMhRevealed) return;
-    const base = screen.scrollHeight - room.offsetHeight;
-    const need = SEASON_MH_THRESHOLD + 24 + Math.max(0, screen.clientHeight - base);
-    room.style.height = Math.ceil(need) + 'px';
-}
-function seasonMhSet(reveal, instant){
-    const box = document.getElementById('season-history-collapse'), room = document.getElementById('season-history-room');
-    seasonMhRevealed = !!reveal;
-    document.body.classList.toggle('mh-revealed', seasonMhRevealed);
-    document.body.classList.toggle('mh-instant', !!instant);
-    if(box) box.classList.toggle('open', seasonMhRevealed);
-    if(room && seasonMhRevealed) room.style.height = '0px';
-    if(instant) requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('mh-instant')));
-}
-function seasonMhReset(){
-    seasonMhSet(false, true);
-    [0, 350, 1100].forEach(ms=>setTimeout(seasonMhMeasure, ms));
-}
+const seasonMh = pullRevealMake({
+    scroller: ()=>document.getElementById('league-table-screen'),
+    head: ()=>document.getElementById('season-history-head'),
+    collapse: ()=>document.getElementById('season-history-collapse'),
+    room: ()=>document.getElementById('season-history-room'),
+    ring: ()=>document.getElementById('mh-ring-fg'),
+    applicable: seasonMhApplicable
+});
+function seasonMhTap(){ if(typeof haptic==='function') haptic([6]); seasonMh.set(true, false); }
 function seasonFabSync(){
-    const screen = document.getElementById('league-table-screen'), fab = document.getElementById('back-to-top-fab'), ring = document.getElementById('fab-ring-fg');
+    const screen = document.getElementById('league-table-screen'), fab = document.getElementById('back-to-top-fab');
     if(!screen || !fab) return;
-    const st = screen.scrollTop;
-    if(!seasonMhRevealed && seasonMhApplicable()){
-        const p = Math.max(0, Math.min(1, st / SEASON_MH_THRESHOLD));
-        fab.classList.add('fab-pending');
-        fab.classList.remove('season-fab-faded');
-        if(ring) ring.style.strokeDashoffset = String(SEASON_MH_RING * (1 - p));
-        if(p >= 1){
-            seasonMhSet(true, false);
-            fab.classList.remove('fab-pending');
-            fab.classList.add('fab-morph'); setTimeout(()=>fab.classList.remove('fab-morph'), 900);
-            if(typeof haptic==='function') haptic([10]);
-        }
-        return;
-    }
-    fab.classList.remove('fab-pending');
-    fab.classList.toggle('season-fab-faded', st <= SEASON_FAB_SCROLL_THRESHOLD);
-}
-function seasonFabTap(){
-    const fab = document.getElementById('back-to-top-fab');
-    if(fab && fab.classList.contains('fab-pending')){            // tapping the ring scrolls down to the history
-        if(typeof haptic==='function') haptic([6]);
-        const screen = document.getElementById('league-table-screen');
-        if(screen) screen.scrollTo({ top: SEASON_MH_THRESHOLD + 4, behavior:'smooth' });
-        return;
-    }
-    scrollSeasonToTop();
+    fab.classList.toggle('season-fab-faded', screen.scrollTop <= SEASON_FAB_SCROLL_THRESHOLD);
+    seasonMh.sync();
 }
 function updateSeasonFabs(route){
     const topFab=document.getElementById('back-to-top-fab');
@@ -126,7 +84,7 @@ function updateSeasonFabs(route){
     topFab.classList.toggle('season-fab-active', onSeasonScreen);
     if(onSeasonScreen){
         topFab.classList.add('season-fab-faded');
-        seasonMhReset();
+        seasonMh.reset();
         setTimeout(seasonFabSync, 60);
     }
 }
@@ -141,7 +99,7 @@ function setupSeasonFabScroll(){
     if(!screen||!topFab) return;
     let raf = 0;
     screen.addEventListener('scroll',()=>{ if(raf) return; raf = requestAnimationFrame(()=>{ raf = 0; seasonFabSync(); }); },{passive:true});
-    window.addEventListener('resize', ()=>{ seasonMhMeasure(); seasonFabSync(); });
+    window.addEventListener('resize', ()=>{ seasonMh.measure(); seasonFabSync(); });
 }
 
 function openAiPanel(){

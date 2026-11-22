@@ -642,13 +642,21 @@ function recordsTeamMedals(team){
     });
     return { silver, bronze };
 }
-let recordsTpOpen = false;   // the full record list under the champion bubble starts folded each time a team panel opens
-function recordsTpToggle(btn){
-    haptic([6]);
-    recordsTpOpen = !recordsTpOpen;
-    const L = recL(), wrap = btn.closest('.tp-rec-wrap');
-    if(wrap) wrap.classList.toggle('open', recordsTpOpen);
-    btn.querySelector('span').textContent = recordsTpOpen ? L.hide_all_recs : L.show_all_recs;
+// The records list of a team stays folded until the ring in the "League Records" header has been filled by scrolling the panel down
+// (or the header is tapped).
+const tpReveal = pullRevealMake({
+    scroller: ()=>document.querySelector('#team-panel-overlay .team-panel-scroll'),
+    head: ()=>document.getElementById('tp-records-title'),
+    collapse: ()=>document.querySelector('#team-panel-records .pr-collapse'),
+    room: ()=>document.querySelector('#team-panel-records .pr-room'),
+    ring: ()=>document.getElementById('tp-ring-fg')
+});
+function recordsTpTap(){ if(typeof haptic==='function') haptic([6]); tpReveal.set(true, false); }
+function recordsTpBind(){
+    const sc = tpReveal && document.querySelector('#team-panel-overlay .team-panel-scroll'); if(!sc) return;
+    if(!sc.dataset.prBound){ sc.dataset.prBound = '1'; let raf = 0; sc.addEventListener('scroll', ()=>{ if(raf) return; raf = requestAnimationFrame(()=>{ raf = 0; tpReveal.sync(); }); }, { passive:true }); }
+    tpReveal.set(tpReveal.S.revealed, true);
+    [0, 350].forEach(ms=>setTimeout(()=>{ tpReveal.measure(); tpReveal.sync(); }, ms));
 }
 function recordsTeamChampHtml(team){
     const L = recL(), T = recordsTeamTitles(team);
@@ -692,9 +700,10 @@ function recordsTeamPanelHtml(team){
             <span class="tp-rec-rank">${r.holds ? '👑' : '#'+r.rank}</span>
         </div>`;
     }).join('');
-    return `<div class="tp-rec-wrap${recordsTpOpen?' open':''}">${champ}
-        <button type="button" class="tp-rec-toggle" onclick="recordsTpToggle(this)"><span>${recordsTpOpen ? L.hide_all_recs : L.show_all_recs}</span><i class="fas fa-chevron-down"></i></button>
-        <div class="tp-rec-collapse"><div class="tp-rec-inner">${heldHtml}<div class="tp-rec-list">${list}</div></div></div>
+    setTimeout(recordsTpBind, 0);
+    return `<div class="tp-rec-wrap">${champ}
+        <div class="pr-collapse${tpReveal.S.revealed ? ' open' : ''}"><div class="pr-inner">${heldHtml}<div class="tp-rec-list">${list}</div></div></div>
+        <div class="pr-room"></div>
     </div>`;
 }
 
