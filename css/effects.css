@@ -3151,3 +3151,11 @@ body[data-season-tab="cup"] #season-history-section{ display:none; }
 body.perf-no-anim .pr-collapse, body.perf-no-anim .pr-inner, body.perf-no-anim .pr-room, body.perf-no-anim .pr-ic-down{ transition:none; animation:none; }
 @media (prefers-reduced-motion:reduce){ .pr-collapse, .pr-inner, .pr-room, .pr-ring{ transition:none; } .pr-ic-down{ animation:none; } }
 .tp-rec-wrap .pr-inner{ padding-top:6px; }
+
+/* ring icons: immune to the header's own icon rules (margin / opacity / colour) so they sit exactly in the middle of the circle */
+.pr-head .pr-ring i{ margin:0 !important; padding:0; letter-spacing:0; text-indent:0; text-align:center; inset:0; }
+.pr-head .pr-ring .pr-ic-down{ opacity:1; color:#cbd5e1; }
+.pr-head .pr-ring .pr-ic-ok{ opacity:0; color:var(--primary,#38bdf8); }
+.pr-head.pr-done .pr-ring .pr-ic-down{ opacity:0; }
+.pr-head.pr-done .pr-ring .pr-ic-ok{ opacity:1; }
+.pr-head .pr-ring i::before{ display:block; width:1em; height:1em; line-height:1; text-align:center; }

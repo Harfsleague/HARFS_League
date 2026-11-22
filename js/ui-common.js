@@ -350,17 +350,17 @@ slidingPill('season-subnav', 'subnav-pill');
 //   cfg = { scroller(), head(), collapse(), room(), ring(), applicable?() }
 // ============================================================
 function pullRevealMake(cfg){
-    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:140 };
+    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:340 };
     const motionOk = ()=> !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     // The ring is 0 at rest and fills over the scroll distance in which the header travels from the bottom of the screen up to the middle
     // (at least MIN px, so a short page still needs a real pull). Enough scroll room is added below so that distance always exists.
-    const MIN = 140;
+    const MIN = 340;   // minimum scroll distance (px) needed to fill the ring
     function measure(){
         const sc = cfg.scroller(), h = cfg.head(), room = cfg.room(); if(!sc || !h || !room || S.revealed) return;
         const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
         const headTop = hr.top - sr.top + sc.scrollTop;
         S.from = Math.max(0, headTop - vh*0.9);
-        S.to = Math.max(headTop - vh*0.5, S.from + MIN);
+        S.to = Math.max(headTop - vh*0.3, S.from + MIN);
         const base = sc.scrollHeight - room.offsetHeight;
         room.style.height = Math.ceil(Math.max(0, S.to + 14 - (base - vh))) + 'px';
         S.measured = true;
