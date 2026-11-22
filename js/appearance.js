@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.40";
+const HARFS_VERSION_LABEL = "1.41";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -1500,7 +1500,10 @@ function applyAppLanguage(){
         const tpSecTitles = document.querySelectorAll('#team-panel-overlay .team-panel-section-title');
         if(tpSecTitles[0]) tpSecTitles[0].innerHTML = `<i class="fas fa-trophy"></i> ${harfsT('tp_trophies')}`;
         if(tpSecTitles[1]) tpSecTitles[1].innerHTML = `<i class="fas fa-futbol"></i> ${harfsT('tp_games')}`;
-        if(tpSecTitles[2]) tpSecTitles[2].innerHTML = `<i class="fas fa-crown"></i> ${harfsT('tp_records')}`;
+        if(tpSecTitles[2]){   // keep the pull-to-reveal ring that lives in this header: only the label is rewritten
+            const lbl = tpSecTitles[2].querySelector('.pr-head-t');
+            (lbl || tpSecTitles[2]).innerHTML = `<i class="fas fa-crown"></i> ${harfsT('tp_records')}`;
+        }
         setTxt('#cards-title', 'cards_title');
         setTxt('#cards-subtitle', 'cards_sub');
         setTxt('#playlist-sheet h4', 'pl_title');

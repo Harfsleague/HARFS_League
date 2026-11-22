@@ -102,7 +102,7 @@ function openTeamPanel(team){
         : (hofMedals(trophies).map(m=>`<div class="trophy-cabinet-item${m.isTitle?' is-title':''}" title="${m.title}"><span class="trophy-emoji">${m.icon}</span><div class="trophy-count">${m.n}</div></div>`).join('')
             || '<div class="team-panel-empty">No trophies yet</div>');
 
-    if(typeof tpReveal!=='undefined') tpReveal.S.revealed = false, tpReveal.S.touched = false;
+    if(typeof tpReveal!=='undefined') tpReveal.S.revealed = false, tpReveal.S.measured = false;
     document.getElementById('team-panel-records').innerHTML = (typeof recordsTeamPanelHtml==='function') ? recordsTeamPanelHtml(team) : renderRecordBadgesFor(team);
     const gamesEl = document.getElementById('team-panel-games');
     if(gamesEl){ gamesEl.innerHTML = (typeof recordsTeamGamesHtml==='function') ? recordsTeamGamesHtml(team) : ''; const gsec = gamesEl.closest('.team-panel-section'); if(gsec) gsec.style.display = isSymbolicTeam(team) ? 'none' : ''; }

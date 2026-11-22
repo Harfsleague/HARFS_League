@@ -350,21 +350,27 @@ slidingPill('season-subnav', 'subnav-pill');
 //   cfg = { scroller(), head(), collapse(), room(), ring(), applicable?() }
 // ============================================================
 function pullRevealMake(cfg){
-    const C = 2 * Math.PI * 19, S = { revealed:false, touched:false };
+    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:140 };
     const motionOk = ()=> !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-    // keep enough scroll room below the header for it to travel up to the "full" line, even when the page is short
+    // The ring is 0 at rest and fills over the scroll distance in which the header travels from the bottom of the screen up to the middle
+    // (at least MIN px, so a short page still needs a real pull). Enough scroll room is added below so that distance always exists.
+    const MIN = 140;
     function measure(){
         const sc = cfg.scroller(), h = cfg.head(), room = cfg.room(); if(!sc || !h || !room || S.revealed) return;
         const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
-        const headTop = hr.top - sr.top + sc.scrollTop, base = sc.scrollHeight - room.offsetHeight;
-        room.style.height = Math.ceil(Math.max(40, headTop - vh*0.5 + vh - base + 12)) + 'px';
+        const headTop = hr.top - sr.top + sc.scrollTop;
+        S.from = Math.max(0, headTop - vh*0.9);
+        S.to = Math.max(headTop - vh*0.5, S.from + MIN);
+        const base = sc.scrollHeight - room.offsetHeight;
+        room.style.height = Math.ceil(Math.max(0, S.to + 14 - (base - vh))) + 'px';
+        S.measured = true;
     }
     function set(on, instant){
         S.revealed = !!on;
         const box = cfg.collapse(), room = cfg.room(), h = cfg.head();
         if(instant){ document.body.classList.add('pr-instant'); requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('pr-instant'))); }
         if(box) box.classList.toggle('open', S.revealed);
-        if(h) h.classList.toggle('pr-done', S.revealed);
+        if(h){ h.classList.toggle('pr-done', S.revealed); if(!S.revealed) h.classList.remove('pr-full'); }
         const ring = cfg.ring && cfg.ring();
         if(ring) ring.style.strokeDashoffset = String(S.revealed ? 0 : C);
         if(room && S.revealed) room.style.height = '0px';
@@ -373,18 +379,16 @@ function pullRevealMake(cfg){
         if(S.revealed) return;
         if(cfg.applicable && !cfg.applicable()) return;
         const sc = cfg.scroller(), h = cfg.head(); if(!sc || !h) return;
-        const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
-        const start = sr.top + vh*0.9, end = sr.top + vh*0.5;
-        const p = Math.max(0, Math.min(1, (start - hr.top) / (start - end)));
+        if(!S.measured) measure();
+        const p = Math.max(0, Math.min(1, (sc.scrollTop - S.from) / Math.max(1, S.to - S.from)));
         const ring = cfg.ring && cfg.ring();
         if(ring) ring.style.strokeDashoffset = String(C * (1 - p));
         h.classList.toggle('pr-full', p >= 1);
-        if(sc.scrollTop > 4) S.touched = true;
-        if(p >= 1 && S.touched){
+        if(p >= 1 && sc.scrollTop > 4){
             set(true, !motionOk());
             if(typeof haptic === 'function') haptic([10]);
         }
     }
-    function reset(){ S.touched = false; set(false, true); [0, 350, 1100].forEach(ms=>setTimeout(()=>{ measure(); sync(); }, ms)); }
+    function reset(){ S.measured = false; set(false, true); [0, 350, 1100].forEach(ms=>setTimeout(()=>{ measure(); sync(); }, ms)); }
     return { S, measure, set, sync, reset };
 }
