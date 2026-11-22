@@ -39,6 +39,7 @@ function openMagazinePanel() {
 async function loadMagazine() {
     const body = document.getElementById('magazine-body');
     const loading = document.getElementById('magazine-loading');
+    const hadLoader = !!(loading && loading.style.display !== 'none');
     const cached = await idbGet('magazineArchive', 'v');
     if (cached && Array.isArray(cached) && cached.length && !magazineLoaded) {
         magazineArchive = cached;
@@ -70,8 +71,32 @@ async function loadMagazine() {
             renderMagazineEmpty();
         }
     } finally {
-        if (loading) loading.style.display = 'none';
+        magLoaderOut(loading, body, hadLoader);
     }
+}
+// The spinner above the cover used to vanish and the issue to pop into its place. Now the spinner shrinks and fades away while the cover
+// and then each block of text glide in one after another, filling the space it leaves.
+function magLoaderOut(loading, body, hadLoader) {
+    if (!loading) return;
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const still = document.body.classList.contains('perf-no-anim');
+    if (!hadLoader || reduce || still || !loading.animate || loading.style.display === 'none') { loading.style.display = 'none'; return; }
+    const ease = 'cubic-bezier(.22,1,.36,1)';
+    if (body) {
+        [...body.children].slice(0, 9).forEach((el, i) => {
+            el.animate(
+                [{ opacity: 0, transform: i === 0 ? 'translateY(26px) scale(.97)' : 'translateY(22px)' }, { opacity: 1, transform: 'none' }],
+                { duration: 800, delay: 120 + i * 90, easing: ease, fill: 'backwards' });
+        });
+    }
+    const h = loading.offsetHeight;
+    loading.style.overflow = 'hidden';
+    const a = loading.animate(
+        [{ opacity: 1, transform: 'scale(1)', height: h + 'px', paddingTop: '40px', paddingBottom: '40px' },
+         { opacity: 0, transform: 'scale(.35)', height: '0px', paddingTop: '0px', paddingBottom: '0px' }],
+        { duration: 520, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+    const done = () => { loading.style.display = 'none'; loading.style.overflow = ''; a.cancel(); };
+    a.onfinish = done; a.oncancel = () => { loading.style.overflow = ''; };
 }
 
 function renderMagazineEmpty() {

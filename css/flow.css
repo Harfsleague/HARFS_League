@@ -444,3 +444,7 @@ body.ai-disabled #nav-admin{ display:none !important; }   /* Assistant switched 
 .cards-info-cell span{ font-size:.62rem; font-weight:800; color:#cbd5e1; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; }
 @keyframes cicIn{ from{ opacity:0; transform:translateY(12px) scale(.9); } to{ opacity:1; transform:none; } }
 @media (prefers-reduced-motion:reduce){ .cards-info-cell{ animation:none; } }
+
+/* Schedule view: the back button sits on the right (and points right) */
+body[data-season-view="schedule"] #league-table-screen .season-back-btn{ left:auto; right:14px; }
+body[data-season-view="schedule"] #league-table-screen .season-back-btn i{ display:inline-block; transform:scaleX(-1); }
