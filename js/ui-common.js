@@ -350,11 +350,11 @@ slidingPill('season-subnav', 'subnav-pill');
 //   cfg = { scroller(), head(), collapse(), room(), ring(), applicable?() }
 // ============================================================
 function pullRevealMake(cfg){
-    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:340 };
+    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:560, down:false, snapT:0 };
     const motionOk = ()=> !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     // The ring is 0 at rest and fills over the scroll distance in which the header travels from the bottom of the screen up to the middle
     // (at least MIN px, so a short page still needs a real pull). Enough scroll room is added below so that distance always exists.
-    const MIN = 340;   // minimum scroll distance (px) needed to fill the ring
+    const MIN = 560;   // minimum scroll distance (px) needed to fill the ring
     function measure(){
         const sc = cfg.scroller(), h = cfg.head(), room = cfg.room(); if(!sc || !h || !room || S.revealed) return;
         const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
@@ -375,20 +375,40 @@ function pullRevealMake(cfg){
         if(ring) ring.style.strokeDashoffset = String(S.revealed ? 0 : C);
         if(room && S.revealed) room.style.height = '0px';
     }
+    // let go before the ring is full -> the page eases back to where the ring is empty again (like a pull-to-refresh that did not reach its line)
+    const uid = 'pr' + Math.random().toString(36).slice(2, 8);
+    function bindTouch(sc){
+        if(sc.dataset[uid]) return; sc.dataset[uid] = '1';
+        sc.addEventListener('touchstart', ()=>{ S.down = true; clearTimeout(S.snapT); }, { passive:true });
+        const up = ()=>{ S.down = false; setTimeout(sync, 60); };
+        sc.addEventListener('touchend', up, { passive:true });
+        sc.addEventListener('touchcancel', up, { passive:true });
+    }
+    function armSnap(p){
+        clearTimeout(S.snapT);
+        if(p <= 0.001 || p >= 1) return;
+        S.snapT = setTimeout(()=>{
+            if(S.down || S.revealed) return;
+            const sc = cfg.scroller(); if(!sc) return;
+            if(sc.scrollTop > S.from + 1) sc.scrollTo({ top:S.from, behavior: motionOk() ? 'smooth' : 'auto' });
+        }, 240);
+    }
     function sync(){
         if(S.revealed) return;
         if(cfg.applicable && !cfg.applicable()) return;
         const sc = cfg.scroller(), h = cfg.head(); if(!sc || !h) return;
+        bindTouch(sc);
         if(!S.measured) measure();
         const p = Math.max(0, Math.min(1, (sc.scrollTop - S.from) / Math.max(1, S.to - S.from)));
         const ring = cfg.ring && cfg.ring();
         if(ring) ring.style.strokeDashoffset = String(C * (1 - p));
         h.classList.toggle('pr-full', p >= 1);
+        armSnap(p);
         if(p >= 1 && sc.scrollTop > 4){
             set(true, !motionOk());
             if(typeof haptic === 'function') haptic([10]);
         }
     }
-    function reset(){ S.measured = false; set(false, true); [0, 350, 1100].forEach(ms=>setTimeout(()=>{ measure(); sync(); }, ms)); }
+    function reset(){ S.measured = false; clearTimeout(S.snapT); set(false, true); [0, 350, 1100].forEach(ms=>setTimeout(()=>{ measure(); sync(); }, ms)); }
     return { S, measure, set, sync, reset };
 }
