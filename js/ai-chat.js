@@ -68,7 +68,8 @@ const seasonMh = pullRevealMake({
     collapse: ()=>document.getElementById('season-history-collapse'),
     room: ()=>document.getElementById('season-history-room'),
     ring: ()=>document.getElementById('mh-ring-fg'),
-    applicable: seasonMhApplicable
+    applicable: seasonMhApplicable,
+    min: 220
 });
 function seasonMhTap(){ if(typeof haptic==='function') haptic([6]); seasonMh.set(true, false); }
 function seasonFabSync(){

@@ -352,15 +352,16 @@ slidingPill('season-subnav', 'subnav-pill');
 function pullRevealMake(cfg){
     const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:560, down:false, snapT:0 };
     const motionOk = ()=> !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-    // The ring is 0 at rest and fills over the scroll distance in which the header travels from the bottom of the screen up to the middle
-    // (at least MIN px, so a short page still needs a real pull). Enough scroll room is added below so that distance always exists.
-    const MIN = 560;   // minimum scroll distance (px) needed to fill the ring
+    // The ring stays EMPTY until the whole visible block (the header and what sits above the folded part) is on screen, and then fills over
+    // cfg.min px of scrolling. Enough scroll room is added below so that distance always exists.
+    const MIN = cfg.min || 560;
     function measure(){
-        const sc = cfg.scroller(), h = cfg.head(), room = cfg.room(); if(!sc || !h || !room || S.revealed) return;
-        const sr = sc.getBoundingClientRect(), hr = h.getBoundingClientRect(), vh = sr.height;
-        const headTop = hr.top - sr.top + sc.scrollTop;
-        S.from = Math.max(0, headTop - vh*0.9);
-        S.to = Math.max(headTop - vh*0.3, S.from + MIN);
+        const sc = cfg.scroller(), h = cfg.head(), room = cfg.room(), box = cfg.collapse(); if(!sc || !h || !room || S.revealed) return;
+        const sr = sc.getBoundingClientRect(), vh = sr.height;
+        const edge = (box || h).getBoundingClientRect();          // top of the folded part = bottom of the visible block
+        const blockBottom = edge.top - sr.top + sc.scrollTop;
+        S.from = Math.max(0, blockBottom - vh + 28);
+        S.to = S.from + MIN;
         const base = sc.scrollHeight - room.offsetHeight;
         room.style.height = Math.ceil(Math.max(0, S.to + 14 - (base - vh))) + 'px';
         S.measured = true;
@@ -375,23 +376,26 @@ function pullRevealMake(cfg){
         if(ring) ring.style.strokeDashoffset = String(S.revealed ? 0 : C);
         if(room && S.revealed) room.style.height = '0px';
     }
-    // let go before the ring is full -> the page eases back to where the ring is empty again (like a pull-to-refresh that did not reach its line)
+    // let go before the ring is full -> the page eases straight back to where the ring is empty again
     const uid = 'pr' + Math.random().toString(36).slice(2, 8);
+    const progress = sc => Math.max(0, Math.min(1, (sc.scrollTop - S.from) / Math.max(1, S.to - S.from)));
+    function snapBack(){
+        if(S.down || S.revealed) return;
+        const sc = cfg.scroller(); if(!sc) return;
+        const p = progress(sc);
+        if(p > 0.001 && p < 1) sc.scrollTo({ top:S.from, behavior: motionOk() ? 'smooth' : 'auto' });
+    }
     function bindTouch(sc){
         if(sc.dataset[uid]) return; sc.dataset[uid] = '1';
         sc.addEventListener('touchstart', ()=>{ S.down = true; clearTimeout(S.snapT); }, { passive:true });
-        const up = ()=>{ S.down = false; setTimeout(sync, 60); };
+        const up = ()=>{ S.down = false; clearTimeout(S.snapT); snapBack(); };   // finger lifted: go back at once
         sc.addEventListener('touchend', up, { passive:true });
         sc.addEventListener('touchcancel', up, { passive:true });
     }
-    function armSnap(p){
+    function armSnap(p){                      // wheel / trackpad / momentum: no finger to wait for, only a very short pause
         clearTimeout(S.snapT);
         if(p <= 0.001 || p >= 1) return;
-        S.snapT = setTimeout(()=>{
-            if(S.down || S.revealed) return;
-            const sc = cfg.scroller(); if(!sc) return;
-            if(sc.scrollTop > S.from + 1) sc.scrollTo({ top:S.from, behavior: motionOk() ? 'smooth' : 'auto' });
-        }, 240);
+        S.snapT = setTimeout(snapBack, 110);
     }
     function sync(){
         if(S.revealed) return;
@@ -399,7 +403,7 @@ function pullRevealMake(cfg){
         const sc = cfg.scroller(), h = cfg.head(); if(!sc || !h) return;
         bindTouch(sc);
         if(!S.measured) measure();
-        const p = Math.max(0, Math.min(1, (sc.scrollTop - S.from) / Math.max(1, S.to - S.from)));
+        const p = progress(sc);
         const ring = cfg.ring && cfg.ring();
         if(ring) ring.style.strokeDashoffset = String(C * (1 - p));
         h.classList.toggle('pr-full', p >= 1);

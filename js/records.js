@@ -649,7 +649,8 @@ const tpReveal = pullRevealMake({
     head: ()=>document.getElementById('tp-records-title'),
     collapse: ()=>document.querySelector('#team-panel-records .pr-collapse'),
     room: ()=>document.querySelector('#team-panel-records .pr-room'),
-    ring: ()=>document.getElementById('tp-ring-fg')
+    ring: ()=>document.getElementById('tp-ring-fg'),
+    min: 480
 });
 function recordsTpTap(){ if(typeof haptic==='function') haptic([6]); tpReveal.set(true, false); }
 function recordsTpBind(){
