@@ -2980,7 +2980,7 @@ body.perf-no-anim .rec-tile, body.perf-no-anim .rec-card.rec-match, html.lite-mo
    HARFS MUSIC PLAYER & HOME WIDE TILE (v102)
    ===================================================== */
 .ov-wide-music{ grid-column:1 / -1; --tile-accent:#ec4899; }
-body:not(.music-admin-allowed) .ov-wide-music, body.music-panel-disabled .ov-wide-music{ display:none !important; }
+body.music-panel-disabled .ov-wide-music{ display:none !important; }
 .ov-wide-music .ov-tile{ width:calc((100% - 20px) / 3); }
 .ov-tile-music{ --tile-accent:#ec4899; color:#f472b6; }
 .ov-ext-music{ display:flex; align-items:center; gap:10px; }
@@ -3175,3 +3175,5 @@ body.perf-no-anim .pr-collapse, body.perf-no-anim .pr-inner, body.perf-no-anim .
 .mtac-steps li{ display:flex; gap:9px; align-items:flex-start; font-size:.78rem; line-height:1.9; color:#e2e8f0; }
 .mtac-n{ flex:0 0 auto; width:21px; height:21px; margin-top:3px; border-radius:50%; background:#fbbf24; color:#111827; font-weight:900; font-size:.72rem; display:grid; place-items:center; }
 .mtac-next{ display:flex; align-items:center; gap:8px; margin-top:12px; padding:9px 12px; border-radius:14px; background:rgba(251,191,36,.09); border:1px dashed rgba(251,191,36,.4); font-size:.76rem; line-height:1.8; color:#fde68a; }
+
+.beta-pill{ display:inline-block; margin-inline-start:4px; padding:1px 6px; border-radius:99px; font-size:.54rem; font-weight:900; letter-spacing:.5px; vertical-align:middle; color:#111827; background:linear-gradient(90deg,#fbbf24,#f59e0b); }

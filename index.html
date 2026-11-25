@@ -184,6 +184,18 @@
             <button class="font-size-btn large" onclick="adjustFontSize('magazine',10)" id="magazine-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
         </div>
         </div>
+
+        <div class="ap-card">
+        <div class="appearance-section-label">Beta</div>
+        <div class="perf-option-row" onclick="toggleMusicPanelVisibility()" style="cursor:pointer;">
+            <div class="perf-option-icon"><i class="fas fa-music"></i></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title"><span id="music-panel-toggle-lbl">HARFS Music</span> <span class="beta-pill">BETA</span></span>
+                <span class="perf-option-sub">Adds the Music section to the Home page</span>
+            </div>
+            <div class="perf-toggle" id="music-panel-toggle"></div>
+        </div>
+        </div>
     </div>
 </div>
 
@@ -706,10 +718,6 @@
                         <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-wand-magic-sparkles"></i>HARFS Assistant</span>
                         <div class="perf-toggle on" id="ai-assistant-toggle"></div>
                     </div>
-                    <div class="settings-page-tile wide" id="music-panel-toggle-row" style="display:none;flex-direction:row;justify-content:space-between;" onclick="toggleMusicPanelVisibility()">
-                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-music"></i><span id="music-panel-toggle-lbl">Music Panel</span></span>
-                        <div class="perf-toggle on" id="music-panel-toggle"></div>
-                    </div>
                 </div>
             </div>
 
@@ -1073,7 +1081,7 @@
             </div>
         </div>
         <div id="magazine-loading" style="display:flex;justify-content:center;padding:40px;">
-            <span class="spinner"></span>
+            <span class="spinner" style="width:40px;height:40px;"></span>
         </div>
         <div id="magazine-body"></div>
     </div>

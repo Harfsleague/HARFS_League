@@ -838,7 +838,11 @@ body.perf-no-anim #hero-logo-container.in-header.showing-notif .hero-capsule-not
 /* =====================================================
    MISC
    ===================================================== */
-.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--primary);border-radius:50%;animation:spin 0.7s linear infinite;}
+.spinner{display:inline-block;width:18px;height:18px;border:0;border-radius:0;background:var(--primary);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.4' stroke-width='1.7'/%3E%3Cpath d='M12 7.4L16.4 10.6L14.7 15.7H9.3L7.6 10.6Z' fill='black' stroke-width='.8'/%3E%3Cpath d='M12 7.4V1.6M16.4 10.6L22 8.8M14.7 15.7L18.2 20.4M9.3 15.7L5.8 20.4M7.6 10.6L2 8.8' stroke-width='1.3'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.4' stroke-width='1.7'/%3E%3Cpath d='M12 7.4L16.4 10.6L14.7 15.7H9.3L7.6 10.6Z' fill='black' stroke-width='.8'/%3E%3Cpath d='M12 7.4V1.6M16.4 10.6L22 8.8M14.7 15.7L18.2 20.4M9.3 15.7L5.8 20.4M7.6 10.6L2 8.8' stroke-width='1.3'/%3E%3C/svg%3E") center/contain no-repeat;animation:spin 1.1s linear infinite;filter:drop-shadow(0 0 3px var(--primary-glow));}
+/* Every loading indicator is a football turning on its own axis, tinted with the person's theme colour. Icon-font spinners (buttons) use the same ball in the button's text colour. */
+i.fa-spinner,.fa-spinner.fas,.fa-spinner.fa{display:inline-block;width:1em;height:1em;vertical-align:-.125em;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.4' stroke-width='1.7'/%3E%3Cpath d='M12 7.4L16.4 10.6L14.7 15.7H9.3L7.6 10.6Z' fill='black' stroke-width='.8'/%3E%3Cpath d='M12 7.4V1.6M16.4 10.6L22 8.8M14.7 15.7L18.2 20.4M9.3 15.7L5.8 20.4M7.6 10.6L2 8.8' stroke-width='1.3'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.4' stroke-width='1.7'/%3E%3Cpath d='M12 7.4L16.4 10.6L14.7 15.7H9.3L7.6 10.6Z' fill='black' stroke-width='.8'/%3E%3Cpath d='M12 7.4V1.6M16.4 10.6L22 8.8M14.7 15.7L18.2 20.4M9.3 15.7L5.8 20.4M7.6 10.6L2 8.8' stroke-width='1.3'/%3E%3C/svg%3E") center/contain no-repeat;}
+i.fa-spinner::before,.fa-spinner.fas::before,.fa-spinner.fa::before{content:"" !important;}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:2.4s;}}
 /* Golden Moment save button — doubles as an upload progress bar so the
    admin can see % uploaded and whether the save succeeded, without any
    separate modal/toast that would clash with the existing button UI. */
@@ -2197,8 +2201,9 @@ html body .match-card-mini[data-res="draw"]{ background-color:rgba(129,140,248,.
 }
 .pv-slide img{ max-width:100%; max-height:100%; object-fit:contain; opacity:0; transition:opacity .25s; user-select:none; -webkit-user-drag:none; }
 .pv-spinner{
-    position:absolute; width:26px; height:26px; border-radius:50%;
-    border:3px solid rgba(255,255,255,0.18); border-top-color:#fff; animation:pvspin .8s linear infinite;
+    position:absolute; width:28px; height:28px;
+    border:0; border-radius:0; background:#fff;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.4' stroke-width='1.7'/%3E%3Cpath d='M12 7.4L16.4 10.6L14.7 15.7H9.3L7.6 10.6Z' fill='black' stroke-width='.8'/%3E%3Cpath d='M12 7.4V1.6M16.4 10.6L22 8.8M14.7 15.7L18.2 20.4M9.3 15.7L5.8 20.4M7.6 10.6L2 8.8' stroke-width='1.3'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.4' stroke-width='1.7'/%3E%3Cpath d='M12 7.4L16.4 10.6L14.7 15.7H9.3L7.6 10.6Z' fill='black' stroke-width='.8'/%3E%3Cpath d='M12 7.4V1.6M16.4 10.6L22 8.8M14.7 15.7L18.2 20.4M9.3 15.7L5.8 20.4M7.6 10.6L2 8.8' stroke-width='1.3'/%3E%3C/svg%3E") center/contain no-repeat; animation:pvspin 1.1s linear infinite;
 }
 @keyframes pvspin{ to{ transform:rotate(360deg); } }
 .pv-nav{

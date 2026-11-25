@@ -571,7 +571,7 @@ function renderMagazine(issue) {
     const waitingForMatches = !hist && magNeedsMatches(issue);
     if (waitingForMatches) magEnsureMatchHistory();
     // only the new chart is ever shown; an issue with no rank data (old archive, no live matches) simply has no chart
-    const raceVisual = hist ? magRankChart(hist) : (waitingForMatches ? '<div class="mrc-card mrc-wait"><span class="mrc-wait-dot"></span><span class="mrc-wait-dot"></span><span class="mrc-wait-dot"></span></div>' : '');
+    const raceVisual = hist ? magRankChart(hist) : (waitingForMatches ? '<div class="mrc-card mrc-wait"><span class="spinner" style="width:30px;height:30px;"></span></div>' : '');
 
     // ---- form guide: the streak text sits at the right, so every row's circles line up in one column ----
     const formRows = (issue.formGuide || []).map(f => `

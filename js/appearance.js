@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.42";
+const HARFS_VERSION_LABEL = "1.43";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -473,33 +473,29 @@ function toggleAiAssistant(){
 syncAiAssistantUI(); // apply the saved choice on startup
 
 // ============================================================
-// MUSIC PANEL on/off — hides the Home Music tile when switched off. Saved on this device.
+// HARFS MUSIC (BETA) — Appearance → Beta. Off by default for everyone; switching it on adds the Music section to the Home page.
+// Saved on this device ('musicBeta' = 'on').
 // ============================================================
-let musicPanelEnabled = localStorage.getItem('musicPanel') !== 'off';
-function isMusicAdmin(){
-    return (typeof loggedInTeam !== 'undefined' && loggedInTeam === 'Bayern') || (typeof harfsIsAdmin !== 'undefined' && !!harfsIsAdmin);
+let musicPanelEnabled = localStorage.getItem('musicBeta') === 'on';
+function isMusicAdmin(){   // kept for older callers; the beta switch (not the account) now decides who sees Music
+    return true;
 }
 function syncMusicPanelUI(){
-    const allowed = isMusicAdmin();
-    document.body.classList.toggle('music-admin-allowed', allowed);
-    document.body.classList.toggle('music-panel-disabled', !allowed || !musicPanelEnabled);
-    const row = document.getElementById('music-panel-toggle-row');
-    if(row) row.style.display = allowed ? 'flex' : 'none';
+    document.body.classList.toggle('music-panel-disabled', !musicPanelEnabled);
     const t = document.getElementById('music-panel-toggle');
     if(t) t.classList.toggle('on', musicPanelEnabled);
 }
 function toggleMusicPanelVisibility(){
-    if(!isMusicAdmin()) return;
     haptic([8]);
     musicPanelEnabled = !musicPanelEnabled;
-    localStorage.setItem('musicPanel', musicPanelEnabled ? 'on' : 'off');
+    localStorage.setItem('musicBeta', musicPanelEnabled ? 'on' : 'off');
     syncMusicPanelUI();
     const l = (typeof getAppLanguage==='function') ? getAppLanguage() : 'en';
     const msg = l==='fa'
-        ? (musicPanelEnabled ? 'پنل موزیک فعال شد' : 'پنل موزیک غیرفعال شد')
+        ? (musicPanelEnabled ? 'هرفس موزیک (بتا) فعال شد' : 'هرفس موزیک غیرفعال شد')
         : l==='es'
-            ? (musicPanelEnabled ? 'Panel de música activado' : 'Panel de música desactivado')
-            : (musicPanelEnabled ? 'Music Panel on' : 'Music Panel off');
+            ? (musicPanelEnabled ? 'HARFS Music (beta) activado' : 'HARFS Music desactivado')
+            : (musicPanelEnabled ? 'HARFS Music (beta) on' : 'HARFS Music off');
     showToast(msg, 'info', 1600);
 }
 syncMusicPanelUI(); // apply the saved choice on startup
@@ -1010,7 +1006,7 @@ const HARFS_I18N = {
         th_team:'Team', th_p:'P', th_w:'W', th_d:'D', th_l:'L', th_gf:'GF', th_ga:'GA', th_gd:'GD', th_pt:'PT',
         moments_title:'⭐ Golden Moments ⭐',
         profile_title:'Profile', account_sub:'HARFS League Account',
-        sec_appearance:'Appearance & Sound', btn_appearance:'Appearance & Performance', btn_assistant:'HARFS Assistant', btn_music_panel:'Music Panel',
+        sec_appearance:'Appearance & Sound', btn_appearance:'Appearance & Performance', btn_assistant:'HARFS Assistant', btn_music_panel:'HARFS Music',
         sec_language:'Language', ap_lang_sub:'Tap to choose app language',
         sec_quick:'Quick Access', q_emergency:'Emergency', q_notif:'Notifications', q_devices:'Devices', q_tools:'Tools',
         sec_account:'Account', btn_logout:'Log Out', btn_login:'Log In / Pick a Team',
@@ -1052,7 +1048,7 @@ const HARFS_I18N = {
         th_team:'تیم', th_p:'ب', th_w:'ب', th_d:'م', th_l:'ش', th_gf:'گ‌ز', th_ga:'گ‌خ', th_gd:'ت‌گ', th_pt:'امتیاز',
         moments_title:'⭐ لحظات طلایی ⭐',
         profile_title:'پروفایل', account_sub:'حساب کاربری لیگ HARFS',
-        sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر و عملکرد برنامه', btn_assistant:'دستیار هوشمند HARFS', btn_music_panel:'پنل موزیک',
+        sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر و عملکرد برنامه', btn_assistant:'دستیار هوشمند HARFS', btn_music_panel:'هرفس موزیک',
         sec_language:'زبان برنامه', ap_lang_sub:'برای انتخاب زبان برنامه ضربه بزنید',
         sec_quick:'دسترسی سریع', q_emergency:'اضطراری', q_notif:'اعلان‌ها', q_devices:'دستگاه‌ها', q_tools:'ابزارها',
         sec_account:'حساب کاربری', btn_logout:'خروج از حساب', btn_login:'ورود / انتخاب تیم',
@@ -1094,7 +1090,7 @@ const HARFS_I18N = {
         th_team:'Equipo', th_p:'PJ', th_w:'G', th_d:'E', th_l:'P', th_gf:'GF', th_ga:'GC', th_gd:'DG', th_pt:'PTS',
         moments_title:'⭐ Momentos Dorados ⭐',
         profile_title:'Perfil', account_sub:'Cuenta de Liga HARFS',
-        sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia y Rendimiento', btn_assistant:'Asistente HARFS', btn_music_panel:'Panel de Música',
+        sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia y Rendimiento', btn_assistant:'Asistente HARFS', btn_music_panel:'HARFS Music',
         sec_language:'Idioma', ap_lang_sub:'Toca para elegir el idioma de la app',
         sec_quick:'Acceso Rápido', q_emergency:'Emergencia', q_notif:'Alertas', q_devices:'Dispositivos', q_tools:'Herramientas',
         sec_account:'Cuenta', btn_logout:'Cerrar Sesión', btn_login:'Iniciar Sesión / Elegir Equipo',

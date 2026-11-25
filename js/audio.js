@@ -413,7 +413,7 @@ function openMusicPage(){
 }
 
 async function onMusicPageEntered(){
-    if(typeof isMusicAdmin === 'function' && !isMusicAdmin()){ navigate('main-league'); return; }
+    if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled){ navigate('main-league'); return; }   // HARFS Music is a beta switch (Appearance → Beta)
     mpApplyStaticLabels();
     renderMusicPage();
     mpSyncPlayerUI();
