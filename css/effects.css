@@ -3159,3 +3159,19 @@ body.perf-no-anim .pr-collapse, body.perf-no-anim .pr-inner, body.perf-no-anim .
 .pr-head.pr-done .pr-ring .pr-ic-down{ opacity:0; }
 .pr-head.pr-done .pr-ring .pr-ic-ok{ opacity:1; }
 .pr-head .pr-ring i::before{ display:block; width:1em; height:1em; line-height:1; text-align:center; }
+
+/* ===== Magazine → آموزشگاه تاکتیک (green pitch schematic) ===== */
+.mtac-roles{ display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+.mtac-role{ padding:9px 12px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-inline-start:3px solid var(--mtac-c,#94a3b8); }
+.mtac-role b{ display:block; font-size:.8rem; color:var(--mtac-c,#e2e8f0); margin-bottom:2px; }
+.mtac-role p{ margin:0; font-size:.78rem; line-height:1.9; color:#e2e8f0; overflow-wrap:anywhere; }
+.mtac-d{ --mtac-c:#38bdf8; } .mtac-m{ --mtac-c:#f8fafc; } .mtac-a{ --mtac-c:#fb923c; }
+.mtac-board{ display:flex; flex-direction:column; align-items:center; gap:7px; margin:14px 0 10px; }
+.mtac-pitch{ width:min(300px,86%); height:auto; border-radius:12px; box-shadow:0 10px 22px -8px rgba(0,0,0,.6); }
+.mtac-caption{ font-size:.72rem; font-weight:800; color:#cbd5e1; }
+.mtac-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; font-size:.66rem; color:#94a3b8; }
+.mtac-legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:4px; vertical-align:-1px; }
+.mtac-steps{ list-style:none; margin:10px 0; padding:0; display:flex; flex-direction:column; gap:7px; }
+.mtac-steps li{ display:flex; gap:9px; align-items:flex-start; font-size:.78rem; line-height:1.9; color:#e2e8f0; }
+.mtac-n{ flex:0 0 auto; width:21px; height:21px; margin-top:3px; border-radius:50%; background:#fbbf24; color:#111827; font-weight:900; font-size:.72rem; display:grid; place-items:center; }
+.mtac-next{ display:flex; align-items:center; gap:8px; margin-top:12px; padding:9px 12px; border-radius:14px; background:rgba(251,191,36,.09); border:1px dashed rgba(251,191,36,.4); font-size:.76rem; line-height:1.8; color:#fde68a; }

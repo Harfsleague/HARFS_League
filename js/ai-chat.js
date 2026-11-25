@@ -69,7 +69,7 @@ const seasonMh = pullRevealMake({
     room: ()=>document.getElementById('season-history-room'),
     ring: ()=>document.getElementById('mh-ring-fg'),
     applicable: seasonMhApplicable,
-    min: 220
+    min: 76          // ≈ 2 cm of finger travel (1 cm ≈ 37.8 CSS px)
 });
 function seasonMhTap(){ if(typeof haptic==='function') haptic([6]); seasonMh.set(true, false); }
 function seasonFabSync(){

@@ -481,6 +481,63 @@ function magStandingsName(team){
     if(team === 'Yellow' || /nifa|mahmou[sz]|\u0646\u06cc\u0641\u0627|\u0645\u0627\u0647\u0645\u0648/i.test(label)) return 'NMIYA';
     return label;
 }
+// ---- "آموزشگاه تاکتیک": a football system explained on a green pitch schematic (issue.tactics comes from scripts/generate-magazine.mjs) ----
+function magTacticsPitch(d, uid) {
+    const G = { gk: '#facc15', d: '#38bdf8', m: '#f8fafc', a: '#fb923c' };
+    const num = (n, x, y) => `<g><circle cx="${x}" cy="${y}" r="2.7" fill="#fbbf24" stroke="#1f2937" stroke-width=".5"/><text x="${x}" y="${y + 1.05}" text-anchor="middle" font-size="3.2" font-weight="900" fill="#111827">${n}</text></g>`;
+    const lines = (d.steps || []).map(st => {
+        if (st.kind === 'badge') return '';
+        const from = st.from || st.at, to = st.to; if (!from || !to) return '';
+        const pass = st.kind === 'pass';
+        const mx = (from[0] + to[0]) / 2, my = (from[1] + to[1]) / 2;
+        return `<line x1="${from[0]}" y1="${from[1]}" x2="${to[0]}" y2="${to[1]}" stroke="${pass ? '#fde047' : '#ffffff'}" stroke-width="${pass ? 1.1 : .9}" ${pass ? '' : 'stroke-dasharray="2.2 1.6"'} stroke-linecap="round" marker-end="url(#${uid}-ah${pass ? 'p' : 'r'})"/>${num(st.n, mx, my)}`;
+    }).join('');
+    const badges = (d.steps || []).filter(st => st.kind === 'badge').map(st => num(st.n, st.at[0] + 4.6, st.at[1] - 4.6)).join('');
+    const opp = (d.opp || []).map(o => `<circle cx="${o.x}" cy="${o.y}" r="2.3" fill="#ef4444" stroke="#7f1d1d" stroke-width=".5"/><text x="${o.x}" y="${o.y + .95}" text-anchor="middle" font-size="2.6" font-weight="800" fill="#fff">×</text>`).join('');
+    const me = (d.players || []).map(q => `<circle cx="${q.x}" cy="${q.y}" r="2.7" fill="${G[q.g] || '#fff'}" stroke="#0f172a" stroke-width=".5"/><text x="${q.x}" y="${q.y + .95}" text-anchor="middle" font-size="2.15" font-weight="900" fill="#0f172a">${escapeHtml(q.t || '')}</text>`).join('');
+    const ball = d.ball ? `<circle cx="${d.ball.x}" cy="${d.ball.y}" r="1.35" fill="#fff" stroke="#111" stroke-width=".4"/>` : '';
+    return `<svg class="mtac-pitch" viewBox="0 0 68 105" xmlns="http://www.w3.org/2000/svg" direction="ltr" role="img" aria-label="${escapeHtml(d.caption || '')}">
+        <defs>
+            <linearGradient id="${uid}-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8f4e"/><stop offset="1" stop-color="#1f6b3a"/></linearGradient>
+            <marker id="${uid}-ahp" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="3.4" markerHeight="3.4" orient="auto"><path d="M0 0L6 3L0 6z" fill="#fde047"/></marker>
+            <marker id="${uid}-ahr" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="3.4" markerHeight="3.4" orient="auto"><path d="M0 0L6 3L0 6z" fill="#fff"/></marker>
+        </defs>
+        <rect x="0" y="0" width="68" height="105" rx="3" fill="url(#${uid}-g)"/>
+        ${[0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="0" y="${i * 15}" width="68" height="7.5" fill="#000" opacity=".045"/>`).join('')}
+        <g fill="none" stroke="#fff" stroke-opacity=".75" stroke-width=".55">
+            <rect x="2.5" y="2.5" width="63" height="100"/><line x1="2.5" y1="52.5" x2="65.5" y2="52.5"/><circle cx="34" cy="52.5" r="8"/>
+            <rect x="14" y="2.5" width="40" height="16"/><rect x="24" y="2.5" width="20" height="6"/>
+            <rect x="14" y="86.5" width="40" height="16"/><rect x="24" y="96.5" width="20" height="6"/>
+        </g>
+        ${opp}${lines}${me}${ball}${badges}
+    </svg>`;
+}
+
+function renderTacticsSection(issue) {
+    const t = issue && issue.tactics;
+    if (!t || !t.diagram) return '';
+    const uid = 'mtac' + (issue.issueNumber || 0);
+    const stepDefs = (t.diagram.steps || []).filter(st => st.hintFa);
+    const steps = stepDefs.map((st, i) => `<li><span class="mtac-n">${magFaNum(st.n)}</span><span>${escapeHtml((t.steps && t.steps[i]) || st.hintFa)}</span></li>`).join('');
+    const role = (cls, title, txt) => txt ? `<div class="mtac-role ${cls}"><b>${title}</b><p>${escapeHtml(txt)}</p></div>` : '';
+    return `
+        <div class="magazine-page magazine-tactics">
+            <h2 class="magazine-section-title"><i class="fas fa-chess-board"></i> آموزشگاه تاکتیک <span class="magazine-cup-badge">${escapeHtml(t.title || '')}</span></h2>
+            ${t.intro ? `<p class="magazine-text">${escapeHtml(t.intro)}</p>` : ''}
+            <div class="mtac-roles">
+                ${role('mtac-d', 'مدافعان', t.defense)}${role('mtac-m', 'هافبک‌ها', t.midfield)}${role('mtac-a', 'خط حمله', t.attack)}
+            </div>
+            <div class="mtac-board">
+                ${magTacticsPitch(t.diagram, uid)}
+                <div class="mtac-caption">${escapeHtml(t.diagram.caption || '')}</div>
+                <div class="mtac-legend"><span><i style="background:#38bdf8"></i>دفاع</span><span><i style="background:#f8fafc"></i>میانه</span><span><i style="background:#fb923c"></i>حمله</span><span><i style="background:#ef4444"></i>حریف</span></div>
+            </div>
+            ${steps ? `<ol class="mtac-steps">${steps}</ol>` : ''}
+            ${t.conclusion ? `<p class="magazine-commentary">${escapeHtml(t.conclusion)}</p>` : ''}
+            ${t.nextTeaser ? `<div class="mtac-next"><i class="fas fa-forward"></i><span>${escapeHtml(t.nextTeaser)}</span></div>` : ''}
+        </div>`;
+}
+
 function renderMagazine(issue) {
     const body = document.getElementById('magazine-body');
     if (!body) return;
@@ -631,14 +688,14 @@ function renderMagazine(issue) {
                 <tbody>${standingsRows}</tbody>
             </table>
             ${leagueIdleNote}
-            <p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>
+            ${(issue.standingsCommentary || '').trim() ? `<p class="magazine-commentary">${escapeHtml(issue.standingsCommentary)}</p>` : ''}
         </div>
 
         ${(hist || waitingForMatches || (issue.titleRaceCommentary || '').trim()) ? `
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-crown"></i> جدال قهرمانی</h2>
             ${raceVisual}
-            <p class="magazine-commentary">${escapeHtml(issue.titleRaceCommentary)}</p>
+            ${(issue.titleRaceCommentary || '').trim() ? `<p class="magazine-commentary">${escapeHtml(issue.titleRaceCommentary)}</p>` : ''}
         </div>` : ''}
 
         ${formRows ? `
@@ -662,6 +719,8 @@ function renderMagazine(issue) {
         </div>` : ''}
 
         ${interviewSection}
+
+        ${renderTacticsSection(issue)}
 
         <div class="magazine-page">
             <h2 class="magazine-section-title"><i class="fas fa-lightbulb"></i> توصیه‌های این هفته</h2>

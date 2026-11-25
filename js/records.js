@@ -650,7 +650,7 @@ const tpReveal = pullRevealMake({
     collapse: ()=>document.querySelector('#team-panel-records .pr-collapse'),
     room: ()=>document.querySelector('#team-panel-records .pr-room'),
     ring: ()=>document.getElementById('tp-ring-fg'),
-    min: 480
+    min: 76          // ≈ 2 cm of finger travel (1 cm ≈ 37.8 CSS px)
 });
 function recordsTpTap(){ if(typeof haptic==='function') haptic([6]); tpReveal.set(true, false); }
 function recordsTpBind(){

@@ -780,6 +780,83 @@ function buildPreviousIssuesSummary(archive) {
   }));
 }
 
+
+// ------------------------------------------------------------
+// "آموزشگاه تاکتیک" — a standing series: one football system per issue, in this order. The model writes the words; the pitch
+// diagram (positions, opponents, numbered arrows) lives HERE so it is always correct, and js/magazine.js draws it.
+// Pitch is 68 x 105 (own goal at the bottom, we attack upwards). g = line group: gk | d (defence) | m (midfield) | a (attack).
+// Add a new episode at the end of the list to extend the series; an issue takes the first episode no earlier issue has used.
+// ------------------------------------------------------------
+const TACTICS_EPISODES = [
+  {
+    id: "fast-transition",
+    titleFa: "انتقال سریع توپ به حمله",
+    facts: [
+      "توخل در چلسی (۲۰۲۱) با ساختار سه‌دفاعه (۳-۴-۲-۱) و دفاع فشرده، بلافاصله بعد از پس‌گرفتن توپ به فضای پشت دفاع حریف حمله می‌کرد و با همین شیوه قهرمان لیگ قهرمانان اروپا شد.",
+      "آنچلوتی در رئال مادرید (۲۰۲۲) با ۴-۳-۳ و ساختار فشرده، در بازی‌های بزرگ با پاس‌های مستقیم و سریع به بازیکنان سرعتی ضدحمله می‌زد و با همین شیوه قهرمان لیگ قهرمانان اروپا شد.",
+    ],
+    nextTeaserFa: "هفتهٔ آینده دربارهٔ سیستم‌های فوق دفاعی و پرس شدیدی که تیم‌های سیمئونه و آرتتا اجرا می‌کنند صحبت می‌کنیم.",
+    diagram: {
+      formation: "3-4-2-1",
+      caption: "نمونه: ساختار ۳-۴-۲-۱ (الگوی چلسی ۲۰۲۱)",
+      players: [
+        { x: 34, y: 97, g: "gk", t: "GK" },
+        { x: 19, y: 83, g: "d", t: "CB" }, { x: 34, y: 85, g: "d", t: "CB" }, { x: 49, y: 83, g: "d", t: "CB" },
+        { x: 7, y: 62, g: "m", t: "WB" }, { x: 61, y: 62, g: "m", t: "WB" },
+        { x: 26, y: 71, g: "m", t: "CM" }, { x: 42, y: 71, g: "m", t: "CM" },
+        { x: 20, y: 46, g: "a", t: "10" }, { x: 48, y: 46, g: "a", t: "10" },
+        { x: 34, y: 34, g: "a", t: "ST" },
+      ],
+      opp: [
+        { x: 34, y: 60 }, { x: 28, y: 52 }, { x: 40, y: 52 },
+        { x: 13, y: 24 }, { x: 26, y: 22 }, { x: 42, y: 22 }, { x: 55, y: 24 },
+      ],
+      ball: { x: 42, y: 66 },
+      steps: [
+        { n: 1, kind: "badge", at: [42, 71], hintFa: "هافبک راست توپ را از حریف پس می‌گیرد" },
+        { n: 2, kind: "pass", from: [42, 71], to: [48, 46], hintFa: "اولین پاس مستقیم و رو به جلو به یکی از دو بازیکن نقش ۱۰" },
+        { n: 3, kind: "run", from: [34, 34], to: [31, 11], hintFa: "مهاجم و وینگ‌بک راست هم‌زمان به فضای پشت دفاع حریف می‌دوند" },
+        { n: 3, kind: "run", from: [61, 62], to: [61, 26] },
+        { n: 4, kind: "pass", from: [48, 46], to: [32, 14], hintFa: "پاس نفوذی به فضای خالی و شوت یا پاس گل" },
+      ],
+    },
+  },
+  {
+    id: "deep-block-and-press",
+    titleFa: "سیستم‌های فوق دفاعی و پرس شدید",
+    facts: [
+      "سیمئونه در اتلتیکو مادرید معمولاً ۴-۴-۲ بازی می‌کند با دو خط چهارنفرهٔ بسیار فشرده که فاصله‌شان کم است و فضای میان خطوط را می‌بندند.",
+      "آرتتا در آرسنال پرس بالا و شدید را در زمین حریف اجرا می‌کند و بلافاصله بعد از از دست دادن توپ برای پس‌گرفتنش فشار می‌آورد.",
+    ],
+    nextTeaserFa: "",
+    diagram: {
+      formation: "4-4-2",
+      caption: "نمونه: بلوک فشردهٔ ۴-۴-۲ (الگوی اتلتیکو)",
+      players: [
+        { x: 34, y: 97, g: "gk", t: "GK" },
+        { x: 12, y: 84, g: "d", t: "LB" }, { x: 26, y: 86, g: "d", t: "CB" }, { x: 42, y: 86, g: "d", t: "CB" }, { x: 56, y: 84, g: "d", t: "RB" },
+        { x: 14, y: 70, g: "m", t: "LM" }, { x: 28, y: 72, g: "m", t: "CM" }, { x: 40, y: 72, g: "m", t: "CM" }, { x: 54, y: 70, g: "m", t: "RM" },
+        { x: 28, y: 58, g: "a", t: "ST" }, { x: 40, y: 58, g: "a", t: "ST" },
+      ],
+      opp: [{ x: 9, y: 54 }, { x: 24, y: 46 }, { x: 40, y: 44 }, { x: 54, y: 48 }, { x: 34, y: 34 }],
+      ball: { x: 9, y: 54 },
+      steps: [
+        { n: 1, kind: "run", from: [44, 58], to: [30, 50], hintFa: "دو مهاجم راه پاس عمودی میانی را می‌بندند" },
+        { n: 2, kind: "run", from: [56, 70], to: [40, 70], hintFa: "هر دو خط (هافبک‌ها و مدافعان) هم‌زمان به سمت توپ جابه‌جا می‌شوند و فاصله‌شان کم می‌ماند" },
+        { n: 2, kind: "run", from: [58, 84], to: [44, 84] },
+        { n: 3, kind: "press", at: [14, 70], to: [10, 58], hintFa: "وقتی توپ کنار زمین می‌رود، هافبک چپ فشار می‌آورد و حریف را به خط می‌چسباند" },
+      ],
+    },
+  },
+];
+
+// The episode for this issue = the first one no earlier issue has used. Returns { ep, next } (ep null when the series has run out).
+function pickTacticsEpisode(archive) {
+  const used = new Set((archive || []).map((i) => i && i.tactics && i.tactics.episodeId).filter(Boolean));
+  const idx = TACTICS_EPISODES.findIndex((e) => !used.has(e.id));
+  return idx < 0 ? { ep: null, next: null } : { ep: TACTICS_EPISODES[idx], next: TACTICS_EPISODES[idx + 1] || null };
+}
+
 // ------------------------------------------------------------
 // 2) ask Gemini 3.5 Flash to write the magazine, as strict JSON
 // ------------------------------------------------------------
@@ -788,8 +865,8 @@ const MAGAZINE_SCHEMA = {
   properties: {
     issueTitle: { type: "string", description: "عنوان جذاب و کمی طنز برای این شماره مجله" },
     coverSubtitle: { type: "string", description: "یک زیرعنوان کوتاه و بامزه برای جلد" },
-    standingsCommentary: { type: "string", description: "تحلیل جدول رده‌بندی فعلی، با لحن یک گزارشگر ورزشی که کمی طنازی هم دارد. حتماً به جابه‌جایی رتبه‌ها نسبت به هفتهٔ قبل (rankChanges) اشاره کن: چه کسی بالا آمده، چه کسی پایین رفته و چه کسی همان‌جا مانده — دقیقاً مطابق delta، بدون ساختن جابه‌جایی. اگر rankChanges خالی است، چیزی دربارهٔ تغییر رتبه نگو." },
-    matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط از بازی‌های «لیگ» این هفته (recentMatches). بازی‌های CUP هرگز اینجا نمی‌آید — برای آن‌ها cupReport هست. اگر این هفته بازی لیگ نبوده، کوتاه و صادقانه بگو لیگ استراحت داشته (۱ تا ۲ جمله)." },
+    standingsCommentary: { type: "string", description: "تنها جایی که از رتبه و امتیاز تیم‌ها و جابه‌جایی رتبه‌ها (rankChanges) حرف زده می‌شود: ۲ تا ۴ جملهٔ کوتاه و بدون مقدمه؛ چه کسی بالا آمده، چه کسی پایین رفته و چه کسی ثابت مانده — دقیقاً مطابق delta. اگر rankChanges خالی است یا چیز تازه‌ای برای گفتن نیست، رشتهٔ خالی \"\" برگردان (جدول خودش گویاست). هیچ عددی را که در جدول دیده می‌شود دوباره فهرست نکن." },
+    matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط از بازی‌های «لیگ» این هفته (recentMatches). بازی‌های CUP هرگز اینجا نمی‌آید — برای آن‌ها cupReport هست. فقط روایت خود بازی‌ها (نتیجه، صحنه‌ها، قهرمان بازی)؛ از رتبه و امتیاز جدول و از فاصلهٔ تیم‌ها تا صدر حرف نزن (آن‌ها جای دیگری گفته می‌شود). اگر این هفته بازی لیگ نبوده، کوتاه و صادقانه بگو لیگ استراحت داشته (۱ تا ۲ جمله)." },
     cupReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط دربارهٔ بازی‌های «CUP» این هفته (cup.gamesThisWeek، cup.bracket، cup.medals، cup.recordsThisWeek). اگر cup.hasActivity برابر false است، رشتهٔ خالی \"\" برگردان." },
     superCupReport: { type: "string", description: "گزارش کوتاه دربارهٔ سوپرکاپ (فقط وقتی superCup.hasActivity برابر true است: تیم‌ها، نتیجه و برنده از superCup.result). در غیر این صورت رشتهٔ خالی \"\" برگردان." },
     scheduleOutlook: { type: "string", description: "پیش‌نمایش بازی‌های هفتهٔ آینده لیگ (۲ تا ۳ پاراگراف کوتاه): تمرکز اصلی روی بازی‌های schedule.nextLeagueFixtures — هر بازی را با توجه به رتبه و فرم دو تیم (formGuide، currentSeasonTable، rankChanges) تحلیل کن، حساسیت‌ها و ماجراهای بالقوه را بگو. مرحله‌های برنامهٔ فصل را شرح نده. هیچ بازی، تاریخ یا حریفی که در schedule نیست نساز و نتیجه را پیش‌بینی نکن. اگر schedule.nextLeagueFixtures خالی بود (مثلاً نوبت CUP یا سوپرکاپ است) فقط ۱ تا ۲ جمله بگو بعدی چیست (nextStepFa). اگر schedule.status برابر no_schedule بود فقط یک جملهٔ کوتاه بنویس." },
@@ -813,7 +890,7 @@ const MAGAZINE_SCHEMA = {
     },
     playerSpotlights: {
       type: "array",
-      description: "۲ تا ۴ نکته دربارهٔ تیم‌ها یا عملکردهای برجسته این هفته",
+      description: "۲ تا ۴ نکتهٔ کوتاه دربارهٔ عملکردهای برجستهٔ این هفته؛ هر نکته یک زاویهٔ تازه باشد و نتیجه‌ها، رتبه‌ها و امتیازهایی را که در بخش‌های دیگر آمده تکرار نکند",
       items: {
         type: "object",
         properties: {
@@ -826,18 +903,31 @@ const MAGAZINE_SCHEMA = {
     },
     recommendations: {
       type: "array",
-      description: "۳ تا ۵ توصیهٔ تاکتیکی یا شوخ‌طبعانه برای تیم‌ها برای هفتهٔ بعد",
+      description: "۳ تا ۴ توصیهٔ تاکتیکی یا شوخ‌طبعانه، هر کدام یک جمله؛ بدون تکرار رتبه، امتیاز یا نتیجه‌های بخش‌های قبلی",
       items: { type: "string" },
     },
     titleRaceCommentary: {
       type: "string",
-      description: "تحلیل کوتاه دربارهٔ وضعیت قهرمانی (کنار نمودار رتبهٔ هر تیم در طول فصل — rankHistory — که اپ نشان می‌دهد؛ می‌توانی به صعود و سقوط‌های نمودار اشاره کنی): فاصلهٔ امتیازی تیم‌ها تا صدرنشین، و اینکه با این روند چه کسی شانس بیشتری برای قهرمانی این فصل دارد. فقط بر اساس عدد‌های titleRace استدلال کن، هیچ درصد شانسی از خودت نساز.",
+      description: "فقط یک تا دو جملهٔ کوتاه دربارهٔ «چشم‌انداز قهرمانی» کنار نمودار رتبه (rankHistory): مثلاً اینکه نمودار چه روندی نشان می‌دهد یا چه چیزی قهرمانی را تعیین می‌کند. نام صدرنشین و امتیازش، رتبه‌ها و جابه‌جایی‌ها را اینجا تکرار نکن (جای آن‌ها standingsCommentary است). اگر حرف تازه‌ای نداری رشتهٔ خالی \"\" برگردان و بگذار نمودار حرف بزند. هیچ درصد شانسی از خودت نساز.",
     },
     recordsAndOddities: {
       type: "string",
-      description: "یک یا دو پاراگراف دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords). اگر weeklyRecords خالی بود، صادقانه بگو این هفته رکورد خاصی ثبت نشده. دربارهٔ خاطره‌ها یا «لحظات طلایی» چیزی ننویس.",
+      description: "حداکثر یک پاراگراف کوتاه دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords)؛ کارت‌های آماری خودشان عدد و تیم‌ها را نشان می‌دهند، پس اینجا فقط یک نکتهٔ تازه یا طنز بگو و نتیجه‌ها را دوباره روایت نکن. اگر weeklyRecords خالی بود، یک جمله بگو این هفته رکورد خاصی ثبت نشده. دربارهٔ خاطره‌ها یا «لحظات طلایی» چیزی ننویس.",
     },
     funnyClosing: { type: "string", description: "یک جمله یا پاراگراف کوتاه طنز برای پایان مجله" },
+    tactics: {
+      type: "object",
+      description: "بخش ثابت «آموزشگاه تاکتیک»: آموزش یک سیستم بازی در فوتبال، دقیقاً دربارهٔ موضوع tacticsEpisode که در دیتا آمده. شماتیک (زمین، مهره‌ها و فلش‌ها) را اپ خودش از tacticsEpisode.diagram می‌کشد؛ تو فقط متن‌ها را می‌نویسی و فقط به همان مهره‌ها و گام‌های diagram اشاره می‌کنی.",
+      properties: {
+        intro: { type: "string", description: "۲ تا ۳ جمله: این سیستم چیست و چرا مهم است، با اشاره به مربیان و تیم‌های موجود در tacticsEpisode.facts. هیچ واقعیت دیگری نساز." },
+        defense: { type: "string", description: "وظایف مدافعان در این سیستم: ۲ تا ۳ جملهٔ کوتاه و مشخص" },
+        midfield: { type: "string", description: "وظایف هافبک‌ها در این سیستم: ۲ تا ۳ جملهٔ کوتاه و مشخص" },
+        attack: { type: "string", description: "وظایف خط حمله در این سیستم: ۲ تا ۳ جملهٔ کوتاه و مشخص" },
+        steps: { type: "array", description: "دقیقاً به تعداد tacticsEpisode.diagram.steps؛ برای هر گام یک جملهٔ کوتاه که همان اتفاق روی شماتیک را توضیح بدهد، به همان ترتیب.", items: { type: "string" } },
+        conclusion: { type: "string", description: "یک یا دو جمله جمع‌بندی: نقطه‌قوت و ریسک این سیستم. بدون جملهٔ «هفتهٔ آینده» (آن را خود اسکریپت اضافه می‌کند)." },
+      },
+      required: ["intro", "defense", "midfield", "attack", "steps", "conclusion"],
+    },
     interview: {
       type: "object",
       description: "یک مصاحبهٔ کاملاً خیالی (ساخته‌ذهن نویسنده، نه واقعی) و تا حدی طنز با یکی از اعضای تیمی که در دیتا با کلید interviewTeam مشخص شده — این تیم از قبل تعیین شده، تو فقط شخصیت و پاسخ‌ها را خلق می‌کنی.",
@@ -881,6 +971,7 @@ const MAGAZINE_SCHEMA = {
     "recordsAndOddities",
     "funnyClosing",
     "interview",
+    "tactics",
   ],
 };
 
@@ -919,7 +1010,7 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 • superCup.past قهرمان‌های سوپرکاپ فصل‌های قبل است؛ می‌توانی برای مقایسه از آن استفاده کنی.
 • اگر schedule.status برابر no_schedule است، دربارهٔ برنامه یا مرحله‌ها چیزی نساز.
 
-دربارهٔ تغییر رتبه‌ها: در دیتا rankChanges نشان می‌دهد هر تیم نسبت به هفتهٔ قبل چند پله بالا یا پایین آمده یا ثابت مانده (delta). در standingsCommentary و matchReport به این جابه‌جایی‌ها اشاره کن (مثلاً «Bayern یک پله صعود کرد و دوم شد»)، فقط بر اساس همان delta. اپ کنار رتبهٔ هر تیم فلش سبز (صعود)، قرمز (سقوط) یا خط خاکستری (ثابت) می‌گذارد و یک نمودار خطی از رتبهٔ هر تیم در طول فصل (rankHistory) نشان می‌دهد؛ پس هیچ‌وقت خودت جدول یا نمودار متنی نساز.
+دربارهٔ تغییر رتبه‌ها: در دیتا rankChanges نشان می‌دهد هر تیم نسبت به هفتهٔ قبل چند پله بالا یا پایین آمده یا ثابت مانده (delta). فقط در standingsCommentary به این جابه‌جایی‌ها اشاره کن (مثلاً «Bayern یک پله صعود کرد و دوم شد»)، فقط بر اساس همان delta؛ در matchReport و بخش‌های دیگر تکرارشان نکن. اپ کنار رتبهٔ هر تیم فلش سبز (صعود)، قرمز (سقوط) یا خط خاکستری (ثابت) می‌گذارد و یک نمودار خطی از رتبهٔ هر تیم در طول فصل (rankHistory) نشان می‌دهد؛ پس هیچ‌وقت خودت جدول یا نمودار متنی نساز.
 
 دربارهٔ مصاحبه (جذاب و زنده بنویس): interviewContext نتایج همین هفتهٔ تیم مصاحبه‌شونده است. مصاحبه مثل یک صحنهٔ واقعی باشد: scene، دیالوگ‌های کوتاه، واکنش‌های stage و لحن شخصیت متناسب با mood. اگر interviewContext.walkout برابر true باشد (تیم این هفته ۲ باخت یا بیشتر داشته)، چند دیالوگ اول آرام و شوخ باشد، بعد خبرنگار یک سؤال چالشی و تلخ دربارهٔ باخت‌ها بپرسد، شخصیت عصبانی شود، پاسخ آخرش نیمه‌کاره و تند باشد و در exitNote جلسه را ترک کند. اگر walkout برابر false است، مصاحبه تا آخر کامل شود و exitNote رشتهٔ خالی باشد. mood=cocky_after_wins یعنی شخصیت از برد خوشحال و کمی از خودراضی است. هیچ نتیجه یا عددی خارج از interviewContext و دیتا نساز.
 
@@ -928,6 +1019,10 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 در lineupSuggestions برای هر چهار تیم یک پیشنهاد ترکیب بده (مثلاً تیمی که زیاد گل خورده 5-3-2 یا 4-5-1، تیمی که کم گل زده 4-2-3-1 یا 4-3-3). فقط بر اساس دیتا استدلال کن و نام بازیکن نساز. این پیشنهاد در بخش «توصیه‌های این هفته» نمایش داده می‌شود.
 
 دربارهٔ سرمربی NMIYA: هر وقت در هر بخشی از مجله (گزارش، تحلیل، مصاحبه، توصیه‌ها و غیره) از سرمربی یا مربی تیم NMIYA حرف می‌زنی، او همیشه یک «خانم» است و باید با ضمیر و صفت‌های مؤنث و عنوان‌هایی مثل «خانم سرمربی» به او اشاره شود. شخصیتش همیشه منطقی، آرام، مؤدب و محترمانه است: حتی بعد از باخت یا در سؤال تلخ، با استدلال و ادب حرف می‌زند و هرگز بی‌ادبی، داد و فریاد یا تهمت نمی‌زند. اگر او مصاحبه‌شونده باشد و walkout برابر true باشد، به‌جای عصبانیت و قهر، جلسه را آرام و مؤدبانه و با ذکر دلیل تمام می‌کند (مثلاً به‌خاطر جلسهٔ تحلیل بازی). نام این شخصیت را خودت می‌سازی (یک نام زنانهٔ فارسی) و در طول یک شماره ثابت نگه می‌داری.
+
+قاعدهٔ عدم تکرار (بسیار مهم): هر اطلاعات فقط و فقط در یک بخش گفته شود. تقسیم کار این است: جدول و نمودار خودشان اعداد را نشان می‌دهند؛ رتبه، امتیاز و جابه‌جایی رتبه‌ها فقط در standingsCommentary؛ نتیجهٔ بازی‌ها و صحنه‌هایشان فقط در matchReport (و برای CUP در cupReport)؛ رکوردهای عددی فقط در کارت‌های recordsAndOddities؛ بخش‌های titleRaceCommentary، playerSpotlights، recommendations، lineupSuggestions، fixturePreviews، scheduleOutlook، interview و funnyClosing نباید رتبه، امتیاز، فاصله تا صدر یا نتیجهٔ بازی‌های هفته را دوباره بگویند. جمله‌ای که چیزی به مطلب نمی‌افزاید، مقدمه‌چینی، جمع‌بندی تکراری و حرف‌های کلی («در این هفتهٔ پرهیجان…») ننویس. اگر برای بخشی که فیلدش می‌تواند خالی باشد (standingsCommentary، titleRaceCommentary) حرف تازه‌ای نداری، رشتهٔ خالی "" بگذار تا فقط جدول و نمودار نمایش داده شود، یا دربارهٔ چیز دیگری (فرم، روند، حاشیه‌ها) حرف بزن. پاسخ‌ها را کوتاه و فشرده نگه دار.
+
+دربارهٔ بخش tactics («آموزشگاه تاکتیک»): هر شماره یک سیستم بازی در فوتبال آموزش داده می‌شود و موضوع این هفته در tacticsEpisode آمده (عنوان، facts و diagram). فقط از همان facts دربارهٔ مربیان، تیم‌ها و دوره‌ها استفاده کن و چیز دیگری (آمار، نتیجه، نام بازیکن یا نقل‌قول) نساز. وظایف مدافعان، هافبک‌ها و خط حمله را جداگانه و روشن بگو و در steps هر گام شماتیک را به همان ترتیب توضیح بده. این بخش با لیگ HARFS ربطی ندارد و دیتای لیگ را وارد آن نکن. اگر tacticsEpisode در دیتا نیست، فیلد tactics را با رشته‌های خالی و steps خالی پر کن. لحن آموزشی و ساده ولی کمی شوخ باشد.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
@@ -1088,6 +1183,19 @@ async function main() {
   // The one-time complaint (25 penalty chances not given, 2 posts hit) is offered to the model until an interview has used it.
   if (!archive.some((i) => i.interview && i.interview.grievanceUsed)) data.interviewContext.refGrievance = { penaltyChances: 25, postsHit: 2 };
 
+  const { ep: tacticsEp, next: tacticsNext } = pickTacticsEpisode(archive);
+  if (tacticsEp) {
+    data.tacticsEpisode = {
+      id: tacticsEp.id,
+      title: tacticsEp.titleFa,
+      facts: tacticsEp.facts,
+      diagram: {
+        formation: tacticsEp.diagram.formation,
+        steps: tacticsEp.diagram.steps.filter((st) => st.hintFa).map((st) => ({ step: st.n, what: st.hintFa })),
+      },
+    };
+  }
+
   console.log(`Asking Gemini 3.5 Flash to write the magazine (interview team: ${data.interviewTeam})...`);
   let magazine;
   try {
@@ -1108,6 +1216,26 @@ async function main() {
     magazine.interview.walkedOut = !!data.interviewContext.walkout; // decided by the results, not by the model
     // used = the interview really contains the line (25 in Latin or Persian digits); only then it stops being offered
     if (data.interviewContext.refGrievance && /(?:25|\u06f2\u06f5)/.test(JSON.stringify(magazine.interview))) magazine.interview.grievanceUsed = true;
+  }
+  // The tactics lesson: the episode (and its pitch diagram) is decided here, never by the model.
+  if (tacticsEp && magazine.tactics) {
+    const want = tacticsEp.diagram.steps.filter((st) => st.hintFa).length;
+    const stepTexts = (Array.isArray(magazine.tactics.steps) ? magazine.tactics.steps : []).map((x) => String(x || "").trim()).slice(0, want);
+    while (stepTexts.length < want) stepTexts.push("");
+    magazine.tactics = {
+      episodeId: tacticsEp.id,
+      title: tacticsEp.titleFa,
+      intro: magazine.tactics.intro,
+      defense: magazine.tactics.defense,
+      midfield: magazine.tactics.midfield,
+      attack: magazine.tactics.attack,
+      steps: stepTexts,
+      conclusion: magazine.tactics.conclusion,
+      nextTeaser: tacticsEp.nextTeaserFa || (tacticsNext ? `هفتهٔ آینده دربارهٔ ${tacticsNext.titleFa} صحبت می‌کنیم.` : ""),
+      diagram: tacticsEp.diagram,
+    };
+  } else {
+    delete magazine.tactics; // no episode left in the series (or the model skipped it) -> the app simply shows no tactics section
   }
   // Same idea for the CUP: the structured data decides whether there IS a CUP
   // story, not the model. No CUP activity -> no CUP report, whatever it wrote.
