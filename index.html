@@ -137,6 +137,18 @@
 
         </div>
 
+        <div class="ap-card">
+        <div class="appearance-section-label">Beta</div>
+        <div class="perf-option-row" onclick="toggleMusicPanelVisibility()" style="cursor:pointer;">
+            <div class="perf-option-icon"><i class="fas fa-music"></i></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title"><span id="music-panel-toggle-lbl">HARFS Music</span> <span class="beta-pill">BETA</span></span>
+                <span class="perf-option-sub">Adds the Music section to the Home page</span>
+            </div>
+            <div class="perf-toggle" id="music-panel-toggle"></div>
+        </div>
+        </div>
+
         <div class="ap-card ap-lang-card">
             <button type="button" class="lang-toggle-btn" id="appearance-lang-btn" onclick="toggleLanguageOptions()" aria-expanded="false">
                 <div class="perf-option-icon"><i class="fas fa-globe"></i></div>
@@ -182,18 +194,6 @@
             <button class="font-size-btn small" onclick="adjustFontSize('magazine',-10)" id="magazine-font-size-minus" title="Smaller text"><i class="fas fa-minus"></i></button>
             <span class="font-size-value" id="magazine-font-size-value">100%</span>
             <button class="font-size-btn large" onclick="adjustFontSize('magazine',10)" id="magazine-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
-        </div>
-        </div>
-
-        <div class="ap-card">
-        <div class="appearance-section-label">Beta</div>
-        <div class="perf-option-row" onclick="toggleMusicPanelVisibility()" style="cursor:pointer;">
-            <div class="perf-option-icon"><i class="fas fa-music"></i></div>
-            <div class="perf-option-textcol">
-                <span class="perf-option-title"><span id="music-panel-toggle-lbl">HARFS Music</span> <span class="beta-pill">BETA</span></span>
-                <span class="perf-option-sub">Adds the Music section to the Home page</span>
-            </div>
-            <div class="perf-toggle" id="music-panel-toggle"></div>
         </div>
         </div>
     </div>

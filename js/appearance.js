@@ -574,15 +574,18 @@ function closePlaylistSheet(){
 let playlistPicked = -1;   // the row just tapped → plays the pick animation once
 function renderPlaylistSheet(){
     // the same list is drawn in the old sheet and in the bubble under the player (scroll position survives a re-draw)
+    // Benyamin's songs are not part of it: they only live in HARFS Music (Home).
+    const idxs = PLAYLIST.length ? profileIdxList() : [];
     [['playlist-list-container','playlist-track-count'],['mp-pl-list','mp-pl-count']].forEach(([listId,cntId])=>{
         const container=document.getElementById(listId); if(!container) return;
         const cnt=document.getElementById(cntId);
-        if(cnt) cnt.textContent = PLAYLIST.length ? `${PLAYLIST.length} track${PLAYLIST.length===1?'':'s'}` : 'Loading…';
+        if(cnt) cnt.textContent = PLAYLIST.length ? `${idxs.length} track${idxs.length===1?'':'s'}` : 'Loading…';
         if(!PLAYLIST.length){ container.innerHTML='<div class="playlist-empty"><span class="spinner"></span></div>'; return; }
         const keep=container.scrollTop;
-        container.innerHTML=PLAYLIST.map((t,i)=>{
+        container.innerHTML=idxs.map((i,n)=>{
+            const t=PLAYLIST[i];
             const isPlaying = i===currentTrackIndex && backgroundMusicStarted && !musicMuted;
-            return `<div class="playlist-track-item ${isPlaying?'playing':''} ${i===playlistPicked?'picked':''}" style="--i:${Math.min(i,8)}" onclick="selectPlaylistTrack(${i})">
+            return `<div class="playlist-track-item ${isPlaying?'playing':''} ${i===playlistPicked?'picked':''}" style="--i:${Math.min(n,8)}" onclick="selectPlaylistTrack(${i})">
                 <div class="playlist-track-icon ${isPlaying?'px-on':''}">${isPlaying ? '<span class="pl-px"></span>' : '<i class="fas fa-music"></i>'}</div>
                 <div class="playlist-track-title">${escapeHtml(t.title)}</div>
             </div>`;
@@ -645,8 +648,9 @@ function renderMusicPlayerUI(){
         });
     }
     const mode=PLAYBACK_MODES[playbackMode]||PLAYBACK_MODES.shuffle;
-    document.getElementById('mp-sub').textContent = PLAYLIST.length
-        ? `Track ${currentTrackIndex+1} of ${PLAYLIST.length} · ${mode.label}` : 'HARFS Playlist';
+    const plIdx = PLAYLIST.length ? profileIdxList() : [], plPos = plIdx.indexOf(currentTrackIndex);
+    document.getElementById('mp-sub').textContent = plIdx.length
+        ? (plPos >= 0 ? `Track ${plPos+1} of ${plIdx.length} · ${mode.label}` : `${plIdx.length} tracks · ${mode.label}`) : 'HARFS Playlist';
     const shB=document.getElementById('mp-shuffle-btn'), rpB=document.getElementById('mp-repeat-btn');
     if(shB) shB.classList.toggle('on', playbackMode==='shuffle');
     if(rpB) rpB.classList.toggle('on', playbackMode==='single');
@@ -723,10 +727,8 @@ function playerStep(dir){
     const go=()=>{
         if(!PLAYLIST.length) return;
         playerEnsureOn();
-        let next;
-        if(dir>0 && playbackMode==='shuffle' && PLAYLIST.length>1){
-            do{ next=Math.floor(Math.random()*PLAYLIST.length); }while(next===currentTrackIndex);
-        } else next=currentTrackIndex+dir;
+        const next = (dir>0 && playbackMode==='shuffle') ? profileRandom(currentTrackIndex) : profileNeighbor(dir);
+        if(next==null) return;
         playTrack(next);
         syncSettingsUI();
     };

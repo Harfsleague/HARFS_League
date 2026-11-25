@@ -57,6 +57,7 @@ async function loadPlaylistFromGitHub() {
         } catch (e) {
             PLAYLIST = (cachedList && cachedList.length) ? cachedList : [FALLBACK_TRACK];
         }
+        try{ await loadMusicMetaFromGitHub(); }catch(e){}   // needed to know which songs are Benyamin's (kept out of the profile playlist)
         if (PLAYLIST.length) ensureOfflineTrackCached();
         return PLAYLIST;
     })();
@@ -145,19 +146,41 @@ const LAST_TRACK_KEY = 'lastTrackSrc';
 function saveLastTrack(track){
     try{ if(track && track.src) localStorage.setItem(LAST_TRACK_KEY, track.src); }catch(e){}
 }
+// ---- Profile playlist = every song EXCEPT Benyamin's (those live only in HARFS Music on the Home page) ----
+function isBenyaminTrack(t){
+    if(!t || !t.src) return false;
+    const file = (typeof mpExtractFilename === 'function') ? mpExtractFilename(t.src) : String(t.src).split('/').pop();
+    const m = (typeof musicMeta !== 'undefined' && musicMeta && musicMeta.tracks && musicMeta.tracks[file]) || {};
+    if(m.section) return m.section === 'benyamin';
+    return !!(typeof mpGuessBenyaminInfo === 'function' && mpGuessBenyaminInfo(file, m.title || t.title));
+}
+function profileIdxList(){ const r = []; PLAYLIST.forEach((t,i) => { if(t && !isBenyaminTrack(t)) r.push(i); }); return r; }
+function profileNeighbor(dir){
+    const l = profileIdxList(); if(!l.length) return null;
+    const pos = l.indexOf(currentTrackIndex);
+    if(pos < 0) return dir > 0 ? l[0] : l[l.length-1];
+    return l[(pos + dir + l.length) % l.length];
+}
+function profileRandom(exclude){
+    const l = profileIdxList(); if(!l.length) return null;
+    const c = l.filter(i => i !== exclude), a = c.length ? c : l;
+    return a[Math.floor(Math.random() * a.length)];
+}
 function pickStartTrackIndex(){
-    const random = () => Math.floor(Math.random() * PLAYLIST.length);
+    const list = profileIdxList();
+    if(!list.length) return null;
+    const random = () => list[Math.floor(Math.random() * list.length)];
     let mode = 'shuffle';
     try{ mode = localStorage.getItem('playbackMode') || ((typeof playbackMode!=='undefined') ? playbackMode : 'shuffle'); }catch(e){}
     if (mode === 'shuffle') return random();
     let saved = null;
     try{ saved = localStorage.getItem(LAST_TRACK_KEY); }catch(e){}
     const idx = saved ? PLAYLIST.findIndex(t => t.src === saved) : -1;
-    return idx >= 0 ? idx : random();
+    return (idx >= 0 && list.includes(idx)) ? idx : random();
 }
 
 function playTrack(index) {
-    if (!bgMusic || PLAYLIST.length === 0) return;
+    if (!bgMusic || PLAYLIST.length === 0 || index == null || !isFinite(index)) return;
     currentTrackIndex = ((index % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length;
     const track = PLAYLIST[currentTrackIndex];
     saveLastTrack(track);
@@ -194,31 +217,30 @@ async function playTrackWithFallback(src, title){
 }
 
 function playNextTrack() {
-    playTrack(currentTrackIndex + 1);
+    const n = profileNeighbor(1); if(n != null) playTrack(n);
 }
 
 function playPrevTrack() {
-    playTrack(currentTrackIndex - 1);
+    const n = profileNeighbor(-1); if(n != null) playTrack(n);
 }
 
-// When a song ends, decide what plays next based on the chosen playback mode
+// When a song ends, decide what plays next based on the chosen playback mode.
+// A Benyamin song started from HARFS Music continues inside that page's own list; everything else stays in the profile playlist.
 if (bgMusic) {
     bgMusic.addEventListener('ended', () => {
-        if (PLAYLIST.length <= 1) {
-            playTrack(0);
+        const cur = PLAYLIST[currentTrackIndex];
+        if (cur && isBenyaminTrack(cur) && mpQueue.length > 1 && playbackMode !== 'single') {
+            if (playbackMode === 'sequential') { mpNext(); return; }
+            const at = mpFindCurrentInQueue(); let r;
+            do { r = Math.floor(Math.random() * mpQueue.length); } while (r === at);
+            mpPlayFromQueue(r);
             return;
         }
-        if (playbackMode === 'single') {
-            playTrack(currentTrackIndex);
-        } else if (playbackMode === 'sequential') {
-            playNextTrack();
-        } else {
-            // shuffle — pick a new random track (not the same one)
-            let next;
-            do { next = Math.floor(Math.random() * PLAYLIST.length); }
-            while (next === currentTrackIndex);
-            playTrack(next);
-        }
+        if (cur && isBenyaminTrack(cur)) { playTrack(currentTrackIndex); return; }   // repeat-one / a one-song list
+        const list = profileIdxList();
+        if (!list.length) return;
+        if (list.length <= 1 || playbackMode === 'single') { playTrack(list.length <= 1 ? list[0] : currentTrackIndex); return; }
+        playTrack(playbackMode === 'sequential' ? profileNeighbor(1) : profileRandom(currentTrackIndex));
     });
 }
 
