@@ -437,6 +437,10 @@ function openMusicPage(){
 async function onMusicPageEntered(){
     if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled){ navigate('main-league'); return; }   // HARFS Music is a beta switch (Appearance → Beta)
     mpApplyStaticLabels();
+    const scr = document.getElementById('music-screen');   // replay the entrance of every part
+    if(scr){ scr.classList.remove('mp-enter'); void scr.offsetWidth; scr.classList.add('mp-enter'); }
+    const tabsEl = document.getElementById('mp-tabs'); if(tabsEl) tabsEl.style.setProperty('--ti', ['benyamin','community','all'].indexOf(mpTab));
+    mpAnimNext = true;
     renderMusicPage();
     mpSyncPlayerUI();
     if(typeof loadMomentReactions === 'function') loadMomentReactions().then(()=>{ if(document.getElementById('music-screen')?.classList.contains('active')) renderMusicPage(); });
@@ -470,9 +474,13 @@ function mpApplyStaticLabels(){
     if(h) h.innerHTML = `<i class="fas fa-cloud-arrow-up"></i> ${escapeHtml(mpT('upHeading'))}`;
 }
 
+let mpAnimNext = true;   // the next render of the list plays its staggered entrance (page opened / tab changed); play-pause re-renders stay still
 function mpSetTab(tab){
     mpTab = tab;
     document.querySelectorAll('#mp-tabs .mp-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    const tabs = document.getElementById('mp-tabs');
+    if(tabs) tabs.style.setProperty('--ti', ['benyamin','community','all'].indexOf(tab));   // slides the highlight under the tab
+    mpAnimNext = true;
     renderMusicPage();
 }
 
@@ -538,6 +546,7 @@ function mpRenderTrackCard(t, idxInQueue){
 function renderMusicPage(){
     const body = document.getElementById('mp-body');
     if(!body) return;
+    if(mpAnimNext){ mpAnimNext = false; body.classList.remove('mp-anim'); void body.offsetWidth; body.classList.add('mp-anim'); clearTimeout(body._animT); body._animT = setTimeout(()=>body.classList.remove('mp-anim'), 1400); }
     mpApplyStaticLabels();
     const allTracks = mpGetEnrichedTracks();
     const l = mpLang();
@@ -730,10 +739,15 @@ function mpSyncPlayerUI(){
         ? (enriched.section === 'benyamin' ? (mpAlbumLabel(enriched.albumId) || mpT('tabBenyamin')) : (enriched.uploader ? `${mpT('uploadedBy')} ${TEAM_DISPLAY_NAMES[enriched.uploader]||enriched.uploader}` : mpT('tabCommunity')))
         : 'HARFS MUSIC';
 
-    const tEl = document.getElementById('mp-now-title'); if(tEl) tEl.textContent = title;
+    const tEl = document.getElementById('mp-now-title');
+    if(tEl && tEl.textContent !== title){                      // a new song: the title swaps in with a small slide
+        tEl.textContent = title;
+        tEl.classList.remove('swap'); void tEl.offsetWidth; tEl.classList.add('swap');
+    }
     const aEl = document.getElementById('mp-now-artist'); if(aEl) aEl.textContent = artist;
     const bEl = document.getElementById('mp-now-badge'); if(bEl) bEl.textContent = badge;
-    const disc = document.getElementById('mp-disc'); if(disc) disc.classList.toggle('spinning', playing);
+    const stage = document.getElementById('hmp-stage'); if(stage) stage.classList.toggle('playing', playing);   // drives the LED equaliser
+    const card = document.getElementById('mp-player-card'); if(card) card.classList.toggle('is-playing', playing);
     const playBtn = document.getElementById('mp-play-btn');
     if(playBtn) playBtn.innerHTML = `<i class="fas fa-${playing?'pause':'play'}"></i>`;
     const muteBtn = document.getElementById('mp-mute-btn');
@@ -744,7 +758,7 @@ function mpSyncPlayerUI(){
         modeBtn.innerHTML = m === 'single' ? '<i class="fas fa-repeat"></i><b class="mp-mode-1">1</b>' : (m === 'sequential' ? '<i class="fas fa-repeat"></i>' : '<i class="fas fa-shuffle"></i>');
     }
     const vol = document.getElementById('hmp-vol');
-    if(vol && bgMusic) vol.value = Math.round((bgMusic.volume || 0) * 100);
+    if(vol && bgMusic){ vol.value = Math.round((bgMusic.volume || 0) * 100); if(typeof setRangeFill === 'function') setRangeFill(vol, vol.value); }
     updateHomeMusicTile();
 }
 
@@ -768,6 +782,7 @@ if(bgMusic){
         if(dur) dur.textContent = mpFmtTime(bgMusic.duration);
         if(seek && isFinite(bgMusic.duration) && bgMusic.duration > 0){
             seek.value = (bgMusic.currentTime / bgMusic.duration) * 100;
+            if(typeof setRangeFill === 'function') setRangeFill(seek, seek.value);
         }
     });
     ['play','pause','ended','loadedmetadata'].forEach(ev => bgMusic.addEventListener(ev, ()=>{
@@ -779,6 +794,7 @@ document.addEventListener('harfs-track', mpSyncPlayerUI);
 document.addEventListener('DOMContentLoaded', ()=>{
     const seek = document.getElementById('hmp-seek');
     if(seek) seek.addEventListener('input', ()=>{
+        if(typeof setRangeFill === 'function') setRangeFill(seek, seek.value);
         if(bgMusic && isFinite(bgMusic.duration) && bgMusic.duration > 0){
             bgMusic.currentTime = (Number(seek.value) / 100) * bgMusic.duration;
         }

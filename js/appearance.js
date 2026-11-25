@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.43";
+const HARFS_VERSION_LABEL = "1.44";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -894,9 +894,9 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(
 // Columns of small rounded squares, bottom → top fading from the theme's main colour to its accent, one falling "peak" square per column,
 // a faint unlit grid behind, and a thin glowing baseline. It is lively but smooth (fast attack, softer release, time-based so it looks the same
 // at any frame rate) and is deliberately NOT locked to the beat of the track.
-(function playerStage(){
-    const stage=document.getElementById('mp-art'); if(!stage) return;
-    stage.innerHTML='';
+function mpxStageMake(stage){
+    if(!stage) return;
+    stage.querySelectorAll('canvas').forEach(c=>c.remove());
     const cv=document.createElement('canvas'); cv.className='mpx-canvas'; stage.appendChild(cv);
     const ctx=cv.getContext('2d'); if(!ctx) return;
     const CELL=8, GAP=3, PITCH=CELL+GAP, PADX=14, BASE=16;          // BASE = room under the grid for the glowing line
@@ -980,7 +980,9 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePlaylistPop(
     if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); if(!raf) draw(); }).observe(stage);
     document.addEventListener('visibilitychange', sync);
     sync();
-})();
+}
+mpxStageMake(document.getElementById('mp-art'));        // Profile player
+mpxStageMake(document.getElementById('hmp-stage'));     // HARFS Music page (same equaliser)
 
 
 // ============================================================

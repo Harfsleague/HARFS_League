@@ -3181,3 +3181,100 @@ body.perf-no-anim .pr-collapse, body.perf-no-anim .pr-inner, body.perf-no-anim .
 /* lineup section now carries the (shorter) weekly tips under the team cards */
 .mag-recs-mini{ margin:10px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px; }
 .mag-recs-mini li{ font-size:.72rem; line-height:1.8; color:#cbd5e1; padding:0 2px; }
+
+/* =====================================================================
+   HARFS Music — same look as the player in Profile (theme colours, LED equaliser stage, big play button),
+   and every part of the page animates in. Entrance replays each time the page opens; lists re-animate only on open / tab change.
+   ===================================================================== */
+#music-screen .mp-frame{ margin:0; transition:box-shadow .6s ease; }
+#music-screen .mp-frame:has(.mp-hmp.is-playing){ box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 34px -8px var(--primary-glow); }
+.mp-hmp{ margin:0; }
+.mp-hmp .mpx-stage{ margin-bottom:2px; }
+.mp-stage-chip{ position:absolute; top:9px; left:10px; z-index:2; max-width:72%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:0;
+    background:color-mix(in srgb,var(--primary) 24%,rgba(0,0,0,0.45)); color:#fff; border:1px solid color-mix(in srgb,var(--primary) 50%,transparent); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.mp-hmp-meta{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:2px; min-width:0; }
+.mp-hmp-meta .mp-now-title{ width:100%; font-size:1.02rem; font-weight:900; color:#fff; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mp-hmp-meta .mp-now-artist{ width:100%; text-align:center; color:#a5b4cf; font-size:.62rem; letter-spacing:.6px; text-transform:uppercase; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mp-now-title.swap{ animation:mpxTitleSwap .5s cubic-bezier(.22,1,.36,1); }
+.mp-hmp .mpx-seek .mp-range{ accent-color:#fff; }
+.mp-hmp-vol{ display:flex; align-items:center; gap:10px; padding:0 6px; color:#94a3b8; font-size:.72rem; }
+.mp-hmp-vol .mp-range{ flex:1; width:auto; height:22px; }
+.mp-hmp .mpx-play::after{ content:''; position:absolute; inset:2px; border-radius:50%; border:2px solid var(--primary); opacity:0; pointer-events:none; }
+.mp-hmp.is-playing .mpx-play::after{ animation:mpRing 2.2s ease-out infinite; }
+.mp-hmp .mpx-ic i{ font-size:1.15rem; }
+.mp-hmp .mpx-mode .mp-mode-1{ position:absolute; bottom:6px; right:9px; font-size:.5rem; color:var(--primary); }
+
+/* theme colours instead of the old pink/violet */
+.mp-topbar-title i{ color:var(--primary); }
+.mp-upload-trigger{ background:color-mix(in srgb,var(--primary) 22%,rgba(15,23,42,0.8)); border-color:color-mix(in srgb,var(--primary) 50%,transparent); color:#fff; }
+.mp-tabs{ position:relative; }
+.mp-tabs::before{ content:''; position:absolute; top:5px; bottom:5px; inset-inline-start:5px; width:calc((100% - 10px) / 3); border-radius:12px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 34%,transparent),color-mix(in srgb,var(--accent) 30%,transparent));
+    border:1px solid color-mix(in srgb,var(--primary) 50%,transparent); box-shadow:0 0 16px -4px var(--primary-glow);
+    transform:translateX(calc(var(--ti,0) * 100%)); transition:transform .5s cubic-bezier(.22,1.2,.36,1); }
+html[dir="rtl"] .mp-tabs::before{ transform:translateX(calc(var(--ti,0) * -100%)); }
+.mp-tab{ position:relative; z-index:1; transition:color .3s ease, transform .2s ease; }
+.mp-tab.active{ background:transparent !important; border-color:transparent !important; color:#fff; }
+.mp-tab:active{ transform:scale(.95); }
+.mp-search-wrap{ transition:border-color .3s ease, box-shadow .3s ease; }
+.mp-search-wrap:focus-within{ border-color:color-mix(in srgb,var(--primary) 60%,transparent); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent); }
+.mp-ben-hero{ background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 36%,rgba(15,23,42,0.6)),color-mix(in srgb,var(--accent) 38%,rgba(15,23,42,0.7)) 55%,rgba(15,23,42,0.92)); border-color:color-mix(in srgb,var(--primary) 40%,transparent); }
+.mp-ben-btn.primary{ background:linear-gradient(135deg,var(--primary),var(--accent)); }
+.mp-album-card{ transition:border-color .25s, transform .25s cubic-bezier(.22,1,.36,1), box-shadow .3s; }
+.mp-album-card:hover{ transform:translateY(-3px); }
+.mp-album-card.active{ border-color:var(--primary); box-shadow:0 0 0 1px color-mix(in srgb,var(--primary) 45%,transparent), 0 8px 20px -8px var(--primary-glow); }
+.mp-track-card{ transition:transform .2s cubic-bezier(.22,1,.36,1), border-color .3s, background .4s; }
+.mp-track-card:active{ transform:scale(.985); }
+.mp-track-card.is-current{ border-color:color-mix(in srgb,var(--primary) 55%,transparent); background:linear-gradient(155deg,color-mix(in srgb,var(--primary) 20%,rgba(15,23,42,0.9)),rgba(15,23,42,0.94)); }
+.mp-track-card.is-playing{ animation:mpxCur 2.6s ease-in-out infinite; }
+.mp-track-play-ic{ background:color-mix(in srgb,var(--primary) 16%,transparent); color:var(--primary); transition:transform .25s cubic-bezier(.34,1.5,.5,1), background .3s; }
+.mp-track-main:active .mp-track-play-ic{ transform:scale(.88); }
+.mp-track-card.is-current .mp-track-play-ic{ background:linear-gradient(135deg,var(--primary),var(--accent)); color:#fff; }
+.mp-album-tag{ color:var(--primary); background:color-mix(in srgb,var(--primary) 14%,transparent); }
+.mp-fchip{ transition:background .25s, border-color .25s, transform .2s; }
+.mp-fchip.active{ background:color-mix(in srgb,var(--primary) 22%,transparent); border-color:var(--primary); }
+.mp-link-btn{ color:var(--primary); }
+.mp-empty i{ color:var(--primary); animation:mpxFloat 3s ease-in-out infinite; }
+
+@keyframes mpxDrop{ from{ opacity:0; transform:translateY(-16px); } to{ opacity:1; transform:none; } }
+@keyframes mpxRise{ from{ opacity:0; transform:translateY(26px) scale(.96); filter:blur(6px); } to{ opacity:1; transform:none; filter:none; } }
+@keyframes mpxPop{ 0%{ opacity:0; transform:scale(.6); } 65%{ opacity:1; transform:scale(1.08); } 100%{ opacity:1; transform:none; } }
+@keyframes mpxStage{ from{ clip-path:inset(0 50% 0 50% round 20px); opacity:.2; } to{ clip-path:inset(0 0 0 0 round 20px); opacity:1; } }
+@keyframes mpxTitleSwap{ from{ opacity:0; transform:translateY(9px); } to{ opacity:1; transform:none; } }
+@keyframes mpxCur{ 0%,100%{ box-shadow:0 0 0 0 transparent; } 50%{ box-shadow:0 0 20px -3px var(--primary-glow); } }
+@keyframes mpxFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+
+@media (prefers-reduced-motion:no-preference){
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-topbar{ animation:mpxDrop .55s cubic-bezier(.22,1,.36,1) both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-frame{ animation:mpxRise .8s cubic-bezier(.22,1,.36,1) .08s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-frame .mpx-stage{ animation:mpxStage .95s cubic-bezier(.22,1,.36,1) .3s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp-meta{ animation:mpxRise .6s cubic-bezier(.22,1,.36,1) .42s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-seek{ animation:mpxRise .6s cubic-bezier(.22,1,.36,1) .5s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-controls > *{ animation:mpxPop .6s cubic-bezier(.34,1.4,.5,1) both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-controls > *:nth-child(1){ animation-delay:.58s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-controls > *:nth-child(2){ animation-delay:.64s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-controls > *:nth-child(3){ animation-delay:.7s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-controls > *:nth-child(4){ animation-delay:.76s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp .mpx-controls > *:nth-child(5){ animation-delay:.82s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-hmp-vol{ animation:mpxRise .55s cubic-bezier(.22,1,.36,1) .85s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-tabs{ animation:mpxRise .6s cubic-bezier(.22,1,.36,1) .55s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-search-wrap{ animation:mpxRise .6s cubic-bezier(.22,1,.36,1) .65s both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim > *{ animation:mpxRise .65s cubic-bezier(.22,1,.36,1) both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim > *:nth-child(2){ animation-delay:.1s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim > *:nth-child(3){ animation-delay:.2s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim > *:nth-child(4){ animation-delay:.3s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card{ animation:mpxPop .6s cubic-bezier(.34,1.4,.5,1) both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card{ animation:mpxRise .55s cubic-bezier(.22,1,.36,1) both; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(1), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(1){ animation-delay:0.17s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(2), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(2){ animation-delay:0.22s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(3), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(3){ animation-delay:0.27s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(4), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(4){ animation-delay:0.32s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(5), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(5){ animation-delay:0.37s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(6), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(6){ animation-delay:0.42s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(7), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(7){ animation-delay:0.47s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(8), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(8){ animation-delay:0.52s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(9), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(9){ animation-delay:0.57s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(10), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(10){ animation-delay:0.62s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(11), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(11){ animation-delay:0.67s; }
+    body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(12), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(12){ animation-delay:0.72s; }
+}
