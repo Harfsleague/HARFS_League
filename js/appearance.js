@@ -983,6 +983,7 @@ function mpxStageMake(stage){
 }
 mpxStageMake(document.getElementById('mp-art'));        // Profile player
 mpxStageMake(document.getElementById('hmp-stage'));     // HARFS Music page (same equaliser)
+mpxStageMake(document.getElementById('ov-music-stage')); // Home → Music tile (pixel effect while a song plays)
 
 
 // ============================================================

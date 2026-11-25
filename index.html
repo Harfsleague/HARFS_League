@@ -340,11 +340,14 @@
                         <i class="fas fa-music"></i><span>Music</span>
                     </button>
                     <div class="ov-ext ov-ext-music" id="ov-music-ext">
+                        <div class="ov-music-cover" id="ov-music-cover" aria-hidden="true"></div>
+                        <div class="ov-music-stage" id="ov-music-stage" aria-hidden="true"></div>
                         <div class="ov-music-eq" id="ov-music-eq" aria-hidden="true"><i></i><i></i><i></i></div>
                         <div class="ov-music-meta">
                             <div class="ov-music-title" id="ov-music-title" dir="auto">HARFS Music</div>
                             <div class="ov-music-sub" id="ov-music-sub" dir="auto">Benyamin Bahadori &amp; Community</div>
                         </div>
+                        <div class="ov-music-bubble" id="ov-music-bubble" dir="auto"><i class="fas fa-music"></i><span id="ov-music-bubble-t"></span></div>
                     </div>
                 </div>
             </div>
@@ -1211,7 +1214,7 @@
             <!-- Now Playing Deck — same look as the player in Profile (LED equaliser stage, white seek bar, big play button) -->
             <div class="settings-frame mp-frame" id="mp-player-frame">
                 <div class="music-player mp-hmp" id="mp-player-card">
-                    <div class="mpx-stage" id="hmp-stage" aria-hidden="true"><span class="mp-now-badge mp-stage-chip" id="mp-now-badge">HARFS MUSIC</span></div>
+                    <div class="mpx-stage" id="hmp-stage" aria-hidden="true"><div class="mp-stage-cover" id="mp-stage-cover"></div><span class="mp-now-badge mp-stage-chip" id="mp-now-badge">HARFS MUSIC</span></div>
                     <div class="mpx-meta mp-meta mp-hmp-meta">
                         <div class="mp-now-title mp-title" id="mp-now-title" dir="auto">Select a song to play</div>
                         <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto">Benyamin Bahadori &amp; Community</div>
@@ -1233,13 +1236,6 @@
                         <i class="fas fa-volume-high"></i>
                     </div>
                 </div>
-            </div>
-
-            <!-- Section Tabs: Benyamin Bahadori | Community | All -->
-            <div class="mp-tabs" id="mp-tabs">
-                <button type="button" class="mp-tab active" data-tab="benyamin" onclick="mpSetTab('benyamin')"><i class="fas fa-star"></i><span id="mp-tab-benyamin">Benyamin Bahadori</span></button>
-                <button type="button" class="mp-tab" data-tab="community" onclick="mpSetTab('community')"><i class="fas fa-users"></i><span id="mp-tab-community">Community</span></button>
-                <button type="button" class="mp-tab" data-tab="all" onclick="mpSetTab('all')"><i class="fas fa-list-ul"></i><span id="mp-tab-all">All</span></button>
             </div>
 
             <!-- Search bar -->

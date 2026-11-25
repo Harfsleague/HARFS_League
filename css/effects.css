@@ -3278,3 +3278,56 @@ html[dir="rtl"] .mp-tabs::before{ transform:translateX(calc(var(--ti,0) * -100%)
     body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(11), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(11){ animation-delay:0.67s; }
     body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-album-card:nth-child(12), body:not(.perf-no-anim):not(.lite-mode) #music-screen .mp-body.mp-anim .mp-track-card:nth-child(12){ animation-delay:0.72s; }
 }
+
+/* ===== HARFS Music — album bubbles with covers, folding song list, cover on the player, Home tile pixel effect ===== */
+.mp-albums-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+.mp-album-art{ background-size:cover; background-position:center; }
+.mp-album-edit{ position:absolute; top:6px; right:7px; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.55); color:#fff; font-size:.7rem; border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+    transition:transform .2s cubic-bezier(.34,1.5,.5,1), background .2s; }
+.mp-album-edit:active{ transform:scale(.85); background:color-mix(in srgb,var(--primary) 60%,rgba(0,0,0,.5)); }
+.mp-album-card.has-cover .mp-album-art{ box-shadow:0 6px 16px -6px rgba(0,0,0,.7); }
+.mp-hint{ display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:16px; border:1px dashed rgba(255,255,255,0.14); color:#94a3b8; font-size:.74rem; }
+.mp-hint i{ color:var(--primary); animation:mpxFloat 2.4s ease-in-out infinite; }
+.mp-tracks-sec{ display:flex; flex-direction:column; gap:10px; }
+.mp-tracks-sec .mp-sec-head .mp-link-btn{ width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.07); display:inline-flex; align-items:center; justify-content:center; }
+@keyframes mpxUnfold{ from{ opacity:0; transform:translateY(-14px) scaleY(.88); } to{ opacity:1; transform:none; } }
+.mp-tracks-sec.reveal{ transform-origin:50% 0; animation:mpxUnfold .55s cubic-bezier(.22,1,.36,1) both; }
+.mp-tracks-sec.reveal .mp-track-card{ animation:mpxRise .5s cubic-bezier(.22,1,.36,1) both; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(1){ animation-delay:0.13s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(2){ animation-delay:0.18s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(3){ animation-delay:0.23s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(4){ animation-delay:0.28s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(5){ animation-delay:0.33s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(6){ animation-delay:0.38s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(7){ animation-delay:0.43s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(8){ animation-delay:0.48s; }
+.mp-tracks-sec.reveal .mp-track-card:nth-child(9){ animation-delay:0.53s; }
+body.perf-no-anim .mp-tracks-sec.reveal, body.perf-no-anim .mp-tracks-sec.reveal .mp-track-card, body.lite-mode .mp-tracks-sec.reveal, body.lite-mode .mp-tracks-sec.reveal .mp-track-card{ animation:none; }
+
+/* cover behind the equaliser of the player on the Music page */
+.mp-stage-cover{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity .7s ease, transform 1.2s ease; transform:scale(1.08); }
+.mpx-stage.has-cover .mp-stage-cover{ opacity:1; transform:scale(1); }
+.mpx-stage.has-cover .mp-stage-cover::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(3,6,14,.25),rgba(3,6,14,.72)); }
+
+/* Home → Music tile: the whole free area becomes a pixel equaliser while a song plays; the name floats in a small bubble */
+.ov-ext-music > *{ position:relative; z-index:2; }
+.ov-music-cover, .ov-music-stage{ position:absolute !important; inset:0; z-index:0 !important; }
+.ov-music-cover{ background-size:cover; background-position:center; opacity:0; transition:opacity .7s ease; }
+.ov-ext-music.has-cover .ov-music-cover{ opacity:1; }
+.ov-ext-music.has-cover .ov-music-cover::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(3,6,14,.78),rgba(3,6,14,.35) 60%,rgba(3,6,14,.55)); }
+.ov-music-stage{ opacity:0; transition:opacity .5s ease; pointer-events:none; }
+.ov-ext-music.is-playing .ov-music-stage{ opacity:1; }
+.ov-ext-music .ov-music-stage .mpx-canvas{ filter:drop-shadow(0 0 6px color-mix(in srgb,var(--primary) 45%,transparent)); }
+.ov-ext-music.is-playing .ov-music-eq, .ov-ext-music.is-playing .ov-music-meta{ opacity:0; transform:translateY(6px); }
+.ov-music-eq, .ov-music-meta{ transition:opacity .35s ease, transform .4s cubic-bezier(.22,1,.36,1); }
+.ov-music-bubble{ position:absolute !important; z-index:3 !important; left:36px; right:12px; top:50%; display:flex; align-items:center; justify-content:center; gap:6px; max-width:calc(100% - 48px); margin:0 auto; width:max-content;
+    padding:5px 12px; border-radius:99px; font-size:.7rem; font-weight:800; color:#fff; white-space:nowrap; overflow:hidden;
+    background:color-mix(in srgb,var(--primary) 26%,rgba(3,6,14,.72)); border:1px solid color-mix(in srgb,var(--primary) 55%,transparent);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 6px 18px -6px var(--primary-glow);
+    opacity:0; transform:translateY(calc(-50% + 10px)) scale(.9); transition:opacity .4s ease, transform .5s cubic-bezier(.34,1.4,.5,1); pointer-events:none; }
+.ov-music-bubble i{ font-size:.62rem; color:var(--primary); flex:none; }
+.ov-music-bubble span{ overflow:hidden; text-overflow:ellipsis; }
+.ov-ext-music.is-playing .ov-music-bubble{ opacity:1; transform:translateY(-50%) scale(1); }
+@media (prefers-reduced-motion:no-preference){ .ov-ext-music.is-playing .ov-music-bubble{ animation:ovBubFloat 3.4s ease-in-out .6s infinite; } }
+@keyframes ovBubFloat{ 0%,100%{ transform:translateY(-50%) scale(1); } 50%{ transform:translateY(calc(-50% - 4px)) scale(1.02); } }
