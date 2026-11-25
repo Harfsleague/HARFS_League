@@ -863,8 +863,8 @@ function pickTacticsEpisode(archive) {
 const MAGAZINE_SCHEMA = {
   type: "object",
   properties: {
-    issueTitle: { type: "string", description: "عنوان جذاب و کمی طنز برای این شماره مجله" },
-    coverSubtitle: { type: "string", description: "یک زیرعنوان کوتاه و بامزه برای جلد" },
+    issueTitle: { type: "string", description: "تیتر جلد: ساده، کوتاه (۲ تا ۵ کلمه) و خلاقانه؛ یک بازی با کلمات، تصویر یا استعارهٔ تازه از ماجرای همین هفته. قالب‌های تکراری مثل «هفتهٔ …» یا «نبرد …» نباشد و با تیترهای شمارهٔ قبل (previousIssuesSummary) شبیه نباشد." },
+    coverSubtitle: { type: "string", description: "زیرعنوان جلد: یک جملهٔ بامزه حداکثر ۸ کلمه که تیتر را کامل کند، نه اینکه تکرارش کند." },
     standingsCommentary: { type: "string", description: "تنها جایی که از رتبه و امتیاز تیم‌ها و جابه‌جایی رتبه‌ها (rankChanges) حرف زده می‌شود: ۲ تا ۴ جملهٔ کوتاه و بدون مقدمه؛ چه کسی بالا آمده، چه کسی پایین رفته و چه کسی ثابت مانده — دقیقاً مطابق delta. اگر rankChanges خالی است یا چیز تازه‌ای برای گفتن نیست، رشتهٔ خالی \"\" برگردان (جدول خودش گویاست). هیچ عددی را که در جدول دیده می‌شود دوباره فهرست نکن." },
     matchReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط از بازی‌های «لیگ» این هفته (recentMatches). بازی‌های CUP هرگز اینجا نمی‌آید — برای آن‌ها cupReport هست. فقط روایت خود بازی‌ها (نتیجه، صحنه‌ها، قهرمان بازی)؛ از رتبه و امتیاز جدول و از فاصلهٔ تیم‌ها تا صدر حرف نزن (آن‌ها جای دیگری گفته می‌شود). اگر این هفته بازی لیگ نبوده، کوتاه و صادقانه بگو لیگ استراحت داشته (۱ تا ۲ جمله)." },
     cupReport: { type: "string", description: "گزارش خبری چند پاراگرافی فقط دربارهٔ بازی‌های «CUP» این هفته (cup.gamesThisWeek، cup.bracket، cup.medals، cup.recordsThisWeek). اگر cup.hasActivity برابر false است، رشتهٔ خالی \"\" برگردان." },
@@ -872,7 +872,7 @@ const MAGAZINE_SCHEMA = {
     scheduleOutlook: { type: "string", description: "پیش‌نمایش بازی‌های هفتهٔ آینده لیگ (۲ تا ۳ پاراگراف کوتاه): تمرکز اصلی روی بازی‌های schedule.nextLeagueFixtures — هر بازی را با توجه به رتبه و فرم دو تیم (formGuide، currentSeasonTable، rankChanges) تحلیل کن، حساسیت‌ها و ماجراهای بالقوه را بگو. مرحله‌های برنامهٔ فصل را شرح نده. هیچ بازی، تاریخ یا حریفی که در schedule نیست نساز و نتیجه را پیش‌بینی نکن. اگر schedule.nextLeagueFixtures خالی بود (مثلاً نوبت CUP یا سوپرکاپ است) فقط ۱ تا ۲ جمله بگو بعدی چیست (nextStepFa). اگر schedule.status برابر no_schedule بود فقط یک جملهٔ کوتاه بنویس." },
     lineupSuggestions: {
       type: "array",
-      description: "پیشنهاد ترکیب برای هر چهار تیم (هر تیم دقیقاً یک آیتم): team همان نام لاتین دیتا، formation مثل 4-3-3 یا 5-3-2 یا 4-2-3-1، و idea یک تا دو جملهٔ توضیح دربارهٔ اینکه چرا این ترکیب مناسب است — بر اساس آمار گل زده و خورده، فرم اخیر، تغییر رتبه و حریف هفتهٔ بعد. نام بازیکن نساز.",
+      description: "پیشنهاد ترکیب برای هر چهار تیم (هر تیم دقیقاً یک آیتم): team همان نام لاتین دیتا، formation مثل 4-3-3 یا 5-3-2 یا 4-2-3-1، و idea فقط یک جملهٔ کوتاه به نگاه «مربی»: چه چیزی را در زمین عوض کند (گل زده و خورده، فرم اخیر و حریف هفتهٔ بعد). رتبه و امتیاز را نگو و نام بازیکن نساز.",
       items: {
         type: "object",
         properties: { team: { type: "string" }, formation: { type: "string" }, idea: { type: "string" } },
@@ -890,7 +890,7 @@ const MAGAZINE_SCHEMA = {
     },
     playerSpotlights: {
       type: "array",
-      description: "۲ تا ۴ نکتهٔ کوتاه دربارهٔ عملکردهای برجستهٔ این هفته؛ هر نکته یک زاویهٔ تازه باشد و نتیجه‌ها، رتبه‌ها و امتیازهایی را که در بخش‌های دیگر آمده تکرار نکند",
+      description: "نگاه «کاشف استعداد»: ۲ تا ۴ نکتهٔ کوتاه دربارهٔ یک ویژگی یا الگوی خاص یک تیم (مثلاً دفاع‌کردن، ضدحمله، دیر گل‌زدن) که در هیچ بخش دیگری نیامده؛ نتیجه، رتبه و امتیاز را تکرار نکن. اگر در دیتا spotlightsThisWeek برابر false است، آرایهٔ خالی [] برگردان (این بخش یک هفته در میان می‌آید).",
       items: {
         type: "object",
         properties: {
@@ -903,7 +903,7 @@ const MAGAZINE_SCHEMA = {
     },
     recommendations: {
       type: "array",
-      description: "۳ تا ۴ توصیهٔ تاکتیکی یا شوخ‌طبعانه، هر کدام یک جمله؛ بدون تکرار رتبه، امتیاز یا نتیجه‌های بخش‌های قبلی",
+      description: "فقط ۲ تا ۳ توصیهٔ خیلی کوتاه (هر کدام یک جملهٔ حداکثر ۱۲ کلمه) که زیر کارت‌های ترکیب نشان داده می‌شود؛ همه دربارهٔ چیدمان و کار مربی‌ها در بازی بعد باشد، نه رتبه، امتیاز یا نتیجه.",
       items: { type: "string" },
     },
     titleRaceCommentary: {
@@ -914,7 +914,7 @@ const MAGAZINE_SCHEMA = {
       type: "string",
       description: "حداکثر یک پاراگراف کوتاه دربارهٔ رکوردهای این هفته (پرگل‌ترین بازی، بزرگ‌ترین اختلاف نتیجه — از weeklyRecords)؛ کارت‌های آماری خودشان عدد و تیم‌ها را نشان می‌دهند، پس اینجا فقط یک نکتهٔ تازه یا طنز بگو و نتیجه‌ها را دوباره روایت نکن. اگر weeklyRecords خالی بود، یک جمله بگو این هفته رکورد خاصی ثبت نشده. دربارهٔ خاطره‌ها یا «لحظات طلایی» چیزی ننویس.",
     },
-    funnyClosing: { type: "string", description: "یک جمله یا پاراگراف کوتاه طنز برای پایان مجله" },
+    funnyClosing: { type: "string", description: "یک جملهٔ کوتاه و بامزه به سبک استندآپ برای پایان؛ دربارهٔ حاشیه‌ها یا شخصیت تیم‌ها، نه آمار و نه چیزی که در بخش‌های قبلی گفته شده." },
     tactics: {
       type: "object",
       description: "بخش ثابت «آموزشگاه تاکتیک»: آموزش یک سیستم بازی در فوتبال، دقیقاً دربارهٔ موضوع tacticsEpisode که در دیتا آمده. شماتیک (زمین، مهره‌ها و فلش‌ها) را اپ خودش از tacticsEpisode.diagram می‌کشد؛ تو فقط متن‌ها را می‌نویسی و فقط به همان مهره‌ها و گام‌های diagram اشاره می‌کنی.",
@@ -1023,6 +1023,8 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 قاعدهٔ عدم تکرار (بسیار مهم): هر اطلاعات فقط و فقط در یک بخش گفته شود. تقسیم کار این است: جدول و نمودار خودشان اعداد را نشان می‌دهند؛ رتبه، امتیاز و جابه‌جایی رتبه‌ها فقط در standingsCommentary؛ نتیجهٔ بازی‌ها و صحنه‌هایشان فقط در matchReport (و برای CUP در cupReport)؛ رکوردهای عددی فقط در کارت‌های recordsAndOddities؛ بخش‌های titleRaceCommentary، playerSpotlights، recommendations، lineupSuggestions، fixturePreviews، scheduleOutlook، interview و funnyClosing نباید رتبه، امتیاز، فاصله تا صدر یا نتیجهٔ بازی‌های هفته را دوباره بگویند. جمله‌ای که چیزی به مطلب نمی‌افزاید، مقدمه‌چینی، جمع‌بندی تکراری و حرف‌های کلی («در این هفتهٔ پرهیجان…») ننویس. اگر برای بخشی که فیلدش می‌تواند خالی باشد (standingsCommentary، titleRaceCommentary) حرف تازه‌ای نداری، رشتهٔ خالی "" بگذار تا فقط جدول و نمودار نمایش داده شود، یا دربارهٔ چیز دیگری (فرم، روند، حاشیه‌ها) حرف بزن. پاسخ‌ها را کوتاه و فشرده نگه دار.
 
 دربارهٔ بخش tactics («آموزشگاه تاکتیک»): هر شماره یک سیستم بازی در فوتبال آموزش داده می‌شود و موضوع این هفته در tacticsEpisode آمده (عنوان، facts و diagram). فقط از همان facts دربارهٔ مربیان، تیم‌ها و دوره‌ها استفاده کن و چیز دیگری (آمار، نتیجه، نام بازیکن یا نقل‌قول) نساز. وظایف مدافعان، هافبک‌ها و خط حمله را جداگانه و روشن بگو و در steps هر گام شماتیک را به همان ترتیب توضیح بده. این بخش با لیگ HARFS ربطی ندارد و دیتای لیگ را وارد آن نکن. اگر tacticsEpisode در دیتا نیست، فیلد tactics را با رشته‌های خالی و steps خالی پر کن. لحن آموزشی و ساده ولی کمی شوخ باشد.
+
+زاویهٔ دید هر بخش (هر بخش را از نگاه خودش بنویس و هرگز شبیه بخش دیگر نشو): matchReport = راوی؛ صحنه‌ها، لحظه‌های تعیین‌کننده و قهرمان بازی‌ها. standingsCommentary = حسابدار؛ فقط جابه‌جایی‌ها. titleRaceCommentary = تحلیلگر نمودار؛ فقط روند، بدون نام و عدد. recordsAndOddities = کلکسیونر اتفاق‌های عجیب؛ یک نکتهٔ تازه یا طنز. playerSpotlights = کاشف استعداد؛ الگوها و ویژگی‌های خاص تیم‌ها. lineupSuggestions و recommendations = مربی؛ فقط چیدمان و تغییرها برای بازی بعد. fixturePreviews و scheduleOutlook = فالگیر؛ حس و حال بازی‌های بعد و حساسیت‌هایشان، بدون تکرار فرم و جدول. interview = طنز تخیلی. funnyClosing = استندآپ‌کمدین. tactics = معلم فوتبال. اگر برای بخشی هر طور فکر می‌کنی باز هم چیزی جز مطالب تکراری نداری، آن را کوتاه کن یا خالی بگذار (spotlightsThisWeek یعنی بخش «زیر ذره‌بین» این هفته نوبتش است یا نه). تیترها ساده، کوتاه و خلاقانه باشند و هیچ‌وقت دو شماره‌ی پشت‌سرهم شبیه هم نشوند.
 
 خروجی را دقیقاً مطابق اسکیمای داده‌شده و فقط به‌صورت JSON برگردان.`;
 
@@ -1178,6 +1180,8 @@ async function main() {
   const issueNumber = archive.reduce((max, i) => Math.max(max, i.issueNumber || 0), 0) + 1;
 
   data.previousIssuesSummary = buildPreviousIssuesSummary(archive);
+  // "زیر ذره‌بین" (player spotlights) tends to repeat the other sections, so it runs every other issue: even issue numbers only.
+  data.spotlightsThisWeek = issueNumber % 2 === 0;
   data.interviewTeam = computeInterviewTeam(issueNumber);
   data.interviewContext = computeInterviewContext(data.interviewTeam, data.recentMatches, (data.rankChanges || []).find((r) => r.team === data.interviewTeam));
   // The one-time complaint (25 penalty chances not given, 2 posts hit) is offered to the model until an interview has used it.
@@ -1217,6 +1221,8 @@ async function main() {
     // used = the interview really contains the line (25 in Latin or Persian digits); only then it stops being offered
     if (data.interviewContext.refGrievance && /(?:25|\u06f2\u06f5)/.test(JSON.stringify(magazine.interview))) magazine.interview.grievanceUsed = true;
   }
+  if (!data.spotlightsThisWeek) magazine.playerSpotlights = [];   // off-week: the section is simply not shown
+
   // The tactics lesson: the episode (and its pitch diagram) is decided here, never by the model.
   if (tacticsEp && magazine.tactics) {
     const want = tacticsEp.diagram.steps.filter((st) => st.hintFa).length;

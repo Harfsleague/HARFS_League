@@ -71,7 +71,7 @@ const seasonMh = pullRevealMake({
     applicable: seasonMhApplicable,
     min: 76          // ≈ 2 cm of finger travel (1 cm ≈ 37.8 CSS px)
 });
-function seasonMhTap(){ if(typeof haptic==='function') haptic([6]); seasonMh.set(true, false); }
+function seasonMhTap(){ if(typeof haptic==='function') haptic([6]); seasonMh.toggle(); }
 function seasonFabSync(){
     const screen = document.getElementById('league-table-screen'), fab = document.getElementById('back-to-top-fab');
     if(!screen || !fab) return;

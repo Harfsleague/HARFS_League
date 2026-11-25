@@ -429,7 +429,7 @@ function magLineupSuggestions(issue) {
 function renderNextWeekSection(issue, ranksNow) {
     const s = issue.schedule;
     const hasOutlook = !!(issue.scheduleOutlook && String(issue.scheduleOutlook).trim());
-    if (!s || s.status !== 'active') return hasOutlook ? `<div class="magazine-page"><h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> هفتهٔ آینده</h2><p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p></div>` : '';
+    if (!s || s.status !== 'active') return hasOutlook ? `<div class="magazine-page"><h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> پیش از سوت</h2><p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p></div>` : '';
     const mw = s.leagueMatchweek || {};
     const fixtures = s.nextLeagueFixtures || [];
     const previews = issue.fixturePreviews || [];
@@ -451,7 +451,7 @@ function renderNextWeekSection(issue, ranksNow) {
     }).join('');
     return `
         <div class="magazine-page magazine-nextweek">
-            <h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> بازی‌های هفتهٔ آینده <span class="magazine-cup-badge">${mw.current ? `هفتهٔ ${magFaNum(mw.current)} از ${magFaNum(mw.total)}` : escapeHtml(s.phaseLabelFa || '')}</span></h2>
+            <h2 class="magazine-section-title"><i class="fas fa-calendar-days"></i> پیش از سوت <span class="magazine-cup-badge">${mw.current ? `هفتهٔ ${magFaNum(mw.current)} از ${magFaNum(mw.total)}` : escapeHtml(s.phaseLabelFa || '')}</span></h2>
             ${cards || `<div class="magazine-cup-note">${escapeHtml(s.nextStepFa || 'این هفته بازی لیگ در برنامه نیست.')}</div>`}
             ${hasOutlook ? `<p class="magazine-text">${escapeHtml(issue.scheduleOutlook).replace(/\n/g, '<br>')}</p>` : ''}
         </div>`;
@@ -522,7 +522,7 @@ function renderTacticsSection(issue) {
     const role = (cls, title, txt) => txt ? `<div class="mtac-role ${cls}"><b>${title}</b><p>${escapeHtml(txt)}</p></div>` : '';
     return `
         <div class="magazine-page magazine-tactics">
-            <h2 class="magazine-section-title"><i class="fas fa-chess-board"></i> آموزشگاه تاکتیک <span class="magazine-cup-badge">${escapeHtml(t.title || '')}</span></h2>
+            <h2 class="magazine-section-title"><i class="fas fa-chess-board"></i> تخته تاکتیک <span class="magazine-cup-badge">${escapeHtml(t.title || '')}</span></h2>
             ${t.intro ? `<p class="magazine-text">${escapeHtml(t.intro)}</p>` : ''}
             <div class="mtac-roles">
                 ${role('mtac-d', 'مدافعان', t.defense)}${role('mtac-m', 'هافبک‌ها', t.midfield)}${role('mtac-a', 'خط حمله', t.attack)}
@@ -573,14 +573,6 @@ function renderMagazine(issue) {
     // only the new chart is ever shown; an issue with no rank data (old archive, no live matches) simply has no chart
     const raceVisual = hist ? magRankChart(hist) : (waitingForMatches ? '<div class="mrc-card mrc-wait"><span class="spinner" style="width:30px;height:30px;"></span></div>' : '');
 
-    // ---- form guide: the streak text sits at the right, so every row's circles line up in one column ----
-    const formRows = (issue.formGuide || []).map(f => `
-        <div class="magazine-form-row">
-            <div class="magazine-form-streak">${f.streakCount > 1 ? `${f.streakCount} ${f.streakType === 'W' ? 'برد' : f.streakType === 'L' ? 'باخت' : 'تساوی'} پیاپی` : ''}</div>
-            <div class="magazine-form-team">${teamLabel(f.team)}</div>
-            <div class="magazine-form-chips">${(f.form || []).slice().reverse().map(r => `<span class="magazine-form-chip ${r}">${r}</span>`).join('') || '<span class="magazine-form-none">—</span>'}</div>
-        </div>`).join('');
-
     // ---- weekly records ----
     const wr = issue.weeklyRecords;
     const statCards = wr ? `
@@ -618,7 +610,7 @@ function renderMagazine(issue) {
     const qa = (iv && iv.qAndA) || [];
     const interviewSection = iv ? `
         <div class="magazine-page magazine-interview">
-            <h2 class="magazine-section-title"><i class="fas fa-microphone"></i> مصاحبهٔ این هفته</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-microphone"></i> پشت میکروفون</h2>
             <div class="mi-people">
                 <div class="mi-person">
                     <span class="mi-ava mi-ava-q mi-ava-big"><i class="fas fa-microphone"></i></span>
@@ -677,12 +669,12 @@ function renderMagazine(issue) {
         ${weekType === 'cup_only' ? cupSection : ''}
 
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-newspaper"></i> ${hasCupLayout ? 'گزارش لیگ' : 'گزارش هفته'}</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-newspaper"></i> روی چمن</h2>
             <p class="magazine-text">${escapeHtml(issue.matchReport).replace(/\n/g, '<br>')}</p>
         </div>
 
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-table"></i> ${issue.seasonContext?.tableRepresents === 'ended_season_final' && issue.seasonContext.endedSeasonId ? `جدول نهایی فصل ${issue.seasonContext.endedSeasonId}` : 'جدول رده‌بندی'}</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-table"></i> ${issue.seasonContext?.tableRepresents === 'ended_season_final' && issue.seasonContext.endedSeasonId ? `جدول نهایی فصل ${issue.seasonContext.endedSeasonId}` : 'پله‌ها'}</h2>
             <table class="magazine-table">
                 <thead><tr><th>#</th><th class="mag-st-team-h">تیم</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pt</th></tr></thead>
                 <tbody>${standingsRows}</tbody>
@@ -693,28 +685,22 @@ function renderMagazine(issue) {
 
         ${(hist || waitingForMatches || (issue.titleRaceCommentary || '').trim()) ? `
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-crown"></i> جدال قهرمانی</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-crown"></i> تعقیب و گریز</h2>
             ${raceVisual}
             ${(issue.titleRaceCommentary || '').trim() ? `<p class="magazine-commentary">${escapeHtml(issue.titleRaceCommentary)}</p>` : ''}
-        </div>` : ''}
-
-        ${formRows ? `
-        <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-chart-line"></i> ${hasCupLayout ? 'فرم لیگ' : 'فرم این هفته'}</h2>
-            <div class="magazine-form-grid">${formRows}</div>
         </div>` : ''}
 
         ${weekType === 'both' ? cupSection : ''}
 
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-fire"></i> رکوردها و اتفاق‌های عجیب</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-fire"></i> عجیب ولی واقعی</h2>
             ${statCards}
             <p class="magazine-text">${escapeHtml(issue.recordsAndOddities).replace(/\n/g, '<br>')}</p>
         </div>
 
         ${spotlights ? `
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-star"></i> نکات برجسته</h2>
+            <h2 class="magazine-section-title"><i class="fas fa-star"></i> زیر ذره‌بین</h2>
             <div class="magazine-spotlight-grid">${spotlights}</div>
         </div>` : ''}
 
@@ -722,11 +708,12 @@ function renderMagazine(issue) {
 
         ${renderTacticsSection(issue)}
 
+        ${(lineups || recommendations) ? `
         <div class="magazine-page">
-            <h2 class="magazine-section-title"><i class="fas fa-lightbulb"></i> توصیه‌های این هفته</h2>
-            <ul class="magazine-recommendations">${recommendations}</ul>
-            ${lineups ? `<h3 class="mlu-title"><i class="fas fa-futbol"></i> پیشنهاد ترکیب برای هر تیم</h3><div class="mlu-grid">${lineups}</div>` : ''}
-        </div>
+            <h2 class="magazine-section-title"><i class="fas fa-futbol"></i> ترکیب پیشنهادی</h2>
+            ${lineups ? `<div class="mlu-grid">${lineups}</div>` : ''}
+            ${recommendations ? `<ul class="magazine-recommendations mag-recs-mini">${recommendations}</ul>` : ''}
+        </div>` : ''}
 
         ${renderNextWeekSection(issue, ranksNow)}
 

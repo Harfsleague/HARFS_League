@@ -350,7 +350,7 @@ slidingPill('season-subnav', 'subnav-pill');
 //   cfg = { scroller(), head(), collapse(), room(), ring(), applicable?() }
 // ============================================================
 function pullRevealMake(cfg){
-    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:560, down:false, snapT:0 };
+    const C = 2 * Math.PI * 19, S = { revealed:false, measured:false, from:0, to:560, down:false, snapT:0, closing:false };
     const motionOk = ()=> !document.body.classList.contains('perf-no-anim') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     // The ring stays EMPTY until the whole visible block (the header and what sits above the folded part) is on screen, and then fills over
     // cfg.min px of scrolling. Enough scroll room is added below so that distance always exists.
@@ -398,7 +398,7 @@ function pullRevealMake(cfg){
         S.snapT = setTimeout(snapBack, 110);
     }
     function sync(){
-        if(S.revealed) return;
+        if(S.revealed || S.closing) return;
         if(cfg.applicable && !cfg.applicable()) return;
         const sc = cfg.scroller(), h = cfg.head(); if(!sc || !h) return;
         bindTouch(sc);
@@ -414,5 +414,15 @@ function pullRevealMake(cfg){
         }
     }
     function reset(){ S.measured = false; clearTimeout(S.snapT); set(false, true); [0, 350, 1100].forEach(ms=>setTimeout(()=>{ measure(); sync(); }, ms)); }
-    return { S, measure, set, sync, reset };
+    // the arrow shown once it is open folds everything back up: the ring empties and the page eases back to where it was before the pull
+    function close(){
+        if(!S.revealed) return;
+        S.closing = true; clearTimeout(S.snapT);
+        set(false);
+        const sc = cfg.scroller();
+        setTimeout(()=>{ S.measured = false; measure(); if(sc) sc.scrollTo({ top:S.from, behavior: motionOk() ? 'smooth' : 'auto' }); }, 60);
+        setTimeout(()=>{ S.measured = false; measure(); S.closing = false; sync(); }, 1150);
+    }
+    function toggle(){ if(S.revealed) close(); else set(true, false); }
+    return { S, measure, set, sync, reset, close, toggle };
 }

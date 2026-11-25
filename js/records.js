@@ -652,7 +652,7 @@ const tpReveal = pullRevealMake({
     ring: ()=>document.getElementById('tp-ring-fg'),
     min: 76          // ≈ 2 cm of finger travel (1 cm ≈ 37.8 CSS px)
 });
-function recordsTpTap(){ if(typeof haptic==='function') haptic([6]); tpReveal.set(true, false); }
+function recordsTpTap(){ if(typeof haptic==='function') haptic([6]); tpReveal.toggle(); }
 function recordsTpBind(){
     const sc = tpReveal && document.querySelector('#team-panel-overlay .team-panel-scroll'); if(!sc) return;
     if(!sc.dataset.prBound){ sc.dataset.prBound = '1'; let raf = 0; sc.addEventListener('scroll', ()=>{ if(raf) return; raf = requestAnimationFrame(()=>{ raf = 0; tpReveal.sync(); }); }, { passive:true }); }
