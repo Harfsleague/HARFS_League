@@ -81,8 +81,8 @@ body:not(.lite-mode):not(.perf-no-blur) :is(
             rgba(0,0,0,0.26) 88%,
             rgba(255,255,255,0.08) 100%
         ) !important;
-    backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94) !important;
-    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94) !important;
+    backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) brightness(0.94) !important;
+    -webkit-backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) brightness(0.94) !important;
     border:1px solid rgba(255,255,255,0.16) !important;
     border-top-color:rgba(255,255,255,0.44) !important;
     border-left-color:rgba(255,255,255,0.28) !important;
@@ -245,8 +245,8 @@ body:not(.lite-mode):not(.perf-no-blur) .season-subnav{
     background-image:
         radial-gradient(120% 90% at 20% 0%,rgba(255,255,255,0.18) 0%,transparent 55%),
         linear-gradient(135deg,rgba(255,255,255,0.12) 0%,rgba(0,0,0,0.22) 55%,color-mix(in srgb,var(--primary) 14%,transparent) 100%) !important;
-    backdrop-filter:blur(13px) saturate(185%) contrast(1.08) !important;
-    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) !important;
+    backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) !important;
+    -webkit-backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) !important;
     border:1px solid rgba(255,255,255,0.16) !important;
     border-top-color:rgba(255,255,255,0.40) !important;
     box-shadow:0 12px 30px -4px rgba(0,0,0,0.58),inset 0 1px 1px rgba(255,255,255,0.38) !important;
@@ -2257,7 +2257,7 @@ body.island .isl-layer{ display:block; }
     position:absolute; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; pointer-events:auto; padding:0;
     background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.24));
     background-image:radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%), linear-gradient(180deg,rgba(255,255,255,0.14) 0%,rgba(255,255,255,0.01) 16%,rgba(0,0,0,0.16) 55%,rgba(0,0,0,0.26) 88%,rgba(255,255,255,0.08) 100%);
-    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94); backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94);
+    -webkit-backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) brightness(0.94); backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) brightness(0.94);
     border:1px solid rgba(255,255,255,0.16); border-top-color:rgba(255,255,255,0.44); border-left-color:rgba(255,255,255,0.28);
     box-shadow:0 14px 30px -6px rgba(0,0,0,0.58), inset 0 1.5px 1px rgba(255,255,255,0.46), inset 0 -1.5px 1.5px rgba(255,255,255,0.14), inset 0 0 14px rgba(0,0,0,0.38);
     -webkit-tap-highlight-color:transparent; transition:scale .2s cubic-bezier(.22,1,.36,1);
@@ -2284,7 +2284,7 @@ body.perf-no-anim .isl-title span{ animation:none; }
 .isl-numslot .magazine-issue-pill{ position:relative; display:flex; align-items:center; justify-content:center; padding:0; color:#fff; cursor:pointer; font-weight:900; font-family:inherit;
     background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.24));
     background-image:radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%), linear-gradient(180deg,rgba(255,255,255,0.14) 0%,rgba(255,255,255,0.01) 16%,rgba(0,0,0,0.16) 55%,rgba(0,0,0,0.26) 88%,rgba(255,255,255,0.08) 100%);
-    -webkit-backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94); backdrop-filter:blur(13px) saturate(185%) contrast(1.08) brightness(0.94);
+    -webkit-backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) brightness(0.94); backdrop-filter:blur(6.5px) saturate(185%) contrast(1.08) brightness(0.94);
     border:1px solid rgba(255,255,255,0.16); border-top-color:rgba(255,255,255,0.44);
     box-shadow:0 14px 30px -6px rgba(0,0,0,0.58), inset 0 1.5px 1px rgba(255,255,255,0.46), inset 0 -1.5px 1.5px rgba(255,255,255,0.14), inset 0 0 14px rgba(0,0,0,0.38); }
 body.perf-no-blur .isl-numslot .magazine-issue-pill, body.lite-mode .isl-numslot .magazine-issue-pill{ background-color:var(--bg-mid); background-image:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
@@ -2979,10 +2979,15 @@ body.perf-no-anim .rec-tile, body.perf-no-anim .rec-card.rec-match, html.lite-mo
 /* ==============================================
    HARFS MUSIC PLAYER & HOME WIDE TILE (v102)
    ===================================================== */
-.ov-wide-music{ grid-column:1 / -1; --tile-accent:#ec4899; }
-body.music-panel-disabled .ov-wide-music{ display:none !important; }
-.ov-wide-music .ov-tile{ width:calc((100% - 20px) / 3); }
-.ov-tile-music{ --tile-accent:#ec4899; color:#f472b6; }
+.ov-wide-ai{ grid-column:1 / -1; --tile-accent:#a855f7; }
+body.ai-disabled .ov-wide-ai{ display:none !important; }
+.ov-wide-ai .ov-tile{ width:calc((100% - 20px) / 3); }
+.ov-tile-ai{ --tile-accent:#a855f7; color:#c084fc; }
+.ov-tile-ai svg.ov-ai-ic{ width:1.35rem; height:1.35rem; }
+.ov-ext-ai{ display:flex; align-items:center; gap:10px; }
+.ov-ai-meta{ min-width:0; flex:1; text-align:left; }
+.ov-ai-title{ font-size:.82rem; font-weight:800; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ov-ai-sub{ font-size:.66rem; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
 .ov-ext-music{ display:flex; align-items:center; gap:10px; }
 .ov-music-eq{ display:inline-flex; align-items:flex-end; gap:2.5px; height:18px; width:16px; flex:none; }
 .ov-music-eq i{ display:block; width:3px; border-radius:2px; background:#f472b6; height:6px; transition:height .2s ease; }

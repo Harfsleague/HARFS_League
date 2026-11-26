@@ -1002,7 +1002,7 @@ const HARFS_LANGS = [
 ];
 const HARFS_I18N = {
     en: {
-        nav_home:'Home', nav_season:'Season', nav_assistant:'Assistant', nav_profile:'Profile',
+        nav_home:'Home', nav_season:'Season', nav_assistant:'Assistant', nav_music:'Music', nav_profile:'Profile',
         subnav_league:'League', subnav_cup:'Cup',
         ov_podium_label:'Overall Ranking and Trophies',
         ov_mag_intro:'This week’s issue',
@@ -1044,7 +1044,7 @@ const HARFS_I18N = {
         game_sync_err:'Could not check updates right now'
     },
     fa: {
-        nav_home:'خانه', nav_season:'فصل', nav_assistant:'دستیار', nav_profile:'پروفایل',
+        nav_home:'خانه', nav_season:'فصل', nav_assistant:'دستیار', nav_music:'موزیک', nav_profile:'پروفایل',
         subnav_league:'لیگ', subnav_cup:'جام حذفی',
         ov_podium_label:'رده‌بندی کل و جام‌های قهرمانی',
         ov_mag_intro:'شمارهٔ این هفته',
@@ -1086,7 +1086,7 @@ const HARFS_I18N = {
         game_sync_err:'خطا در بررسی آپدیت بازی‌ها'
     },
     es: {
-        nav_home:'Inicio', nav_season:'Temporada', nav_assistant:'Asistente', nav_profile:'Perfil',
+        nav_home:'Inicio', nav_season:'Temporada', nav_assistant:'Asistente', nav_music:'Música', nav_profile:'Perfil',
         subnav_league:'Liga', subnav_cup:'Copa',
         ov_podium_label:'Clasificación General y Trofeos',
         ov_mag_intro:'Edición de esta semana',
@@ -1384,7 +1384,8 @@ function applyAppLanguage(){
         // 1. Bottom nav & Season subnav
         setTxt('#nav-main span', 'nav_home');
         setTxt('#nav-season span', 'nav_season');
-        setTxt('#nav-admin-label', 'nav_assistant');
+        setTxt('#nav-admin-label', 'nav_music');
+        setTxt('#ov-ai-tile-label', 'nav_assistant');
         setTxt('#nav-settings span', 'nav_profile');
         setTxt('#season-subnav [data-tab="league"] span', 'subnav_league');
         setTxt('#season-subnav [data-tab="cup"] span', 'subnav_cup');

@@ -103,7 +103,7 @@ function navigate(route){
     const navMap={
         'main-league':'nav-main','league':'nav-season','weird':'nav-main',
         'settings':'nav-settings','admin':'nav-settings',
-        'magazine':'nav-main','ai-chat':'nav-admin','chat':'nav-main','game':'nav-main','music':'nav-main'
+        'magazine':'nav-main','ai-chat':'nav-main','chat':'nav-main','game':'nav-main','music':'nav-admin'
     };
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById(navMap[route])?.classList.add('active');

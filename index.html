@@ -267,8 +267,8 @@
         <div class="nav-item active" onclick="navigate('league')" id="nav-season">
             <i class="fas fa-futbol"></i><span>Season</span>
         </div>
-        <div class="nav-item" onclick="openAiPanel()" id="nav-admin">
-            <svg class="nav-ai-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z"/><path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z"/></svg><span id="nav-admin-label">Assistant</span>
+        <div class="nav-item" onclick="openMusicPage()" id="nav-admin">
+            <i class="fas fa-music"></i><span id="nav-admin-label">Music</span>
         </div>
         <div class="nav-item" onclick="navigate('settings')" id="nav-settings">
             <i class="fas fa-gear" id="nav-settings-icon"></i>
@@ -334,20 +334,16 @@
                 <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
                     <i class="fas fa-medal"></i><span>Records</span>
                 </button>
-                <!-- Row 4: Music Player (Benyamin Bahadori & Community Uploads + Reactions) -->
-                <div class="ov-wide ov-wide-music" onclick="openMusicPage()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMusicPage();}" role="button" tabindex="0" aria-label="HARFS Music Player">
-                    <button class="ov-tile ov-tile-music" tabindex="-1" aria-hidden="true">
-                        <i class="fas fa-music"></i><span>Music</span>
+                <!-- Row 4: HARFS Assistant -->
+                <div class="ov-wide ov-wide-ai" onclick="openAiPanel()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAiPanel();}" role="button" tabindex="0" aria-label="HARFS Assistant">
+                    <button class="ov-tile ov-tile-ai" tabindex="-1" aria-hidden="true">
+                        <svg class="ov-ai-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z"/><path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z"/></svg><span id="ov-ai-tile-label">Assistant</span>
                     </button>
-                    <div class="ov-ext ov-ext-music" id="ov-music-ext">
-                        <div class="ov-music-cover" id="ov-music-cover" aria-hidden="true"></div>
-                        <div class="ov-music-stage" id="ov-music-stage" aria-hidden="true"></div>
-                        <div class="ov-music-eq" id="ov-music-eq" aria-hidden="true"><i></i><i></i><i></i></div>
-                        <div class="ov-music-meta">
-                            <div class="ov-music-title" id="ov-music-title" dir="auto">HARFS Music</div>
-                            <div class="ov-music-sub" id="ov-music-sub" dir="auto">Benyamin Bahadori &amp; Community</div>
+                    <div class="ov-ext ov-ext-ai" id="ov-ai-ext">
+                        <div class="ov-ai-meta">
+                            <div class="ov-ai-title" id="ov-ai-title" dir="auto">HARFS Assistant</div>
+                            <div class="ov-ai-sub" id="ov-ai-sub" dir="auto">AI League Helper &amp; Stats</div>
                         </div>
-                        <div class="ov-music-bubble" id="ov-music-bubble" dir="auto"><i class="fas fa-music"></i><span id="ov-music-bubble-t"></span></div>
                     </div>
                 </div>
             </div>
