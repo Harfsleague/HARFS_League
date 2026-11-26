@@ -5,7 +5,7 @@
 // used to run when it was one inline <script> block.
 // ============================================================
 // Version shown at the very bottom of Settings (Profile) as "HARFS v1.08". It goes up by one with every update.
-const HARFS_VERSION_LABEL = "1.44";
+const HARFS_VERSION_LABEL = "1.45";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
 // × Palette (8 presets + Custom). Three independent axes; see
@@ -243,6 +243,16 @@ function openAppearanceSheet(){
 function closeAppearanceSheet(){
     document.getElementById('appearance-sheet').classList.remove('open');
 }
+// Fonts live in their own sheet (Appearance → Fonts)
+function openFontSheet(){
+    haptic([6]);
+    renderFontGrid();
+    syncAppearanceUI();
+    document.getElementById('font-sheet').classList.add('open');
+}
+function closeFontSheet(){
+    document.getElementById('font-sheet').classList.remove('open');
+}
 // val is 'lite' | 'custom'. Picking 'custom' just switches the source
 // of truth to perfCustom/Auto-Detect (seeded from whatever was active)
 // and reveals the panel below.
@@ -306,6 +316,8 @@ function syncAppearanceUI(){
     document.querySelectorAll('.font-swatch').forEach(el=>{
         el.classList.toggle('selected', el.dataset.id === (el.dataset.target==='magazine' ? currentMagazineFont : currentAppFont));
     });
+    const fontCur = document.getElementById('ap-font-current');
+    if(fontCur){ const f = APP_FONTS.find(x => x.id === currentAppFont); fontCur.textContent = f ? f.label : ''; }
     const appSizeVal = document.getElementById('app-font-size-value');
     if(appSizeVal) appSizeVal.textContent = currentAppFontSize + '%';
     const appMinus = document.getElementById('app-font-size-minus'), appPlus = document.getElementById('app-font-size-plus');
@@ -1447,8 +1459,8 @@ function applyAppLanguage(){
         if(secLabels[2]) secLabels[2].textContent = harfsT('sec_account');
 
         setTxt('#settings-screen .settings-page-tile[onclick*="openAppearanceSheet"] span', 'btn_appearance');
-        const aiTile = document.querySelector('#settings-screen .settings-page-tile[onclick*="toggleAiAssistant"] > span');
-        if(aiTile) aiTile.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i>${harfsT('btn_assistant')}`;
+        const aiTitle = document.getElementById('ap-ai-title');
+        if(aiTitle) aiTitle.textContent = harfsT('btn_assistant');
 
         setTxt('#settings-lite-tile span', 'q_emergency');
         setTxt('#settings-notif-tile span', 'q_notif');

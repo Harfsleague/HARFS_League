@@ -138,7 +138,15 @@
         </div>
 
         <div class="ap-card">
-        <div class="appearance-section-label">Beta</div>
+        <div class="appearance-section-label">Features</div>
+        <div class="perf-option-row" onclick="toggleAiAssistant()" style="cursor:pointer;">
+            <div class="perf-option-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title" id="ap-ai-title">HARFS Assistant</span>
+                <span class="perf-option-sub">Show the chat assistant on the Home page</span>
+            </div>
+            <div class="perf-toggle on" id="ai-assistant-toggle"></div>
+        </div>
         <div class="perf-option-row" onclick="toggleMusicPanelVisibility()" style="cursor:pointer;">
             <div class="perf-option-icon"><i class="fas fa-music"></i></div>
             <div class="perf-option-textcol">
@@ -175,6 +183,27 @@
         </div>
 
         </div>
+
+        <div class="ap-card ap-font-card">
+            <button type="button" class="lang-toggle-btn" id="ap-font-btn" onclick="openFontSheet()">
+                <div class="perf-option-icon"><i class="fas fa-font"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Fonts</span>
+                    <span class="perf-option-sub">App font, magazine font &amp; text size</span>
+                </div>
+                <span class="lang-current-pill" id="ap-font-current"></span>
+                <i class="fas fa-chevron-right lang-chevron"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Fonts sheet (opened from Appearance → Fonts) -->
+<div class="team-picker-sheet as-modal" id="font-sheet" onclick="if(event.target===this)closeFontSheet()">
+    <div class="team-picker-panel appearance-panel team-modal">
+        <div class="modal-x-close" onclick="closeFontSheet()"><i class="fas fa-times"></i></div>
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Fonts</div>
 
         <div class="ap-card">
         <div class="appearance-section-label">App Font</div>
@@ -713,10 +742,6 @@
                         <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
                         <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
                     </div>
-                    <div class="settings-page-tile wide" style="flex-direction:row;justify-content:space-between;" onclick="toggleAiAssistant()">
-                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-wand-magic-sparkles"></i>HARFS Assistant</span>
-                        <div class="perf-toggle on" id="ai-assistant-toggle"></div>
-                    </div>
                 </div>
             </div>
 
@@ -1219,13 +1244,7 @@
                             <div class="mp-now-title mp-title" id="mp-now-title" dir="auto">Select a song to play</div>
                             <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto">Benyamin Bahadori &amp; Community</div>
                         </div>
-                        <div class="mp-vol-wrap">
-                            <button type="button" class="mpx-ic" id="hmp-vol-btn" onclick="mpToggleVolPop(event)" aria-label="Volume" aria-expanded="false"><i class="fas fa-volume-low" id="hmp-vol-icon"></i></button>
-                            <div class="mp-vol-pop" id="hmp-vol-pop" onclick="event.stopPropagation()">
-                                <span class="mp-vol-pct" id="hmp-vol-pct">40</span>
-                                <div class="mp-vol-track"><input type="range" class="mp-range" id="hmp-vol" min="0" max="100" value="40" step="1" aria-label="Volume"></div>
-                            </div>
-                        </div>
+                        <div class="mpx-pl-wrap"><button type="button" class="mpx-ic" style="visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><i class="fas fa-volume-low"></i></button></div>
                     </div>
                     <div class="mpx-seek">
                         <input type="range" id="hmp-seek" class="mp-range" min="0" max="100" value="0" step="0.5" aria-label="Seek">
@@ -1236,12 +1255,23 @@
                         <button type="button" class="mpx-ic mpx-skip" onclick="mpPrev()" aria-label="Previous"><svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M5 5.2a1 1 0 0 1 2 0v5.1L17.4 4.4c.9-.5 1.9.1 1.9 1.1v13c0 1-1 1.6-1.9 1.1L7 13.7v5.1a1 1 0 0 1-2 0z"/></svg></button>
                         <button type="button" class="mpx-play" id="mp-play-btn" onclick="mpTogglePlay()" aria-label="Play / pause"><i class="fas fa-play"></i></button>
                         <button type="button" class="mpx-ic mpx-skip" onclick="mpNext()" aria-label="Next"><svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M19 5.2a1 1 0 0 0-2 0v5.1L6.6 4.4c-.9-.5-1.9.1-1.9 1.1v13c0 1 1 1.6 1.9 1.1L17 13.7v5.1a1 1 0 0 0 2 0z"/></svg></button>
-                        <button type="button" class="mpx-ic mpx-mode" id="mp-mute-btn" onclick="mpToggleMute()" title="Mute / Unmute"><i class="fas fa-volume-high"></i></button>
+                        <div class="mp-vol-wrap mpx-vol">
+                            <button type="button" class="mpx-ic mpx-mode" id="hmp-vol-btn" onclick="mpToggleVolPop(event)" aria-label="Volume" aria-expanded="false"><i class="fas fa-volume-low" id="hmp-vol-icon"></i></button>
+                            <div class="mp-vol-pop" id="hmp-vol-pop" onclick="event.stopPropagation()">
+                                <span class="mp-vol-pct" id="hmp-vol-pct">40</span>
+                                <div class="mp-vol-track"><input type="range" class="mp-range" id="hmp-vol" min="0" max="100" value="40" step="1" aria-label="Volume"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mp-now-react" id="mp-now-react"></div>
                 </div>
             </div>
 
+            <!-- Library button: Search + albums stay hidden until this is tapped -->
+            <button type="button" class="mp-lib-toggle" id="mp-lib-toggle" onclick="mpToggleLibrary()" aria-expanded="false" aria-controls="mp-lib">
+                <i class="fas fa-compact-disc mp-lib-ic"></i><span id="mp-lib-lbl">Albums &amp; Search</span><i class="fas fa-chevron-down mp-lib-chev"></i>
+            </button>
+            <div class="mp-lib" id="mp-lib"><div class="mp-lib-inner">
             <!-- Search bar -->
             <div class="mp-search-wrap">
                 <i class="fas fa-search"></i>
@@ -1250,7 +1280,10 @@
 
             <!-- Dynamic Body (Benyamin Albums + Tracks / Community Tracks / All Tracks) -->
             <div id="mp-body" class="mp-body"></div>
+            </div></div>
         </div>
+        <!-- soft blur veil: sharpens away when the page opens -->
+        <div class="mp-veil" id="mp-veil" aria-hidden="true"></div>
     </div>
 
     <!-- ============ MUSIC UPLOAD MODAL ============ -->

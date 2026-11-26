@@ -3400,3 +3400,60 @@ body.perf-no-anim .mp-ambient i, body.lite-mode .mp-ambient i{ animation:none; }
 body.lite-mode .mp-ambient i{ filter:none; opacity:.55; }
 @media (prefers-reduced-motion:reduce){ .mp-ambient i{ animation:none; } }
 #music-screen .mp-frame:has(.mp-hmp.is-playing){ box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 38px -6px color-mix(in srgb,var(--amb1) 75%,transparent); }
+
+/* ===== v124: Appearance tidy-up (Features card + Fonts button), Music page: soft blur-in, cover-matched player, volume button, folded library ===== */
+.ap-font-card .lang-toggle-btn{ padding:2px; }
+.ap-font-card .lang-toggle-btn:active .lang-chevron{ transform:translateX(3px); }
+.ap-card .perf-option-row:first-of-type{ margin-top:0; }
+#font-sheet .ap-card:first-of-type{ margin-top:10px; }
+#font-sheet.open .team-picker-title + .ap-card{ animation:cardIn .35s ease .1s both; }
+#font-sheet.open .ap-card + .ap-card{ animation:cardIn .35s ease .18s both; }
+
+/* page entrance: a soft veil of blur that melts away, while the colour glow sharpens into place */
+.mp-veil{ position:fixed; inset:0; z-index:60; pointer-events:none; opacity:0; }
+@keyframes mpVeilOut{
+    0%  { opacity:1; backdrop-filter:blur(26px) saturate(1.2); -webkit-backdrop-filter:blur(26px) saturate(1.2); background:rgba(4,6,14,.55); }
+    100%{ opacity:0; backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:rgba(4,6,14,0); }
+}
+@keyframes mpAmbFocus{ 0%{ transform:scale(1.28); filter:blur(38px); } 100%{ transform:scale(1); filter:blur(0); } }
+body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-veil{ animation:mpVeilOut 1.1s cubic-bezier(.22,1,.36,1) both; }
+body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-ambient{ animation:mpAmbFocus 1.6s cubic-bezier(.22,1,.36,1) both; }
+body.perf-no-blur .mp-veil{ display:none; }
+
+/* a song with a cover: the picture fills the top of the player edge to edge (no frame, no border), the card takes the cover's colours */
+.mp-hmp .mp-stage-cover::before{ display:none; }
+.mp-hmp .mp-stage-cover::after{ top:0; bottom:0; left:0; right:0; width:auto; aspect-ratio:auto; transform:none; border-radius:0; box-shadow:none; }
+.mp-hmp .mpx-stage{ transition:height .75s cubic-bezier(.22,1,.36,1), margin .6s cubic-bezier(.22,1,.36,1), border-radius .6s ease, border-color .4s ease; }
+#music-screen .mp-frame{ transition:box-shadow .6s ease, padding .6s cubic-bezier(.22,1,.36,1), background-color 1.2s ease; }
+#music-screen .mp-frame:has(.mpx-stage.has-cover){
+    padding:0; background-color:color-mix(in srgb,var(--amb1) 30%,#05070f); background-image:none; border-color:color-mix(in srgb,var(--amb1) 40%,rgba(255,255,255,.1)); overflow:hidden; }
+body #music-screen .mp-frame .music-player.mp-hmp{ transition:padding .6s cubic-bezier(.22,1,.36,1); }
+body #music-screen .mp-frame .music-player.mp-hmp:has(.mpx-stage.has-cover){
+    padding:0 0 16px; gap:12px; border:0; box-shadow:none; border-radius:inherit;
+    background-color:color-mix(in srgb,var(--amb1) 30%,#05070f);
+    background-image:radial-gradient(100% 60% at 0% 100%,color-mix(in srgb,var(--amb2) 50%,transparent),transparent 72%), radial-gradient(90% 55% at 100% 85%,color-mix(in srgb,var(--amb3) 38%,transparent),transparent 70%), linear-gradient(180deg,transparent 40%,rgba(0,0,0,.28)); }
+.mp-hmp .mpx-stage.has-cover{ height:min(calc(100vw - 48px),420px); margin:0; border:0; border-radius:0; box-shadow:none; background:none; }
+.mp-hmp:has(.mpx-stage.has-cover) > .mpx-top, .mp-hmp:has(.mpx-stage.has-cover) > .mpx-seek, .mp-hmp:has(.mpx-stage.has-cover) > .mpx-controls, .mp-hmp:has(.mpx-stage.has-cover) > .mp-now-react{ margin-left:16px; margin-right:16px; }
+.mp-hmp:has(.mpx-stage.has-cover) .mpx-play{ background:rgba(255,255,255,.95); color:#0b1020; }
+
+/* volume button sits in the control row where mute used to be */
+.mpx-controls .mpx-vol{ position:relative; display:flex; align-items:center; justify-content:center; }
+
+/* Library button + folded search/albums */
+.mp-lib-toggle{ width:100%; display:flex; align-items:center; justify-content:center; gap:9px; padding:11px 16px; border-radius:18px; cursor:pointer; font-family:inherit;
+    font-size:.8rem; font-weight:800; letter-spacing:.2px; color:#e2e8f0; -webkit-tap-highlight-color:transparent;
+    background:color-mix(in srgb,var(--primary) 14%,rgba(10,14,26,.78)); border:1px solid color-mix(in srgb,var(--primary) 38%,rgba(255,255,255,.1));
+    box-shadow:0 8px 20px -10px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,.08);
+    transition:transform .25s cubic-bezier(.34,1.4,.5,1), background .3s ease, border-color .3s ease; }
+.mp-lib-toggle:active{ transform:scale(.97); }
+.mp-lib-ic{ color:var(--primary); font-size:.95rem; }
+.mp-lib-chev{ font-size:.65rem; color:#94a3b8; transition:transform .45s cubic-bezier(.22,1,.36,1); }
+.mp-lib-toggle.open .mp-lib-chev{ transform:rotate(180deg); }
+.mp-lib-toggle.open{ border-color:color-mix(in srgb,var(--primary) 65%,transparent); }
+.mp-lib{ display:grid; grid-template-rows:0fr; opacity:0; visibility:hidden; margin-top:-14px;
+    transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1), opacity .4s ease, margin-top .6s cubic-bezier(.22,1,.36,1), visibility 0s linear .6s; }
+.mp-lib.open{ grid-template-rows:1fr; opacity:1; visibility:visible; margin-top:0; transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1), opacity .45s ease .05s, margin-top .6s cubic-bezier(.22,1,.36,1), visibility 0s; }
+.mp-lib-inner{ min-height:0; overflow:hidden; display:flex; flex-direction:column; gap:14px; }
+.mp-lib.open.settled .mp-lib-inner{ overflow:visible; }
+body.perf-no-anim .mp-lib, body.lite-mode .mp-lib{ transition:none; }
+@media (prefers-reduced-motion:reduce){ .mp-lib, .mp-lib-chev, .mp-hmp .mpx-stage{ transition:none; } .mp-veil{ display:none; } }

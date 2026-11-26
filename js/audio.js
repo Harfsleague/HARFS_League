@@ -290,7 +290,7 @@ const MP_STRINGS = {
     en: {
         title:'HARFS Music', upload:'Upload', selectSong:'Select a song to play', homeSub:'Benyamin Bahadori & Community',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Community', tabAll:'All',
-        search:'Search song or artist...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
+        library:'Albums & Search', search:'Search song or artist...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
         tapAlbum:'Tap an album to see its songs', coverAdd:'Change cover', coverDone:'Album cover saved', coverFail:'Could not save the cover', playAll:'Play All', addBenyamin:'Add Track', addToAlbum:'Add song to this album', tracks:'tracks', track:'track',
         allAlbums:'All Albums', emptyAlbum:'No songs uploaded in this album yet. Be the first to add one!',
         emptyCommunity:'No community songs yet. Upload your favorite track!', emptySearch:'No matching songs found.',
@@ -302,7 +302,7 @@ const MP_STRINGS = {
     fa: {
         title:'موزیک هرفس', upload:'آپلود', selectSong:'یک آهنگ برای پخش انتخاب کن', homeSub:'بنیامین بهادری و انتخاب کاربران',
         tabBenyamin:'بنیامین بهادری', tabCommunity:'کاربران', tabAll:'همه',
-        search:'جستجوی آهنگ یا خواننده...', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
+        library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
         tapAlbum:'روی یک آلبوم بزن تا آهنگ‌هایش را ببینی', coverAdd:'تغییر کاور', coverDone:'کاور آلبوم ذخیره شد', coverFail:'ذخیره‌ی کاور ناموفق بود', playAll:'پخش همه', addBenyamin:'افزودن آهنگ', addToAlbum:'افزودن آهنگ به این آلبوم', tracks:'آهنگ', track:'آهنگ',
         allAlbums:'همه آلبوم‌ها', emptyAlbum:'هنوز آهنگی در این آلبوم آپلود نشده؛ اولین نفر باش!',
         emptyCommunity:'هنوز آهنگی توسط کاربران آپلود نشده. آهنگ مورد علاقه‌ات را آپلود کن!', emptySearch:'آهنگی با این نام پیدا نشد.',
@@ -314,7 +314,7 @@ const MP_STRINGS = {
     es: {
         title:'HARFS Música', upload:'Subir', selectSong:'Elige una canción', homeSub:'Benyamin Bahadori y Comunidad',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Comunidad', tabAll:'Todas',
-        search:'Buscar canción o artista...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
+        library:'Álbumes y búsqueda', search:'Buscar canción o artista...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
         tapAlbum:'Toca un álbum para ver sus canciones', coverAdd:'Cambiar portada', coverDone:'Portada guardada', coverFail:'No se pudo guardar la portada', playAll:'Reproducir todo', addBenyamin:'Añadir canción', addToAlbum:'Añadir canción a este álbum', tracks:'canciones', track:'canción',
         allAlbums:'Todos los álbumes', emptyAlbum:'Aún no hay canciones en este álbum. ¡Sé el primero en subir una!',
         emptyCommunity:'Aún no hay canciones de la comunidad. ¡Sube tu favorita!', emptySearch:'No se encontraron canciones.',
@@ -563,6 +563,7 @@ function openMusicPage(){
 async function onMusicPageEntered(){
     if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled){ navigate('main-league'); return; }   // HARFS Music is a beta switch (Appearance → Beta)
     mpApplyStaticLabels();
+    mpSetLibrary(false);                                   // search + albums start hidden
     const scr = document.getElementById('music-screen');   // replay the entrance of every part
     if(scr){ scr.classList.remove('mp-enter'); void scr.offsetWidth; scr.classList.add('mp-enter'); }
     const tabsEl = document.getElementById('mp-tabs'); if(tabsEl) tabsEl.style.setProperty('--ti', ['benyamin','community','all'].indexOf(mpTab));
@@ -582,6 +583,7 @@ function mpApplyStaticLabels(){
     const set = (id, k)=>{ const el=document.getElementById(id); if(el) el.textContent = mpT(k); };
     set('mp-header-title','title');
     set('mp-upload-btn-lbl','upload');
+    set('mp-lib-lbl','library');
     set('mp-tab-benyamin','tabBenyamin');
     set('mp-tab-community','tabCommunity');
     set('mp-tab-all','tabAll');
@@ -598,6 +600,24 @@ function mpApplyStaticLabels(){
     }
     const h = document.getElementById('mp-up-heading');
     if(h) h.innerHTML = `<i class="fas fa-cloud-arrow-up"></i> ${escapeHtml(mpT('upHeading'))}`;
+}
+
+// The search box + albums list stay folded away until the person taps the Library button under the player
+function mpSetLibrary(open){
+    const lib = document.getElementById('mp-lib'), btn = document.getElementById('mp-lib-toggle'); if(!lib) return;
+    clearTimeout(lib._t);
+    lib.classList.toggle('open', open);
+    lib.classList.remove('settled');                       // clip while it slides; free again afterwards so album pop-ups can overflow
+    if(btn){ btn.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+    if(open){
+        mpAnimNext = true; renderMusicPage();             // the list rises in
+        lib._t = setTimeout(() => lib.classList.add('settled'), 650);
+    } else if(mpSelectedAlbum !== 'all'){ mpSelectedAlbum = 'all'; renderMusicPage(); }
+}
+function mpToggleLibrary(){
+    const lib = document.getElementById('mp-lib'); if(!lib) return;
+    if(typeof haptic === 'function') haptic([6]);
+    mpSetLibrary(!lib.classList.contains('open'));
 }
 
 let mpAnimNext = true;   // the next render of the list plays its staggered entrance (page opened / tab changed); play-pause re-renders stay still
@@ -927,8 +947,6 @@ function mpSyncPlayerUI(){
     const card = document.getElementById('mp-player-card'); if(card) card.classList.toggle('is-playing', playing);
     const playBtn = document.getElementById('mp-play-btn');
     if(playBtn) playBtn.innerHTML = `<i class="fas fa-${playing?'pause':'play'}"></i>`;
-    const muteBtn = document.getElementById('mp-mute-btn');
-    if(muteBtn) muteBtn.innerHTML = `<i class="fas fa-volume-${(bgMusic && bgMusic.muted)?'xmark':'high'}"></i>`;
     const modeBtn = document.getElementById('mp-mode-btn');
     if(modeBtn){
         const m = (typeof playbackMode !== 'undefined' && playbackMode) ? playbackMode : 'shuffle';
