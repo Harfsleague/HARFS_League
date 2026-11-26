@@ -100,6 +100,18 @@
         <div class="team-picker-title">Appearance</div>
 
         <div class="ap-card">
+        <div class="appearance-section-label">Palette</div>
+        <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
+
+        <div id="custom-palette-editor" style="display:none;">
+            <div class="custom-color-row">
+                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
+            </div>
+        </div>
+
+        <div class="ap-card">
         <div class="appearance-section-label">Performance</div>
         <div class="segmented-control" id="perf-segmented">
             <button class="segmented-btn" data-value="lite" onclick="setPerformance('lite')"><i class="fas fa-leaf"></i> Lite</button>
@@ -155,6 +167,14 @@
             </div>
             <div class="perf-toggle" id="music-panel-toggle"></div>
         </div>
+        <div class="perf-option-row" onclick="toggleMusicAmbient()" style="cursor:pointer;">
+            <div class="perf-option-icon"><i class="fas fa-circle-half-stroke"></i></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title">Music background glow</span>
+                <span class="perf-option-sub">Moving colour glow behind the Music page</span>
+            </div>
+            <div class="perf-toggle on" id="music-ambient-toggle"></div>
+        </div>
         </div>
 
         <div class="ap-card ap-lang-card">
@@ -168,18 +188,6 @@
                 <i class="fas fa-chevron-down lang-chevron" id="ap-lang-chevron"></i>
             </button>
             <div class="settings-lang-grid" id="settings-lang-grid" role="radiogroup" aria-label="App Language" hidden></div>
-        </div>
-
-        <div class="ap-card">
-        <div class="appearance-section-label">Palette</div>
-        <div class="palette-grid" id="palette-grid"><!-- filled by JS from PALETTES --></div>
-
-        <div id="custom-palette-editor" style="display:none;">
-            <div class="custom-color-row">
-                <label>Primary <input type="color" id="custom-primary-input" value="#60a5fa" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
-                <label>Accent <input type="color" id="custom-accent-input" value="#818cf8" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
-                <label>Background <input type="color" id="custom-bg-input" value="#1e1b4b" oninput="applyCustomPalette()" onchange="applyCustomPalette()"></label>
-            </div>
         </div>
 
         </div>
@@ -726,8 +734,13 @@
             </div>
             <div class="settings-frame mpx-tiles-frame">
                 <div class="settings-page-grid">
-                    <div class="settings-page-tile wide" onclick="openAppearanceSheet()">
-                        <i class="fas fa-palette"></i><span>Appearance &amp; Performance</span>
+                    <div class="settings-page-tile wide ap-hero-tile" onclick="openAppearanceSheet()">
+                        <div class="ap-hero-ic"><i class="fas fa-palette"></i></div>
+                        <div class="ap-hero-txt">
+                            <span class="ap-hero-title">Appearance &amp; Performance</span>
+                            <small class="ap-hero-sub">Colours · fonts · effects</small>
+                        </div>
+                        <div class="ap-hero-dots" aria-hidden="true"><b></b><b></b><b></b></div>
                         <div class="settings-row-trailing"><i class="fas fa-chevron-right"></i></div>
                     </div>
                 </div>
@@ -1221,9 +1234,13 @@
                     <i class="fas fa-headphones"></i>
                     <span id="mp-header-title">HARFS Music</span>
                 </div>
-                <button type="button" class="mp-upload-trigger" id="mp-upload-btn" onclick="openMusicUploadModal()">
-                    <i class="fas fa-cloud-arrow-up"></i><span id="mp-upload-btn-lbl">Upload</span>
-                </button>
+                <div class="mp-menu-wrap">
+                    <button type="button" class="mp-menu-btn" id="mp-menu-btn" onclick="mpToggleMenu(event)" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis"></i></button>
+                    <div class="mp-menu-pop" id="mp-menu-pop" role="menu" onclick="event.stopPropagation()">
+                        <button type="button" class="mp-menu-item" id="mp-upload-btn" role="menuitem" onclick="mpMenuUpload()"><i class="fas fa-cloud-arrow-up"></i><span id="mp-upload-btn-lbl">Upload</span></button>
+                        <button type="button" class="mp-menu-item" role="menuitem" onclick="toggleMusicAmbient()"><i class="fas fa-circle-half-stroke"></i><span id="mp-menu-glow-lbl">Background glow</span><span class="perf-toggle on mp-menu-tg" id="mp-menu-ambient-toggle"></span></button>
+                    </div>
+                </div>
             </div>
 
             <!-- Now Playing Deck — same look as the player in Profile (LED equaliser stage, white seek bar, big play button) -->

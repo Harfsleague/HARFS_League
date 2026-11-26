@@ -290,7 +290,7 @@ const MP_STRINGS = {
     en: {
         title:'HARFS Music', upload:'Upload', selectSong:'Select a song to play', homeSub:'Benyamin Bahadori & Community',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Community', tabAll:'All',
-        library:'Albums & Search', search:'Search song or artist...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
+        bgGlow:'Background glow', library:'Albums & Search', search:'Search song or artist...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
         tapAlbum:'Tap an album to see its songs', coverAdd:'Change cover', coverDone:'Album cover saved', coverFail:'Could not save the cover', playAll:'Play All', addBenyamin:'Add Track', addToAlbum:'Add song to this album', tracks:'tracks', track:'track',
         allAlbums:'All Albums', emptyAlbum:'No songs uploaded in this album yet. Be the first to add one!',
         emptyCommunity:'No community songs yet. Upload your favorite track!', emptySearch:'No matching songs found.',
@@ -302,7 +302,7 @@ const MP_STRINGS = {
     fa: {
         title:'موزیک هرفس', upload:'آپلود', selectSong:'یک آهنگ برای پخش انتخاب کن', homeSub:'بنیامین بهادری و انتخاب کاربران',
         tabBenyamin:'بنیامین بهادری', tabCommunity:'کاربران', tabAll:'همه',
-        library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
+        bgGlow:'افکت پس‌زمینه', library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
         tapAlbum:'روی یک آلبوم بزن تا آهنگ‌هایش را ببینی', coverAdd:'تغییر کاور', coverDone:'کاور آلبوم ذخیره شد', coverFail:'ذخیره‌ی کاور ناموفق بود', playAll:'پخش همه', addBenyamin:'افزودن آهنگ', addToAlbum:'افزودن آهنگ به این آلبوم', tracks:'آهنگ', track:'آهنگ',
         allAlbums:'همه آلبوم‌ها', emptyAlbum:'هنوز آهنگی در این آلبوم آپلود نشده؛ اولین نفر باش!',
         emptyCommunity:'هنوز آهنگی توسط کاربران آپلود نشده. آهنگ مورد علاقه‌ات را آپلود کن!', emptySearch:'آهنگی با این نام پیدا نشد.',
@@ -314,7 +314,7 @@ const MP_STRINGS = {
     es: {
         title:'HARFS Música', upload:'Subir', selectSong:'Elige una canción', homeSub:'Benyamin Bahadori y Comunidad',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Comunidad', tabAll:'Todas',
-        library:'Álbumes y búsqueda', search:'Buscar canción o artista...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
+        bgGlow:'Brillo de fondo', library:'Álbumes y búsqueda', search:'Buscar canción o artista...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
         tapAlbum:'Toca un álbum para ver sus canciones', coverAdd:'Cambiar portada', coverDone:'Portada guardada', coverFail:'No se pudo guardar la portada', playAll:'Reproducir todo', addBenyamin:'Añadir canción', addToAlbum:'Añadir canción a este álbum', tracks:'canciones', track:'canción',
         allAlbums:'Todos los álbumes', emptyAlbum:'Aún no hay canciones en este álbum. ¡Sé el primero en subir una!',
         emptyCommunity:'Aún no hay canciones de la comunidad. ¡Sube tu favorita!', emptySearch:'No se encontraron canciones.',
@@ -385,6 +385,23 @@ function mpCloseVolPop(){
     if(pop) pop.classList.remove('open');
     if(btn){ btn.setAttribute('aria-expanded', 'false'); btn.classList.remove('on'); }
 }
+// ---- Top-right menu of the Music page: a button that opens a small pop-up with Upload + the background-glow switch ----
+function mpToggleMenu(e){
+    if(e) e.stopPropagation();
+    const pop = document.getElementById('mp-menu-pop'), btn = document.getElementById('mp-menu-btn'); if(!pop) return;
+    const open = !pop.classList.contains('open');
+    pop.classList.toggle('open', open);
+    if(btn){ btn.setAttribute('aria-expanded', open ? 'true' : 'false'); btn.classList.toggle('on', open); }
+}
+function mpCloseMenu(){
+    const pop = document.getElementById('mp-menu-pop'), btn = document.getElementById('mp-menu-btn');
+    if(pop) pop.classList.remove('open');
+    if(btn){ btn.setAttribute('aria-expanded', 'false'); btn.classList.remove('on'); }
+}
+function mpMenuUpload(){ mpCloseMenu(); openMusicUploadModal(); }
+document.addEventListener('click', mpCloseMenu);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') mpCloseMenu(); });
+
 document.addEventListener('click', mpCloseVolPop);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') mpCloseVolPop(); });
 
@@ -432,7 +449,7 @@ function mpCoverPalette(url){
 }
 function mpUpdateAmbient(coverUrl, playing){
     const amb = document.getElementById('mp-ambient'); if(!amb) return;
-    amb.classList.toggle('on', !!playing);
+    amb.classList.toggle('on', !!playing && (typeof musicAmbientEnabled === 'undefined' || musicAmbientEnabled));
     if(amb.dataset.url === (coverUrl || '')) return;
     amb.dataset.url = coverUrl || '';
     const scr = document.getElementById('music-screen') || amb;      // the colours live on the page so the player frame can use them too
@@ -584,6 +601,7 @@ function mpApplyStaticLabels(){
     set('mp-header-title','title');
     set('mp-upload-btn-lbl','upload');
     set('mp-lib-lbl','library');
+    set('mp-menu-glow-lbl','bgGlow');
     set('mp-tab-benyamin','tabBenyamin');
     set('mp-tab-community','tabCommunity');
     set('mp-tab-all','tabAll');

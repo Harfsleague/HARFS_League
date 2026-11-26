@@ -115,18 +115,19 @@ function chatOpenAssistant(btn){
     o.style.cssText = `left:${cx-size/2}px;top:${cy-size/2}px;width:${size}px;height:${size}px;`;
     document.body.appendChild(o);
     const kf = [
-        { transform:'scale(1)', opacity:.95, filter:'hue-rotate(0deg)', offset:0 },
-        { transform:`scale(${scale})`, opacity:.9, filter:'hue-rotate(120deg)', offset:.5 },
-        { transform:`scale(${scale})`, opacity:0, filter:'hue-rotate(240deg)', offset:1 }
+        { transform:'scale(1)', opacity:0, filter:'blur(2px) hue-rotate(0deg)', offset:0 },
+        { transform:`scale(${scale*.35})`, opacity:.5, filter:'blur(14px) hue-rotate(70deg)', offset:.3 },
+        { transform:`scale(${scale})`, opacity:.55, filter:'blur(22px) hue-rotate(160deg)', offset:.62 },
+        { transform:`scale(${scale})`, opacity:0, filter:'blur(30px) hue-rotate(240deg)', offset:1 }
     ];
-    const an = o.animate(kf, { duration:1050, easing:'cubic-bezier(.22,1,.36,1)', fill:'forwards' });
+    const an = o.animate(kf, { duration:2300, easing:'cubic-bezier(.4,0,.2,1)', fill:'forwards' });
     setTimeout(() => {
         openAiPanel();
         const scr = document.getElementById('ai-chat-screen');
-        if(scr){ scr.classList.remove('ai-enter'); void scr.offsetWidth; scr.classList.add('ai-enter'); setTimeout(() => scr.classList.remove('ai-enter'), 1100); }
-    }, 430);
+        if(scr){ scr.classList.remove('ai-enter'); void scr.offsetWidth; scr.classList.add('ai-enter'); setTimeout(() => scr.classList.remove('ai-enter'), 1700); }
+    }, 950);
     an.onfinish = () => o.remove();
-    setTimeout(() => o.remove(), 1500);
+    setTimeout(() => o.remove(), 2700);
 }
 function openAiPanel(){
     if(typeof aiAssistantEnabled!=='undefined' && !aiAssistantEnabled){ showToast('HARFS Assistant is turned off in Settings','info',2400); return; }

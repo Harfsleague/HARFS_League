@@ -512,6 +512,22 @@ function toggleMusicPanelVisibility(){
 }
 syncMusicPanelUI(); // apply the saved choice on startup
 
+// Music page background glow (the moving colour blobs behind the player) — can be switched off here or from the Music page menu. Saved on this device.
+let musicAmbientEnabled = localStorage.getItem('musicAmbient') !== 'off';
+function syncMusicAmbientUI(){
+    document.body.classList.toggle('mp-ambient-off', !musicAmbientEnabled);
+    ['music-ambient-toggle','mp-menu-ambient-toggle'].forEach(id => { const t = document.getElementById(id); if(t) t.classList.toggle('on', musicAmbientEnabled); });
+}
+function toggleMusicAmbient(){
+    haptic([8]);
+    musicAmbientEnabled = !musicAmbientEnabled;
+    localStorage.setItem('musicAmbient', musicAmbientEnabled ? 'on' : 'off');
+    syncMusicAmbientUI();
+    if(typeof mpSyncPlayerUI === 'function') mpSyncPlayerUI();
+    showToast(musicAmbientEnabled ? 'Music background glow on' : 'Music background glow off', 'info', 1400);
+}
+syncMusicAmbientUI();
+
 // ============================================================
 // APP UPDATE — when a newer version has been published, a button appears at the bottom of Profile.
 // Detected two ways: the service worker installs a new copy, or js/config.js on the server names a newer APP_VERSION.
