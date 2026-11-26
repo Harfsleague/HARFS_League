@@ -3478,6 +3478,57 @@ body.perf-no-anim #ai-chat-screen.ai-enter .ai-chat-inner, body.lite-mode #ai-ch
 @keyframes aiEnter{ 0%{ opacity:0; transform:scale(.975); filter:blur(18px) saturate(1.25); } 60%{ opacity:.9; filter:blur(5px) saturate(1.1); } 100%{ opacity:1; transform:none; filter:none; } }
 #ai-chat-screen.ai-enter .ai-chat-inner{ animation:aiEnter 1.5s cubic-bezier(.25,.8,.25,1) both; }
 
+/* the Music page header gets its own display font so "HARFS Music" never reads as part of the HARFS capsule at the top */
+#mp-header-title{
+    font-family:'champions-bold','far-mashintahrir','Segoe UI',Tahoma,sans-serif !important; font-weight:400 !important; letter-spacing:2.5px; text-transform:uppercase;
+    color:#f1f5f9; font-size:1.1rem; text-shadow:0 0 18px color-mix(in srgb,var(--primary) 55%,transparent); }
+
+/* Music page: round menu button + pop-up */
+.mp-menu-wrap{ position:relative; display:flex; }
+.mp-menu-btn{ width:38px; height:38px; border-radius:13px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; color:#e2e8f0; -webkit-tap-highlight-color:transparent;
+    background:color-mix(in srgb,var(--primary) 18%,rgba(15,23,42,.8)); border:1px solid color-mix(in srgb,var(--primary) 45%,rgba(255,255,255,.12)); transition:transform .25s cubic-bezier(.34,1.4,.5,1), background .25s ease; }
+.mp-menu-btn:active{ transform:scale(.9); }
+.mp-menu-btn.on{ background:color-mix(in srgb,var(--primary) 38%,rgba(15,23,42,.85)); color:#fff; }
+.mp-menu-pop{ position:absolute; top:calc(100% + 10px); right:0; min-width:208px; padding:7px; border-radius:20px; z-index:50; display:flex; flex-direction:column; gap:4px;
+    background:linear-gradient(180deg,rgba(24,30,48,.97),rgba(10,14,26,.98)); border:1px solid color-mix(in srgb,var(--primary) 40%,rgba(255,255,255,.14));
+    box-shadow:0 18px 34px -8px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.1);
+    transform-origin:100% 0; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-8px) scale(.9);
+    transition:opacity .2s ease, transform .3s cubic-bezier(.2,1.2,.4,1), visibility 0s linear .3s; }
+.mp-menu-pop.open{ opacity:1; visibility:visible; pointer-events:auto; transform:none; transition:opacity .2s ease, transform .32s cubic-bezier(.2,1.2,.4,1), visibility 0s; }
+.mp-menu-item{ display:flex; align-items:center; gap:10px; width:100%; padding:11px 12px; border:0; border-radius:14px; cursor:pointer; font-family:inherit; font-size:.8rem; font-weight:700; color:#e2e8f0; text-align:start; background:transparent; -webkit-tap-highlight-color:transparent; }
+.mp-menu-item:active{ background:rgba(255,255,255,.08); }
+.mp-menu-item > i{ width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.85rem; color:var(--primary); background:color-mix(in srgb,var(--primary) 16%,rgba(255,255,255,.04)); flex:none; }
+.mp-menu-item > span:not(.mp-menu-tg){ flex:1; min-width:0; }
+.mp-menu-tg{ flex:none; pointer-events:none; }
+@media (prefers-reduced-motion:reduce){ .mp-menu-pop{ transition:opacity .01s; } }
+
+/* Music background glow switched off (Appearance or the Music menu) */
+body.mp-ambient-off .mp-ambient{ display:none !important; }
+body.mp-ambient-off #music-screen .mp-frame:has(.mp-hmp.is-playing){ box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08); }
+
+/* Profile → Appearance button: bigger, with the current palette shown on it */
+.settings-page-tile.ap-hero-tile{ min-height:84px; padding:16px 16px; gap:14px; border-radius:24px; position:relative; overflow:hidden; text-align:left;
+    background-image:radial-gradient(110% 130% at 0% 0%,color-mix(in srgb,var(--primary) 30%,transparent),transparent 62%), radial-gradient(90% 120% at 100% 100%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 65%), linear-gradient(145deg,rgba(255,255,255,0.05),transparent 55%,rgba(0,0,0,0.26)) !important;
+    border-color:color-mix(in srgb,var(--primary) 38%,rgba(255,255,255,.1)) !important;
+    box-shadow:0 12px 26px -10px var(--primary-glow), 0 8px 18px -8px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12) !important; }
+.ap-hero-ic{ width:54px; height:54px; border-radius:18px; display:flex; align-items:center; justify-content:center; flex:none;
+    background:linear-gradient(135deg,var(--primary),var(--accent)); box-shadow:0 8px 18px -6px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,.35); }
+.settings-page-tile.wide .ap-hero-ic > i{ width:auto; height:auto; background:none; border:0; color:#fff; font-size:1.45rem; }
+.ap-hero-txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.settings-page-tile .ap-hero-title{ font-size:.98rem; font-weight:900; color:#fff; line-height:1.2; }
+.ap-hero-sub{ font-size:.66rem; font-weight:700; color:#94a3b8; letter-spacing:.3px; }
+.ap-hero-dots{ display:flex; flex:none; }
+.ap-hero-dots b{ width:20px; height:20px; border-radius:50%; margin-left:-7px; border:2px solid rgba(8,12,24,.9); box-shadow:0 2px 6px rgba(0,0,0,.45); }
+.ap-hero-dots b:nth-child(1){ background:var(--primary); }
+.ap-hero-dots b:nth-child(2){ background:var(--accent); }
+.ap-hero-dots b:nth-child(3){ background:color-mix(in srgb,var(--primary) 50%,var(--accent)); }
+.ap-hero-tile .settings-row-trailing{ flex:none; }
+
+/* ===== v126: softer Assistant transition, own header font, Music menu + glow switch, bigger Appearance button ===== */
+.ai-portal{ background:radial-gradient(circle,rgba(6,10,22,.55) 0 30%,transparent 72%), conic-gradient(#ff2d55,#ff9f0a,#ffd60a,#30d158,#0a84ff,#bf5af2,#ff2d55); }
+@keyframes aiEnter{ 0%{ opacity:0; transform:scale(.975); filter:blur(18px) saturate(1.25); } 60%{ opacity:.9; filter:blur(5px) saturate(1.1); } 100%{ opacity:1; transform:none; filter:none; } }
+#ai-chat-screen.ai-enter .ai-chat-inner{ animation:aiEnter 1.5s cubic-bezier(.25,.8,.25,1) both; }
+
 /* page headers that say "HARFS …" get their own display font so they never read as part of the HARFS capsule at the top */
 #ai-chat-screen .season-title, #mp-header-title{
     font-family:'champions-bold','far-mashintahrir','Segoe UI',Tahoma,sans-serif !important; font-weight:400 !important; letter-spacing:2.5px; text-transform:uppercase; }
