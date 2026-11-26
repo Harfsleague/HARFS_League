@@ -366,6 +366,28 @@ function mpExtractFilename(src){
     catch(e){ return String(src || '').split('/').pop(); }
 }
 
+// ---- Volume: a speaker button opens the same little pop-up slider as in Profile ----
+function mpRenderVolBadge(v){
+    v = Number(v) || 0;
+    const ic = document.getElementById('hmp-vol-icon'), pct = document.getElementById('hmp-vol-pct');
+    if(ic) ic.className = 'fas ' + (v === 0 ? 'fa-volume-xmark' : v < 50 ? 'fa-volume-low' : 'fa-volume-high');
+    if(pct) pct.textContent = v;
+}
+function mpToggleVolPop(e){
+    if(e) e.stopPropagation();
+    const pop = document.getElementById('hmp-vol-pop'), btn = document.getElementById('hmp-vol-btn'); if(!pop) return;
+    const open = !pop.classList.contains('open');
+    pop.classList.toggle('open', open);
+    if(btn){ btn.setAttribute('aria-expanded', open ? 'true' : 'false'); btn.classList.toggle('on', open); }
+}
+function mpCloseVolPop(){
+    const pop = document.getElementById('hmp-vol-pop'), btn = document.getElementById('hmp-vol-btn');
+    if(pop) pop.classList.remove('open');
+    if(btn){ btn.setAttribute('aria-expanded', 'false'); btn.classList.remove('on'); }
+}
+document.addEventListener('click', mpCloseVolPop);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') mpCloseVolPop(); });
+
 // ---- Album covers: one square picture per Benyamin album, kept in music/ and listed in music_meta.json → albums ----
 function mpCanEditCovers(){ return !!loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern'); }
 function mpAlbumCoverUrl(albumId){
@@ -533,12 +555,33 @@ function mpSetTab(tab){
 
 let mpRevealList = false;
 function mpSelectAlbum(albumId){
-    mpSelectedAlbum = (mpSelectedAlbum === albumId) ? 'all' : albumId;   // tap again to fold the list away
+    mpSelectedAlbum = (mpSelectedAlbum === albumId) ? 'all' : albumId;   // tap the same one again to fold the bubble away
     if(albumId === 'community') mpSelectedUploader = 'all';
     mpRevealList = mpSelectedAlbum !== 'all';
     renderMusicPage();
-    if(mpRevealList) setTimeout(()=>{ const el = document.querySelector('#mp-body .mp-tracks-sec'); if(el) el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 90);
 }
+// The bubble grows out of its album: above it (caret pointing at the card), or below it when there is no room; right-aligned for the right-hand column.
+function mpPlaceAlbumPop(){
+    const wrap = document.querySelector('#mp-body .mp-album-wrap.open'); if(!wrap) return;
+    const pop = wrap.querySelector('.mp-pl-pop'); if(!pop) return;
+    const card = wrap.querySelector('.mp-album-card'); const cr = card.getBoundingClientRect();
+    const rightSide = (cr.left + cr.width / 2) > (window.innerWidth / 2);
+    pop.classList.toggle('right', rightSide);
+    pop.classList.toggle('down', cr.top < 330);
+    const w = pop.offsetWidth || 290, c = cr.width / 2 + 8;
+    pop.style.setProperty('--cx', (rightSide ? (w - c) : c) + 'px');
+    if(pop.classList.contains('entering')){
+        clearTimeout(pop._enterT); pop._enterT = setTimeout(() => pop.classList.remove('entering'), 900);
+        if(typeof npxMountIn === 'function') npxMountIn(pop);
+        setTimeout(() => { const r = pop.getBoundingClientRect(); if(r.top < 70 || r.bottom > window.innerHeight - 20) pop.scrollIntoView({ behavior:'smooth', block:'center' }); }, 120);
+    } else if(typeof npxMountIn === 'function') npxMountIn(pop);
+}
+document.addEventListener('click', e => {
+    if(mpSelectedAlbum === 'all') return;
+    if(!document.getElementById('music-screen')?.classList.contains('active')) return;
+    if(e.target.closest && e.target.closest('.mp-album-wrap')) return;
+    mpSelectedAlbum = 'all'; renderMusicPage();
+});
 
 function mpSelectUploader(team){
     mpSelectedUploader = team;
@@ -618,67 +661,76 @@ function renderMusicPage(){
     const sel = mpSelectedAlbum;
     const canCover = mpCanEditCovers();
 
-    // ---- the album bubbles (Benyamin's albums + the community) ----
-    const albumsHtml = BENYAMIN_ALBUMS.map(a => {
-        const name = l === 'fa' ? a.fa : (l === 'es' ? a.es : a.en);
-        const sub = l === 'fa' ? a.subFa : a.subEn;
-        const cnt = benAll.filter(t => t.albumId === a.id).length;
-        const cover = mpAlbumCoverUrl(a.id);
-        const artStyle = cover ? `background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55)),url('${cover}') center/cover no-repeat;` : `background:${a.grad};`;
-        const edit = canCover ? `<span class="mp-album-edit" role="button" tabindex="0" title="${escapeHtml(mpT('coverAdd'))}" onclick="event.stopPropagation();mpPickAlbumCover('${a.id}')"><i class="fas fa-camera"></i></span>` : '';
-        return `
-            <button type="button" class="mp-album-card${sel === a.id ? ' active' : ''}${cover ? ' has-cover' : ''}" onclick="mpSelectAlbum('${a.id}')">
-                <div class="mp-album-art" style="${artStyle}">
-                    <span class="mp-album-yr">${escapeHtml(a.year)}</span>
-                    ${cover ? '' : '<i class="fas fa-compact-disc"></i>'}
-                    <span class="mp-album-cnt">${cnt}</span>
-                    ${edit}
-                </div>
-                <div class="mp-album-name" dir="auto">${escapeHtml(name)}</div>
-                <div class="mp-album-sub" dir="auto">${escapeHtml(sub)}</div>
-            </button>`;
-    }).join('') + `
-            <button type="button" class="mp-album-card mp-album-community${sel === 'community' ? ' active' : ''}" onclick="mpSelectAlbum('community')">
-                <div class="mp-album-art" style="background:linear-gradient(135deg,var(--primary),var(--accent));">
-                    <i class="fas fa-users"></i>
-                    <span class="mp-album-cnt">${commAll.length}</span>
-                </div>
-                <div class="mp-album-name" dir="auto">${escapeHtml(mpT('tabCommunity'))}</div>
-                <div class="mp-album-sub" dir="auto">${escapeHtml(mpT('secCommunity'))}</div>
-            </button>`;
-
-    // ---- the songs of the tapped bubble ----
-    let listHtml = '', queue = benAll;   // nothing tapped yet: next / previous walk through Benyamin's songs
-    const reveal = mpRevealList ? ' reveal' : '';
+    // ---- the album bubbles (Benyamin's albums + the community); the tapped one opens its song list as a bubble above itself ----
+    const isCur = t => { const src = bgMusic && bgMusic.src ? decodeURIComponent(bgMusic.src) : ''; return !!src && (src === decodeURIComponent(t.src) || src.endsWith('/' + t.file)); };
+    const reveal = mpRevealList ? ' entering' : '';
     mpRevealList = false;
-    if(sel === 'community'){
+    const popHtml = (title, tracks, extraHead, emptyMsg) => `
+        <div class="mp-pl-pop open${reveal}" onclick="event.stopPropagation()">
+            <div class="mp-pl-head"><span class="mp-pl-title"><i class="fas fa-music"></i> <span dir="auto">${escapeHtml(title)}</span></span><span class="mp-pl-count">${tracks.length}</span></div>
+            ${extraHead || ''}
+            <div class="mp-pl-list">${tracks.length ? tracks.map((t,i) => {
+                const cur = isCur(t), playing = cur && bgMusic && !bgMusic.paused;
+                const canDel = loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
+                const del = canDel ? `<button type="button" class="mp-bub-del" onclick="event.stopPropagation();mpDeleteTrack(${JSON.stringify(t.file).replace(/"/g,'&quot;')})" title="Delete"><i class="fas fa-trash-can"></i></button>` : '';
+                const who = (t.section !== 'benyamin' && t.uploader) ? `<span class="mp-bub-who">${escapeHtml(TEAM_DISPLAY_NAMES[t.uploader] || t.uploader)}</span>` : '';
+                return `<div class="playlist-track-item${playing ? ' playing' : ''}${cur ? ' picked-cur' : ''}" style="--i:${Math.min(i,8)}" onclick="mpPlayFromQueue(${i})">
+                    <div class="playlist-track-icon${playing ? ' px-on' : ''}">${playing ? '<span class="pl-px"></span>' : '<i class="fas fa-music"></i>'}</div>
+                    <div class="playlist-track-title" dir="auto">${escapeHtml(t.title)}</div>${who}${del}
+                </div>`; }).join('') : `<div class="mp-bub-empty" dir="auto">${escapeHtml(emptyMsg)}</div>`}</div>
+        </div>`;
+
+    let queue = benAll;   // nothing tapped yet: next / previous walk through Benyamin's songs
+    const albumsHtml = BENYAMIN_ALBUMS.map(al => {
+        const name = l === 'fa' ? al.fa : (l === 'es' ? al.es : al.en);
+        const sub = l === 'fa' ? al.subFa : al.subEn;
+        const mine = benAll.filter(t => t.albumId === al.id);
+        const open = sel === al.id;
+        if(open) queue = mine;
+        const cover = mpAlbumCoverUrl(al.id);
+        const artStyle = cover ? `background:url('${cover}') center/cover no-repeat;` : `background:${al.grad};`;
+        const edit = canCover ? `<span class="mp-album-edit" role="button" tabindex="0" title="${escapeHtml(mpT('coverAdd'))}" onclick="event.stopPropagation();mpPickAlbumCover('${al.id}')"><i class="fas fa-camera"></i></span>` : '';
+        return `
+            <div class="mp-album-wrap${open ? ' open' : ''}">
+                <button type="button" class="mp-album-card${open ? ' active' : ''}${cover ? ' has-cover' : ''}" onclick="mpSelectAlbum('${al.id}')">
+                    <div class="mp-album-art" style="${artStyle}">
+                        <span class="mp-album-yr">${escapeHtml(al.year)}</span>
+                        ${cover ? '' : '<i class="fas fa-compact-disc"></i>'}
+                        <span class="mp-album-cnt">${mine.length}</span>
+                        ${edit}
+                    </div>
+                    <div class="mp-album-name" dir="auto">${escapeHtml(name)}</div>
+                    <div class="mp-album-sub" dir="auto">${escapeHtml(sub)}</div>
+                </button>
+                ${open ? popHtml(name, mine, '', mpT('emptyAlbum')) : ''}
+            </div>`;
+    }).join('');
+
+    const commOpen = sel === 'community';
+    let commPop = '';
+    if(commOpen){
         const uploaders = [...new Set(commAll.map(t => t.uploader).filter(Boolean))];
         const filtered = commAll.filter(t => mpSelectedUploader === 'all' || t.uploader === mpSelectedUploader);
         queue = filtered;
-        const filterRow = uploaders.length ? `
-            <div class="mp-filter-chips">
+        const chips = uploaders.length ? `<div class="mp-filter-chips mp-bub-chips">
                 <button type="button" class="mp-fchip${mpSelectedUploader==='all'?' active':''}" onclick="mpSelectUploader('all')">${escapeHtml(mpT('allUsers'))}</button>
                 ${uploaders.map(u=>`<button type="button" class="mp-fchip${mpSelectedUploader===u?' active':''}" onclick="mpSelectUploader('${u}')"><img src="${teamLogoUrl(u)}" alt=""><span>${escapeHtml(TEAM_DISPLAY_NAMES[u]||u)}</span></button>`).join('')}
             </div>` : '';
-        listHtml = `<div class="mp-tracks-sec${reveal}">
-            <div class="mp-sec-head"><span dir="auto">${escapeHtml(mpT('tabCommunity'))} (${filtered.length})</span><button type="button" class="mp-link-btn" onclick="mpSelectAlbum('community')"><i class="fas fa-xmark"></i></button></div>
-            ${filterRow}
-            ${filtered.length ? `<div class="mp-track-list">${filtered.map((t,i)=>mpRenderTrackCard(t,i)).join('')}</div>`
-                : `<div class="mp-empty"><i class="fas fa-music"></i><p dir="auto">${escapeHtml(mpT('emptyCommunity'))}</p><button type="button" class="mp-ben-btn primary" onclick="openMusicUploadModal('community')"><i class="fas fa-cloud-arrow-up"></i> ${escapeHtml(mpT('upload'))}</button></div>`}
-        </div>`;
-    } else if(sel !== 'all'){
-        const a = BENYAMIN_ALBUMS.find(x => x.id === sel);
-        const filtered = benAll.filter(t => t.albumId === sel);
-        queue = filtered;
-        const name = a ? (l === 'fa' ? a.fa : (l === 'es' ? a.es : a.en)) : '';
-        listHtml = `<div class="mp-tracks-sec${reveal}">
-            <div class="mp-sec-head"><span dir="auto">${escapeHtml(name)} (${filtered.length})</span><button type="button" class="mp-link-btn" onclick="mpSelectAlbum('${sel}')"><i class="fas fa-xmark"></i></button></div>
-            ${filtered.length ? `<div class="mp-track-list">${filtered.map((t,i)=>mpRenderTrackCard(t,i)).join('')}</div>`
-                : `<div class="mp-empty"><i class="fas fa-record-vinyl"></i><p dir="auto">${escapeHtml(mpT('emptyAlbum'))}</p><button type="button" class="mp-ben-btn primary" onclick="openMusicUploadModal('benyamin','${sel}')"><i class="fas fa-cloud-arrow-up"></i> ${escapeHtml(mpT('addToAlbum'))}</button></div>`}
-        </div>`;
-    } else {
-        listHtml = `<div class="mp-hint"><i class="fas fa-hand-pointer"></i><span dir="auto">${escapeHtml(mpT('tapAlbum'))}</span></div>`;
+        commPop = popHtml(mpT('tabCommunity'), filtered, chips, mpT('emptyCommunity'));
     }
+    const communityHtml = `
+            <div class="mp-album-wrap${commOpen ? ' open' : ''}">
+                <button type="button" class="mp-album-card mp-album-community${commOpen ? ' active' : ''}" onclick="mpSelectAlbum('community')">
+                    <div class="mp-album-art" style="background:linear-gradient(135deg,var(--primary),var(--accent));">
+                        <i class="fas fa-users"></i>
+                        <span class="mp-album-cnt">${commAll.length}</span>
+                    </div>
+                    <div class="mp-album-name" dir="auto">${escapeHtml(mpT('tabCommunity'))}</div>
+                    <div class="mp-album-sub" dir="auto">${escapeHtml(mpT('secCommunity'))}</div>
+                </button>
+                ${commPop}
+            </div>`;
+    const listHtml = sel === 'all' ? `<div class="mp-hint"><i class="fas fa-hand-pointer"></i><span dir="auto">${escapeHtml(mpT('tapAlbum'))}</span></div>` : '';
     mpQueue = queue;
 
     body.innerHTML = `
@@ -691,8 +743,9 @@ function renderMusicPage(){
                 <button type="button" class="mp-ben-btn" onclick="openMusicUploadModal('benyamin', '${(sel==='all'||sel==='community')?'benyamin-85':sel}')"><i class="fas fa-plus"></i> ${escapeHtml(mpT('addBenyamin'))}</button>
             </div>
         </div>
-        <div class="mp-albums-grid">${albumsHtml}</div>
+        <div class="mp-albums-grid">${albumsHtml}${communityHtml}</div>
         ${listHtml}`;
+    mpPlaceAlbumPop();
 }
 
 function mpPlayFromQueue(idx){
@@ -803,10 +856,16 @@ function mpSyncPlayerUI(){
     const aEl = document.getElementById('mp-now-artist'); if(aEl) aEl.textContent = artist;
     const bEl = document.getElementById('mp-now-badge'); if(bEl) bEl.textContent = badge;
     const stage = document.getElementById('hmp-stage'); if(stage) stage.classList.toggle('playing', playing);   // drives the LED equaliser
+    // a song with a cover shows its picture (whole, rounded) and the pixel effect is switched off
     const coverUrl = (enriched && enriched.albumId) ? mpAlbumCoverUrl(enriched.albumId) : '';
     const sc = document.getElementById('mp-stage-cover');
-    if(sc){ sc.style.backgroundImage = coverUrl ? `url('${coverUrl}')` : 'none'; }
-    if(stage) stage.classList.toggle('has-cover', !!coverUrl);
+    if(sc) sc.style.setProperty('--cv', coverUrl ? `url('${coverUrl}')` : 'none');
+    if(stage){ stage.classList.toggle('has-cover', !!coverUrl); stage.classList.toggle('playing', playing && !coverUrl); }
+    const rr = document.getElementById('mp-now-react');
+    if(rr){
+        const rid = (enriched && enriched.reactId && typeof reactionRowHtml === 'function') ? enriched.reactId : '';
+        if(rr.dataset.rid !== rid){ rr.dataset.rid = rid; rr.innerHTML = rid ? `<div class="react-row mp-react-row" id="react-row-${escapeHtml(rid)}">${reactionRowHtml(rid)}</div>` : ''; }
+    }
     const card = document.getElementById('mp-player-card'); if(card) card.classList.toggle('is-playing', playing);
     const playBtn = document.getElementById('mp-play-btn');
     if(playBtn) playBtn.innerHTML = `<i class="fas fa-${playing?'pause':'play'}"></i>`;
@@ -818,7 +877,7 @@ function mpSyncPlayerUI(){
         modeBtn.innerHTML = m === 'single' ? '<i class="fas fa-repeat"></i><b class="mp-mode-1">1</b>' : (m === 'sequential' ? '<i class="fas fa-repeat"></i>' : '<i class="fas fa-shuffle"></i>');
     }
     const vol = document.getElementById('hmp-vol');
-    if(vol && bgMusic){ vol.value = Math.round((bgMusic.volume || 0) * 100); if(typeof setRangeFill === 'function') setRangeFill(vol, vol.value); }
+    if(vol && bgMusic && document.activeElement !== vol){ vol.value = Math.round((bgMusic.volume || 0) * 100); if(typeof setRangeFill === 'function') setRangeFill(vol, vol.value); mpRenderVolBadge(vol.value); }
     updateHomeMusicTile();
 }
 
@@ -837,8 +896,8 @@ function updateHomeMusicTile(){
     const stage = document.getElementById('ov-music-stage');
     const coverUrl = (cur && cur.albumId) ? mpAlbumCoverUrl(cur.albumId) : '';
     const cv = document.getElementById('ov-music-cover');
-    if(cv) cv.style.backgroundImage = coverUrl ? `url('${coverUrl}')` : 'none';
-    if(stage) stage.classList.toggle('playing', playing);
+    if(cv) cv.style.setProperty('--cv', coverUrl ? `url('${coverUrl}')` : 'none');
+    if(stage) stage.classList.toggle('playing', playing && !coverUrl);   // a song with a cover: the picture replaces the pixel effect
     if(ext){ ext.classList.toggle('is-playing', playing); ext.classList.toggle('has-cover', !!coverUrl); }
     const bt = document.getElementById('ov-music-bubble-t'); if(bt) bt.textContent = songTitle;
 }
@@ -875,8 +934,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
         const v = Math.max(0, Math.min(1, Number(vol.value) / 100));
         if(bgMusic){ bgMusic.volume = v; bgMusic.muted = false; }
         try{ localStorage.setItem('musicVolume', String(v)); }catch(e){}
-        mpSyncPlayerUI();
+        if(typeof setRangeFill === 'function') setRangeFill(vol, vol.value);
+        mpRenderVolBadge(vol.value);
     });
+    // the app's page-swipe listens higher up — keep slider drags from changing pages
+    const pc = document.getElementById('mp-player-card');
+    if(pc) ['touchstart','touchend'].forEach(ev => pc.addEventListener(ev, e => e.stopPropagation(), { passive:true }));
     updateHomeMusicTile();
 });
 

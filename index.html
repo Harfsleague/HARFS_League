@@ -1215,9 +1215,19 @@
             <div class="settings-frame mp-frame" id="mp-player-frame">
                 <div class="music-player mp-hmp" id="mp-player-card">
                     <div class="mpx-stage" id="hmp-stage" aria-hidden="true"><div class="mp-stage-cover" id="mp-stage-cover"></div><span class="mp-now-badge mp-stage-chip" id="mp-now-badge">HARFS MUSIC</span></div>
-                    <div class="mpx-meta mp-meta mp-hmp-meta">
-                        <div class="mp-now-title mp-title" id="mp-now-title" dir="auto">Select a song to play</div>
-                        <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto">Benyamin Bahadori &amp; Community</div>
+                    <div class="mpx-top mp-hmp-top">
+                        <div class="mpx-pl-wrap"><button type="button" class="mpx-ic" style="visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><i class="fas fa-music"></i></button></div>
+                        <div class="mpx-meta mp-meta mp-hmp-meta">
+                            <div class="mp-now-title mp-title" id="mp-now-title" dir="auto">Select a song to play</div>
+                            <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto">Benyamin Bahadori &amp; Community</div>
+                        </div>
+                        <div class="mp-vol-wrap">
+                            <button type="button" class="mpx-ic" id="hmp-vol-btn" onclick="mpToggleVolPop(event)" aria-label="Volume" aria-expanded="false"><i class="fas fa-volume-low" id="hmp-vol-icon"></i></button>
+                            <div class="mp-vol-pop" id="hmp-vol-pop" onclick="event.stopPropagation()">
+                                <span class="mp-vol-pct" id="hmp-vol-pct">40</span>
+                                <div class="mp-vol-track"><input type="range" class="mp-range" id="hmp-vol" min="0" max="100" value="40" step="1" aria-label="Volume"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mpx-seek">
                         <input type="range" id="hmp-seek" class="mp-range" min="0" max="100" value="0" step="0.5" aria-label="Seek">
@@ -1230,11 +1240,7 @@
                         <button type="button" class="mpx-ic mpx-skip" onclick="mpNext()" aria-label="Next"><svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M19 5.2a1 1 0 0 0-2 0v5.1L6.6 4.4c-.9-.5-1.9.1-1.9 1.1v13c0 1 1 1.6 1.9 1.1L17 13.7v5.1a1 1 0 0 0 2 0z"/></svg></button>
                         <button type="button" class="mpx-ic mpx-mode" id="mp-mute-btn" onclick="mpToggleMute()" title="Mute / Unmute"><i class="fas fa-volume-high"></i></button>
                     </div>
-                    <div class="mp-hmp-vol">
-                        <i class="fas fa-volume-low"></i>
-                        <input type="range" id="hmp-vol" class="mp-range" min="0" max="100" value="40" aria-label="Volume">
-                        <i class="fas fa-volume-high"></i>
-                    </div>
+                    <div class="mp-now-react" id="mp-now-react"></div>
                 </div>
             </div>
 
