@@ -388,6 +388,63 @@ function mpCloseVolPop(){
 document.addEventListener('click', mpCloseVolPop);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') mpCloseVolPop(); });
 
+// ---- Ambient glow: slow moving blurred colour blobs behind the Music page while a song plays.
+// The colours are picked from the album cover (three vivid, different hues); songs without a cover use the person's theme colours.
+const mpPaletteCache = {};
+function mpCoverPalette(url){
+    return new Promise(resolve => {
+        if(!url) return resolve(null);
+        if(mpPaletteCache[url]) return resolve(mpPaletteCache[url]);
+        const img = new Image(); img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            try{
+                const S = 36, cv = document.createElement('canvas'); cv.width = cv.height = S;
+                const cx = cv.getContext('2d', { willReadFrequently:true }); cx.drawImage(img, 0, 0, S, S);
+                const d = cx.getImageData(0, 0, S, S).data;
+                const bins = Array.from({ length:12 }, () => ({ w:0, r:0, g:0, b:0 })); let tr = 0, tg = 0, tb = 0, n = 0;
+                for(let i = 0; i < d.length; i += 4){
+                    const r = d[i], g = d[i+1], b = d[i+2], mx = Math.max(r,g,b), mn = Math.min(r,g,b), v = mx / 255, s = mx ? (mx - mn) / mx : 0;
+                    tr += r; tg += g; tb += b; n++;
+                    if(v < .22 || s < .22) continue;
+                    let hh = 0; const dl = mx - mn;
+                    if(mx === r) hh = ((g - b) / dl) % 6; else if(mx === g) hh = (b - r) / dl + 2; else hh = (r - g) / dl + 4;
+                    const bi = Math.floor(((hh * 60 + 360) % 360) / 30), w = s * v * (.5 + v), bn = bins[bi];
+                    bn.w += w; bn.r += r * w; bn.g += g * w; bn.b += b * w;
+                }
+                const toHsl = (r,g,b) => { r/=255; g/=255; b/=255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, dd=mx-mn; let h=0, s=0;
+                    if(dd){ s = l > .5 ? dd/(2-mx-mn) : dd/(mx+mn); h = mx===r ? ((g-b)/dd)%6 : mx===g ? (b-r)/dd+2 : (r-g)/dd+4; h = (h*60+360)%360; } return [h,s,l]; };
+                const fmt = ([h,s,l]) => `hsl(${Math.round(h)} ${Math.round(Math.min(.9,Math.max(.45,s))*100)}% ${Math.round(Math.min(.58,Math.max(.4,l))*100)}%)`;
+                const ranked = bins.map((bn,i) => ({ i, ...bn })).filter(bn => bn.w > 0).sort((p,q) => q.w - p.w);
+                const picked = [];
+                for(const bn of ranked){
+                    if(picked.every(p => { const dh = Math.abs(p.i - bn.i); return Math.min(dh, 12 - dh) >= 2; })) picked.push(bn);
+                    if(picked.length === 3) break;
+                }
+                const base = picked.length ? picked.map(p => toHsl(p.r / p.w, p.g / p.w, p.b / p.w)) : [toHsl(tr / n, tg / n, tb / n)];
+                while(base.length < 3){ const b0 = base[0]; base.push([(b0[0] + (base.length === 1 ? 28 : -28) + 360) % 360, b0[1], base.length === 1 ? Math.min(.55, b0[2] + .06) : Math.max(.36, b0[2] - .08)]); }
+                const pal = base.slice(0, 3).map(fmt);
+                mpPaletteCache[url] = pal; resolve(pal);
+            }catch(e){ resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+function mpUpdateAmbient(coverUrl, playing){
+    const amb = document.getElementById('mp-ambient'); if(!amb) return;
+    amb.classList.toggle('on', !!playing);
+    if(amb.dataset.url === (coverUrl || '')) return;
+    amb.dataset.url = coverUrl || '';
+    const scr = document.getElementById('music-screen') || amb;      // the colours live on the page so the player frame can use them too
+    const reset = () => ['--amb1','--amb2','--amb3'].forEach(k => scr.style.removeProperty(k));   // theme colours
+    if(!coverUrl){ reset(); return; }
+    mpCoverPalette(coverUrl).then(pal => {
+        if(amb.dataset.url !== coverUrl) return;   // the song changed meanwhile
+        if(!pal){ reset(); return; }
+        pal.forEach((c, i) => scr.style.setProperty('--amb' + (i + 1), c));
+    });
+}
+
 // ---- Album covers: one square picture per Benyamin album, kept in music/ and listed in music_meta.json → albums ----
 function mpCanEditCovers(){ return !!loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern'); }
 function mpAlbumCoverUrl(albumId){
@@ -861,6 +918,7 @@ function mpSyncPlayerUI(){
     const sc = document.getElementById('mp-stage-cover');
     if(sc) sc.style.setProperty('--cv', coverUrl ? `url('${coverUrl}')` : 'none');
     if(stage){ stage.classList.toggle('has-cover', !!coverUrl); stage.classList.toggle('playing', playing && !coverUrl); }
+    mpUpdateAmbient(coverUrl, playing);
     const rr = document.getElementById('mp-now-react');
     if(rr){
         const rid = (enriched && enriched.reactId && typeof reactionRowHtml === 'function') ? enriched.reactId : '';

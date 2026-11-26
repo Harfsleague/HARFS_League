@@ -3374,3 +3374,24 @@ body.perf-no-anim .mp-tracks-sec.reveal, body.perf-no-anim .mp-tracks-sec.reveal
     backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 6px 18px -8px var(--primary-glow); }
 .ov-ext-music .ov-music-title{ color:#fff; }
 .ov-ext-music.has-cover .ov-music-bubble{ left:calc(38px + 72px + 12px); right:12px; max-width:none; width:auto; justify-content:center; }
+
+/* ===== v123: moving blurred colour glow behind the Music page while a song plays (colours follow the album cover) ===== */
+@property --amb1{ syntax:'<color>'; inherits:true; initial-value:#38bdf8; }
+@property --amb2{ syntax:'<color>'; inherits:true; initial-value:#a855f7; }
+@property --amb3{ syntax:'<color>'; inherits:true; initial-value:#60a5fa; }
+#music-screen{ --amb1:var(--primary); --amb2:var(--accent); --amb3:color-mix(in srgb,var(--primary) 50%,var(--accent));
+    transition:opacity .55s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1), --amb1 1.6s ease, --amb2 1.6s ease, --amb3 1.6s ease; }
+.mp-ambient{ position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden; opacity:0; transition:opacity 1.3s ease; }
+.mp-ambient.on{ opacity:1; }
+.mp-ambient::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(4,6,14,.5) 0%,rgba(4,6,14,.18) 38%,rgba(4,6,14,.62) 100%); }
+.mp-ambient i{ position:absolute; border-radius:50%; filter:blur(46px); will-change:transform; opacity:.9; }
+.mp-ambient i:nth-child(1){ width:130vmin; height:130vmin; left:-34vmin; bottom:-38vmin; background:radial-gradient(circle,var(--amb1) 0%,transparent 68%); animation:ambDrift1 19s ease-in-out infinite alternate; }
+.mp-ambient i:nth-child(2){ width:112vmin; height:112vmin; right:-38vmin; top:22%; background:radial-gradient(circle,var(--amb2) 0%,transparent 68%); animation:ambDrift2 23s ease-in-out infinite alternate; }
+.mp-ambient i:nth-child(3){ width:96vmin; height:96vmin; left:18%; top:-30vmin; background:radial-gradient(circle,var(--amb3) 0%,transparent 68%); animation:ambDrift3 27s ease-in-out infinite alternate; }
+@keyframes ambDrift1{ 0%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(16vmin,-12vmin) scale(1.14); } 100%{ transform:translate(-6vmin,-22vmin) scale(.96); } }
+@keyframes ambDrift2{ 0%{ transform:translate(0,0) scale(1.05); } 50%{ transform:translate(-18vmin,10vmin) scale(.92); } 100%{ transform:translate(-8vmin,-16vmin) scale(1.16); } }
+@keyframes ambDrift3{ 0%{ transform:translate(0,0) scale(.95); } 50%{ transform:translate(20vmin,14vmin) scale(1.12); } 100%{ transform:translate(-14vmin,8vmin) scale(1); } }
+body.perf-no-anim .mp-ambient i, body.lite-mode .mp-ambient i{ animation:none; }
+body.lite-mode .mp-ambient i{ filter:none; opacity:.55; }
+@media (prefers-reduced-motion:reduce){ .mp-ambient i{ animation:none; } }
+#music-screen .mp-frame:has(.mp-hmp.is-playing){ box-shadow:0 14px 30px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 38px -6px color-mix(in srgb,var(--amb1) 75%,transparent); }
