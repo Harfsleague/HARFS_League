@@ -103,6 +103,31 @@ function setupSeasonFabScroll(){
     window.addEventListener('resize', ()=>{ seasonMh.measure(); seasonFabSync(); });
 }
 
+// Chat header → Assistant: an RGB bloom grows out of the button, the page swaps underneath it, then the bloom melts away.
+function chatOpenAssistant(btn){
+    if(typeof aiAssistantEnabled!=='undefined' && !aiAssistantEnabled){ showToast('HARFS Assistant is turned off in Appearance','info',2400); return; }
+    const calm = document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || !document.body.animate;
+    if(calm || !btn){ openAiPanel(); return; }
+    const r = btn.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const far = Math.hypot(Math.max(cx, innerWidth-cx), Math.max(cy, innerHeight-cy));
+    const size = 40, scale = (far*2.2)/size;
+    const o = document.createElement('div'); o.className = 'ai-portal';
+    o.style.cssText = `left:${cx-size/2}px;top:${cy-size/2}px;width:${size}px;height:${size}px;`;
+    document.body.appendChild(o);
+    const kf = [
+        { transform:'scale(1)', opacity:.95, filter:'hue-rotate(0deg)', offset:0 },
+        { transform:`scale(${scale})`, opacity:.9, filter:'hue-rotate(120deg)', offset:.5 },
+        { transform:`scale(${scale})`, opacity:0, filter:'hue-rotate(240deg)', offset:1 }
+    ];
+    const an = o.animate(kf, { duration:1050, easing:'cubic-bezier(.22,1,.36,1)', fill:'forwards' });
+    setTimeout(() => {
+        openAiPanel();
+        const scr = document.getElementById('ai-chat-screen');
+        if(scr){ scr.classList.remove('ai-enter'); void scr.offsetWidth; scr.classList.add('ai-enter'); setTimeout(() => scr.classList.remove('ai-enter'), 1100); }
+    }, 430);
+    an.onfinish = () => o.remove();
+    setTimeout(() => o.remove(), 1500);
+}
 function openAiPanel(){
     if(typeof aiAssistantEnabled!=='undefined' && !aiAssistantEnabled){ showToast('HARFS Assistant is turned off in Settings','info',2400); return; }
     haptic([8]);

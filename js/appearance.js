@@ -512,6 +512,70 @@ function toggleMusicPanelVisibility(){
 }
 syncMusicPanelUI(); // apply the saved choice on startup
 
+// ============================================================
+// APP UPDATE — when a newer version has been published, a button appears at the bottom of Profile.
+// Detected two ways: the service worker installs a new copy, or js/config.js on the server names a newer APP_VERSION.
+// Nothing reloads by itself — the person taps the button when ready.
+// ============================================================
+const harfsUpdate = { ready:false, sw:false };
+function harfsUpdateUI(){
+    const b = document.getElementById('settings-update-btn'); if(!b) return;
+    b.hidden = !harfsUpdate.ready;
+    const l = getAppLanguage();
+    const lbl = document.getElementById('settings-update-lbl');
+    if(lbl && !b.classList.contains('busy')) lbl.textContent = l==='fa' ? 'نسخه‌ی جدید آماده است — برای به‌روزرسانی بزن' : l==='es' ? 'Actualización disponible: toca para actualizar' : 'Update available — tap to update';
+}
+function harfsMarkUpdateReady(viaSw){
+    if(viaSw) harfsUpdate.sw = true;
+    if(harfsUpdate.ready) return;
+    harfsUpdate.ready = true; harfsUpdateUI();
+}
+async function harfsCheckUpdate(){
+    try{
+        const reg = ('serviceWorker' in navigator) ? await navigator.serviceWorker.getRegistration() : null;
+        if(reg){ reg.update().catch(()=>{}); if(reg.waiting && navigator.serviceWorker.controller) harfsMarkUpdateReady(true); }
+    }catch(e){}
+    try{
+        const res = await fetch('js/config.js?u=' + Date.now(), { cache:'no-store' });
+        if(res.ok){
+            const m = (await res.text()).match(/APP_VERSION\s*=\s*"v(\d+)"/), cur = String(APP_VERSION).match(/(\d+)/);
+            if(m && cur && parseInt(m[1],10) > parseInt(cur[1],10)) harfsMarkUpdateReady(false);
+        }
+    }catch(e){}
+}
+async function harfsApplyUpdate(){
+    const b = document.getElementById('settings-update-btn'), lbl = document.getElementById('settings-update-lbl');
+    if(b){ if(b.classList.contains('busy')) return; b.classList.add('busy'); }
+    if(lbl) lbl.textContent = 'Updating…';
+    haptic([10]);
+    try{
+        if(!harfsUpdate.sw && 'serviceWorker' in navigator){
+            const reg = await navigator.serviceWorker.getRegistration();
+            if(reg){
+                await reg.update().catch(()=>{});
+                if(reg.waiting) reg.waiting.postMessage({ type:'SKIP_WAITING' });
+                await new Promise(r => { const f = () => r(); navigator.serviceWorker.addEventListener('controllerchange', f, { once:true }); setTimeout(f, 3500); });
+            }
+        }
+    }catch(e){}
+    location.reload();
+}
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistration().then(reg => {
+        if(!reg) return;
+        reg.addEventListener('updatefound', () => {
+            const w = reg.installing; if(!w) return;
+            w.addEventListener('statechange', () => { if((w.state === 'installed' || w.state === 'activated') && navigator.serviceWorker.controller) harfsMarkUpdateReady(true); });
+        });
+    }).catch(()=>{});
+    // a new worker that took over while this page keeps running the old files
+    let hadCtl = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if(hadCtl) harfsMarkUpdateReady(true); hadCtl = true; });
+}
+window.addEventListener('load', () => setTimeout(harfsCheckUpdate, 4000));
+document.addEventListener('visibilitychange', () => { if(!document.hidden) harfsCheckUpdate(); });
+setInterval(harfsCheckUpdate, 20*60*1000);
+
 // Populates the Settings screen each time it's navigated to: team
 // badge, admin tile visibility (Bayern only), current toggle states.
 function renderSettingsScreen(){
@@ -523,6 +587,7 @@ function renderSettingsScreen(){
     const badgeName=document.getElementById('settings-team-badge-name');
     const subtitle=document.getElementById('settings-account-subtitle');
     const logoutTile=document.getElementById('settings-logout-tile');
+    harfsUpdateUI();
     const verEl=document.getElementById('settings-app-version'); if(verEl) verEl.textContent='HARFS v'+HARFS_VERSION_LABEL;
     const signinTile=document.getElementById('settings-signin-tile');
     if(loggedInTeam){

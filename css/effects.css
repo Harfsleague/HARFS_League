@@ -2980,7 +2980,7 @@ body.perf-no-anim .rec-tile, body.perf-no-anim .rec-card.rec-match, html.lite-mo
    HARFS MUSIC PLAYER & HOME WIDE TILE (v102)
    ===================================================== */
 .ov-wide-ai{ grid-column:1 / -1; --tile-accent:#a855f7; }
-body.ai-disabled .ov-wide-ai{ display:none !important; }
+body.ai-disabled .chat-ai-btn{ display:none !important; }   /* Assistant switched off in Appearance → its button in the Chat header disappears */
 .ov-wide-ai .ov-tile{ width:calc((100% - 20px) / 3); }
 .ov-tile-ai{ --tile-accent:#a855f7; color:#c084fc; }
 .ov-tile-ai svg.ov-ai-ic{ width:1.35rem; height:1.35rem; }
@@ -3420,22 +3420,6 @@ body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-veil{ animati
 body:not(.perf-no-anim):not(.lite-mode) #music-screen.mp-enter .mp-ambient{ animation:mpAmbFocus 1.6s cubic-bezier(.22,1,.36,1) both; }
 body.perf-no-blur .mp-veil{ display:none; }
 
-/* a song with a cover: the picture fills the top of the player edge to edge (no frame, no border), the card takes the cover's colours */
-.mp-hmp .mp-stage-cover::before{ display:none; }
-.mp-hmp .mp-stage-cover::after{ top:0; bottom:0; left:0; right:0; width:auto; aspect-ratio:auto; transform:none; border-radius:0; box-shadow:none; }
-.mp-hmp .mpx-stage{ transition:height .75s cubic-bezier(.22,1,.36,1), margin .6s cubic-bezier(.22,1,.36,1), border-radius .6s ease, border-color .4s ease; }
-#music-screen .mp-frame{ transition:box-shadow .6s ease, padding .6s cubic-bezier(.22,1,.36,1), background-color 1.2s ease; }
-#music-screen .mp-frame:has(.mpx-stage.has-cover){
-    padding:0; background-color:color-mix(in srgb,var(--amb1) 30%,#05070f); background-image:none; border-color:color-mix(in srgb,var(--amb1) 40%,rgba(255,255,255,.1)); overflow:hidden; }
-body #music-screen .mp-frame .music-player.mp-hmp{ transition:padding .6s cubic-bezier(.22,1,.36,1); }
-body #music-screen .mp-frame .music-player.mp-hmp:has(.mpx-stage.has-cover){
-    padding:0 0 16px; gap:12px; border:0; box-shadow:none; border-radius:inherit;
-    background-color:color-mix(in srgb,var(--amb1) 30%,#05070f);
-    background-image:radial-gradient(100% 60% at 0% 100%,color-mix(in srgb,var(--amb2) 50%,transparent),transparent 72%), radial-gradient(90% 55% at 100% 85%,color-mix(in srgb,var(--amb3) 38%,transparent),transparent 70%), linear-gradient(180deg,transparent 40%,rgba(0,0,0,.28)); }
-.mp-hmp .mpx-stage.has-cover{ height:min(calc(100vw - 48px),420px); margin:0; border:0; border-radius:0; box-shadow:none; background:none; }
-.mp-hmp:has(.mpx-stage.has-cover) > .mpx-top, .mp-hmp:has(.mpx-stage.has-cover) > .mpx-seek, .mp-hmp:has(.mpx-stage.has-cover) > .mpx-controls, .mp-hmp:has(.mpx-stage.has-cover) > .mp-now-react{ margin-left:16px; margin-right:16px; }
-.mp-hmp:has(.mpx-stage.has-cover) .mpx-play{ background:rgba(255,255,255,.95); color:#0b1020; }
-
 /* volume button sits in the control row where mute used to be */
 .mpx-controls .mpx-vol{ position:relative; display:flex; align-items:center; justify-content:center; }
 
@@ -3456,4 +3440,35 @@ body #music-screen .mp-frame .music-player.mp-hmp:has(.mpx-stage.has-cover){
 .mp-lib-inner{ min-height:0; overflow:hidden; display:flex; flex-direction:column; gap:14px; }
 .mp-lib.open.settled .mp-lib-inner{ overflow:visible; }
 body.perf-no-anim .mp-lib, body.lite-mode .mp-lib{ transition:none; }
-@media (prefers-reduced-motion:reduce){ .mp-lib, .mp-lib-chev, .mp-hmp .mpx-stage{ transition:none; } .mp-veil{ display:none; } }
+@media (prefers-reduced-motion:reduce){ .mp-lib, .mp-lib-chev{ transition:none; } .mp-veil{ display:none; } }
+
+/* ===== v125: Assistant lives in the Chat header (RGB ring + bloom into the page), Profile update button ===== */
+@property --rgb-a{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+@keyframes rgbSpin{ to{ --rgb-a:360deg; } }
+@keyframes rgbHue{ to{ filter:hue-rotate(360deg); } }
+.chat-head .chat-ai-btn{ position:relative; overflow:visible; color:#fff; border-color:transparent; background:rgba(8,12,24,.9); }
+.chat-ai-btn::before, .chat-ai-btn::after{ content:''; position:absolute; border-radius:50%; pointer-events:none;
+    background:conic-gradient(from var(--rgb-a),#ff2d55,#ff9f0a,#ffd60a,#30d158,#0a84ff,#bf5af2,#ff2d55); animation:rgbSpin 3.2s linear infinite; }
+.chat-ai-btn::before{ inset:-2px; padding:2px; -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0); }
+.chat-ai-btn::after{ inset:-3px; z-index:-1; filter:blur(8px); opacity:.55; }
+.chat-ai-btn i{ background:conic-gradient(from var(--rgb-a),#ff6b8b,#ffd60a,#5eead4,#60a5fa,#c084fc,#ff6b8b); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:rgbSpin 3.2s linear infinite; }
+body.perf-no-anim .chat-ai-btn::before, body.perf-no-anim .chat-ai-btn::after, body.perf-no-anim .chat-ai-btn i,
+body.lite-mode .chat-ai-btn::before, body.lite-mode .chat-ai-btn::after, body.lite-mode .chat-ai-btn i{ animation:none; }
+body.lite-mode .chat-ai-btn::after{ display:none; }
+@media (prefers-reduced-motion:reduce){ .chat-ai-btn::before, .chat-ai-btn::after, .chat-ai-btn i{ animation:none; } }
+
+.ai-portal{ position:fixed; z-index:99999; border-radius:50%; pointer-events:none; will-change:transform,opacity;
+    background:radial-gradient(circle,rgba(6,10,22,.94) 0 34%,transparent 68%), conic-gradient(#ff2d55,#ff9f0a,#ffd60a,#30d158,#0a84ff,#bf5af2,#ff2d55); }
+@keyframes aiEnter{ 0%{ opacity:0; transform:scale(.965); filter:blur(14px) saturate(1.4); } 100%{ opacity:1; transform:none; filter:none; } }
+#ai-chat-screen.ai-enter .ai-chat-inner{ animation:aiEnter .9s cubic-bezier(.22,1,.36,1) both; }
+body.perf-no-anim #ai-chat-screen.ai-enter .ai-chat-inner, body.lite-mode #ai-chat-screen.ai-enter .ai-chat-inner{ animation:none; }
+
+.settings-update-btn{ width:100%; margin:12px 0 6px; padding:13px 16px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; font-family:inherit;
+    font-size:.82rem; font-weight:800; color:#fff; border-radius:18px; -webkit-tap-highlight-color:transparent;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 55%,#0b1020),color-mix(in srgb,var(--accent) 50%,#0b1020));
+    border:1px solid color-mix(in srgb,var(--primary) 60%,rgba(255,255,255,.2)); box-shadow:0 10px 24px -10px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,.18); }
+.settings-update-btn[hidden]{ display:none; }
+.settings-update-btn i{ font-size:.95rem; }
+.settings-update-btn:active{ transform:scale(.97); }
+.settings-update-btn.busy{ opacity:.75; pointer-events:none; }
+.settings-update-btn.busy i{ animation:spin 1s linear infinite; }

@@ -363,18 +363,6 @@
                 <button class="ov-tile ov-tile-records" id="ov-tile-records" onclick="openRecordsSheet()" aria-label="Records">
                     <i class="fas fa-medal"></i><span>Records</span>
                 </button>
-                <!-- Row 4: HARFS Assistant -->
-                <div class="ov-wide ov-wide-ai" onclick="openAiPanel()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAiPanel();}" role="button" tabindex="0" aria-label="HARFS Assistant">
-                    <button class="ov-tile ov-tile-ai" tabindex="-1" aria-hidden="true">
-                        <svg class="ov-ai-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z"/><path fill="currentColor" opacity="0.85" d="M19 16C19 17.2 18 17.6 16.8 17.6C18 17.6 19 18 19 19.2C19 18 20 17.6 21.2 17.6C20 17.6 19 17.2 19 16Z"/></svg><span id="ov-ai-tile-label">Assistant</span>
-                    </button>
-                    <div class="ov-ext ov-ext-ai" id="ov-ai-ext">
-                        <div class="ov-ai-meta">
-                            <div class="ov-ai-title" id="ov-ai-title" dir="auto">HARFS Assistant</div>
-                            <div class="ov-ai-sub" id="ov-ai-sub" dir="auto">AI League Helper &amp; Stats</div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -778,6 +766,9 @@
                 </div>
             </div>
             <div id="settings-app-version" style="text-align:center;font-size:0.58rem;color:#6b7280;opacity:.75;margin:10px 0 2px;letter-spacing:.04em;"></div>
+            <button type="button" class="settings-update-btn" id="settings-update-btn" onclick="harfsApplyUpdate()" hidden>
+                <i class="fas fa-arrow-rotate-right"></i><span id="settings-update-lbl">Update available — tap to update</span>
+            </button>
         </div>
     </div>
 
@@ -1137,6 +1128,7 @@
     <div id="ai-chat-screen" class="page-screen">
         <!-- Same header card as the Season page: centred title + small line under it, round action button on the right -->
         <div class="league-header" style="position:relative;">
+            <button class="season-icon-btn season-back-btn" onclick="navigate('chat')" aria-label="Back to chat"><i class="fas fa-chevron-left"></i></button>
             <h2 class="season-title">HARFS Assistant</h2>
             <div class="season-date">Table · results · trends</div>
             <div class="season-header-actions">
@@ -1174,7 +1166,7 @@
                     </div>
                     <div class="ai-panel-header-actions">
                         <button class="ai-icon-btn" onclick="chatToggleSearch()" title="Search" aria-label="Search"><i class="fas fa-magnifying-glass"></i></button>
-                        <button class="ai-icon-btn" onclick="openNotifSheet()" title="Notifications" aria-label="Notifications"><i class="fas fa-bell"></i></button>
+                        <button class="ai-icon-btn chat-ai-btn" id="chat-ai-btn" onclick="chatOpenAssistant(this)" title="HARFS Assistant" aria-label="HARFS Assistant"><i class="fas fa-wand-magic-sparkles"></i></button>
                         <button class="ai-icon-btn chat-back-btn" onclick="navigate('main-league')" title="Back" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
                     </div>
                 </div>
