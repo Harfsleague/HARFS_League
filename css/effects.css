@@ -3539,3 +3539,45 @@ body.perf-no-anim .chat-ai-btn .ai-stars, body.lite-mode .chat-ai-btn .ai-stars{
 .ap-card .appearance-section-label, #font-sheet .appearance-section-label{ display:flex; align-items:center; gap:8px; }
 .appearance-section-label > i{ width:24px; height:24px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; flex:none; font-size:.72rem;
     color:var(--primary); background:color-mix(in srgb,var(--primary) 16%,rgba(255,255,255,.04)); border:1px solid color-mix(in srgb,var(--primary) 32%,rgba(255,255,255,.08)); }
+
+/* ===== Magazine → تخته تاکتیک: animated schematic (blue = our team, red = opponent) ===== */
+.mtac-sys{ margin:18px 0 6px; padding:14px 12px 12px; border-radius:20px; background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.09); }
+.mtac-sys + .mtac-sys{ margin-top:16px; }
+.mtac-sys-head{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+.mtac-sys-head > b{ font-size:.95rem; font-weight:900; color:#f8fafc; }
+.mtac-coach{ font-size:.68rem; font-weight:800; color:#94a3b8; }
+.mtac-formation{ margin-inline-start:auto; padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:900; letter-spacing:.5px; color:#dbeafe; background:rgba(37,99,235,.35); border:1px solid rgba(147,197,253,.5); }
+.mtac-sys .mtac-stage{ position:relative; width:min(330px,100%); margin:10px auto 8px; }
+.mtac-sys .mtac-pitch{ display:block; width:100%; height:auto; border-radius:14px; box-shadow:0 12px 24px -10px rgba(0,0,0,.7); }
+.mtac-shape{ position:absolute; top:8px; left:8px; padding:3px 10px; border-radius:99px; font-size:.68rem; font-weight:900; color:#fff; background:rgba(15,23,42,.78); border:1px solid rgba(255,255,255,.22); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+.mtac-play{ position:absolute; bottom:8px; left:8px; width:30px; height:30px; border-radius:50%; border:1px solid rgba(255,255,255,.28); background:rgba(15,23,42,.78); color:#fff; font-size:.7rem; display:grid; place-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.mtac-play:active{ transform:scale(.9); }
+.mtac-me .mtac-ring{ fill:none; stroke:#fde047; stroke-width:.7; opacity:0; transform-box:fill-box; transform-origin:center; }
+.mtac-me.hl .mtac-ring{ opacity:.95; animation:mtacPulse 1.4s ease-in-out infinite; }
+@keyframes mtacPulse{ 0%,100%{ transform:scale(.85); opacity:.95; } 50%{ transform:scale(1.18); opacity:.35; } }
+.mtac-link{ fill:none; stroke:#fff; stroke-opacity:.55; stroke-width:.6; stroke-dasharray:1.6 1.2; stroke-linejoin:round; }
+.mtac-ar{ fill:none; stroke-linecap:round; animation:mtacIn .5s ease both; }
+.mtac-ar-pass{ stroke:#fde047; stroke-width:1.15; }
+.mtac-ar-run{ stroke:#fff; stroke-width:.9; stroke-dasharray:2.2 1.6; }
+.mtac-ar-press{ stroke:#fb923c; stroke-width:1.05; stroke-dasharray:1.8 1.2; }
+.mtac-ar-opass{ stroke:#fecaca; stroke-width:1; stroke-dasharray:1.8 1.4; }
+@keyframes mtacIn{ from{ opacity:0; } to{ opacity:1; } }
+.mtac-sys .mtac-legend{ gap:6px 12px; margin:2px 0 8px; }
+.mtac-sys .mtac-legend span{ display:inline-flex; align-items:center; }
+.mtac-lg-me{ background:#2563eb; box-shadow:0 0 0 1.5px #dbeafe; }
+.mtac-lg-opp{ background:#ef4444; box-shadow:0 0 0 1.5px #fecaca; }
+.mtac-lg-ball{ background:#fff; box-shadow:0 0 0 1.5px #111; }
+.mtac-sys .mtac-legend i.mtac-lg-pass{ width:14px; height:3px; border-radius:2px; background:#fde047; }
+.mtac-sys .mtac-legend i.mtac-lg-run{ width:14px; height:0; border-radius:0; background:none; border-top:2px dashed #fff; }
+.mtac-sys .mtac-legend i.mtac-lg-press{ width:14px; height:0; border-radius:0; background:none; border-top:2px dashed #fb923c; }
+.mtac-phase{ margin:8px 0 8px; padding:10px 12px; border-radius:14px; background:rgba(37,99,235,.12); border:1px solid rgba(147,197,253,.28); min-height:84px; }
+.mtac-phase-title{ display:block; font-size:.84rem; font-weight:900; color:#bfdbfe; margin-bottom:3px; }
+.mtac-phase-text{ margin:0; font-size:.78rem; line-height:1.9; color:#e2e8f0; overflow-wrap:anywhere; }
+.mtac-phase.mtac-swap{ animation:mtacSwap .55s ease both; }
+@keyframes mtacSwap{ from{ opacity:.15; transform:translateY(4px); } to{ opacity:1; transform:none; } }
+.mtac-chips{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:6px; }
+.mtac-chip{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px 5px 8px; border-radius:99px; font-family:inherit; font-size:.68rem; font-weight:800; color:#cbd5e1; cursor:pointer; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); -webkit-tap-highlight-color:transparent; transition:background .25s ease, color .25s ease, border-color .25s ease; }
+.mtac-chip span{ width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:.62rem; font-weight:900; color:#111827; background:#94a3b8; }
+.mtac-chip.on{ color:#fff; background:rgba(37,99,235,.45); border-color:rgba(147,197,253,.7); }
+.mtac-chip.on span{ background:#fde047; }
+@media (prefers-reduced-motion:reduce){ .mtac-me.hl .mtac-ring{ animation:none; } .mtac-phase.mtac-swap, .mtac-ar{ animation:none; } }

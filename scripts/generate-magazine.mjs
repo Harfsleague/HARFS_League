@@ -781,9 +781,12 @@ function buildPreviousIssuesSummary(archive) {
 }
 
 
+import { DEEP_BLOCK_EPISODE } from "./tactics-deep-block.mjs";   // Simeone vs Arteta episode: every position of the animated schematic lives there
+
 // ------------------------------------------------------------
 // "آموزشگاه تاکتیک" — a standing series: one football system per issue, in this order. The model writes the words; the pitch
-// diagram (positions, opponents, numbered arrows) lives HERE so it is always correct, and js/magazine.js draws it.
+// diagram (positions, opponents, arrows) lives HERE so it is always correct, and js/magazine.js draws it. Newer episodes carry `systems`
+// (one animated schematic per system, see scripts/tactics-deep-block.mjs); the first episode keeps the older single `diagram` format.
 // Pitch is 68 x 105 (own goal at the bottom, we attack upwards). g = line group: gk | d (defence) | m (midfield) | a (attack).
 // Add a new episode at the end of the list to extend the series; an issue takes the first episode no earlier issue has used.
 // ------------------------------------------------------------
@@ -821,33 +824,7 @@ const TACTICS_EPISODES = [
       ],
     },
   },
-  {
-    id: "deep-block-and-press",
-    titleFa: "سیستم‌های فوق دفاعی و پرس شدید",
-    facts: [
-      "سیمئونه در اتلتیکو مادرید معمولاً ۴-۴-۲ بازی می‌کند با دو خط چهارنفرهٔ بسیار فشرده که فاصله‌شان کم است و فضای میان خطوط را می‌بندند.",
-      "آرتتا در آرسنال پرس بالا و شدید را در زمین حریف اجرا می‌کند و بلافاصله بعد از از دست دادن توپ برای پس‌گرفتنش فشار می‌آورد.",
-    ],
-    nextTeaserFa: "",
-    diagram: {
-      formation: "4-4-2",
-      caption: "نمونه: بلوک فشردهٔ ۴-۴-۲ (الگوی اتلتیکو)",
-      players: [
-        { x: 34, y: 97, g: "gk", t: "GK" },
-        { x: 12, y: 84, g: "d", t: "LB" }, { x: 26, y: 86, g: "d", t: "CB" }, { x: 42, y: 86, g: "d", t: "CB" }, { x: 56, y: 84, g: "d", t: "RB" },
-        { x: 14, y: 70, g: "m", t: "LM" }, { x: 28, y: 72, g: "m", t: "CM" }, { x: 40, y: 72, g: "m", t: "CM" }, { x: 54, y: 70, g: "m", t: "RM" },
-        { x: 28, y: 58, g: "a", t: "ST" }, { x: 40, y: 58, g: "a", t: "ST" },
-      ],
-      opp: [{ x: 9, y: 54 }, { x: 24, y: 46 }, { x: 40, y: 44 }, { x: 54, y: 48 }, { x: 34, y: 34 }],
-      ball: { x: 9, y: 54 },
-      steps: [
-        { n: 1, kind: "run", from: [44, 58], to: [30, 50], hintFa: "دو مهاجم راه پاس عمودی میانی را می‌بندند" },
-        { n: 2, kind: "run", from: [56, 70], to: [40, 70], hintFa: "هر دو خط (هافبک‌ها و مدافعان) هم‌زمان به سمت توپ جابه‌جا می‌شوند و فاصله‌شان کم می‌ماند" },
-        { n: 2, kind: "run", from: [58, 84], to: [44, 84] },
-        { n: 3, kind: "press", at: [14, 70], to: [10, 58], hintFa: "وقتی توپ کنار زمین می‌رود، هافبک چپ فشار می‌آورد و حریف را به خط می‌چسباند" },
-      ],
-    },
-  },
+  DEEP_BLOCK_EPISODE,
 ];
 
 // The episode for this issue = the first one no earlier issue has used. Returns { ep, next } (ep null when the series has run out).
@@ -917,16 +894,32 @@ const MAGAZINE_SCHEMA = {
     funnyClosing: { type: "string", description: "یک جملهٔ کوتاه و بامزه به سبک استندآپ برای پایان؛ دربارهٔ حاشیه‌ها یا شخصیت تیم‌ها، نه آمار و نه چیزی که در بخش‌های قبلی گفته شده." },
     tactics: {
       type: "object",
-      description: "بخش ثابت «آموزشگاه تاکتیک»: آموزش یک سیستم بازی در فوتبال، دقیقاً دربارهٔ موضوع tacticsEpisode که در دیتا آمده. شماتیک (زمین، مهره‌ها و فلش‌ها) را اپ خودش از tacticsEpisode.diagram می‌کشد؛ تو فقط متن‌ها را می‌نویسی و فقط به همان مهره‌ها و گام‌های diagram اشاره می‌کنی.",
+      description: "بخش ثابت «آموزشگاه تاکتیک»: آموزش سیستم‌های بازی در فوتبال، دقیقاً دربارهٔ موضوع tacticsEpisode که در دیتا آمده. شماتیک متحرک (زمین، بازیکنان آبی = تیم ما و قرمز = حریف، پاس‌ها و جابه‌جایی‌ها) را اپ خودش از روی tacticsEpisode می‌کشد و توضیح هر فاز را هم خودش دارد؛ تو فقط متن‌های اطراف آن را می‌نویسی و فقط به همان فازها و facts اشاره می‌کنی.",
       properties: {
-        intro: { type: "string", description: "۲ تا ۳ جمله: این سیستم چیست و چرا مهم است، با اشاره به مربیان و تیم‌های موجود در tacticsEpisode.facts. هیچ واقعیت دیگری نساز." },
-        defense: { type: "string", description: "وظایف مدافعان در این سیستم: ۲ تا ۳ جملهٔ کوتاه و مشخص" },
-        midfield: { type: "string", description: "وظایف هافبک‌ها در این سیستم: ۲ تا ۳ جملهٔ کوتاه و مشخص" },
-        attack: { type: "string", description: "وظایف خط حمله در این سیستم: ۲ تا ۳ جملهٔ کوتاه و مشخص" },
-        steps: { type: "array", description: "دقیقاً به تعداد tacticsEpisode.diagram.steps؛ برای هر گام یک جملهٔ کوتاه که همان اتفاق روی شماتیک را توضیح بدهد، به همان ترتیب.", items: { type: "string" } },
-        conclusion: { type: "string", description: "یک یا دو جمله جمع‌بندی: نقطه‌قوت و ریسک این سیستم. بدون جملهٔ «هفتهٔ آینده» (آن را خود اسکریپت اضافه می‌کند)." },
+        intro: { type: "string", description: "۲ تا ۳ جملهٔ مقدمه: این بخش دربارهٔ چیست و چرا مقایسهٔ این سیستم‌ها جالب است، فقط با تکیه بر tacticsEpisode.facts. هیچ واقعیت دیگری نساز." },
+        systems: {
+          type: "array",
+          description: "اگر tacticsEpisode.systems وجود دارد: دقیقاً یک عنصر برای هر سیستم، به همان ترتیب و با همان id. اگر وجود ندارد آرایهٔ خالی.",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "دقیقاً همان id سیستم در tacticsEpisode.systems" },
+              summary: { type: "string", description: "یک یا دو جمله: ایدهٔ اصلی این سیستم به زبان ساده، فقط از facts همان سیستم" },
+              defense: { type: "string", description: "وظایف مدافعان در این سیستم: ۲ جملهٔ کوتاه و مشخص، فقط از facts و phases همان سیستم" },
+              midfield: { type: "string", description: "وظایف هافبک‌ها در این سیستم: ۲ جملهٔ کوتاه و مشخص، فقط از facts و phases همان سیستم" },
+              attack: { type: "string", description: "وظایف خط حمله و وینگرها در این سیستم: ۲ جملهٔ کوتاه و مشخص، فقط از facts و phases همان سیستم" },
+              conclusion: { type: "string", description: "یک جمله: نقطه‌قوت یا ریسک این سیستم. بدون جملهٔ «هفتهٔ آینده»." },
+            },
+            required: ["id", "summary", "defense", "midfield", "attack", "conclusion"],
+          },
+        },
+        defense: { type: "string", description: "فقط برای اپیزودهای قدیمی که tacticsEpisode.diagram دارند؛ وگرنه رشتهٔ خالی. وظایف مدافعان: ۲ تا ۳ جملهٔ کوتاه" },
+        midfield: { type: "string", description: "فقط برای اپیزودهای قدیمی با diagram؛ وگرنه رشتهٔ خالی. وظایف هافبک‌ها: ۲ تا ۳ جملهٔ کوتاه" },
+        attack: { type: "string", description: "فقط برای اپیزودهای قدیمی با diagram؛ وگرنه رشتهٔ خالی. وظایف خط حمله: ۲ تا ۳ جملهٔ کوتاه" },
+        steps: { type: "array", description: "فقط برای اپیزودهای قدیمی با diagram: دقیقاً به تعداد tacticsEpisode.diagram.steps یک جملهٔ کوتاه؛ وگرنه آرایهٔ خالی.", items: { type: "string" } },
+        conclusion: { type: "string", description: "فقط برای اپیزودهای قدیمی با diagram؛ وگرنه رشتهٔ خالی. یک یا دو جمله جمع‌بندی، بدون جملهٔ «هفتهٔ آینده»." },
       },
-      required: ["intro", "defense", "midfield", "attack", "steps", "conclusion"],
+      required: ["intro", "systems"],
     },
     interview: {
       type: "object",
@@ -1022,7 +1015,7 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 
 قاعدهٔ عدم تکرار (بسیار مهم): هر اطلاعات فقط و فقط در یک بخش گفته شود. تقسیم کار این است: جدول و نمودار خودشان اعداد را نشان می‌دهند؛ رتبه، امتیاز و جابه‌جایی رتبه‌ها فقط در standingsCommentary؛ نتیجهٔ بازی‌ها و صحنه‌هایشان فقط در matchReport (و برای CUP در cupReport)؛ رکوردهای عددی فقط در کارت‌های recordsAndOddities؛ بخش‌های titleRaceCommentary، playerSpotlights، recommendations، lineupSuggestions، fixturePreviews، scheduleOutlook، interview و funnyClosing نباید رتبه، امتیاز، فاصله تا صدر یا نتیجهٔ بازی‌های هفته را دوباره بگویند. جمله‌ای که چیزی به مطلب نمی‌افزاید، مقدمه‌چینی، جمع‌بندی تکراری و حرف‌های کلی («در این هفتهٔ پرهیجان…») ننویس. اگر برای بخشی که فیلدش می‌تواند خالی باشد (standingsCommentary، titleRaceCommentary) حرف تازه‌ای نداری، رشتهٔ خالی "" بگذار تا فقط جدول و نمودار نمایش داده شود، یا دربارهٔ چیز دیگری (فرم، روند، حاشیه‌ها) حرف بزن. پاسخ‌ها را کوتاه و فشرده نگه دار.
 
-دربارهٔ بخش tactics («آموزشگاه تاکتیک»): هر شماره یک سیستم بازی در فوتبال آموزش داده می‌شود و موضوع این هفته در tacticsEpisode آمده (عنوان، facts و diagram). فقط از همان facts دربارهٔ مربیان، تیم‌ها و دوره‌ها استفاده کن و چیز دیگری (آمار، نتیجه، نام بازیکن یا نقل‌قول) نساز. وظایف مدافعان، هافبک‌ها و خط حمله را جداگانه و روشن بگو و در steps هر گام شماتیک را به همان ترتیب توضیح بده. این بخش با لیگ HARFS ربطی ندارد و دیتای لیگ را وارد آن نکن. اگر tacticsEpisode در دیتا نیست، فیلد tactics را با رشته‌های خالی و steps خالی پر کن. لحن آموزشی و ساده ولی کمی شوخ باشد.
+دربارهٔ بخش tactics («آموزشگاه تاکتیک»): موضوع این هفته در tacticsEpisode آمده (عنوان، facts و یا systems با phases). فقط از همان facts دربارهٔ مربیان، سیستم‌ها و تیم‌ها استفاده کن و چیز دیگری (آمار، نتیجه، نام بازیکن، نقل‌قول یا ادعای تازه) نساز. اگر tacticsEpisode.systems هست، برای هر سیستم جداگانه و با همان id، خلاصه و وظایف مدافعان، هافبک‌ها و خط حمله را روشن و کوتاه بنویس و با phases همان سیستم هم‌خوان باش (آن فازها را اپ به‌صورت انیمیشن نشان می‌دهد، پس دوباره فاز‌به‌فاز بازگویی‌شان نکن). دو سیستم را با هم قاطی نکن و هر نکته فقط در یک جا بیاید. این بخش با لیگ HARFS ربطی ندارد و دیتای لیگ را وارد آن نکن. اگر tacticsEpisode در دیتا نیست، intro را رشتهٔ خالی و systems را آرایهٔ خالی بگذار. لحن آموزشی و ساده ولی کمی شوخ باشد.
 
 زاویهٔ دید هر بخش (هر بخش را از نگاه خودش بنویس و هرگز شبیه بخش دیگر نشو): matchReport = راوی؛ صحنه‌ها، لحظه‌های تعیین‌کننده و قهرمان بازی‌ها. standingsCommentary = حسابدار؛ فقط جابه‌جایی‌ها. titleRaceCommentary = تحلیلگر نمودار؛ فقط روند، بدون نام و عدد. recordsAndOddities = کلکسیونر اتفاق‌های عجیب؛ یک نکتهٔ تازه یا طنز. playerSpotlights = کاشف استعداد؛ الگوها و ویژگی‌های خاص تیم‌ها. lineupSuggestions و recommendations = مربی؛ فقط چیدمان و تغییرها برای بازی بعد. fixturePreviews و scheduleOutlook = فالگیر؛ حس و حال بازی‌های بعد و حساسیت‌هایشان، بدون تکرار فرم و جدول. interview = طنز تخیلی. funnyClosing = استندآپ‌کمدین. tactics = معلم فوتبال. اگر برای بخشی هر طور فکر می‌کنی باز هم چیزی جز مطالب تکراری نداری، آن را کوتاه کن یا خالی بگذار (spotlightsThisWeek یعنی بخش «زیر ذره‌بین» این هفته نوبتش است یا نه). تیترها ساده، کوتاه و خلاقانه باشند و هیچ‌وقت دو شماره‌ی پشت‌سرهم شبیه هم نشوند.
 
@@ -1189,15 +1182,23 @@ async function main() {
 
   const { ep: tacticsEp, next: tacticsNext } = pickTacticsEpisode(archive);
   if (tacticsEp) {
-    data.tacticsEpisode = {
-      id: tacticsEp.id,
-      title: tacticsEp.titleFa,
-      facts: tacticsEp.facts,
-      diagram: {
-        formation: tacticsEp.diagram.formation,
-        steps: tacticsEp.diagram.steps.filter((st) => st.hintFa).map((st) => ({ step: st.n, what: st.hintFa })),
-      },
-    };
+    data.tacticsEpisode = tacticsEp.systems
+      ? {
+          id: tacticsEp.id,
+          title: tacticsEp.titleFa,
+          facts: tacticsEp.facts,
+          // the app animates these phases itself; the model only writes the words around them
+          systems: tacticsEp.systems.map((sy) => ({ id: sy.id, name: sy.nameFa, team: sy.coachFa, formation: sy.formation, phases: sy.scenes.map((sc) => ({ title: sc.title, what: sc.text })) })),
+        }
+      : {
+          id: tacticsEp.id,
+          title: tacticsEp.titleFa,
+          facts: tacticsEp.facts,
+          diagram: {
+            formation: tacticsEp.diagram.formation,
+            steps: tacticsEp.diagram.steps.filter((st) => st.hintFa).map((st) => ({ step: st.n, what: st.hintFa })),
+          },
+        };
   }
 
   console.log(`Asking Gemini 3.5 Flash to write the magazine (interview team: ${data.interviewTeam})...`);
@@ -1224,7 +1225,24 @@ async function main() {
   if (!data.spotlightsThisWeek) magazine.playerSpotlights = [];   // off-week: the section is simply not shown
 
   // The tactics lesson: the episode (and its pitch diagram) is decided here, never by the model.
-  if (tacticsEp && magazine.tactics) {
+  if (tacticsEp && tacticsEp.systems && magazine.tactics) {
+    // New format: the model's words are matched to each system BY ID; positions, phases and phase texts always come from the episode.
+    const written = Array.isArray(magazine.tactics.systems) ? magazine.tactics.systems : [];
+    const clean = (x) => String(x || "").trim();
+    magazine.tactics = {
+      episodeId: tacticsEp.id,
+      title: tacticsEp.titleFa,
+      intro: clean(magazine.tactics.intro),
+      systems: tacticsEp.systems.map((sy, i) => {
+        const w = written.find((x) => x && x.id === sy.id) || written[i] || {};
+        return {
+          id: sy.id, nameFa: sy.nameFa, coachFa: sy.coachFa, formation: sy.formation, me: sy.me, links: sy.links, scenes: sy.scenes,
+          summary: clean(w.summary), defense: clean(w.defense), midfield: clean(w.midfield), attack: clean(w.attack), conclusion: clean(w.conclusion),
+        };
+      }),
+      nextTeaser: tacticsEp.nextTeaserFa || (tacticsNext ? `هفتهٔ آینده دربارهٔ ${tacticsNext.titleFa} صحبت می‌کنیم.` : ""),
+    };
+  } else if (tacticsEp && magazine.tactics) {
     const want = tacticsEp.diagram.steps.filter((st) => st.hintFa).length;
     const stepTexts = (Array.isArray(magazine.tactics.steps) ? magazine.tactics.steps : []).map((x) => String(x || "").trim()).slice(0, want);
     while (stepTexts.length < want) stepTexts.push("");

@@ -513,8 +513,144 @@ function magTacticsPitch(d, uid) {
     </svg>`;
 }
 
+// ---- "آموزشگاه تاکتیک" (new format): ANIMATED schematic. Blue = our team, red = the opponent; players glide from phase to phase.
+// Data (positions of all 22 players per phase, arrows, ball) comes from scripts/tactics-deep-block.mjs via issue.tactics.systems. ----
+const MAG_TAC_REG = {};
+function magTacSystemHtml(sys, uid) {
+    MAG_TAC_REG[uid] = sys;
+    const sc0 = sys.scenes[0];
+    const kinds = {}; sys.scenes.forEach(sc => (sc.arrows || []).forEach(a => { kinds[a.k] = 1; }));
+    const mk = (k, col) => `<marker id="${uid}-m-${k}" viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.2" markerHeight="3.2" orient="auto"><path d="M0 .4L6 3L0 5.6z" fill="${col}"/></marker>`;
+    const me = (sc0.me || []).map((p, i) => `<g class="mtac-me" transform="translate(${p[0]} ${p[1]})"><circle class="mtac-ring" r="5"/><circle r="2.9" fill="#2563eb" stroke="#dbeafe" stroke-width=".6"/><text y=".95" text-anchor="middle" font-size="2.2" font-weight="900" fill="#fff">${escapeHtml((sys.me || [])[i] || '')}</text></g>`).join('');
+    const op = (sc0.opp || []).map(p => `<g class="mtac-op" transform="translate(${p[0]} ${p[1]})"><circle r="2.7" fill="#ef4444" stroke="#fecaca" stroke-width=".55"/></g>`).join('');
+    const links = (sys.links || []).map(() => '<polyline class="mtac-link"/>').join('');
+    const chips = sys.scenes.map((sc, i) => `<button type="button" class="mtac-chip${i ? '' : ' on'}" data-i="${i}"><span>${magFaNum(i + 1)}</span>${escapeHtml(sc.title || '')}</button>`).join('');
+    const role = (cls, title, txt) => txt ? `<div class="mtac-role ${cls}"><b>${title}</b><p>${escapeHtml(txt)}</p></div>` : '';
+    const lg = (cls, label) => `<span><i class="${cls}"></i>${label}</span>`;
+    return `
+        <div class="mtac-sys" data-tac="${uid}">
+            <div class="mtac-sys-head"><b>${escapeHtml(sys.nameFa || '')}</b><span class="mtac-coach">${escapeHtml(sys.coachFa || '')}</span><bdi class="mtac-formation" dir="ltr">${escapeHtml(sys.formation || '')}</bdi></div>
+            ${sys.summary ? `<p class="magazine-text">${escapeHtml(sys.summary)}</p>` : ''}
+            <div class="mtac-stage">
+                <svg class="mtac-pitch" viewBox="0 0 68 105" xmlns="http://www.w3.org/2000/svg" direction="ltr" role="img" aria-label="${escapeHtml(sys.nameFa || '')}">
+                    <defs>
+                        <linearGradient id="${uid}-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8f4e"/><stop offset="1" stop-color="#1f6b3a"/></linearGradient>
+                        ${mk('pass', '#fde047')}${mk('run', '#ffffff')}${mk('press', '#fb923c')}${mk('opass', '#fecaca')}
+                    </defs>
+                    <rect width="68" height="105" rx="3" fill="url(#${uid}-g)"/>
+                    ${[0, 1, 2, 3, 4, 5, 6].map(i => `<rect y="${i * 15}" width="68" height="7.5" fill="#000" opacity=".045"/>`).join('')}
+                    <g fill="none" stroke="#fff" stroke-opacity=".7" stroke-width=".55">
+                        <rect x="2.5" y="2.5" width="63" height="100"/><line x1="2.5" y1="52.5" x2="65.5" y2="52.5"/><circle cx="34" cy="52.5" r="8"/>
+                        <rect x="14" y="2.5" width="40" height="16"/><rect x="24" y="2.5" width="20" height="6"/>
+                        <rect x="14" y="86.5" width="40" height="16"/><rect x="24" y="96.5" width="20" height="6"/>
+                    </g>
+                    <g class="mtac-links">${links}</g>
+                    <g class="mtac-arrows"></g>
+                    <g class="mtac-ops">${op}</g>
+                    <g class="mtac-mes">${me}</g>
+                    <g class="mtac-ball" transform="translate(${sc0.ball[0] + 3.2} ${sc0.ball[1] + 2.4})"><circle r="1.55" fill="#fff" stroke="#111" stroke-width=".45"/><circle r=".55" fill="#111"/></g>
+                </svg>
+                <div class="mtac-shape"><bdi dir="auto">${escapeHtml(sc0.shape || '')}</bdi></div>
+                <button type="button" class="mtac-play" aria-label="pause / play"><i class="fas fa-pause"></i></button>
+            </div>
+            <div class="mtac-legend">${lg('mtac-lg-me', 'تیم ما')}${lg('mtac-lg-opp', 'حریف')}${lg('mtac-lg-ball', 'توپ')}${kinds.pass ? lg('mtac-lg-pass', 'پاس') : ''}${kinds.run ? lg('mtac-lg-run', 'حرکت بدون توپ') : ''}${kinds.press ? lg('mtac-lg-press', 'پرس') : ''}<span><b>↑</b> جهت حمله</span></div>
+            <div class="mtac-phase"><b class="mtac-phase-title">${escapeHtml(sc0.title || '')}</b><p class="mtac-phase-text">${escapeHtml(sc0.text || '')}</p></div>
+            <div class="mtac-chips">${chips}</div>
+            <div class="mtac-roles">${role('mtac-d', 'مدافعان', sys.defense)}${role('mtac-m', 'هافبک‌ها', sys.midfield)}${role('mtac-a', 'خط حمله', sys.attack)}</div>
+            ${sys.conclusion ? `<p class="magazine-commentary">${escapeHtml(sys.conclusion)}</p>` : ''}
+        </div>`;
+}
+
+// Brings every animated schematic in `root` to life: auto-plays while visible, tap a phase to jump to it, button pauses/plays.
+function magTacticsMount(root) {
+    (root || document).querySelectorAll('.mtac-sys[data-tac]').forEach(el => { if (!el._tacOn) { el._tacOn = true; magTacCtl(el); } });
+}
+function magTacCtl(el) {
+    const sys = MAG_TAC_REG[el.dataset.tac]; if (!sys || !sys.scenes || !sys.scenes.length) return;
+    const sc = sys.scenes, N = sc.length;
+    const meEls = [...el.querySelectorAll('.mtac-me')], opEls = [...el.querySelectorAll('.mtac-op')];
+    const ballEl = el.querySelector('.mtac-ball'), arrowsG = el.querySelector('.mtac-arrows');
+    const linkEls = [...el.querySelectorAll('.mtac-link')], chips = [...el.querySelectorAll('.mtac-chip')];
+    const titleEl = el.querySelector('.mtac-phase-title'), textEl = el.querySelector('.mtac-phase-text'), shapeEl = el.querySelector('.mtac-shape bdi');
+    const playBtn = el.querySelector('.mtac-play'), phaseBox = el.querySelector('.mtac-phase');
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const cp = a => a.map(p => p.slice());
+    let cur = { me: cp(sc[0].me), opp: cp(sc[0].opp), ball: sc[0].ball.slice() };
+    let idx = 0, playing = !reduce, visible = false, busy = false, timer = 0, raf = 0;
+    const ease = k => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+    const tr = p => `translate(${p[0].toFixed(2)} ${p[1].toFixed(2)})`;
+    const trBall = p => `translate(${(p[0] + 3.2).toFixed(2)} ${(p[1] + 2.4).toFixed(2)})`;   // ball at the player's feet, never on top of the label
+
+    function paint() {
+        meEls.forEach((g, i) => g.setAttribute('transform', tr(cur.me[i])));
+        opEls.forEach((g, i) => g.setAttribute('transform', tr(cur.opp[i])));
+        ballEl.setAttribute('transform', trBall(cur.ball));
+        (sys.links || []).forEach((grp, k) => { if (linkEls[k]) linkEls[k].setAttribute('points', grp.map(i => cur.me[i].join(',')).join(' ')); });
+    }
+    function drawArrows(n) {
+        arrowsG.innerHTML = (sc[n].arrows || []).map(a => {
+            const dx = a.to[0] - a.from[0], dy = a.to[1] - a.from[1], len = Math.hypot(dx, dy) || 1;
+            const s = len > 9 ? 3 : 0, e = len > 9 ? 3.3 : 0.8;
+            const x1 = a.from[0] + dx / len * s, y1 = a.from[1] + dy / len * s, x2 = a.to[0] - dx / len * e, y2 = a.to[1] - dy / len * e;
+            return `<line class="mtac-ar mtac-ar-${a.k}" x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" marker-end="url(#${el.dataset.tac}-m-${a.k})"/>`;
+        }).join('');
+    }
+    function showScene(n) {
+        idx = n;
+        chips.forEach((c, i) => c.classList.toggle('on', i === n));
+        titleEl.textContent = sc[n].title || ''; textEl.textContent = sc[n].text || ''; shapeEl.textContent = sc[n].shape || '';
+        phaseBox.classList.remove('mtac-swap'); void phaseBox.offsetWidth; phaseBox.classList.add('mtac-swap');
+        meEls.forEach((g, i) => g.classList.toggle('hl', (sc[n].hl || []).indexOf(i) >= 0));
+    }
+    function schedule() {
+        clearTimeout(timer);
+        if (!playing || !visible || busy) return;
+        timer = setTimeout(() => { if (!el.isConnected) return; go((idx + 1) % N); }, idx === N - 1 ? 3800 : 3300);
+    }
+    function go(n) {
+        clearTimeout(timer); cancelAnimationFrame(raf);
+        showScene(n); arrowsG.innerHTML = '';
+        const from = { me: cp(cur.me), opp: cp(cur.opp), ball: cur.ball.slice() }, to = sc[n];
+        const dur = reduce ? 0 : (n === 0 ? 2100 : 1600), t0 = performance.now();
+        busy = true;
+        const done = () => { cur = { me: cp(to.me), opp: cp(to.opp), ball: to.ball.slice() }; paint(); drawArrows(n); busy = false; schedule(); };
+        if (!dur) { done(); return; }
+        const step = now => {
+            if (!el.isConnected) { busy = false; return; }
+            const k = Math.min(1, (now - t0) / dur), e = ease(k);
+            const lerp = (a, b) => [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e];
+            cur = { me: from.me.map((p, i) => lerp(p, to.me[i])), opp: from.opp.map((p, i) => lerp(p, to.opp[i])), ball: lerp(from.ball, to.ball) };
+            paint();
+            if (k < 1) raf = requestAnimationFrame(step); else done();
+        };
+        raf = requestAnimationFrame(step);
+    }
+    chips.forEach((c, i) => c.addEventListener('click', () => go(i)));
+    playBtn.addEventListener('click', () => {
+        playing = !playing;
+        playBtn.innerHTML = `<i class="fas fa-${playing ? 'pause' : 'play'}"></i>`;
+        if (playing) schedule(); else clearTimeout(timer);
+    });
+    if (reduce) playBtn.innerHTML = '<i class="fas fa-play"></i>';
+    document.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); else schedule(); });
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) schedule(); else clearTimeout(timer); }, { threshold: .4 }).observe(el.querySelector('.mtac-stage'));
+    } else { visible = true; }
+    paint(); drawArrows(0); showScene(0); schedule();
+}
+
 function renderTacticsSection(issue) {
     const t = issue && issue.tactics;
+    if (t && Array.isArray(t.systems) && t.systems.length) {
+        const base = 'mtac' + (issue.issueNumber || 0);
+        return `
+        <div class="magazine-page magazine-tactics">
+            <h2 class="magazine-section-title"><i class="fas fa-chess-board"></i> تخته تاکتیک <span class="magazine-cup-badge">${escapeHtml(t.title || '')}</span></h2>
+            ${t.intro ? `<p class="magazine-text">${escapeHtml(t.intro)}</p>` : ''}
+            ${t.systems.map((sys, i) => magTacSystemHtml(sys, base + 's' + i)).join('')}
+            ${t.nextTeaser ? `<div class="mtac-next"><i class="fas fa-forward"></i><span>${escapeHtml(t.nextTeaser)}</span></div>` : ''}
+        </div>`;
+    }
     if (!t || !t.diagram) return '';
     const uid = 'mtac' + (issue.issueNumber || 0);
     const stepDefs = (t.diagram.steps || []).filter(st => st.hintFa);
@@ -729,6 +865,7 @@ function renderMagazine(issue) {
             <p>${escapeHtml(issue.funnyClosing)}</p>
         </div>
     `;
+    magTacticsMount(body);                                                   // start the animated tactics schematics
     if (typeof magCommentsMount === 'function') magCommentsMount(issue);   // comments section at the very end (js/magazine-comments.js)
 }
 
