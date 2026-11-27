@@ -469,7 +469,8 @@ function syncSettingsUI(){
 // HARFS ASSISTANT on/off — hides the entry card on Overall (and blocks
 // opening the chat) when switched off. Saved on this device.
 // ============================================================
-let aiAssistantEnabled = localStorage.getItem('aiAssistant') !== 'off';
+localStorage.removeItem('aiAssistant');   // the on/off switch was removed from Appearance — the Assistant is always available
+let aiAssistantEnabled = true;
 function syncAiAssistantUI(){
     document.body.classList.toggle('ai-disabled', !aiAssistantEnabled);
     const t=document.getElementById('ai-assistant-toggle');
@@ -496,6 +497,8 @@ function syncMusicPanelUI(){
     document.body.classList.toggle('music-panel-disabled', !musicPanelEnabled);
     const t = document.getElementById('music-panel-toggle');
     if(t) t.classList.toggle('on', musicPanelEnabled);
+    const glow = document.getElementById('music-glow-row');   // the background-glow option only exists while HARFS Music is on
+    if(glow) glow.style.display = musicPanelEnabled ? '' : 'none';
 }
 function toggleMusicPanelVisibility(){
     haptic([8]);
@@ -1104,7 +1107,7 @@ const HARFS_I18N = {
         th_team:'Team', th_p:'P', th_w:'W', th_d:'D', th_l:'L', th_gf:'GF', th_ga:'GA', th_gd:'GD', th_pt:'PT',
         moments_title:'⭐ Golden Moments ⭐',
         profile_title:'Profile', account_sub:'HARFS League Account',
-        sec_appearance:'Appearance & Sound', btn_appearance:'Appearance & Performance', btn_assistant:'HARFS Assistant', btn_music_panel:'HARFS Music',
+        sec_appearance:'Appearance & Sound', btn_appearance:'Appearance', btn_assistant:'HARFS Assistant', btn_music_panel:'HARFS Music',
         sec_language:'Language', ap_lang_sub:'Tap to choose app language',
         sec_quick:'Quick Access', q_emergency:'Emergency', q_notif:'Notifications', q_devices:'Devices', q_tools:'Tools',
         sec_account:'Account', btn_logout:'Log Out', btn_login:'Log In / Pick a Team',
@@ -1113,7 +1116,7 @@ const HARFS_I18N = {
         ap_glass:'Liquid Glass', ap_glass_sub:'Frosted blur, specular rims & lens depth',
         ap_bg:'Background Effects', ap_bg_sub:'Floating orbs & shimmer',
         ap_motion:'Motion', ap_motion_sub:'Slide/fade transitions between screens',
-        ap_palette:'Palette', ap_primary:'Primary', ap_accent:'Accent', ap_background:'Background',
+        ap_palette:'Theme', ap_features:'Features', ap_primary:'Primary', ap_accent:'Accent', ap_background:'Background',
         ap_app_font:'App Font', ap_mag_font:'Magazine Font',
         fed_title:'Federation & Owners', fed_sub:'The people behind HARFS · tap a photo to view',
         role_pres:'Federation President', role_owner:'Team Owner', role_fan:'Fan',
@@ -1146,16 +1149,16 @@ const HARFS_I18N = {
         th_team:'تیم', th_p:'ب', th_w:'ب', th_d:'م', th_l:'ش', th_gf:'گ‌ز', th_ga:'گ‌خ', th_gd:'ت‌گ', th_pt:'امتیاز',
         moments_title:'⭐ لحظات طلایی ⭐',
         profile_title:'پروفایل', account_sub:'حساب کاربری لیگ HARFS',
-        sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر و عملکرد برنامه', btn_assistant:'دستیار هوشمند HARFS', btn_music_panel:'هرفس موزیک',
+        sec_appearance:'ظاهر و صدا', btn_appearance:'ظاهر', btn_assistant:'دستیار هوشمند HARFS', btn_music_panel:'هرفس موزیک',
         sec_language:'زبان برنامه', ap_lang_sub:'برای انتخاب زبان برنامه ضربه بزنید',
         sec_quick:'دسترسی سریع', q_emergency:'اضطراری', q_notif:'اعلان‌ها', q_devices:'دستگاه‌ها', q_tools:'ابزارها',
         sec_account:'حساب کاربری', btn_logout:'خروج از حساب', btn_login:'ورود / انتخاب تیم',
         mp_nothing:'آهنگی در حال پخش نیست', mp_playlist:'پلی‌لیست HARFS',
-        ap_title:'ظاهر و عملکرد', ap_perf:'عملکرد گرافیکی', ap_lite:'سبک (Lite)', ap_custom:'سفارشی',
+        ap_title:'ظاهر', ap_perf:'عملکرد گرافیکی', ap_lite:'سبک (Lite)', ap_custom:'سفارشی',
         ap_glass:'شیشه مایع (Liquid Glass)', ap_glass_sub:'مات‌شدگی شیشه‌ای، لبه‌های نوری و عمق لنز',
         ap_bg:'جلوه‌های پس‌زمینه', ap_bg_sub:'گوی‌های نوری شناور و درخشش محیطی',
         ap_motion:'انیمیشن و حرکت', ap_motion_sub:'انتقال نرم بین صفحات و پنل‌ها',
-        ap_palette:'پالت رنگی', ap_primary:'رنگ اصلی', ap_accent:'رنگ مکمل', ap_background:'پس‌زمینه',
+        ap_palette:'تم', ap_features:'امکانات', ap_primary:'رنگ اصلی', ap_accent:'رنگ مکمل', ap_background:'پس‌زمینه',
         ap_app_font:'فونت برنامه', ap_mag_font:'فونت مجله',
         fed_title:'فدراسیون و مالکین', fed_sub:'اعضای اصلی HARFS · برای بزرگ‌نمایی روی عکس بزنید',
         role_pres:'رئیس فدراسیون', role_owner:'مالک تیم', role_fan:'هوادار',
@@ -1188,7 +1191,7 @@ const HARFS_I18N = {
         th_team:'Equipo', th_p:'PJ', th_w:'G', th_d:'E', th_l:'P', th_gf:'GF', th_ga:'GC', th_gd:'DG', th_pt:'PTS',
         moments_title:'⭐ Momentos Dorados ⭐',
         profile_title:'Perfil', account_sub:'Cuenta de Liga HARFS',
-        sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia y Rendimiento', btn_assistant:'Asistente HARFS', btn_music_panel:'HARFS Music',
+        sec_appearance:'Apariencia y Sonido', btn_appearance:'Apariencia', btn_assistant:'Asistente HARFS', btn_music_panel:'HARFS Music',
         sec_language:'Idioma', ap_lang_sub:'Toca para elegir el idioma de la app',
         sec_quick:'Acceso Rápido', q_emergency:'Emergencia', q_notif:'Alertas', q_devices:'Dispositivos', q_tools:'Herramientas',
         sec_account:'Cuenta', btn_logout:'Cerrar Sesión', btn_login:'Iniciar Sesión / Elegir Equipo',
@@ -1197,7 +1200,7 @@ const HARFS_I18N = {
         ap_glass:'Liquid Glass', ap_glass_sub:'Desenfoque esmerilado, bordes especulares y lente',
         ap_bg:'Efectos de Fondo', ap_bg_sub:'Orbes flotantes y brillo ambiental',
         ap_motion:'Movimiento', ap_motion_sub:'Transiciones suaves entre pantallas',
-        ap_palette:'Paleta de Colores', ap_primary:'Primario', ap_accent:'Acento', ap_background:'Fondo',
+        ap_palette:'Tema', ap_features:'Funciones', ap_primary:'Primario', ap_accent:'Acento', ap_background:'Fondo',
         ap_app_font:'Fuente de la App', ap_mag_font:'Fuente de la Revista',
         fed_title:'Federación y Propietarios', fed_sub:'Las personas detrás de HARFS · toca una foto para ver',
         role_pres:'Presidente de la Federación', role_owner:'Propietario de Equipo', role_fan:'Aficionado',
@@ -1552,42 +1555,23 @@ function applyAppLanguage(){
 
         // 5. Appearance Sheet (#appearance-sheet)
         setTxt('#appearance-sheet .team-picker-title', 'ap_title');
-        const apCards = document.querySelectorAll('#appearance-sheet .ap-card');
-        if(apCards[0]){
-            const lbl = apCards[0].querySelector('.appearance-section-label');
-            if(lbl) lbl.textContent = harfsT('ap_perf');
-            const liteBtn = apCards[0].querySelector('[data-value="lite"]');
-            if(liteBtn) liteBtn.innerHTML = `<i class="fas fa-leaf"></i> ${harfsT('ap_lite')}`;
-            const custBtn = apCards[0].querySelector('[data-value="custom"]');
-            if(custBtn) custBtn.innerHTML = `<i class="fas fa-sliders"></i> ${harfsT('ap_custom')}`;
-            const rows = apCards[0].querySelectorAll('#perf-group-toggles .perf-option-row');
-            if(rows[0]){
-                rows[0].querySelector('.perf-option-title').textContent = harfsT('ap_glass');
-                rows[0].querySelector('.perf-option-sub').textContent = harfsT('ap_glass_sub');
-            }
-            if(rows[1]){
-                rows[1].querySelector('.perf-option-title').textContent = harfsT('ap_bg');
-                rows[1].querySelector('.perf-option-sub').textContent = harfsT('ap_bg_sub');
-            }
-            if(rows[2]){
-                rows[2].querySelector('.perf-option-title').textContent = harfsT('ap_motion');
-                rows[2].querySelector('.perf-option-sub').textContent = harfsT('ap_motion_sub');
-            }
-        }
+        setTxt('#ap-lbl-theme', 'ap_palette');
+        setTxt('#ap-lbl-perf', 'ap_perf');
+        setTxt('#ap-lbl-features', 'ap_features');
+        setTxt('#ap-lbl-appfont', 'ap_app_font');
+        setTxt('#ap-lbl-magfont', 'ap_mag_font');
+        const liteBtn = document.querySelector('#perf-segmented [data-value="lite"]');
+        if(liteBtn) liteBtn.innerHTML = `<i class="fas fa-leaf"></i> ${harfsT('ap_lite')}`;
+        const custBtn = document.querySelector('#perf-segmented [data-value="custom"]');
+        if(custBtn) custBtn.innerHTML = `<i class="fas fa-sliders"></i> ${harfsT('ap_custom')}`;
+        const perfRows = document.querySelectorAll('#perf-group-toggles .perf-option-row');
+        [['ap_glass','ap_glass_sub'],['ap_bg','ap_bg_sub'],['ap_motion','ap_motion_sub']].forEach(([t,sub],i) => {
+            const r = perfRows[i]; if(!r) return;
+            r.querySelector('.perf-option-title').textContent = harfsT(t);
+            r.querySelector('.perf-option-sub').textContent = harfsT(sub);
+        });
         setTxt('#ap-lang-title', 'sec_language');
         setTxt('#ap-lang-sub', 'ap_lang_sub');
-        if(apCards[2]){
-            const lbl = apCards[2].querySelector('.appearance-section-label');
-            if(lbl) lbl.textContent = harfsT('ap_palette');
-        }
-        if(apCards[3]){
-            const lbl = apCards[3].querySelector('.appearance-section-label');
-            if(lbl) lbl.textContent = harfsT('ap_app_font');
-        }
-        if(apCards[4]){
-            const lbl = apCards[4].querySelector('.appearance-section-label');
-            if(lbl) lbl.textContent = harfsT('ap_mag_font');
-        }
 
         // 6. All Sheets & Modals (Records, Federation, Team Panel, Cards, Playlist, Edit Profile, Sessions, Lite, Notifications, Pickers, Chat, AI Assistant)
         setTxt('#people-sheet h4', 'fed_title');
