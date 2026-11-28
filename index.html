@@ -1231,7 +1231,18 @@
                 <div class="music-player mp-hmp" id="mp-player-card">
                     <div class="mpx-stage" id="hmp-stage" aria-hidden="true"><div class="mp-stage-cover" id="mp-stage-cover"></div></div>
                     <div class="mpx-top mp-hmp-top">
-                        <div class="mpx-pl-wrap"><button type="button" class="mpx-ic" style="visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><i class="fas fa-music"></i></button></div>
+                        <div class="mpx-pl-wrap">
+                            <button class="mpx-ic" id="hmp-pl-btn" onclick="toggleMusicPlaylistPop(event)" aria-label="Playlist" aria-expanded="false"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h16M3 12h9M3 18h7"/><circle cx="17" cy="17.5" r="2.4" fill="currentColor" stroke="none"/><path d="M19.4 17.5V9.5l3 1.4"/></svg></button>
+                            <!-- Playlist bubble: [Default | Albums] switch on top; Default = the site's songs, Albums = album covers -> song list -->
+                            <div class="mp-pl-pop" id="hmp-pl-pop" onclick="event.stopPropagation()">
+                                <div class="mp-pl-seg" id="mp-pl-seg" style="--si:0">
+                                    <i aria-hidden="true"></i>
+                                    <button type="button" data-m="default" class="active" id="mp-seg-default" onclick="mpSetPlMode('default')">Default</button>
+                                    <button type="button" data-m="albums" id="mp-seg-albums" onclick="mpSetPlMode('albums')">Albums</button>
+                                </div>
+                                <div class="mp-pl-stage" id="mp-pl-stage"></div>
+                            </div>
+                        </div>
                         <div class="mpx-meta mp-meta mp-hmp-meta">
                             <div class="mp-now-title mp-title" id="mp-now-title" dir="auto">Select a song to play</div>
                             <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto"></div>
@@ -1258,24 +1269,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Site Default Musics bubble (filled by js/audio.js) -->
-            <div class="mp-site-slot" id="mp-site-slot"></div>
-
-            <!-- Library button: Search + albums stay hidden until this is tapped -->
-            <button type="button" class="mp-lib-toggle" id="mp-lib-toggle" onclick="mpToggleLibrary()" aria-expanded="false" aria-controls="mp-lib">
-                <i class="fas fa-compact-disc mp-lib-ic"></i><span id="mp-lib-lbl">Albums &amp; Search</span><i class="fas fa-chevron-down mp-lib-chev"></i>
-            </button>
-            <div class="mp-lib" id="mp-lib"><div class="mp-lib-inner">
-            <!-- Search bar -->
-            <div class="mp-search-wrap">
-                <i class="fas fa-search"></i>
-                <input type="search" id="mp-search" class="mp-search" placeholder="Search song or artist..." oninput="mpOnSearch(this.value)">
-            </div>
-
-            <!-- Dynamic Body (Benyamin Albums + Tracks / Community Tracks / All Tracks) -->
-            <div id="mp-body" class="mp-body"></div>
-            </div></div>
         </div>
         <!-- soft blur veil: sharpens away when the page opens -->
         <div class="mp-veil" id="mp-veil" aria-hidden="true"></div>

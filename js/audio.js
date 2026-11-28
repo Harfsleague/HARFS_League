@@ -290,7 +290,7 @@ const MP_STRINGS = {
     en: {
         title:'MUSIC', upload:'Upload', selectSong:'Select a song to play', homeSub:'Benyamin Bahadori & Community',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Community', tabAll:'All',
-        bgGlow:'Background glow', library:'Albums & Search', search:'Search song or artist...', siteDefault:'Site Default Musics', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
+        bgGlow:'Background glow', library:'Albums & Search', search:'Search song or artist...', siteDefault:'Site Default Musics', plDefault:'Default', plAlbums:'Albums', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
         tapAlbum:'Tap an album to see its songs', coverAdd:'Change cover', coverDone:'Album cover saved', coverFail:'Could not save the cover', playAll:'Play All', addBenyamin:'Add Track', addToAlbum:'Add song to this album', tracks:'tracks', track:'track',
         allAlbums:'All Albums', emptyAlbum:'No songs uploaded in this album yet. Be the first to add one!',
         emptyCommunity:'No community songs yet. Upload your favorite track!', emptySearch:'No matching songs found.',
@@ -302,7 +302,7 @@ const MP_STRINGS = {
     fa: {
         title:'موزیک هرفس', upload:'آپلود', selectSong:'یک آهنگ برای پخش انتخاب کن', homeSub:'بنیامین بهادری و انتخاب کاربران',
         tabBenyamin:'بنیامین بهادری', tabCommunity:'کاربران', tabAll:'همه',
-        bgGlow:'افکت پس‌زمینه', library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', siteDefault:'Site Default Musics', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
+        bgGlow:'افکت پس‌زمینه', library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', siteDefault:'Site Default Musics', plDefault:'پیش‌فرض', plAlbums:'آلبوم‌ها', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
         tapAlbum:'روی یک آلبوم بزن تا آهنگ‌هایش را ببینی', coverAdd:'تغییر کاور', coverDone:'کاور آلبوم ذخیره شد', coverFail:'ذخیره‌ی کاور ناموفق بود', playAll:'پخش همه', addBenyamin:'افزودن آهنگ', addToAlbum:'افزودن آهنگ به این آلبوم', tracks:'آهنگ', track:'آهنگ',
         allAlbums:'همه آلبوم‌ها', emptyAlbum:'هنوز آهنگی در این آلبوم آپلود نشده؛ اولین نفر باش!',
         emptyCommunity:'هنوز آهنگی توسط کاربران آپلود نشده. آهنگ مورد علاقه‌ات را آپلود کن!', emptySearch:'آهنگی با این نام پیدا نشد.',
@@ -314,7 +314,7 @@ const MP_STRINGS = {
     es: {
         title:'MUSIC', upload:'Subir', selectSong:'Elige una canción', homeSub:'Benyamin Bahadori y Comunidad',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Comunidad', tabAll:'Todas',
-        bgGlow:'Brillo de fondo', library:'Álbumes y búsqueda', search:'Buscar canción o artista...', siteDefault:'Site Default Musics', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
+        bgGlow:'Brillo de fondo', library:'Álbumes y búsqueda', search:'Buscar canción o artista...', siteDefault:'Site Default Musics', plDefault:'Predeterminadas', plAlbums:'Álbumes', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
         tapAlbum:'Toca un álbum para ver sus canciones', coverAdd:'Cambiar portada', coverDone:'Portada guardada', coverFail:'No se pudo guardar la portada', playAll:'Reproducir todo', addBenyamin:'Añadir canción', addToAlbum:'Añadir canción a este álbum', tracks:'canciones', track:'canción',
         allAlbums:'Todos los álbumes', emptyAlbum:'Aún no hay canciones en este álbum. ¡Sé el primero en subir una!',
         emptyCommunity:'Aún no hay canciones de la comunidad. ¡Sube tu favorita!', emptySearch:'No se encontraron canciones.',
@@ -375,6 +375,7 @@ function mpRenderVolBadge(v){
 }
 function mpToggleVolPop(e){
     if(e) e.stopPropagation();
+    if(typeof closeMusicPlaylistPop === 'function') closeMusicPlaylistPop();
     const pop = document.getElementById('hmp-vol-pop'), btn = document.getElementById('hmp-vol-btn'); if(!pop) return;
     const open = !pop.classList.contains('open');
     pop.classList.toggle('open', open);
@@ -580,7 +581,7 @@ function openMusicPage(){
 async function onMusicPageEntered(){
     if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled){ navigate('main-league'); return; }   // HARFS Music is a beta switch (Appearance → Beta)
     mpApplyStaticLabels();
-    mpSetLibrary(false);                                   // search + albums start hidden
+    closeMusicPlaylistPop();                               // the playlist bubble starts closed
     const scr = document.getElementById('music-screen');   // replay the entrance of every part
     if(scr){ scr.classList.remove('mp-enter'); void scr.offsetWidth; scr.classList.add('mp-enter'); }
     const tabsEl = document.getElementById('mp-tabs'); if(tabsEl) tabsEl.style.setProperty('--ti', ['benyamin','community','all'].indexOf(mpTab));
@@ -620,24 +621,6 @@ function mpApplyStaticLabels(){
     if(h) h.innerHTML = `<i class="fas fa-cloud-arrow-up"></i> ${escapeHtml(mpT('upHeading'))}`;
 }
 
-// The search box + albums list stay folded away until the person taps the Library button under the player
-function mpSetLibrary(open){
-    const lib = document.getElementById('mp-lib'), btn = document.getElementById('mp-lib-toggle'); if(!lib) return;
-    clearTimeout(lib._t);
-    lib.classList.toggle('open', open);
-    lib.classList.remove('settled');                       // clip while it slides; free again afterwards so album pop-ups can overflow
-    if(btn){ btn.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
-    if(open){
-        mpAnimNext = true; renderMusicPage();             // the list rises in
-        lib._t = setTimeout(() => lib.classList.add('settled'), 650);
-    } else if(mpSelectedAlbum !== 'all'){ mpSelectedAlbum = 'all'; renderMusicPage(); }
-}
-function mpToggleLibrary(){
-    const lib = document.getElementById('mp-lib'); if(!lib) return;
-    if(typeof haptic === 'function') haptic([6]);
-    mpSetLibrary(!lib.classList.contains('open'));
-}
-
 let mpAnimNext = true;   // the next render of the list plays its staggered entrance (page opened / tab changed); play-pause re-renders stay still
 function mpSetTab(tab){
     mpTab = tab;
@@ -649,42 +632,49 @@ function mpSetTab(tab){
 }
 
 let mpRevealList = false;
-function mpSelectAlbum(albumId){
-    mpSelectedAlbum = (mpSelectedAlbum === albumId) ? 'all' : albumId;   // tap the same one again to fold the bubble away
-    if(albumId === 'community') mpSelectedUploader = 'all';
-    mpRevealList = mpSelectedAlbum !== 'all';
+let mpPlMode = 'default';      // what the playlist bubble shows: 'default' (the site's songs) | 'albums'
+let mpStageAnim = false;       // the next render plays the soft switch-in animation (mode / album changed); play-pause re-renders stay still
+function mpSetPlMode(m){
+    if(typeof haptic === 'function') haptic([5]);
+    if(mpPlMode === m) return;
+    mpPlMode = m; mpSelectedAlbum = 'all'; mpStageAnim = true;
     renderMusicPage();
 }
-// The bubble grows out of its album: above it (caret pointing at the card), or below it when there is no room; right-aligned for the right-hand column.
-function mpPlaceAlbumPop(){
-    const wrap = document.querySelector('#music-screen .mp-album-wrap.open'); if(!wrap) return;
-    const pop = wrap.querySelector('.mp-pl-pop'); if(!pop) return;
-    const card = wrap.querySelector('.mp-album-card, .mp-site-card'); const cr = card.getBoundingClientRect();
-    const rightSide = (cr.left + cr.width / 2) > (window.innerWidth / 2);
-    pop.classList.toggle('right', rightSide);
-    pop.classList.toggle('down', cr.top < 330);
-    const w = pop.offsetWidth || 290, c = cr.width / 2 + 8;
-    pop.style.setProperty('--cx', (rightSide ? (w - c) : c) + 'px');
-    if(pop.classList.contains('entering')){
-        clearTimeout(pop._enterT); pop._enterT = setTimeout(() => pop.classList.remove('entering'), 900);
-        if(typeof npxMountIn === 'function') npxMountIn(pop);
-        setTimeout(() => { const r = pop.getBoundingClientRect(); if(r.top < 70 || r.bottom > window.innerHeight - 20) pop.scrollIntoView({ behavior:'smooth', block:'center' }); }, 120);
-    } else if(typeof npxMountIn === 'function') npxMountIn(pop);
+function mpSelectAlbum(albumId){
+    if(typeof haptic === 'function') haptic([5]);
+    mpSelectedAlbum = albumId; mpStageAnim = true;
+    if(albumId === 'community') mpSelectedUploader = 'all';
+    renderMusicPage();
+}
+function mpBackToAlbums(){
+    if(typeof haptic === 'function') haptic([5]);
+    mpSelectedAlbum = 'all'; mpStageAnim = true;
+    renderMusicPage();
+}
+function toggleMusicPlaylistPop(e){
+    if(e) e.stopPropagation();
+    if(typeof haptic === 'function') haptic([6]);
+    const pop = document.getElementById('hmp-pl-pop'), btn = document.getElementById('hmp-pl-btn'); if(!pop || !btn) return;
+    if(pop.classList.contains('open')){ closeMusicPlaylistPop(); return; }
+    mpCloseVolPop();
+    const br = btn.getBoundingClientRect();
+    pop.classList.toggle('down', br.top < 250);
+    mpStageAnim = true; renderMusicPage();
+    if(!PLAYLIST.length && typeof loadPlaylistFromGitHub === 'function') loadPlaylistFromGitHub().then(() => renderMusicPage());
+    pop.classList.add('open'); btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
+}
+function closeMusicPlaylistPop(){
+    const pop = document.getElementById('hmp-pl-pop'), btn = document.getElementById('hmp-pl-btn');
+    if(pop) pop.classList.remove('open');
+    if(btn){ btn.classList.remove('on'); btn.setAttribute('aria-expanded','false'); }
 }
 document.addEventListener('click', e => {
-    if(mpSelectedAlbum === 'all') return;
-    if(!document.getElementById('music-screen')?.classList.contains('active')) return;
-    if(e.target.closest && e.target.closest('.mp-album-wrap')) return;
-    mpSelectedAlbum = 'all'; renderMusicPage();
+    if(e.target.closest && e.target.closest('#hmp-pl-pop, #hmp-pl-btn')) return;
+    closeMusicPlaylistPop();
 });
 
 function mpSelectUploader(team){
     mpSelectedUploader = team;
-    renderMusicPage();
-}
-
-function mpOnSearch(q){
-    mpSearchQuery = String(q || '').trim().toLowerCase();
     renderMusicPage();
 }
 
@@ -733,77 +723,45 @@ function mpRenderTrackCard(t, idxInQueue){
 }
 
 function renderMusicPage(){
-    const body = document.getElementById('mp-body');
-    if(!body) return;
-    if(mpAnimNext){ mpAnimNext = false; body.classList.remove('mp-anim'); void body.offsetWidth; body.classList.add('mp-anim'); clearTimeout(body._animT); body._animT = setTimeout(()=>body.classList.remove('mp-anim'), 1400); }
     mpApplyStaticLabels();
+    const stage = document.getElementById('mp-pl-stage');
     const allTracks = mpGetEnrichedTracks();
     const l = mpLang();
-    const q = mpSearchQuery;
-    const matchSearch = t => !q || (t.title||'').toLowerCase().includes(q) || (t.artist||'').toLowerCase().includes(q) || (t.file||'').toLowerCase().includes(q) || (t.uploader && (TEAM_DISPLAY_NAMES[t.uploader]||t.uploader).toLowerCase().includes(q)) || (t.albumId && (mpAlbumLabel(t.albumId)||'').toLowerCase().includes(q));
-    const emptyHtml = msg => `<div class="mp-empty"><i class="fas fa-music"></i><p dir="auto">${escapeHtml(msg)}</p></div>`;
-
-    // searching: one flat list across every album and the community
-    if(q){
-        const found = allTracks.filter(matchSearch);
-        mpQueue = found;
-        body.innerHTML = found.length ? `<div class="mp-track-list">${found.map((t,i)=>mpRenderTrackCard(t,i)).join('')}</div>` : emptyHtml(mpT('emptySearch'));
-        return;
-    }
-
     const benAll = allTracks.filter(t => t.section === 'benyamin');
     const commAll = allTracks.filter(t => t.section !== 'benyamin');
+    const siteAll = (PLAYLIST.length ? profileIdxList() : []).map(i => ({ src: PLAYLIST[i].src, title: PLAYLIST[i].title, file: mpExtractFilename(PLAYLIST[i].src), noDel: true }));
     const sel = mpSelectedAlbum;
     const canCover = mpCanEditCovers();
-
-    // ---- the album bubbles (Benyamin's albums + the community); the tapped one opens its song list as a bubble above itself ----
     const isCur = t => { const src = bgMusic && bgMusic.src ? decodeURIComponent(bgMusic.src) : ''; return !!src && (src === decodeURIComponent(t.src) || src.endsWith('/' + t.file)); };
-    const reveal = mpRevealList ? ' entering' : '';
-    mpRevealList = false;
-    const popHtml = (title, tracks, extraHead, emptyMsg) => `
-        <div class="mp-pl-pop open${reveal}" onclick="event.stopPropagation()">
-            <div class="mp-pl-head"><span class="mp-pl-title"><i class="fas fa-music"></i> <span dir="auto">${escapeHtml(title)}</span></span><span class="mp-pl-count">${tracks.length}</span></div>
-            ${extraHead || ''}
-            <div class="mp-pl-list">${tracks.length ? tracks.map((t,i) => {
-                const cur = isCur(t), playing = cur && bgMusic && !bgMusic.paused;
-                const canDel = !t.noDel && loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
-                const del = canDel ? `<button type="button" class="mp-bub-del" onclick="event.stopPropagation();mpDeleteTrack(${JSON.stringify(t.file).replace(/"/g,'&quot;')})" title="Delete"><i class="fas fa-trash-can"></i></button>` : '';
-                const who = (t.section !== 'benyamin' && t.uploader) ? `<span class="mp-bub-who">${escapeHtml(TEAM_DISPLAY_NAMES[t.uploader] || t.uploader)}</span>` : '';
-                return `<div class="playlist-track-item${playing ? ' playing' : ''}${cur ? ' picked-cur' : ''}" style="--i:${Math.min(i,8)}" onclick="mpPlayFromQueue(${i})">
-                    <div class="playlist-track-icon${playing ? ' px-on' : ''}">${playing ? '<span class="pl-px"></span>' : '<i class="fas fa-music"></i>'}</div>
-                    <div class="playlist-track-title" dir="auto">${escapeHtml(t.title)}</div>${who}${del}
-                </div>`; }).join('') : `<div class="mp-bub-empty" dir="auto">${escapeHtml(emptyMsg)}</div>`}</div>
-        </div>`;
+    const rowsHtml = (tracks, emptyMsg) => `<div class="mp-pl-list">${tracks.length ? tracks.map((t,i) => {
+        const cur = isCur(t), playing = cur && bgMusic && !bgMusic.paused;
+        const canDel = !t.noDel && loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
+        const del = canDel ? `<button type="button" class="mp-bub-del" onclick="event.stopPropagation();mpDeleteTrack(${JSON.stringify(t.file).replace(/"/g,'&quot;')})" title="Delete"><i class="fas fa-trash-can"></i></button>` : '';
+        const who = (t.section !== 'benyamin' && t.uploader) ? `<span class="mp-bub-who">${escapeHtml(TEAM_DISPLAY_NAMES[t.uploader] || t.uploader)}</span>` : '';
+        return `<div class="playlist-track-item${playing ? ' playing' : ''}${cur ? ' picked-cur' : ''}" style="--i:${Math.min(i,8)}" onclick="mpPlayFromQueue(${i})">
+            <div class="playlist-track-icon${playing ? ' px-on' : ''}">${playing ? '<span class="pl-px"></span>' : '<i class="fas fa-music"></i>'}</div>
+            <div class="playlist-track-title" dir="auto">${escapeHtml(t.title)}</div>${who}${del}
+        </div>`; }).join('') : `<div class="mp-bub-empty" dir="auto">${escapeHtml(emptyMsg)}</div>`}</div>`;
+    const headHtml = (title, count, back) => `<div class="mp-al-head">${back ? '<button type="button" class="mp-al-back" onclick="mpBackToAlbums()" aria-label="Back"><i class="fas fa-chevron-left"></i></button>' : ''}<span class="mp-pl-title" dir="auto"><i class="fas fa-music"></i> ${escapeHtml(title)}</span><span class="mp-pl-count">${count}</span></div>`;
 
-    let queue = benAll;   // nothing tapped yet: next / previous walk through Benyamin's songs
-    const albumsHtml = BENYAMIN_ALBUMS.map(al => {
-        const name = l === 'fa' ? al.fa : (l === 'es' ? al.es : al.en);
-        const sub = l === 'fa' ? al.subFa : al.subEn;
-        const mine = benAll.filter(t => t.albumId === al.id);
-        const open = sel === al.id;
-        if(open) queue = mine;
-        const cover = mpAlbumCoverUrl(al.id);
-        const artStyle = cover ? `background:url('${cover}') center/cover no-repeat;` : `background:${al.grad};`;
-        const edit = canCover ? `<span class="mp-album-edit" role="button" tabindex="0" title="${escapeHtml(mpT('coverAdd'))}" onclick="event.stopPropagation();mpPickAlbumCover('${al.id}')"><i class="fas fa-camera"></i></span>` : '';
-        return `
-            <div class="mp-album-wrap${open ? ' open' : ''}">
-                <button type="button" class="mp-album-card${open ? ' active' : ''}${cover ? ' has-cover' : ''}" onclick="mpSelectAlbum('${al.id}')">
-                    <div class="mp-album-art" style="${artStyle}">
-                        <span class="mp-album-yr">${escapeHtml(al.year)}</span>
-                        ${cover ? '' : '<i class="fas fa-compact-disc"></i>'}
-                        <span class="mp-album-cnt">${mine.length}</span>
-                        ${edit}
-                    </div>
-                    <div class="mp-album-name" dir="auto">${escapeHtml(name)}</div>
-                    <div class="mp-album-sub" dir="auto">${escapeHtml(sub)}</div>
-                </button>
-                ${open ? popHtml(name, mine, '', mpT('emptyAlbum')) : ''}
-            </div>`;
-    }).join('');
-
-    const commOpen = sel === 'community';
-    let commPop = '';
-    if(commOpen){
+    let queue, html;
+    if(mpPlMode === 'default'){
+        queue = siteAll;
+        html = headHtml(mpT('siteDefault'), siteAll.length || (PLAYLIST.length ? 0 : '…'), false) + rowsHtml(siteAll, mpT('emptyAlbum'));
+    } else if(sel === 'all'){
+        // the albums, one by one, each with its cover
+        queue = benAll;
+        const cards = BENYAMIN_ALBUMS.map((al,i) => {
+            const name = l === 'fa' ? al.fa : (l === 'es' ? al.es : al.en);
+            const n = benAll.filter(t => t.albumId === al.id).length;
+            const cover = mpAlbumCoverUrl(al.id);
+            const artStyle = cover ? `background:url('${cover}') center/cover no-repeat;` : `background:${al.grad};`;
+            const edit = canCover ? `<span class="mp-al-edit" role="button" tabindex="0" title="${escapeHtml(mpT('coverAdd'))}" onclick="event.stopPropagation();mpPickAlbumCover('${al.id}')"><i class="fas fa-camera"></i></span>` : '';
+            return `<button type="button" class="mp-al-card" style="--i:${i}" onclick="mpSelectAlbum('${al.id}')"><span class="mp-al-art" style="${artStyle}">${cover ? '' : '<i class="fas fa-compact-disc"></i>'}<span class="mp-al-cnt">${n}</span>${edit}</span><span class="mp-al-name" dir="auto">${escapeHtml(name)}</span></button>`;
+        }).join('');
+        const comm = `<button type="button" class="mp-al-card" style="--i:${BENYAMIN_ALBUMS.length}" onclick="mpSelectAlbum('community')"><span class="mp-al-art" style="background:linear-gradient(135deg,var(--primary),var(--accent));"><i class="fas fa-users"></i><span class="mp-al-cnt">${commAll.length}</span></span><span class="mp-al-name" dir="auto">${escapeHtml(mpT('tabCommunity'))}</span></button>`;
+        html = `<div class="mp-al-grid">${cards}${comm}</div>`;
+    } else if(sel === 'community'){
         const uploaders = [...new Set(commAll.map(t => t.uploader).filter(Boolean))];
         const filtered = commAll.filter(t => mpSelectedUploader === 'all' || t.uploader === mpSelectedUploader);
         queue = filtered;
@@ -811,47 +769,29 @@ function renderMusicPage(){
                 <button type="button" class="mp-fchip${mpSelectedUploader==='all'?' active':''}" onclick="mpSelectUploader('all')">${escapeHtml(mpT('allUsers'))}</button>
                 ${uploaders.map(u=>`<button type="button" class="mp-fchip${mpSelectedUploader===u?' active':''}" onclick="mpSelectUploader('${u}')"><img src="${teamLogoUrl(u)}" alt=""><span>${escapeHtml(TEAM_DISPLAY_NAMES[u]||u)}</span></button>`).join('')}
             </div>` : '';
-        commPop = popHtml(mpT('tabCommunity'), filtered, chips, mpT('emptyCommunity'));
+        html = headHtml(mpT('tabCommunity'), filtered.length, true) + chips + rowsHtml(filtered, mpT('emptyCommunity'));
+    } else {
+        const al = BENYAMIN_ALBUMS.find(x => x.id === sel);
+        const mine = benAll.filter(t => t.albumId === sel);
+        queue = mine;
+        const name = al ? (l === 'fa' ? al.fa : (l === 'es' ? al.es : al.en)) : '';
+        html = headHtml(name, mine.length, true) + rowsHtml(mine, mpT('emptyAlbum'));
     }
-    const communityHtml = `
-            <div class="mp-album-wrap${commOpen ? ' open' : ''}">
-                <button type="button" class="mp-album-card mp-album-community${commOpen ? ' active' : ''}" onclick="mpSelectAlbum('community')">
-                    <div class="mp-album-art" style="background:linear-gradient(135deg,var(--primary),var(--accent));">
-                        <i class="fas fa-users"></i>
-                        <span class="mp-album-cnt">${commAll.length}</span>
-                    </div>
-                    <div class="mp-album-name" dir="auto">${escapeHtml(mpT('tabCommunity'))}</div>
-                    <div class="mp-album-sub" dir="auto">${escapeHtml(mpT('secCommunity'))}</div>
-                </button>
-                ${commPop}
-            </div>`;
-    // ---- "Site Default Musics": the songs that belong to the site (the Profile playlist); tapping the bubble opens their list ----
-    const siteOpen = sel === 'site';
-    const siteAll = (PLAYLIST.length ? profileIdxList() : []).map(i => ({ src: PLAYLIST[i].src, title: PLAYLIST[i].title, file: mpExtractFilename(PLAYLIST[i].src), noDel: true }));
-    let sitePop = '';
-    if(siteOpen){
-        queue = siteAll;
-        sitePop = popHtml(mpT('siteDefault'), siteAll, '', mpT('emptyAlbum'));
-        if(!PLAYLIST.length && typeof loadPlaylistFromGitHub === 'function') loadPlaylistFromGitHub().then(() => { if(mpSelectedAlbum === 'site') renderMusicPage(); });
-    }
-    const listHtml = sel === 'all' ? `<div class="mp-hint"><i class="fas fa-hand-pointer"></i><span dir="auto">${escapeHtml(mpT('tapAlbum'))}</span></div>` : '';
     mpQueue = queue;
 
-    const siteSlot = document.getElementById('mp-site-slot');
-    if(siteSlot) siteSlot.innerHTML = `
-        <div class="mp-album-wrap mp-site-wrap${siteOpen ? ' open' : ''}">
-            <button type="button" class="mp-ben-hero mp-site-card" onclick="mpSelectAlbum('site')" aria-expanded="${siteOpen}">
-                <span class="mp-site-ic"><i class="fas fa-music"></i></span>
-                <span class="mp-site-txt"><span class="mp-ben-name" dir="auto">${escapeHtml(mpT('siteDefault'))}</span></span>
-                <span class="mp-site-cnt">${siteAll.length || (PLAYLIST.length ? 0 : '…')}</span>
-                <i class="fas fa-chevron-down mp-site-chev"></i>
-            </button>
-            ${sitePop}
-        </div>`;
-    body.innerHTML = `
-        <div class="mp-albums-grid">${albumsHtml}${communityHtml}</div>
-        ${listHtml}`;
-    mpPlaceAlbumPop();
+    // the Default | Albums switch
+    const seg = document.getElementById('mp-pl-seg');
+    if(seg){
+        seg.style.setProperty('--si', mpPlMode === 'albums' ? 1 : 0);
+        const bd = document.getElementById('mp-seg-default'), ba = document.getElementById('mp-seg-albums');
+        if(bd){ bd.textContent = mpT('plDefault'); bd.classList.toggle('active', mpPlMode === 'default'); }
+        if(ba){ ba.textContent = mpT('plAlbums'); ba.classList.toggle('active', mpPlMode === 'albums'); }
+    }
+    if(!stage) return;
+    const oldList = stage.querySelector('.mp-pl-list'), keep = (!mpStageAnim && oldList) ? oldList.scrollTop : 0;
+    stage.innerHTML = html;
+    if(mpStageAnim){ mpStageAnim = false; stage.classList.remove('mp-stage-in'); void stage.offsetWidth; stage.classList.add('mp-stage-in'); clearTimeout(stage._t); stage._t = setTimeout(() => stage.classList.remove('mp-stage-in'), 1200); stage.scrollTop = 0; }
+    else { const nl = stage.querySelector('.mp-pl-list'); if(nl && keep) nl.scrollTop = keep; }
 }
 
 function mpPlayFromQueue(idx){
@@ -1200,6 +1140,7 @@ async function mpSubmitUpload(){
                 : (failedCount ? `${uploadedCount} uploaded (${failedCount} failed)` : `${uploadedCount} song(s) uploaded!`);
             showToast(okMsg, failedCount ? 'info' : 'success', 2800);
             closeMusicUploadModal();
+            mpPlMode = 'albums'; mpStageAnim = true;
             mpSelectedAlbum = albumId || 'community';
             mpRevealList = true; mpAnimNext = true;
             renderMusicPage();
