@@ -744,34 +744,29 @@ function renderMagazine(issue) {
     // ---- interview (fictional, one team per issue): a little scene with bubbles; after a bad week it ends in a walk-out ----
     const iv = issue.interview;
     const qa = (iv && iv.qAndA) || [];
+    const ivReporter = iv && iv.v2 ? (iv.reporterName || 'پیتر پرکار') : MAG_REPORTER.name;
+    const ivReporterRole = iv && iv.v2 ? 'خبرنگار روزنامهٔ دیلی HARFS' : MAG_REPORTER.role;
+    const ivCoach = iv ? magNoEmoji(iv.intervieweeName || teamLabel(iv.team)) : '';
+    // Printed press-conference transcript (not a chat): masthead, headline, byline, then question / answer paragraphs.
     const interviewSection = iv ? `
-        <div class="magazine-page magazine-interview">
+        <div class="magazine-page magazine-interview mpr">
             <h2 class="magazine-section-title"><i class="fas fa-microphone"></i> پشت میکروفون</h2>
-            <div class="mi-people">
-                <div class="mi-person">
-                    <span class="mi-ava mi-ava-q mi-ava-big"><i class="fas fa-microphone"></i></span>
-                    <div><b>${MAG_REPORTER.name}</b><small>${MAG_REPORTER.role}</small></div>
+            <article class="mpr-paper">
+                <div class="mpr-mast"><span class="mpr-mast-name">DAILY HARFS</span><span class="mpr-mast-tag">گفتگوی ویژه پس از بازی</span></div>
+                ${iv.headline ? `<h3 class="mpr-headline">${escapeHtml(magNoEmoji(iv.headline))}</h3>` : ''}
+                <div class="mpr-byline">
+                    <img src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
+                    <span><b>${escapeHtml(ivCoach)}</b> · ${escapeHtml(magNoEmoji(iv.intervieweeRole || 'سرمربی'))} ${teamLabel(iv.team)}</span>
+                    <span class="mpr-byline-sep"></span>
+                    <span>گفتگو: <b>${escapeHtml(ivReporter)}</b>، ${escapeHtml(ivReporterRole)}</span>
                 </div>
-                <span class="mi-people-sep">با</span>
-                <div class="mi-person">
-                    <img class="mi-ava mi-ava-big" src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
-                    <div><b>${escapeHtml(magNoEmoji(iv.intervieweeName || teamLabel(iv.team)))}</b><small>${escapeHtml(magNoEmoji(iv.intervieweeRole || ''))} · ${teamLabel(iv.team)}</small></div>
+                ${iv.scene ? `<p class="mpr-scene">${escapeHtml(magNoEmoji(iv.scene))}</p>` : ''}
+                <div class="mpr-body">
+                    ${qa.map((x, i) => `
+                    <p class="mpr-q" style="--i:${i * 2}"><span class="mpr-who">${escapeHtml(ivReporter)}</span>${escapeHtml(magNoEmoji(x.question))}</p>
+                    <p class="mpr-a" style="--i:${i * 2 + 1}"><span class="mpr-who mpr-who-coach">${escapeHtml(ivCoach)}</span>${x.stage ? `<em class="mpr-stage">(${escapeHtml(magNoEmoji(String(x.stage).replace(/^\(|\)$/g, '')))})</em> ` : ''}${escapeHtml(magNoEmoji(x.answer))}</p>`).join('')}
                 </div>
-            </div>
-            ${iv.headline ? `<div class="magazine-interview-headline">${escapeHtml(magNoEmoji(iv.headline))}</div>` : ''}
-            ${iv.scene ? `<div class="mi-scene">${escapeHtml(magNoEmoji(iv.scene))}</div>` : ''}
-            <div class="mi-chat">
-                ${qa.map((x, i) => {
-                    const last = i === qa.length - 1, angry = !!iv.walkedOut && i >= qa.length - 2;
-                    return `
-                <div class="mi-row mi-q" style="--i:${i * 2}"><span class="mi-ava mi-ava-q"><i class="fas fa-microphone"></i></span><div class="mi-bubble"><span class="mi-who">${MAG_REPORTER.name}</span>${escapeHtml(magNoEmoji(x.question))}</div></div>
-                <div class="mi-row mi-a${angry ? ' angry' : ''}${iv.walkedOut && last ? ' last-angry' : ''}" style="--i:${i * 2 + 1}">
-                    <img class="mi-ava" src="${teamLogoUrl(iv.team)}" alt="" draggable="false" onerror="this.style.visibility='hidden'">
-                    <div class="mi-bubble">${x.stage ? `<em class="mi-stage">(${escapeHtml(magNoEmoji(String(x.stage).replace(/^\(|\)$/g, '')))})</em>` : ''}${escapeHtml(magNoEmoji(x.answer))}</div>
-                </div>`;
-                }).join('')}
-                ${iv.walkedOut ? `<div class="mi-exit" style="--i:${qa.length * 2}"><span>${escapeHtml(magNoEmoji(iv.exitNote) || (iv.team==='Yellow' ? 'خانم سرمربی مؤدبانه از حاضرین تشکر کرد و جلسه را به پایان رساند.' : 'مصاحبه‌شونده عصبانی شد و جلسه را ترک کرد.'))}</span></div>` : ''}
-            </div>
+            </article>
         </div>` : '';
 
     // ---- week type: both | league_only | cup_only | quiet (older issues: undefined = league layout) ----

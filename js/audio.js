@@ -288,7 +288,7 @@ const BENYAMIN_ALBUMS = [
 
 const MP_STRINGS = {
     en: {
-        title:'HARFS Music', upload:'Upload', selectSong:'Select a song to play', homeSub:'Benyamin Bahadori & Community',
+        title:'MUSIC', upload:'Upload', selectSong:'Select a song to play', homeSub:'Benyamin Bahadori & Community',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Community', tabAll:'All',
         bgGlow:'Background glow', library:'Albums & Search', search:'Search song or artist...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
         tapAlbum:'Tap an album to see its songs', coverAdd:'Change cover', coverDone:'Album cover saved', coverFail:'Could not save the cover', playAll:'Play All', addBenyamin:'Add Track', addToAlbum:'Add song to this album', tracks:'tracks', track:'track',
@@ -312,7 +312,7 @@ const MP_STRINGS = {
         delConfirm:'این آهنگ از کتابخانه موزیک حذف شود؟'
     },
     es: {
-        title:'HARFS Música', upload:'Subir', selectSong:'Elige una canción', homeSub:'Benyamin Bahadori y Comunidad',
+        title:'MUSIC', upload:'Subir', selectSong:'Elige una canción', homeSub:'Benyamin Bahadori y Comunidad',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Comunidad', tabAll:'Todas',
         bgGlow:'Brillo de fondo', library:'Álbumes y búsqueda', search:'Buscar canción o artista...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
         tapAlbum:'Toca un álbum para ver sus canciones', coverAdd:'Cambiar portada', coverDone:'Portada guardada', coverFail:'No se pudo guardar la portada', playAll:'Reproducir todo', addBenyamin:'Añadir canción', addToAlbum:'Añadir canción a este álbum', tracks:'canciones', track:'canción',
@@ -949,7 +949,7 @@ function mpSyncPlayerUI(){
         tEl.classList.remove('swap'); void tEl.offsetWidth; tEl.classList.add('swap');
     }
     const aEl = document.getElementById('mp-now-artist'); if(aEl) aEl.textContent = artist;
-    const bEl = document.getElementById('mp-now-badge'); if(bEl) bEl.textContent = badge;
+    
     const stage = document.getElementById('hmp-stage'); if(stage) stage.classList.toggle('playing', playing);   // drives the LED equaliser
     // a song with a cover shows its picture (whole, rounded) and the pixel effect is switched off
     const coverUrl = (enriched && enriched.albumId) ? mpAlbumCoverUrl(enriched.albumId) : '';

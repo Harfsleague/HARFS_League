@@ -29,6 +29,15 @@ const RAW_BASE = `https://raw.githubusercontent.com/${DATA_REPO}/${DATA_BRANCH}/
 const API_BASE = `https://api.github.com/repos/${DATA_REPO}/contents/`;
 
 const TEAM_NAMES = ["HOSI", "Sezar", "Bayern", "Yellow"];
+// Fixed head coaches of the post-match interview (internal team key -> name). Fictional characters of this league whose names and
+// manners are inspired by the real coaches; the same person is interviewed every time, never a made-up name.
+const COACHES = {
+  HOSI: { name: "خوزه مورینیو", team: "Mess" },
+  Bayern: { name: "ونسان کمپانی", team: "Azar" },
+  Sezar: { name: "پپ گواردیولا", team: "FC Gilas" },
+  Yellow: { name: "نیفانی تیتاریتو", team: "NMIYA" },
+};
+const REPORTER_NAME = "پیتر پرکار";
 
 // The cover every issue gets (and what the client shows for any issue without
 // one). It already sits in the HARFS_Data repo alongside the team logos, so it
@@ -660,16 +669,24 @@ function computeRankChanges(history) {
 
 // What happened to the interviewed team this week — decides (here, not by the AI) whether the interview ends with a walk-out.
 //   2+ defeats in the window -> the interviewee gets angry at a tough question and leaves.
-function computeInterviewContext(team, matches, rankChange) {
+function computeInterviewContext(team, matches, rankChange, olderMatches) {
   const mine = (matches || [])
     .filter((m) => m.home === team || m.away === team)
     .map((m) => ({ opponent: m.home === team ? m.away : m.home, home: m.home === team, score: m.score, result: resultForTeam(team, m) }))
     .filter((r) => r.result);
   const count = (x) => mine.filter((r) => r.result === x).length;
   const wins = count("W"), draws = count("D"), losses = count("L");
-  const walkout = losses >= 2;
+  // consecutive league defeats going back from the latest game (this week's games first, then the older ones) — may span several weeks
+  const chain = [...(matches || []), ...(olderMatches || [])]
+    .filter((m) => (m.home === team || m.away === team) && resultForTeam(team, m))
+    .sort((a, b) => Date.parse(b.timestamp || 0) - Date.parse(a.timestamp || 0));
+  let lossStreak = 0;
+  for (const m of chain) { if (resultForTeam(team, m) === "L") lossStreak++; else break; }
+  // the coach walks out after 2+ defeats IN A ROW (decided here from the results, never by the AI)
+  const walkout = lossStreak >= 2;
   const mood = walkout ? "furious_after_defeats" : losses === 0 && wins >= 2 ? "cocky_after_wins" : mine.length ? "mixed" : "quiet_week";
-  return { team, gamesThisWeek: mine, wins, draws, losses, walkout, mood, rankChange: rankChange || null };
+  const c = COACHES[team] || {};
+  return { team, coachName: c.name || null, gamesThisWeek: mine, wins, draws, losses, lossStreak, walkout, mood, rankChange: rankChange || null };
 }
 
 async function gatherData(lastIssue) {
@@ -757,6 +774,37 @@ async function gatherData(lastIssue) {
 // #1 -> TEAM_NAMES[0], #2 -> TEAM_NAMES[1], ..., #5 -> TEAM_NAMES[0] again.
 function computeInterviewTeam(issueNumber) {
   return TEAM_NAMES[(issueNumber - 1) % TEAM_NAMES.length];
+}
+
+// What the coaches said in earlier issues: (a) the last 4 interviews, so a coach can needle another one about it, and
+// (b) every earlier question, so the reporter never asks the same thing twice.
+function buildPreviousInterviews(archive) {
+  const cut = (t, n) => String(t || "").replace(/\s+/g, " ").trim().slice(0, n);
+  const withIv = (archive || []).filter((i) => i.interview && Array.isArray(i.interview.qAndA) && i.interview.qAndA.length);
+  const previousInterviews = withIv.slice(0, 4).map((i) => ({
+    issueNumber: i.issueNumber,
+    team: i.interview.team,
+    coachName: COACHES[i.interview.team]?.name || i.interview.intervieweeName || null,
+    headline: cut(i.interview.headline, 120),
+    whatHeSaid: i.interview.qAndA.slice(0, 5).map((x) => cut(x.answer, 240)),
+  }));
+  const previousInterviewQuestions = withIv.slice(0, 24).flatMap((i) => i.interview.qAndA.map((x) => cut(x.question, 160)));
+  return { previousInterviews, previousInterviewQuestions };
+}
+
+// Drops any new question that is (nearly) a repeat of an earlier one, keeping at least 3 Q&As.
+function dedupeInterviewQuestions(iv, previousQuestions) {
+  if (!iv || !Array.isArray(iv.qAndA)) return;
+  const toks = (t) => new Set(String(t || "").replace(/[\u200c\u200f.,؟?!«»"'،؛:()\-]/g, " ").split(/\s+/).filter((w) => w.length > 2));
+  const sim = (a, b) => { const A = toks(a), B = toks(b); if (!A.size || !B.size) return 0; let n = 0; for (const w of A) if (B.has(w)) n++; return n / (A.size + B.size - n); };
+  const seen = [...(previousQuestions || [])];
+  const kept = [];
+  for (const x of iv.qAndA) {
+    const dup = seen.some((q) => sim(q, x.question) >= 0.6);
+    if (dup && iv.qAndA.length - (iv.qAndA.indexOf(x) + 1) + kept.length >= 3) { console.log("Dropped a repeated interview question:", x.question); continue; }
+    kept.push(x); seen.push(x.question);
+  }
+  iv.qAndA = kept;
 }
 
 // A short digest of the last few issues so the new issue doesn't repeat the
@@ -926,13 +974,13 @@ const MAGAZINE_SCHEMA = {
       description: "یک مصاحبهٔ کاملاً خیالی (ساخته‌ذهن نویسنده، نه واقعی) و تا حدی طنز با یکی از اعضای تیمی که در دیتا با کلید interviewTeam مشخص شده — این تیم از قبل تعیین شده، تو فقط شخصیت و پاسخ‌ها را خلق می‌کنی.",
       properties: {
         team: { type: "string", description: "دقیقاً همان مقدار interviewTeam در دیتای ورودی" },
-        intervieweeRole: { type: "string", description: "نقش شخصیت مصاحبه‌شونده: مثلاً «بازیکن»، «کاپیتان» یا «سرمربی» — خودت انتخاب کن" },
-        intervieweeName: { type: "string", description: "یک نام خیالی و بامزه برای این شخصیت (چون بازیکن‌های واقعی و اسم‌هایشان در دیتا نیست، این کاملاً از خودت است)" },
-        headline: { type: "string", description: "یک تیتر کوتاه و بامزه برای این مصاحبه" },
+        intervieweeRole: { type: "string", description: "همیشه «سرمربی»" },
+        intervieweeName: { type: "string", description: "دقیقاً همان interviewContext.coachName؛ نام را تغییر نده" },
+        headline: { type: "string", description: "یک تیتر کوتاه روزنامه‌ای از یک جملهٔ جنجالی یا خاص خود مربی در همین مصاحبه" },
         scene: { type: "string", description: "یک یا دو جملهٔ صحنه‌چینی کوتاه و سینمایی: کجا، چه حال‌وهوایی، شخصیت با چه قیافه‌ای پشت میز نشسته (مثلاً «مصاحبه در راهروی باشگاه، بعد از تمرین عصر»)" },
         qAndA: {
           type: "array",
-          description: "۴ تا ۶ دیالوگ پرسش و پاسخ خیالی و طنزآمیز، با اشاره‌های ظریف به وضعیت واقعی تیم (نتایج این هفته در interviewContext، جدول، فرم اخیر، تغییر رتبه). مصاحبه باید مثل یک صحنهٔ زنده باشد: حالت و واکنش شخصیت در stage بیاید. اگر interviewContext.walkout برابر true است، اولین دیالوگ‌ها آرام‌اند و بعد یک سؤال چالشی دربارهٔ دو باخت می‌آید که او را عصبانی می‌کند؛ پاسخ آخر نیمه‌تمام و پرخاشگرانه است و او جلسه را ترک می‌کند.",
+          description: "۴ تا ۶ دیالوگ پرسش و پاسخ خیالی و طنزآمیز، با اشاره‌های ظریف به وضعیت واقعی تیم (نتایج این هفته در interviewContext، جدول، فرم اخیر، تغییر رتبه). مصاحبه باید مثل یک صحنهٔ زنده باشد: حالت و واکنش شخصیت در stage بیاید. اگر interviewContext.walkout برابر true است، مربی به‌تدریج عصبی‌تر می‌شود و آخرین پاسخ کوتاه و تند است و با حالتی مثل بلند شدن از جا (در stage) مصاحبه را قطع می‌کند؛ جملهٔ جداگانه‌ای دربارهٔ ترک جلسه ننویس.",
           items: {
             type: "object",
             properties: {
@@ -943,7 +991,6 @@ const MAGAZINE_SCHEMA = {
             required: ["question", "answer"],
           },
         },
-        exitNote: { type: "string", description: "فقط وقتی interviewContext.walkout برابر true است: یک جملهٔ توصیفی دربارهٔ ترک جلسه (مثلاً «او میکروفون را روی میز می‌کوبد و از در بیرون می‌رود»). در غیر این صورت رشتهٔ خالی." },
       },
       required: ["team", "intervieweeRole", "intervieweeName", "headline", "scene", "qAndA"],
     },
@@ -1005,13 +1052,13 @@ const SYSTEM_PROMPT = `تو دبیر «مجله هفتگی HARFS» هستی — 
 
 دربارهٔ تغییر رتبه‌ها: در دیتا rankChanges نشان می‌دهد هر تیم نسبت به هفتهٔ قبل چند پله بالا یا پایین آمده یا ثابت مانده (delta). فقط در standingsCommentary به این جابه‌جایی‌ها اشاره کن (مثلاً «Bayern یک پله صعود کرد و دوم شد»)، فقط بر اساس همان delta؛ در matchReport و بخش‌های دیگر تکرارشان نکن. اپ کنار رتبهٔ هر تیم فلش سبز (صعود)، قرمز (سقوط) یا خط خاکستری (ثابت) می‌گذارد و یک نمودار خطی از رتبهٔ هر تیم در طول فصل (rankHistory) نشان می‌دهد؛ پس هیچ‌وقت خودت جدول یا نمودار متنی نساز.
 
-دربارهٔ مصاحبه (جذاب و زنده بنویس): interviewContext نتایج همین هفتهٔ تیم مصاحبه‌شونده است. مصاحبه مثل یک صحنهٔ واقعی باشد: scene، دیالوگ‌های کوتاه، واکنش‌های stage و لحن شخصیت متناسب با mood. اگر interviewContext.walkout برابر true باشد (تیم این هفته ۲ باخت یا بیشتر داشته)، چند دیالوگ اول آرام و شوخ باشد، بعد خبرنگار یک سؤال چالشی و تلخ دربارهٔ باخت‌ها بپرسد، شخصیت عصبانی شود، پاسخ آخرش نیمه‌کاره و تند باشد و در exitNote جلسه را ترک کند. اگر walkout برابر false است، مصاحبه تا آخر کامل شود و exitNote رشتهٔ خالی باشد. mood=cocky_after_wins یعنی شخصیت از برد خوشحال و کمی از خودراضی است. هیچ نتیجه یا عددی خارج از interviewContext و دیتا نساز.
+دربارهٔ مصاحبه (جذاب و زنده بنویس): interviewContext نتایج همین هفتهٔ تیم مصاحبه‌شونده است. مصاحبه مثل یک مصاحبهٔ مطبوعاتی واقعی باشد: scene، سؤال‌های خبرنگار، واکنش‌های stage و لحن مربی متناسب با mood. اگر interviewContext.walkout برابر true باشد (تیم باخت‌های پیاپی دارد)، مربی از اول کمی سردتر است، با هر سؤال عصبی‌تر می‌شود و آخرین پاسخش کوتاه و تند است و با stage مثل «بلند می‌شود» مصاحبه را قطع می‌کند؛ جملهٔ جداگانه‌ای دربارهٔ ترک جلسه نمی‌نویسی. اگر walkout برابر false است، مصاحبه تا آخر کامل شود. mood=cocky_after_wins یعنی مربی از برد خوشحال و کمی از خودراضی است. هیچ نتیجه یا عددی خارج از interviewContext و دیتا نساز.
 
-در تمام بخش‌های مصاحبه (headline، scene، question، stage، answer و exitNote) هیچ ایموجی و شکلک ننویس؛ فقط متن ساده. نام خبرنگار مصاحبه «آرش بهرامی» است و می‌تواند یک بار در مصاحبه خطاب شود.
+در تمام بخش‌های مصاحبه (headline، scene، question، stage و answer) هیچ ایموجی و شکلک ننویس؛ فقط متن ساده. خبرنگار مصاحبه «پیتر پرکار» است و فقط خودش را خبرنگار روزنامهٔ «دیلی HARFS» می‌داند (نه چیز دیگری)؛ می‌تواند یک بار در مصاحبه خطاب شود.
 
 در lineupSuggestions برای هر چهار تیم یک پیشنهاد ترکیب بده (مثلاً تیمی که زیاد گل خورده 5-3-2 یا 4-5-1، تیمی که کم گل زده 4-2-3-1 یا 4-3-3). فقط بر اساس دیتا استدلال کن و نام بازیکن نساز. این پیشنهاد در بخش «توصیه‌های این هفته» نمایش داده می‌شود.
 
-دربارهٔ سرمربی NMIYA: هر وقت در هر بخشی از مجله (گزارش، تحلیل، مصاحبه، توصیه‌ها و غیره) از سرمربی یا مربی تیم NMIYA حرف می‌زنی، او همیشه یک «خانم» است و باید با ضمیر و صفت‌های مؤنث و عنوان‌هایی مثل «خانم سرمربی» به او اشاره شود. شخصیتش همیشه منطقی، آرام، مؤدب و محترمانه است: حتی بعد از باخت یا در سؤال تلخ، با استدلال و ادب حرف می‌زند و هرگز بی‌ادبی، داد و فریاد یا تهمت نمی‌زند. اگر او مصاحبه‌شونده باشد و walkout برابر true باشد، به‌جای عصبانیت و قهر، جلسه را آرام و مؤدبانه و با ذکر دلیل تمام می‌کند (مثلاً به‌خاطر جلسهٔ تحلیل بازی). نام این شخصیت را خودت می‌سازی (یک نام زنانهٔ فارسی) و در طول یک شماره ثابت نگه می‌داری.
+دربارهٔ سرمربی NMIYA: هر وقت در هر بخشی از مجله (گزارش، تحلیل، مصاحبه، توصیه‌ها و غیره) از سرمربی یا مربی تیم NMIYA حرف می‌زنی، او همیشه یک «خانم» است و باید با ضمیر و صفت‌های مؤنث و عنوان‌هایی مثل «خانم سرمربی» به او اشاره شود. شخصیتش همیشه منطقی، آرام، مؤدب و محترمانه است: حتی بعد از باخت یا در سؤال تلخ، با استدلال و ادب حرف می‌زند و هرگز بی‌ادبی، داد و فریاد یا تهمت نمی‌زند. اگر او مصاحبه‌شونده باشد و walkout برابر true باشد، به‌جای عصبانیت و قهر، جلسه را آرام و مؤدبانه و با ذکر دلیل تمام می‌کند (مثلاً به‌خاطر جلسهٔ تحلیل بازی). نام او همیشه «نیفانی تیتاریتو» است (interviewContext.coachName).
 
 قاعدهٔ عدم تکرار (بسیار مهم): هر اطلاعات فقط و فقط در یک بخش گفته شود. تقسیم کار این است: جدول و نمودار خودشان اعداد را نشان می‌دهند؛ رتبه، امتیاز و جابه‌جایی رتبه‌ها فقط در standingsCommentary؛ نتیجهٔ بازی‌ها و صحنه‌هایشان فقط در matchReport (و برای CUP در cupReport)؛ رکوردهای عددی فقط در کارت‌های recordsAndOddities؛ بخش‌های titleRaceCommentary، playerSpotlights، recommendations، lineupSuggestions، fixturePreviews، scheduleOutlook، interview و funnyClosing نباید رتبه، امتیاز، فاصله تا صدر یا نتیجهٔ بازی‌های هفته را دوباره بگویند. جمله‌ای که چیزی به مطلب نمی‌افزاید، مقدمه‌چینی، جمع‌بندی تکراری و حرف‌های کلی («در این هفتهٔ پرهیجان…») ننویس. اگر برای بخشی که فیلدش می‌تواند خالی باشد (standingsCommentary، titleRaceCommentary) حرف تازه‌ای نداری، رشتهٔ خالی "" بگذار تا فقط جدول و نمودار نمایش داده شود، یا دربارهٔ چیز دیگری (فرم، روند، حاشیه‌ها) حرف بزن. پاسخ‌ها را کوتاه و فشرده نگه دار.
 
@@ -1027,8 +1074,28 @@ const GRIEVANCE_PROMPT = `نکتهٔ یک‌بارمصرف دربارهٔ مصا
 // Azar's (internal name: Bayern) interview always contains one famous Johan Cruyff line. The two wordings below are real, well-known
 // quotes — the model must use one of them as written (no invented quotes), and credit Cruyff by name.
 const CRUYFF_PROMPT = `نکتهٔ مصاحبهٔ Azar (چون interviewTeam برابر Bayern است): در این مصاحبه، مصاحبه‌شونده باید دقیقاً یک بار، در یکی از پاسخ‌ها و به‌صورت طبیعی، یک جملهٔ معروف از یوهان کرویف (Johan Cruyff) را نقل کند و صریحاً بگوید که از کرویف است (مثلاً «به قول یوهان کرویف…»). فقط یکی از این دو جمله را، بدون تغییر در معنی، استفاده کن و جملهٔ دیگری به کرویف نسبت نده: (الف) «فوتبال بازی کردن خیلی ساده است، اما ساده بازی کردن سخت‌ترین کار دنیاست.» (ب) «کیفیت بدون نتیجه بی‌معناست، و نتیجه بدون کیفیت کسل‌کننده است.» اگر در previousIssuesSummary مصاحبهٔ قبلی Azar یکی از این دو را آورده بود، دیگری را انتخاب کن. جمله را به گفتگو و وضعیت واقعی تیم (نتایج همین هفته در interviewContext) گره بزن.`;
+
+// Post-match interview, format 2: permanent coaches, the Daily HARFS reporter, no repeated questions, digs at earlier interviews, real walk-outs.
+const INTERVIEW_V2_PROMPT = `قالب مصاحبه (این بخش بر هر قاعدهٔ قدیمی‌تر دربارهٔ مصاحبه، نام مصاحبه‌شونده و نام خبرنگار اولویت دارد):
+
+۱) مصاحبه‌شونده همیشه سرمربی تیم است و اسمش ثابت است و در interviewContext.coachName آمده؛ همان را intervieweeName و «سرمربی» را intervieweeRole بگذار: Mess = خوزه مورینیو، Azar = ونسان کمپانی، FC Gilas = پپ گواردیولا، NMIYA = نیفانی تیتاریتو. این‌ها شخصیت‌های خیالیِ دنیای این لیگ‌اند که از مربیان معروف الهام گرفته‌اند؛ پس لحن، عادت‌های کلامی، شوخ‌طبعی و سبک واقعیِ مصاحبه‌های آن مربی‌ها را بازسازی کن (طفره رفتن، طعنه، مکث، جواب‌های کوتاه یا بلند، حرف زدن دربارهٔ فلسفهٔ فوتبال، داور، فشار رسانه‌ها و غیره). جملهٔ واقعیِ آن‌ها را عیناً نقل نکن و چیزی را واقعی جا نزن.
+
+۲) خبرنگار «پیتر پرکار» است و فقط خودش را خبرنگار روزنامهٔ «دیلی HARFS» می‌داند؛ هیچ سمت یا نهاد دیگری برای خودش نمی‌گوید. سؤال‌ها مثل سؤال یک خبرنگار واقعی باشند: گاهی کوتاه، گاهی با یک مقدمهٔ کوتاه، گاهی دنبالهٔ حرف مربی و گاهی تلخ.
+
+۳) سؤال‌ها هر هفته کاملاً تازه‌اند: همهٔ سؤال‌های قبلی در previousInterviewQuestions آمده؛ هیچ‌کدام را (حتی با کمی تغییر) تکرار نکن و زاویهٔ سؤال‌ها را از نتایج همین هفته، جدول، بازی بعد، حرف‌های مربیان دیگر و موضوع‌های تازه بگیر.
+
+۴) تیکه به مربیان دیگر: previousInterviews مصاحبه‌های هفته‌های قبل را دارد (whatHeSaid = حرف‌هایی که آن مربی زده). مربی می‌تواند به حرف مربی‌های دیگر در هفته‌های قبل واکنش نشان بدهد و وسط حرف‌هایش در حد یک جمله تیکه بیندازد (طبیعی و بدون توضیح اضافه؛ نه نقل کامل). اگر هنوز مصاحبهٔ قبلی‌ای نیست، به رقابت کلی‌شان اشاره کن. فقط چیزی را به دیگری نسبت بده که در previousInterviews هست یا نظر شخصی خود مربی است؛ نتیجه یا واقعهٔ ساختگی نساز.
+
+۵) شخصیت‌ها:
+- خوزه مورینیو (Mess): زبانش خیلی تند و نیش‌دار است؛ طعنه، غرور، کنایه، گله از داور و رسانه، جملهٔ کوتاه و ضربه‌ای. در هر مصاحبه با پپ گواردیولا و تیم FC Gilas درگیر است و برای تیم FC Gilas حاشیه می‌سازد (کنایه، ادعا دربارهٔ امتیازهایی که به نظر او «ساده» گرفته‌اند و غیره، به‌صورت نظر شخصی و نه واقعیت ساختگی). گاهی به ونسان کمپانی هم نیش می‌زند.
+- ونسان کمپانی (Azar): آرام، خوش‌برخورد، با لبخند و فلسفی حرف می‌زند، اما در هر مصاحبه حتماً دست‌کم یک جملهٔ تحقیرآمیز (با ظاهر مؤدبانه) دربارهٔ پپ گواردیولا و تیم FC Gilas می‌گوید (مثلاً کوچک شمردن سبک و موفقیت‌هایشان).
+- پپ گواردیولا (FC Gilas): پرحرف، دقیق، علاقه‌مند به جزئیات، با اشاره به «روند» و بازیکنانش؛ بعضی مصاحبه‌ها (نه همیشه) یک جمله تیکه به خوزه مورینیو/Mess می‌اندازد.
+- نیفانی تیتاریتو (NMIYA): خانم و همیشه منطقی، آرام و مؤدب (قاعدهٔ قبلی دربارهٔ NMIYA برقرار است)؛ در مصاحبه می‌تواند خیلی کم و مؤدبانه به حرف دیگران پاسخ بدهد.
+
+۶) ترک مصاحبه: فقط وقتی interviewContext.walkout برابر true است (lossStreak یعنی تعداد باخت‌های پیاپی). آن‌وقت مصاحبه واقعی‌تر است: مربی به‌تدریج عصبی‌تر می‌شود، آخرین پاسخ کوتاه و تند است و با stage مثل «بلند می‌شود» یا «میکروفون را کنار می‌گذارد» تمام می‌شود. هیچ جملهٔ جداگانه‌ای مثل «او مصاحبه را ترک کرد» ننویس و exitNote وجود ندارد. NMIYA هم مؤدبانه، با ذکر دلیل (مثلاً جلسهٔ تحلیل بازی) تمام می‌کند.`;
+
 function systemPromptFor(data) {
-  const extra = [];
+  const extra = [INTERVIEW_V2_PROMPT];
   if (data && data.interviewTeam === "Bayern") extra.push(CRUYFF_PROMPT);
   if (data && data.interviewContext && data.interviewContext.refGrievance) extra.push(GRIEVANCE_PROMPT);
   return extra.length ? `${SYSTEM_PROMPT}\n\n${extra.join("\n\n")}` : SYSTEM_PROMPT;
@@ -1176,7 +1243,10 @@ async function main() {
   // "زیر ذره‌بین" (player spotlights) tends to repeat the other sections, so it runs every other issue: even issue numbers only.
   data.spotlightsThisWeek = issueNumber % 2 === 0;
   data.interviewTeam = computeInterviewTeam(issueNumber);
-  data.interviewContext = computeInterviewContext(data.interviewTeam, data.recentMatches, (data.rankChanges || []).find((r) => r.team === data.interviewTeam));
+  data.interviewContext = computeInterviewContext(data.interviewTeam, data.recentMatches, (data.rankChanges || []).find((r) => r.team === data.interviewTeam), data.previousLeagueResults);
+  const prevIv = buildPreviousInterviews(archive);
+  data.previousInterviews = prevIv.previousInterviews;
+  data.previousInterviewQuestions = prevIv.previousInterviewQuestions;
   // The one-time complaint (25 penalty chances not given, 2 posts hit) is offered to the model until an interview has used it.
   if (!archive.some((i) => i.interview && i.interview.grievanceUsed)) data.interviewContext.refGrievance = { penaltyChances: 25, postsHit: 2 };
 
@@ -1219,6 +1289,13 @@ async function main() {
   if (magazine.interview) {
     magazine.interview.team = data.interviewTeam;
     magazine.interview.walkedOut = !!data.interviewContext.walkout; // decided by the results, not by the model
+    // fixed names (the model is told them, but they are forced here); v2 = the press-conference layout with the permanent coaches + Peter Parkar
+    magazine.interview.intervieweeName = COACHES[data.interviewTeam]?.name || magazine.interview.intervieweeName;
+    magazine.interview.intervieweeRole = "سرمربی";
+    magazine.interview.reporterName = REPORTER_NAME;
+    magazine.interview.v2 = true;
+    delete magazine.interview.exitNote; // no "he left" line any more: the walk-out is only felt in the last answer
+    dedupeInterviewQuestions(magazine.interview, data.previousInterviewQuestions);
     // used = the interview really contains the line (25 in Latin or Persian digits); only then it stops being offered
     if (data.interviewContext.refGrievance && /(?:25|\u06f2\u06f5)/.test(JSON.stringify(magazine.interview))) magazine.interview.grievanceUsed = true;
   }

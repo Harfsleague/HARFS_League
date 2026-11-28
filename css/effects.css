@@ -3001,7 +3001,7 @@ body.ai-disabled .chat-ai-btn{ display:none !important; }   /* Assistant switche
 .ov-music-title{ font-size:.82rem; font-weight:800; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ov-music-sub{ font-size:.66rem; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
 
-#music-screen{ flex-direction:column; align-items:center; padding:74px 14px 104px; overflow-y:auto; }
+#music-screen{ flex-direction:column; align-items:center; padding:100px 14px 104px; overflow-y:auto; }   /* top padding clears the HARFS capsule, like the other pages */
 .mp-wrap{ width:100%; max-width:520px; display:flex; flex-direction:column; gap:14px; }
 .mp-topbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .mp-topbar-title{ display:flex; align-items:center; gap:8px; font-size:1.05rem; font-weight:900; color:#f8fafc; letter-spacing:.2px; }
@@ -3581,3 +3581,28 @@ body.perf-no-anim .chat-ai-btn .ai-stars, body.lite-mode .chat-ai-btn .ai-stars{
 .mtac-chip.on{ color:#fff; background:rgba(37,99,235,.45); border-color:rgba(147,197,253,.7); }
 .mtac-chip.on span{ background:#fde047; }
 @media (prefers-reduced-motion:reduce){ .mtac-me.hl .mtac-ring{ animation:none; } .mtac-phase.mtac-swap, .mtac-ar{ animation:none; } }
+
+/* ---- Magazine interview, press-conference transcript (not a chat) ---- */
+.mpr-paper{ position:relative; padding:14px 16px 6px; border-radius:14px; background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.09); }
+.mpr-mast{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-bottom:7px; margin-bottom:10px; border-bottom:2px double rgba(255,255,255,.22); direction:ltr; }
+.mpr-mast-name{ font-weight:900; font-size:.95rem; letter-spacing:.22em; color:#f8fafc; }
+.mpr-mast-tag{ font-size:.6rem; font-weight:700; color:#94a3b8; direction:rtl; }
+.mpr-headline{ margin:0 0 9px; font-size:1.02rem; line-height:1.7; font-weight:900; color:#f8fafc; }
+.mpr-byline{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; font-size:.68rem; color:#94a3b8; margin-bottom:10px; }
+.mpr-byline img{ width:22px; height:22px; border-radius:50%; object-fit:cover; background:#0b1220; }
+.mpr-byline b{ color:#e2e8f0; font-weight:800; }
+.mpr-byline-sep{ width:1px; height:12px; background:rgba(255,255,255,.18); }
+.mpr-scene{ margin:0 0 12px; font-size:.74rem; line-height:1.9; color:#9ca3af; font-style:italic; }
+.mpr-body{ display:block; }
+.mpr-q, .mpr-a{ margin:0; font-size:.83rem; line-height:2; animation:mprIn .5s ease both; animation-delay:calc(var(--i,0) * 110ms); }
+.mpr-q{ margin-top:12px; font-weight:800; color:#f1f5f9; }
+.mpr-a{ margin-top:3px; padding:0 10px; border-inline-start:2px solid rgba(251,191,36,.55); color:#e2e8f0; }
+.mpr-who{ display:inline-block; margin-inline-end:6px; padding:0 6px; border-radius:5px; font-size:.62rem; font-weight:900; letter-spacing:.02em; background:rgba(148,163,184,.18); color:#cbd5e1; vertical-align:1px; }
+.mpr-who-coach{ background:rgba(251,191,36,.16); color:#fcd34d; }
+.mpr-stage{ font-size:.7rem; color:#a8a29e; }
+@keyframes mprIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce){ .mpr-q, .mpr-a{ animation:none; } }
+
+/* ===== v129: HARFS Music on -> the Profile player is hidden (its playlist button lives on the Music page now) ===== */
+body:not(.music-panel-disabled) #profile-music-frame{ display:none !important; }
+#hmp-pl-pop{ z-index:90; }
