@@ -672,7 +672,7 @@ function renderPlaylistSheet(){
     // the same list is drawn in the old sheet and in the bubble under the player (scroll position survives a re-draw)
     // Benyamin's songs are not part of it: they only live in HARFS Music (Home).
     const idxs = PLAYLIST.length ? profileIdxList() : [];
-    [['playlist-list-container','playlist-track-count'],['mp-pl-list','mp-pl-count'],['hmp-pl-list','hmp-pl-count']].forEach(([listId,cntId])=>{
+    [['playlist-list-container','playlist-track-count'],['mp-pl-list','mp-pl-count']].forEach(([listId,cntId])=>{
         const container=document.getElementById(listId); if(!container) return;
         const cnt=document.getElementById(cntId);
         if(cnt) cnt.textContent = PLAYLIST.length ? `${idxs.length} track${idxs.length===1?'':'s'}` : 'Loading…';
@@ -979,31 +979,6 @@ function togglePlaylistPop(e){
 }
 function closePlaylistPop(){
     const pop=document.getElementById('mp-pl-pop'), btn=document.getElementById('mp-pl-btn');
-    if(pop) pop.classList.remove('open','entering');
-    if(btn){ btn.classList.remove('on'); btn.setAttribute('aria-expanded','false'); }
-    closeMusicPlaylistPop();
-}
-// Same playlist bubble on the HARFS Music page (the Profile player is hidden while HARFS Music is on): pick any site song from here
-function toggleMusicPlaylistPop(e){
-    if(e) e.stopPropagation();
-    haptic([6]);
-    const pop=document.getElementById('hmp-pl-pop'), btn=document.getElementById('hmp-pl-btn');
-    if(!pop || !btn) return;
-    if(pop.classList.contains('open')){ closeMusicPlaylistPop(); return; }
-    if(typeof closeVolPop==='function') closeVolPop();
-    if(typeof mpCloseVolPop==='function') mpCloseVolPop();
-    const br=btn.getBoundingClientRect();
-    pop.classList.toggle('down', br.top < 250);
-    renderPlaylistSheet();
-    if(!PLAYLIST.length) loadPlaylistFromGitHub().then(renderPlaylistSheet);
-    pop.classList.add('open','entering');
-    btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
-    clearTimeout(pop._enterT); pop._enterT=setTimeout(()=>pop.classList.remove('entering'), 900);
-    const cur=pop.querySelector('.playlist-track-item.playing');
-    if(cur) setTimeout(()=>cur.scrollIntoView({ block:'nearest' }), 60);
-}
-function closeMusicPlaylistPop(){
-    const pop=document.getElementById('hmp-pl-pop'), btn=document.getElementById('hmp-pl-btn');
     if(pop) pop.classList.remove('open','entering');
     if(btn){ btn.classList.remove('on'); btn.setAttribute('aria-expanded','false'); }
 }

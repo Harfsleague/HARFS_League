@@ -121,7 +121,7 @@ function loadMomentReactions(){
 function reactAvatar(team){
     return `<img class="react-av" src="${teamLogoUrl(team)}" alt="" onerror="this.style.opacity='0.3'">`;
 }
-function reactionRowHtml(id){
+function reactionRowHtml(id, heartOnly){
     const map = momentReactions[id] || {};
     const counts = {}, who = {};
     for(const [team, e] of Object.entries(map)){
@@ -130,6 +130,13 @@ function reactionRowHtml(id){
     }
     const mine = loggedInTeam ? map[loggedInTeam] : null;
     const held = reactHeld && String(reactHeld.id) === String(id) ? reactHeld.emoji : null;
+    if(heartOnly){   // HARFS Music now-playing row: just one heart (tap = react / remove), with the tiny avatars of who hearted it
+        const H = '\u2764\uFE0F', teams = who[H] || [], hasMine = mine === H;
+        const stack = teams.slice(0,3).map(reactAvatar).join('');
+        const more = teams.length>3 ? `<span class="react-more">+${teams.length-3}</span>` : '';
+        const q = JSON.stringify(String(id)).replace(/"/g, '&quot;');
+        return `<div class="react-chips"><button class="react-chip react-heart${hasMine?' mine':''}${held===H?' who-open':''}" data-react-id="${escapeHtml(String(id))}" data-react-emoji="${H}" aria-label="Heart" onclick="reactChipClick(${q},'${H}')"><span class="react-emoji">${(hasMine||teams.length)?H:'\u{1F90D}'}</span>${teams.length?`<span class="react-avs">${stack}${more}</span>`:''}</button></div>`;
+    }
     // Every reaction chip shows WHO reacted, permanently: up to 3 tiny avatars (+N for the rest).
     const chips = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).map(e=>{
         const teams = who[e];
@@ -253,13 +260,14 @@ function reactChipClick(id, emoji){
 }
 
 function refreshReactionRow(id){
-    const el = document.getElementById(`react-row-${id}`);
-    if(el) el.innerHTML = reactionRowHtml(id);
+    document.querySelectorAll('.react-row').forEach(el=>{
+        if(el.id === `react-row-${id}`) el.innerHTML = reactionRowHtml(id, el.classList.contains('mp-heart-only'));
+    });
 }
 function refreshAllReactionRows(){
     document.querySelectorAll('.react-row').forEach(el=>{
         const id = el.id.replace('react-row-','');
-        el.innerHTML = reactionRowHtml(id);
+        el.innerHTML = reactionRowHtml(id, el.classList.contains('mp-heart-only'));
     });
 }
 function toggleReactionPicker(id){

@@ -290,7 +290,7 @@ const MP_STRINGS = {
     en: {
         title:'MUSIC', upload:'Upload', selectSong:'Select a song to play', homeSub:'Benyamin Bahadori & Community',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Community', tabAll:'All',
-        bgGlow:'Background glow', library:'Albums & Search', search:'Search song or artist...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
+        bgGlow:'Background glow', library:'Albums & Search', search:'Search song or artist...', siteDefault:'Site Default Musics', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Mr. Love · Official Albums & Singles',
         tapAlbum:'Tap an album to see its songs', coverAdd:'Change cover', coverDone:'Album cover saved', coverFail:'Could not save the cover', playAll:'Play All', addBenyamin:'Add Track', addToAlbum:'Add song to this album', tracks:'tracks', track:'track',
         allAlbums:'All Albums', emptyAlbum:'No songs uploaded in this album yet. Be the first to add one!',
         emptyCommunity:'No community songs yet. Upload your favorite track!', emptySearch:'No matching songs found.',
@@ -302,7 +302,7 @@ const MP_STRINGS = {
     fa: {
         title:'موزیک هرفس', upload:'آپلود', selectSong:'یک آهنگ برای پخش انتخاب کن', homeSub:'بنیامین بهادری و انتخاب کاربران',
         tabBenyamin:'بنیامین بهادری', tabCommunity:'کاربران', tabAll:'همه',
-        bgGlow:'افکت پس‌زمینه', library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
+        bgGlow:'افکت پس‌زمینه', library:'آلبوم‌ها و جستجو', search:'جستجوی آهنگ یا خواننده...', siteDefault:'Site Default Musics', benyaminHeroTitle:'بنیامین بهادری', benyaminHeroSub:'آقای عشق · آلبوم‌ها و تک‌آهنگ‌های رسمی',
         tapAlbum:'روی یک آلبوم بزن تا آهنگ‌هایش را ببینی', coverAdd:'تغییر کاور', coverDone:'کاور آلبوم ذخیره شد', coverFail:'ذخیره‌ی کاور ناموفق بود', playAll:'پخش همه', addBenyamin:'افزودن آهنگ', addToAlbum:'افزودن آهنگ به این آلبوم', tracks:'آهنگ', track:'آهنگ',
         allAlbums:'همه آلبوم‌ها', emptyAlbum:'هنوز آهنگی در این آلبوم آپلود نشده؛ اولین نفر باش!',
         emptyCommunity:'هنوز آهنگی توسط کاربران آپلود نشده. آهنگ مورد علاقه‌ات را آپلود کن!', emptySearch:'آهنگی با این نام پیدا نشد.',
@@ -314,7 +314,7 @@ const MP_STRINGS = {
     es: {
         title:'MUSIC', upload:'Subir', selectSong:'Elige una canción', homeSub:'Benyamin Bahadori y Comunidad',
         tabBenyamin:'Benyamin Bahadori', tabCommunity:'Comunidad', tabAll:'Todas',
-        bgGlow:'Brillo de fondo', library:'Álbumes y búsqueda', search:'Buscar canción o artista...', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
+        bgGlow:'Brillo de fondo', library:'Álbumes y búsqueda', search:'Buscar canción o artista...', siteDefault:'Site Default Musics', benyaminHeroTitle:'Benyamin Bahadori', benyaminHeroSub:'Álbumes oficiales y sencillos',
         tapAlbum:'Toca un álbum para ver sus canciones', coverAdd:'Cambiar portada', coverDone:'Portada guardada', coverFail:'No se pudo guardar la portada', playAll:'Reproducir todo', addBenyamin:'Añadir canción', addToAlbum:'Añadir canción a este álbum', tracks:'canciones', track:'canción',
         allAlbums:'Todos los álbumes', emptyAlbum:'Aún no hay canciones en este álbum. ¡Sé el primero en subir una!',
         emptyCommunity:'Aún no hay canciones de la comunidad. ¡Sube tu favorita!', emptySearch:'No se encontraron canciones.',
@@ -659,7 +659,7 @@ function mpSelectAlbum(albumId){
 function mpPlaceAlbumPop(){
     const wrap = document.querySelector('#mp-body .mp-album-wrap.open'); if(!wrap) return;
     const pop = wrap.querySelector('.mp-pl-pop'); if(!pop) return;
-    const card = wrap.querySelector('.mp-album-card'); const cr = card.getBoundingClientRect();
+    const card = wrap.querySelector('.mp-album-card, .mp-site-card'); const cr = card.getBoundingClientRect();
     const rightSide = (cr.left + cr.width / 2) > (window.innerWidth / 2);
     pop.classList.toggle('right', rightSide);
     pop.classList.toggle('down', cr.top < 330);
@@ -704,7 +704,7 @@ function mpRenderTrackCard(t, idxInQueue){
         ? `<span class="mp-uploader-chip"><img src="${teamLogoUrl(t.uploader)}" alt="" onerror="this.style.opacity='0.3'"><span>${escapeHtml(uploaderName)}</span></span>`
         : '';
     const albumChip = t.albumId ? `<span class="mp-album-tag">${escapeHtml(mpAlbumLabel(t.albumId))}</span>` : '';
-    const canDel = loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
+    const canDel = !t.noDel && loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
     const delBtn = canDel ? `<button type="button" class="mp-track-del" onclick="event.stopPropagation();mpDeleteTrack(${JSON.stringify(t.file).replace(/"/g,'&quot;')})" title="Delete"><i class="fas fa-trash-can"></i></button>` : '';
     const reactHtml = (typeof reactionRowHtml === 'function')
         ? `<div class="react-row mp-react-row" id="react-row-${escapeHtml(t.reactId)}">${reactionRowHtml(t.reactId)}</div>`
@@ -766,7 +766,7 @@ function renderMusicPage(){
             ${extraHead || ''}
             <div class="mp-pl-list">${tracks.length ? tracks.map((t,i) => {
                 const cur = isCur(t), playing = cur && bgMusic && !bgMusic.paused;
-                const canDel = loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
+                const canDel = !t.noDel && loggedInTeam && (harfsIsAdmin || loggedInTeam === 'Bayern' || (t.uploader && t.uploader === loggedInTeam));
                 const del = canDel ? `<button type="button" class="mp-bub-del" onclick="event.stopPropagation();mpDeleteTrack(${JSON.stringify(t.file).replace(/"/g,'&quot;')})" title="Delete"><i class="fas fa-trash-can"></i></button>` : '';
                 const who = (t.section !== 'benyamin' && t.uploader) ? `<span class="mp-bub-who">${escapeHtml(TEAM_DISPLAY_NAMES[t.uploader] || t.uploader)}</span>` : '';
                 return `<div class="playlist-track-item${playing ? ' playing' : ''}${cur ? ' picked-cur' : ''}" style="--i:${Math.min(i,8)}" onclick="mpPlayFromQueue(${i})">
@@ -825,18 +825,27 @@ function renderMusicPage(){
                 </button>
                 ${commPop}
             </div>`;
+    // ---- "Site Default Musics": the songs that belong to the site (the Profile playlist); tapping the bubble opens their list ----
+    const siteOpen = sel === 'site';
+    const siteAll = (PLAYLIST.length ? profileIdxList() : []).map(i => ({ src: PLAYLIST[i].src, title: PLAYLIST[i].title, file: mpExtractFilename(PLAYLIST[i].src), noDel: true }));
+    let sitePop = '';
+    if(siteOpen){
+        queue = siteAll;
+        sitePop = popHtml(mpT('siteDefault'), siteAll, '', mpT('emptyAlbum'));
+        if(!PLAYLIST.length && typeof loadPlaylistFromGitHub === 'function') loadPlaylistFromGitHub().then(() => { if(mpSelectedAlbum === 'site') renderMusicPage(); });
+    }
     const listHtml = sel === 'all' ? `<div class="mp-hint"><i class="fas fa-hand-pointer"></i><span dir="auto">${escapeHtml(mpT('tapAlbum'))}</span></div>` : '';
     mpQueue = queue;
 
     body.innerHTML = `
-        <div class="mp-ben-hero">
-            <div class="mp-ben-badge"><i class="fas fa-crown"></i> FEATURED ARTIST</div>
-            <div class="mp-ben-name" dir="auto">${escapeHtml(mpT('benyaminHeroTitle'))}</div>
-            <div class="mp-ben-sub" dir="auto">${escapeHtml(mpT('benyaminHeroSub'))}</div>
-            <div class="mp-ben-actions">
-                <button type="button" class="mp-ben-btn primary" onclick="mpPlayBenyaminAll()"><i class="fas fa-play"></i> ${escapeHtml(mpT('playAll'))} (${benAll.length})</button>
-                <button type="button" class="mp-ben-btn" onclick="openMusicUploadModal('benyamin', '${(sel==='all'||sel==='community')?'benyamin-85':sel}')"><i class="fas fa-plus"></i> ${escapeHtml(mpT('addBenyamin'))}</button>
-            </div>
+        <div class="mp-album-wrap mp-site-wrap${siteOpen ? ' open' : ''}">
+            <button type="button" class="mp-ben-hero mp-site-card" onclick="mpSelectAlbum('site')" aria-expanded="${siteOpen}">
+                <span class="mp-site-ic"><i class="fas fa-music"></i></span>
+                <span class="mp-site-txt"><span class="mp-ben-name" dir="auto">${escapeHtml(mpT('siteDefault'))}</span></span>
+                <span class="mp-site-cnt">${siteAll.length || (PLAYLIST.length ? 0 : '…')}</span>
+                <i class="fas fa-chevron-down mp-site-chev"></i>
+            </button>
+            ${sitePop}
         </div>
         <div class="mp-albums-grid">${albumsHtml}${communityHtml}</div>
         ${listHtml}`;
@@ -938,7 +947,7 @@ function mpSyncPlayerUI(){
     const activeFile = bgMusic && bgMusic.src ? mpExtractFilename(bgMusic.src) : '';
     const enriched = mpGetEnrichedTracks().find(t => t.file === activeFile) || window.mpActiveTrack || null;
     const title = (enriched && enriched.title) || window.nowPlayingTitle || mpT('selectSong');
-    const artist = (enriched && enriched.artist) || (enriched && enriched.uploader ? (TEAM_DISPLAY_NAMES[enriched.uploader]||enriched.uploader) : mpT('homeSub'));
+    const artist = (enriched && enriched.artist) || (enriched && enriched.uploader ? (TEAM_DISPLAY_NAMES[enriched.uploader]||enriched.uploader) : '');
     const badge = enriched
         ? (enriched.section === 'benyamin' ? (mpAlbumLabel(enriched.albumId) || mpT('tabBenyamin')) : (enriched.uploader ? `${mpT('uploadedBy')} ${TEAM_DISPLAY_NAMES[enriched.uploader]||enriched.uploader}` : mpT('tabCommunity')))
         : 'HARFS MUSIC';
@@ -960,7 +969,7 @@ function mpSyncPlayerUI(){
     const rr = document.getElementById('mp-now-react');
     if(rr){
         const rid = (enriched && enriched.reactId && typeof reactionRowHtml === 'function') ? enriched.reactId : '';
-        if(rr.dataset.rid !== rid){ rr.dataset.rid = rid; rr.innerHTML = rid ? `<div class="react-row mp-react-row" id="react-row-${escapeHtml(rid)}">${reactionRowHtml(rid)}</div>` : ''; }
+        if(rr.dataset.rid !== rid){ rr.dataset.rid = rid; rr.innerHTML = rid ? `<div class="react-row mp-react-row mp-heart-only" id="react-row-${escapeHtml(rid)}">${reactionRowHtml(rid, true)}</div>` : ''; }
     }
     const card = document.getElementById('mp-player-card'); if(card) card.classList.toggle('is-playing', playing);
     const playBtn = document.getElementById('mp-play-btn');
@@ -984,7 +993,7 @@ function updateHomeMusicTile(){
     const titleEl = document.getElementById('ov-music-title');
     const subEl = document.getElementById('ov-music-sub');
     if(titleEl) titleEl.textContent = songTitle || mpT('title');
-    if(subEl) subEl.textContent = mpT('homeSub');
+    if(subEl) subEl.textContent = '';   // no "Benyamin Bahadori & Community" line any more
     // while a song plays: pixel equaliser over the whole tile, the song name in a small bubble, and the album cover (if the album has one) behind it
     const ext = document.getElementById('ov-music-ext');
     const stage = document.getElementById('ov-music-stage');

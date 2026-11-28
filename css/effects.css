@@ -3605,4 +3605,19 @@ body.perf-no-anim .chat-ai-btn .ai-stars, body.lite-mode .chat-ai-btn .ai-stars{
 
 /* ===== v129: HARFS Music on -> the Profile player is hidden (its playlist button lives on the Music page now) ===== */
 body:not(.music-panel-disabled) #profile-music-frame{ display:none !important; }
-#hmp-pl-pop{ z-index:90; }
+
+/* ===== v130: Site Default Musics bubble, heart-only reaction under the song name ===== */
+.mp-site-card{ width:100%; display:flex; align-items:center; gap:12px; padding:13px 14px; text-align:start; cursor:pointer; color:#fff; font:inherit; -webkit-tap-highlight-color:transparent; transition:transform .2s ease; }
+.mp-site-card:active{ transform:scale(.98); }
+.mp-site-ic{ width:42px; height:42px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.13); font-size:1.05rem; flex:none; }
+.mp-site-txt{ flex:1; min-width:0; }
+.mp-site-card .mp-ben-name{ display:block; font-size:1.02rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mp-site-cnt{ font-size:.7rem; font-weight:800; padding:3px 9px; border-radius:99px; background:rgba(0,0,0,.3); flex:none; }
+.mp-site-chev{ font-size:.8rem; opacity:.75; transition:transform .25s ease; flex:none; }
+.mp-site-wrap.open .mp-site-chev{ transform:rotate(180deg); }
+.mp-site-wrap{ margin-bottom:10px; }
+.mp-now-artist:empty{ display:none; }
+.mp-hmp-meta .mp-now-react{ padding:4px 0 0; }
+.mp-now-react .mp-react-row{ margin:0; padding:0; border-top:none; }
+.mp-now-react .react-heart{ min-width:38px; justify-content:center; }
+#ov-music-sub:empty{ display:none; }

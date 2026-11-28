@@ -1239,17 +1239,11 @@
                 <div class="music-player mp-hmp" id="mp-player-card">
                     <div class="mpx-stage" id="hmp-stage" aria-hidden="true"><div class="mp-stage-cover" id="mp-stage-cover"></div></div>
                     <div class="mpx-top mp-hmp-top">
-                        <div class="mpx-pl-wrap">
-                            <button class="mpx-ic" id="hmp-pl-btn" onclick="toggleMusicPlaylistPop(event)" aria-label="Playlist" aria-expanded="false"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h16M3 12h9M3 18h7"/><circle cx="17" cy="17.5" r="2.4" fill="currentColor" stroke="none"/><path d="M19.4 17.5V9.5l3 1.4"/></svg></button>
-                            <!-- the profile playlist (site songs) lives here while HARFS Music is on -->
-                            <div class="mp-pl-pop" id="hmp-pl-pop" onclick="event.stopPropagation()">
-                                <div class="mp-pl-head"><span class="mp-pl-title"><i class="fas fa-music"></i> Playlist</span><span class="mp-pl-count" id="hmp-pl-count"></span></div>
-                                <div class="mp-pl-list" id="hmp-pl-list"></div>
-                            </div>
-                        </div>
+                        <div class="mpx-pl-wrap"><button type="button" class="mpx-ic" style="visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><i class="fas fa-music"></i></button></div>
                         <div class="mpx-meta mp-meta mp-hmp-meta">
                             <div class="mp-now-title mp-title" id="mp-now-title" dir="auto">Select a song to play</div>
-                            <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto">Benyamin Bahadori &amp; Community</div>
+                            <div class="mp-now-artist mp-sub" id="mp-now-artist" dir="auto"></div>
+                            <div class="mp-now-react" id="mp-now-react"></div>
                         </div>
                         <div class="mpx-pl-wrap"><button type="button" class="mpx-ic" style="visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><i class="fas fa-volume-low"></i></button></div>
                     </div>
@@ -1270,7 +1264,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mp-now-react" id="mp-now-react"></div>
                 </div>
             </div>
 
