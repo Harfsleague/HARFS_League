@@ -497,6 +497,7 @@ function syncMusicPanelUI(instant){
     document.body.classList.toggle('music-panel-disabled', !musicPanelEnabled);
     const t = document.getElementById('music-panel-toggle');
     if(t) t.classList.toggle('on', musicPanelEnabled);
+    if(!musicPanelEnabled && typeof miniMusicClose === 'function') miniMusicClose();
     // the background-glow option only exists while HARFS Music is on — it slides open / closed smoothly
     const wrap = document.getElementById('music-glow-wrap');
     if(wrap){

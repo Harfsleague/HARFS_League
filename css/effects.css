@@ -3705,3 +3705,39 @@ body.perf-no-anim .ap-collapse, body.lite-mode .ap-collapse{ transition:none; }
 .mp-stage-in .mp-al-card{ animation:mpStageIn .55s cubic-bezier(.22,1,.36,1) both; animation-delay:calc(var(--i,0) * 60ms + 60ms); }
 .mp-stage-in .playlist-track-item{ animation:mpStageIn .5s cubic-bezier(.22,1,.36,1) both; animation-delay:calc(var(--i,0) * 45ms + 90ms); }
 body.perf-no-anim .mp-stage-in *, body.lite-mode .mp-stage-in *, body.perf-no-anim .mp-pl-seg i, body.lite-mode .mp-pl-seg i{ animation:none !important; transition:none !important; }
+
+/* ===== v133: playlist bubble fixed inside the screen (portal on <body>) ===== */
+#hmp-pl-pop, #hmp-pl-pop.down{ position:fixed; z-index:260; right:auto; width:var(--pw,290px); max-width:calc(100vw - 24px); }
+#hmp-pl-pop .mp-pl-stage{ max-height:var(--sh,300px); }
+#hmp-pl-pop .mp-pl-list{ max-height:none; overflow:visible; }
+
+/* ===== mini music player under the HARFS capsule ===== */
+.hmini{ position:fixed; left:50%; top:var(--hm-top,84px); z-index:199; width:min(372px,calc(100vw - 20px)); display:flex; align-items:center; gap:10px;
+    transform-origin:var(--hm-ox,50%) 0; transform:translateX(-50%) translateY(-38px) scale(.3); opacity:0; visibility:hidden; pointer-events:none;
+    transition:transform .45s cubic-bezier(.55,0,.8,.3), opacity .28s ease, visibility 0s linear .45s; }
+.hmini.show{ transform:translateX(-50%); opacity:1; visibility:visible; pointer-events:auto; transition:transform .7s cubic-bezier(.34,1.42,.5,1), opacity .35s ease, visibility 0s; }
+.hmini-pill, .hmini-open{
+    background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.34));
+    background-image:radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%), linear-gradient(180deg,rgba(255,255,255,0.12) 0%,rgba(255,255,255,0.01) 16%,rgba(0,0,0,0.18) 100%);
+    -webkit-backdrop-filter:blur(10px) saturate(185%); backdrop-filter:blur(10px) saturate(185%);
+    border:1px solid rgba(255,255,255,0.16); border-top-color:rgba(255,255,255,0.4);
+    box-shadow:0 16px 32px -8px rgba(0,0,0,0.6), inset 0 1.5px 1px rgba(255,255,255,0.4), inset 0 0 14px rgba(0,0,0,0.34); }
+body.perf-no-blur .hmini-pill, body.perf-no-blur .hmini-open, body.lite-mode .hmini-pill, body.lite-mode .hmini-open{ background-color:var(--bg-mid); background-image:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+.hmini-pill{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; height:52px; padding:0 8px 0 12px; border-radius:26px; }
+.hmini-open{ flex:none; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.95rem; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:scale .2s cubic-bezier(.22,1,.36,1); }
+.hmini-open:active{ scale:.9; }
+.hmini-eq{ flex:none; display:flex; align-items:flex-end; gap:3px; width:20px; height:20px; }
+.hmini-eq i{ flex:1; height:30%; border-radius:2px; background:linear-gradient(180deg,var(--primary),var(--accent)); transform-origin:bottom; }
+.hmini.playing .hmini-eq i{ animation:hminiEq 1s ease-in-out infinite alternate; }
+.hmini.playing .hmini-eq i:nth-child(2){ animation-duration:.8s; animation-delay:-.3s; }
+.hmini.playing .hmini-eq i:nth-child(3){ animation-duration:1.2s; animation-delay:-.6s; }
+@keyframes hminiEq{ 0%{ height:25%; } 100%{ height:100%; } }
+.hmini-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.hmini-title{ font-size:.76rem; font-weight:800; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hmini-prog{ height:3px; border-radius:3px; background:rgba(255,255,255,.14); overflow:hidden; }
+.hmini-prog i{ display:block; height:100%; width:100%; transform-origin:left; transform:scaleX(0); background:linear-gradient(90deg,var(--primary),var(--accent)); transition:transform .3s linear; }
+.hmini-btn{ flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#e2e8f0; font-size:.8rem; background:none; border:0; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .2s ease, background .2s ease; }
+.hmini-btn:active{ transform:scale(.86); background:rgba(255,255,255,.12); }
+.hmini-play{ width:38px; height:38px; font-size:.85rem; color:#fff; background:linear-gradient(135deg,var(--primary),var(--accent)); box-shadow:0 6px 14px -4px var(--primary-glow); }
+body.perf-no-anim .hmini, body.perf-no-anim .hmini.show, body.lite-mode .hmini, body.lite-mode .hmini.show{ transition:opacity .15s ease, visibility 0s; transform:translateX(-50%); }
+body.perf-no-anim .hmini.playing .hmini-eq i{ animation:none; height:60%; }

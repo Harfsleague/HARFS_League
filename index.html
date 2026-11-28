@@ -64,6 +64,18 @@
     </div>
 </div>
 
+<!-- Mini music player: grows out of the HARFS capsule when it is tapped (only while HARFS Music is on); the round button opens the full Music page -->
+<div class="hmini" id="hmini" aria-hidden="true">
+    <div class="hmini-pill">
+        <div class="hmini-eq" id="hmini-eq" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="hmini-meta"><div class="hmini-title" id="hmini-title" dir="auto">Select a song</div><div class="hmini-prog" aria-hidden="true"><i id="hmini-fill"></i></div></div>
+        <button type="button" class="hmini-btn" onclick="miniMusicPrev()" aria-label="Previous"><i class="fas fa-backward-step"></i></button>
+        <button type="button" class="hmini-btn hmini-play" id="hmini-play" onclick="miniMusicPlay()" aria-label="Play / pause"><i class="fas fa-play"></i></button>
+        <button type="button" class="hmini-btn" onclick="miniMusicNext()" aria-label="Next"><i class="fas fa-forward-step"></i></button>
+    </div>
+    <button type="button" class="hmini-open" onclick="miniMusicOpenPage()" aria-label="Open Music"><i class="fas fa-expand"></i></button>
+</div>
+
 <!-- ============ LOGIN SCREEN ============
      Telegram-style: pick your team, then set (first time) or enter
      (every time after) that team's password. Session is kept in

@@ -651,15 +651,35 @@ function mpBackToAlbums(){
     mpSelectedAlbum = 'all'; mpStageAnim = true;
     renderMusicPage();
 }
+// The bubble lives on <body> (so no card can clip it) and is placed with position:fixed, always inside the screen: it opens below the
+// button when there is room (otherwise above), is as wide as the phone allows, and scrolls inside itself when it is taller than the space.
+function mpPlacePlPop(){
+    const pop = document.getElementById('hmp-pl-pop'), btn = document.getElementById('hmp-pl-btn'); if(!pop || !btn) return;
+    const vw = document.documentElement.clientWidth, vh = window.innerHeight, br = btn.getBoundingClientRect();
+    const w = Math.min(300, vw - 24);
+    const left = Math.max(12, Math.min(br.left - 8, vw - w - 12));
+    const topSafe = 84, botSafe = 14;                       // keep clear of the HARFS capsule above and the screen edge below
+    const below = vh - br.bottom - 12 - botSafe, above = br.top - 12 - topSafe;
+    const down = below >= 250 || below >= above;
+    const room = Math.max(170, Math.min(470, down ? below : above));
+    pop.style.setProperty('--pw', w + 'px');
+    pop.style.left = left + 'px';
+    pop.style.setProperty('--cx', Math.max(18, Math.min(w - 18, br.left + br.width / 2 - left)) + 'px');
+    pop.style.setProperty('--sh', Math.max(110, room - 64) + 'px');   // the list area (the pop minus its switch row and padding)
+    if(down){ pop.style.top = (br.bottom + 12) + 'px'; pop.style.bottom = 'auto'; }
+    else { pop.style.bottom = (vh - br.top + 12) + 'px'; pop.style.top = 'auto'; }
+    pop.classList.toggle('down', down);
+}
 function toggleMusicPlaylistPop(e){
     if(e) e.stopPropagation();
     if(typeof haptic === 'function') haptic([6]);
     const pop = document.getElementById('hmp-pl-pop'), btn = document.getElementById('hmp-pl-btn'); if(!pop || !btn) return;
     if(pop.classList.contains('open')){ closeMusicPlaylistPop(); return; }
     mpCloseVolPop();
-    const br = btn.getBoundingClientRect();
-    pop.classList.toggle('down', br.top < 250);
+    if(pop.parentNode !== document.body) document.body.appendChild(pop);
+    mpPlacePlPop();
     mpStageAnim = true; renderMusicPage();
+    mpPlacePlPop();
     if(!PLAYLIST.length && typeof loadPlaylistFromGitHub === 'function') loadPlaylistFromGitHub().then(() => renderMusicPage());
     pop.classList.add('open'); btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
 }
@@ -668,6 +688,8 @@ function closeMusicPlaylistPop(){
     if(pop) pop.classList.remove('open');
     if(btn){ btn.classList.remove('on'); btn.setAttribute('aria-expanded','false'); }
 }
+window.addEventListener('resize', () => { const p = document.getElementById('hmp-pl-pop'); if(p && p.classList.contains('open')) mpPlacePlPop(); });
+window.addEventListener('orientationchange', () => setTimeout(() => { const p = document.getElementById('hmp-pl-pop'); if(p && p.classList.contains('open')) mpPlacePlPop(); }, 250));
 document.addEventListener('click', e => {
     if(e.target.closest && e.target.closest('#hmp-pl-pop, #hmp-pl-btn')) return;
     closeMusicPlaylistPop();
@@ -788,10 +810,11 @@ function renderMusicPage(){
         if(ba){ ba.textContent = mpT('plAlbums'); ba.classList.toggle('active', mpPlMode === 'albums'); }
     }
     if(!stage) return;
-    const oldList = stage.querySelector('.mp-pl-list'), keep = (!mpStageAnim && oldList) ? oldList.scrollTop : 0;
+    const keep = mpStageAnim ? 0 : stage.scrollTop;
     stage.innerHTML = html;
     if(mpStageAnim){ mpStageAnim = false; stage.classList.remove('mp-stage-in'); void stage.offsetWidth; stage.classList.add('mp-stage-in'); clearTimeout(stage._t); stage._t = setTimeout(() => stage.classList.remove('mp-stage-in'), 1200); stage.scrollTop = 0; }
-    else { const nl = stage.querySelector('.mp-pl-list'); if(nl && keep) nl.scrollTop = keep; }
+    else if(keep) stage.scrollTop = keep;
+    const pp = document.getElementById('hmp-pl-pop'); if(pp && pp.classList.contains('open')) mpPlacePlPop();
 }
 
 function mpPlayFromQueue(idx){
@@ -924,6 +947,7 @@ function mpSyncPlayerUI(){
     const vol = document.getElementById('hmp-vol');
     if(vol && bgMusic && document.activeElement !== vol){ vol.value = Math.round((bgMusic.volume || 0) * 100); if(typeof setRangeFill === 'function') setRangeFill(vol, vol.value); mpRenderVolBadge(vol.value); }
     updateHomeMusicTile();
+    if(typeof miniMusicSync === 'function') miniMusicSync();
 }
 
 function updateHomeMusicTile(){
@@ -1182,3 +1206,64 @@ async function mpDeleteTrack(filename){
         showToast('Delete failed', 'error', 2400);
     }
 }
+
+
+// ============================================================
+// Mini music player: tap the HARFS capsule at the top -> a small player grows out of it (only while HARFS Music is on).
+// Its round button opens the full Music page. Tap anywhere else to fold it back into the capsule.
+// ============================================================
+function miniMusicEl(){ return document.getElementById('hmini'); }
+function miniMusicIsOpen(){ const m = miniMusicEl(); return !!(m && m.classList.contains('show')); }
+function miniMusicSync(){
+    const m = miniMusicEl(); if(!m) return;
+    const playing = !!(bgMusic && bgMusic.src && !bgMusic.paused);
+    const cur = (bgMusic && bgMusic.src && typeof mpCurrentTrackInfo === 'function') ? mpCurrentTrackInfo() : null;
+    const title = (cur && cur.title) || ((window.nowPlayingTitle && bgMusic && bgMusic.src) ? window.nowPlayingTitle : '') || mpT('selectSong');
+    const t = document.getElementById('hmini-title'); if(t && t.textContent !== title) t.textContent = title;
+    m.classList.toggle('playing', playing);
+    const pb = document.getElementById('hmini-play'); if(pb) pb.innerHTML = `<i class="fas fa-${playing ? 'pause' : 'play'}"></i>`;
+    miniMusicProgress();
+}
+function miniMusicProgress(){
+    const f = document.getElementById('hmini-fill'); if(!f || !bgMusic) return;
+    f.style.transform = `scaleX(${(isFinite(bgMusic.duration) && bgMusic.duration > 0) ? Math.min(1, bgMusic.currentTime / bgMusic.duration) : 0})`;
+}
+function miniMusicOpen(){
+    const m = miniMusicEl(), cap = document.getElementById('hero-logo-container'); if(!m || !cap) return;
+    if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled) return;
+    if(document.getElementById('music-screen')?.classList.contains('active')) return;   // the full player is already on screen
+    if(!mpQueue.length) renderMusicPage();                                              // so previous / next / play have a list to work with
+    const r = cap.getBoundingClientRect();
+    m.style.setProperty('--hm-top', Math.round(r.bottom + 10) + 'px');
+    m.style.setProperty('--hm-ox', '50%');
+    miniMusicSync();
+    m.classList.remove('leaving'); m.classList.add('show'); m.setAttribute('aria-hidden','false');
+    if(typeof haptic === 'function') haptic([8]);
+}
+function miniMusicClose(){
+    const m = miniMusicEl(); if(!m || !m.classList.contains('show')) return;
+    m.classList.remove('show'); m.setAttribute('aria-hidden','true');
+}
+function miniMusicPlay(){ mpTogglePlay(); miniMusicSync(); }
+function miniMusicNext(){ if(!mpQueue.length) renderMusicPage(); mpNext(); }
+function miniMusicPrev(){ if(!mpQueue.length) renderMusicPage(); mpPrev(); }
+function miniMusicOpenPage(){ miniMusicClose(); if(typeof haptic === 'function') haptic([8]); openMusicPage(); }
+(function wireMiniMusic(){
+    const cap = document.getElementById('hero-logo-container'); if(!cap) return;
+    let downAt = 0;
+    cap.addEventListener('pointerdown', () => { downAt = Date.now(); });
+    cap.addEventListener('click', () => {
+        if(Date.now() - downAt > 600) return;                                   // a long press is the Federation shortcut, not a tap
+        if(!cap.classList.contains('in-header') || cap.classList.contains('showing-notif') || !loggedInTeam) return;
+        if(miniMusicIsOpen()) miniMusicClose(); else miniMusicOpen();
+    });
+    document.addEventListener('click', e => {
+        if(!miniMusicIsOpen()) return;
+        if(e.target.closest && e.target.closest('#hmini, #hero-logo-container')) return;
+        miniMusicClose();
+    });
+    if(bgMusic){
+        bgMusic.addEventListener('timeupdate', miniMusicProgress);
+        ['play','pause','ended','loadedmetadata','emptied'].forEach(ev => bgMusic.addEventListener(ev, miniMusicSync));
+    }
+})();

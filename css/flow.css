@@ -197,7 +197,7 @@ body.perf-no-anim #season-sections{ transition:none !important; animation:none !
 .ov-tile-cards{ color:#f87171; }
 .ov-tile-chat{ color:#34d399; }
 .ov-tile-game{ color:#fb923c; }
-body.music-panel-disabled #nav-admin{ display:none !important; }   /* Music switched off in Settings → its bottom tab disappears */
+#nav-admin{ display:none !important; }   /* the Music tab is gone from the bottom bar for good: Music opens from the mini player under the HARFS capsule */
 .ov-tile-moments{ color:#f472b6; }
 
 /* =====================================================
