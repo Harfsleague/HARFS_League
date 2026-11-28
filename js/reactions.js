@@ -130,12 +130,10 @@ function reactionRowHtml(id, heartOnly){
     }
     const mine = loggedInTeam ? map[loggedInTeam] : null;
     const held = reactHeld && String(reactHeld.id) === String(id) ? reactHeld.emoji : null;
-    if(heartOnly){   // HARFS Music now-playing row: just one heart (tap = react / remove), with the tiny avatars of who hearted it
-        const H = '\u2764\uFE0F', teams = who[H] || [], hasMine = mine === H;
-        const stack = teams.slice(0,3).map(reactAvatar).join('');
-        const more = teams.length>3 ? `<span class="react-more">+${teams.length-3}</span>` : '';
+    if(heartOnly){   // HARFS Music now-playing row: one heart. Tap = like / unlike (animated); WHO liked is shown only while you hold it
+        const H = '\u2764\uFE0F', hasMine = mine === H;
         const q = JSON.stringify(String(id)).replace(/"/g, '&quot;');
-        return `<div class="react-chips"><button class="react-chip react-heart${hasMine?' mine':''}${held===H?' who-open':''}" data-react-id="${escapeHtml(String(id))}" data-react-emoji="${H}" aria-label="Heart" onclick="reactChipClick(${q},'${H}')"><span class="react-emoji">${(hasMine||teams.length)?H:'\u{1F90D}'}</span>${teams.length?`<span class="react-avs">${stack}${more}</span>`:''}</button></div>`;
+        return `<div class="react-chips"><button class="react-chip react-heart${hasMine?' mine':''}${held===H?' who-open':''}" data-react-id="${escapeHtml(String(id))}" data-react-emoji="${H}" aria-label="Heart" onclick="reactChipClick(${q},'${H}')"><span class="heart-ic"><i class="far fa-heart h-off"></i><i class="fas fa-heart h-on"></i></span></button></div>`;
     }
     // Every reaction chip shows WHO reacted, permanently: up to 3 tiny avatars (+N for the rest).
     const chips = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).map(e=>{
@@ -259,15 +257,22 @@ function reactChipClick(id, emoji){
     reactToMoment(id, emoji);
 }
 
+// A heart-only row is patched in place (so the colour change can animate); every other row is simply redrawn
+function reactRenderRow(el, id){
+    if(!el.classList.contains('mp-heart-only')){ el.innerHTML = reactionRowHtml(id); return; }
+    const btn = el.querySelector('.react-heart');
+    if(!btn){ el.innerHTML = reactionRowHtml(id, true); return; }
+    const mine = !!(loggedInTeam && (momentReactions[id] || {})[loggedInTeam] === '\u2764\uFE0F');
+    const was = btn.classList.contains('mine');
+    btn.classList.toggle('mine', mine);
+    if(mine && !was){ btn.classList.remove('beat'); void btn.offsetWidth; btn.classList.add('beat'); clearTimeout(btn._beatT); btn._beatT = setTimeout(() => btn.classList.remove('beat'), 800); }
+}
 function refreshReactionRow(id){
-    document.querySelectorAll('.react-row').forEach(el=>{
-        if(el.id === `react-row-${id}`) el.innerHTML = reactionRowHtml(id, el.classList.contains('mp-heart-only'));
-    });
+    document.querySelectorAll('.react-row').forEach(el=>{ if(el.id === `react-row-${id}`) reactRenderRow(el, id); });
 }
 function refreshAllReactionRows(){
     document.querySelectorAll('.react-row').forEach(el=>{
-        const id = el.id.replace('react-row-','');
-        el.innerHTML = reactionRowHtml(id, el.classList.contains('mp-heart-only'));
+        reactRenderRow(el, el.id.replace('react-row-',''));
     });
 }
 function toggleReactionPicker(id){

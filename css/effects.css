@@ -3621,3 +3621,58 @@ body:not(.music-panel-disabled) #profile-music-frame{ display:none !important; }
 .mp-now-react .mp-react-row{ margin:0; padding:0; border-top:none; }
 .mp-now-react .react-heart{ min-width:38px; justify-content:center; }
 #ov-music-sub:empty{ display:none; }
+
+/* ===== v131: smaller Site Default Musics bubble above the library, animated heart, Profile cards, smooth Appearance reveal ===== */
+.mp-site-slot:empty{ display:none; }
+.mp-site-slot{ position:relative; z-index:45; }
+.mp-site-wrap{ margin-bottom:0; }
+.mp-site-card{ padding:7px 12px !important; gap:10px !important; border-radius:16px !important; }
+.mp-site-ic{ width:30px !important; height:30px !important; border-radius:10px !important; font-size:.85rem !important; }
+.mp-site-card .mp-ben-name{ font-size:.86rem !important; }
+.mp-site-cnt{ font-size:.62rem !important; padding:2px 8px !important; }
+.mp-site-chev{ font-size:.7rem !important; }
+
+/* heart reaction: grey outline -> red heart with a pop + ring */
+.react-heart{ position:relative; min-width:42px; justify-content:center; }
+.react-heart .heart-ic{ position:relative; display:inline-block; width:20px; height:20px; }
+.react-heart .heart-ic i{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.05rem; transition:opacity .3s ease, transform .45s cubic-bezier(.34,1.6,.5,1), color .3s ease; }
+.react-heart .h-off{ color:#94a3b8; opacity:1; transform:scale(1); }
+.react-heart .h-on{ color:#ef4444; opacity:0; transform:scale(.3); }
+.react-heart.mine .h-off{ opacity:0; transform:scale(.6); }
+.react-heart.mine .h-on{ opacity:1; transform:scale(1); filter:drop-shadow(0 0 6px rgba(239,68,68,.65)); }
+.react-heart::after{ content:''; position:absolute; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%; border:2px solid #ef4444; opacity:0; pointer-events:none; }
+.react-heart.beat .heart-ic{ animation:heartBeat .65s cubic-bezier(.3,1.5,.5,1); }
+.react-heart.beat::after{ animation:heartRing .65s ease-out; }
+@keyframes heartBeat{ 0%{ transform:scale(1); } 30%{ transform:scale(1.55); } 60%{ transform:scale(.88); } 100%{ transform:scale(1); } }
+@keyframes heartRing{ 0%{ transform:scale(.4); opacity:.85; } 100%{ transform:scale(2.3); opacity:0; } }
+body.perf-no-anim .react-heart.beat .heart-ic, body.perf-no-anim .react-heart.beat::after, body.lite-mode .react-heart.beat .heart-ic, body.lite-mode .react-heart.beat::after{ animation:none; }
+
+/* smooth slide-open for an Appearance option that only exists while its feature is on */
+.ap-collapse{ display:grid; grid-template-rows:0fr; opacity:0; transform:translateY(-6px); transition:grid-template-rows .5s cubic-bezier(.22,1,.36,1), opacity .4s ease, transform .5s cubic-bezier(.22,1,.36,1); pointer-events:none; }
+.ap-collapse > .ap-collapse-in{ overflow:hidden; min-height:0; }
+.ap-collapse.open{ grid-template-rows:1fr; opacity:1; transform:none; pointer-events:auto; }
+.ap-collapse.ap-collapse-instant{ transition:none !important; }
+body.perf-no-anim .ap-collapse, body.lite-mode .ap-collapse{ transition:none; }
+
+/* Profile: one family of cards (same height, radius, icon chip) */
+.pf-grid{ display:flex; flex-wrap:wrap; gap:10px; padding:0 2px; margin-bottom:4px; }
+.pf-card{ flex:1 1 calc(50% - 5px); min-width:0; min-height:62px; display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:20px; cursor:pointer; text-align:start; font-family:inherit; color:#e2e8f0; -webkit-tap-highlight-color:transparent;
+    background-color:color-mix(in srgb,var(--bg-mid) 86%,#050811);
+    background-image:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--primary) 14%,transparent),transparent 60%), linear-gradient(145deg,rgba(255,255,255,.04),transparent 55%,rgba(0,0,0,.22));
+    border:1px solid rgba(255,255,255,.08); border-top-color:color-mix(in srgb,var(--primary) 28%,rgba(255,255,255,.14));
+    box-shadow:0 8px 18px -8px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08); transition:transform .15s ease, border-color .2s ease, box-shadow .2s ease; }
+.pf-card:active{ transform:scale(.97); border-color:var(--primary); }
+.pf-card > span{ flex:1; min-width:0; font-size:.78rem; font-weight:800; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pf-ic{ width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex:none; font-weight:400;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 34%,transparent),color-mix(in srgb,var(--accent) 26%,transparent)); border:1px solid color-mix(in srgb,var(--primary) 40%,rgba(255,255,255,.1)); }
+.pf-ic i{ font-size:.95rem; color:#fff; }
+.pf-wide, .pf-toggle{ flex-basis:100%; }
+.pf-grid > .pf-admin{ flex-basis:calc(50% - 5px); }
+.pf-admin .pf-ic{ background:rgba(167,139,250,.18); border-color:rgba(167,139,250,.4); }
+.pf-admin .pf-ic i{ color:#c4b5fd; }
+.pf-danger{ color:#fca5a5; border-color:rgba(239,68,68,.3); background-image:radial-gradient(120% 140% at 0% 0%,rgba(239,68,68,.14),transparent 60%); }
+.pf-danger .pf-ic{ background:rgba(239,68,68,.16); border-color:rgba(239,68,68,.38); }
+.pf-danger .pf-ic i{ color:#f87171; }
+.pf-toggle .perf-toggle{ flex:none; }
+.pf-note{ font-size:.6rem; color:#6b7280; text-align:center; margin:8px 4px 0; line-height:1.5; }
+.settings-page-tile.ap-hero-tile{ border-radius:20px; min-height:76px; }

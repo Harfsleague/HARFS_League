@@ -8,7 +8,7 @@
 const HARFS_VERSION_LABEL = "1.47";
 // ============================================================
 // APPEARANCE — Performance (Full/Lite) × Color Scheme (Dark/Light)
-// × Palette (8 presets + Custom). Three independent axes; see
+// × Palette (7 presets + Custom). Three independent axes; see
 // applyAppearance() as the single source of truth.
 // ============================================================
 const PALETTES = [
@@ -18,7 +18,6 @@ const PALETTES = [
     { id:'sunset',   label:'Sunset',    sw:['#c2410c','#fb923c','#f472b6'] },
     { id:'violet',   label:'Violet',    sw:['#6d28d9','#a78bfa','#e879f9'] },
     { id:'cyan',     label:'Cyan',      sw:['#0891b2','#22d3ee','#38bdf8'] },
-    { id:'rosegold', label:'Rose Gold', sw:['#be123c','#fb7185','#fbbf24'] },
     { id:'graphite', label:'Graphite',  sw:['#475569','#e2e8f0','#94a3b8'] },
 ];
 const DEFAULT_CUSTOM = { primary:'#60a5fa', accent:'#818cf8', bg:'#1e1b4b' };
@@ -124,6 +123,7 @@ async function loadCustomFonts(){
 loadCustomFonts();
 
 let currentPalette = localStorage.getItem('palette') || 'ocean';
+if(currentPalette === 'rosegold'){ currentPalette = 'ocean'; try{ localStorage.setItem('palette','ocean'); }catch(e){} }   // Rose Gold was removed from the theme list
 
 // ------------------------------------------------------------
 // PERFORMANCE — two presets: Lite (a one-tap "everything off" shortcut)
@@ -493,12 +493,16 @@ let musicPanelEnabled = localStorage.getItem('musicBeta') === 'on';
 function isMusicAdmin(){   // kept for older callers; the beta switch (not the account) now decides who sees Music
     return true;
 }
-function syncMusicPanelUI(){
+function syncMusicPanelUI(instant){
     document.body.classList.toggle('music-panel-disabled', !musicPanelEnabled);
     const t = document.getElementById('music-panel-toggle');
     if(t) t.classList.toggle('on', musicPanelEnabled);
-    const glow = document.getElementById('music-glow-row');   // the background-glow option only exists while HARFS Music is on
-    if(glow) glow.style.display = musicPanelEnabled ? '' : 'none';
+    // the background-glow option only exists while HARFS Music is on — it slides open / closed smoothly
+    const wrap = document.getElementById('music-glow-wrap');
+    if(wrap){
+        if(instant){ wrap.classList.add('ap-collapse-instant'); wrap.classList.toggle('open', musicPanelEnabled); void wrap.offsetWidth; requestAnimationFrame(() => wrap.classList.remove('ap-collapse-instant')); }
+        else wrap.classList.toggle('open', musicPanelEnabled);
+    }
 }
 function toggleMusicPanelVisibility(){
     haptic([8]);
@@ -513,7 +517,7 @@ function toggleMusicPanelVisibility(){
             : (musicPanelEnabled ? 'HARFS Music (beta) on' : 'HARFS Music off');
     showToast(msg, 'info', 1600);
 }
-syncMusicPanelUI(); // apply the saved choice on startup
+syncMusicPanelUI(true); // apply the saved choice on startup (no animation)
 
 // Music page background glow (the moving colour blobs behind the player) — can be switched off here or from the Music page menu. Saved on this device.
 let musicAmbientEnabled = localStorage.getItem('musicAmbient') !== 'off';

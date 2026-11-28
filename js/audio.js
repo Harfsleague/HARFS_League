@@ -657,7 +657,7 @@ function mpSelectAlbum(albumId){
 }
 // The bubble grows out of its album: above it (caret pointing at the card), or below it when there is no room; right-aligned for the right-hand column.
 function mpPlaceAlbumPop(){
-    const wrap = document.querySelector('#mp-body .mp-album-wrap.open'); if(!wrap) return;
+    const wrap = document.querySelector('#music-screen .mp-album-wrap.open'); if(!wrap) return;
     const pop = wrap.querySelector('.mp-pl-pop'); if(!pop) return;
     const card = wrap.querySelector('.mp-album-card, .mp-site-card'); const cr = card.getBoundingClientRect();
     const rightSide = (cr.left + cr.width / 2) > (window.innerWidth / 2);
@@ -837,7 +837,8 @@ function renderMusicPage(){
     const listHtml = sel === 'all' ? `<div class="mp-hint"><i class="fas fa-hand-pointer"></i><span dir="auto">${escapeHtml(mpT('tapAlbum'))}</span></div>` : '';
     mpQueue = queue;
 
-    body.innerHTML = `
+    const siteSlot = document.getElementById('mp-site-slot');
+    if(siteSlot) siteSlot.innerHTML = `
         <div class="mp-album-wrap mp-site-wrap${siteOpen ? ' open' : ''}">
             <button type="button" class="mp-ben-hero mp-site-card" onclick="mpSelectAlbum('site')" aria-expanded="${siteOpen}">
                 <span class="mp-site-ic"><i class="fas fa-music"></i></span>
@@ -846,7 +847,8 @@ function renderMusicPage(){
                 <i class="fas fa-chevron-down mp-site-chev"></i>
             </button>
             ${sitePop}
-        </div>
+        </div>`;
+    body.innerHTML = `
         <div class="mp-albums-grid">${albumsHtml}${communityHtml}</div>
         ${listHtml}`;
     mpPlaceAlbumPop();

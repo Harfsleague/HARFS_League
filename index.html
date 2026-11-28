@@ -159,6 +159,7 @@
             </div>
             <div class="perf-toggle" id="music-panel-toggle"></div>
         </div>
+        <div class="ap-collapse" id="music-glow-wrap"><div class="ap-collapse-in">
         <div class="perf-option-row" id="music-glow-row" onclick="toggleMusicAmbient()" style="cursor:pointer;">
             <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
             <div class="perf-option-textcol">
@@ -167,6 +168,7 @@
             </div>
             <div class="perf-toggle on" id="music-ambient-toggle"></div>
         </div>
+        </div></div>
         </div>
 
         <div class="ap-card ap-lang-card">
@@ -738,37 +740,27 @@
                 </div>
             </div>
 
+            <div class="settings-section-label">Quick Access</div>
+            <div class="pf-grid">
+                <button type="button" class="pf-card" id="settings-lite-tile" onclick="openLiteSheet()"><b class="pf-ic"><i class="fas fa-life-ring"></i></b><span>Emergency</span></button>
+                <button type="button" class="pf-card" id="settings-notif-tile" onclick="openNotifSheet()"><b class="pf-ic"><i class="fas fa-bell"></i></b><span>Notifications</span></button>
+                <button type="button" class="pf-card" id="settings-devices-tile" onclick="openSessionsSheet()"><b class="pf-ic"><i class="fas fa-mobile-screen-button"></i></b><span>Devices</span></button>
+                <button type="button" class="pf-card" id="settings-tools-section" style="display:none;" onclick="navigate('admin')"><b class="pf-ic"><i class="fas fa-toolbox"></i></b><span>Tools</span></button>
+            </div>
 
             <div id="settings-admin-section" style="display:none;">
                 <div class="settings-section-label">Bayern Admin</div>
-                <div class="settings-page-grid">
-                    <div class="settings-page-tile wide admin-tile" onclick="navigate('admin')">
-                        <i class="fas fa-user-shield" style="margin-right:8px;"></i><span>Admin Panel</span>
-                    </div>
-                    <div class="settings-page-tile wide admin-tile" style="flex-direction:row;justify-content:space-between;cursor:default;" onclick="event.stopPropagation()">
-                        <span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-pen-to-square"></i>Edit Mode</span>
-                        <div class="perf-toggle" id="admin-edit-mode-toggle" onclick="toggleAdminEditMode()"></div>
-                    </div>
+                <div class="pf-grid">
+                    <button type="button" class="pf-card pf-admin" onclick="navigate('admin')"><b class="pf-ic"><i class="fas fa-user-shield"></i></b><span>Admin Panel</span></button>
+                    <div class="pf-card pf-admin pf-toggle" role="button" tabindex="0" onclick="toggleAdminEditMode()"><b class="pf-ic"><i class="fas fa-pen-to-square"></i></b><span>Edit Mode</span><div class="perf-toggle" id="admin-edit-mode-toggle"></div></div>
                 </div>
-                <p style="font-size:0.6rem;color:#6b7280;text-align:center;margin:6px 4px 0;line-height:1.5;">When on: Pin/Edit/Delete appear on Memories.</p>
-            </div>
-
-            <div class="settings-section-label">Quick Access</div>
-            <div class="settings-quick-row">
-                <button type="button" class="settings-quick-btn" id="settings-lite-tile" onclick="openLiteSheet()"><i class="fas fa-life-ring"></i><span>Emergency</span></button>
-                <button type="button" class="settings-quick-btn" id="settings-notif-tile" onclick="openNotifSheet()"><i class="fas fa-bell"></i><span>Notifications</span></button>
-                <button type="button" class="settings-quick-btn" id="settings-devices-tile" onclick="openSessionsSheet()"><i class="fas fa-mobile-screen-button"></i><span>Devices</span></button>
-                <button type="button" class="settings-quick-btn" id="settings-tools-section" style="display:none;" onclick="navigate('admin')"><i class="fas fa-toolbox"></i><span>Tools</span></button>
+                <p class="pf-note">When on: Pin/Edit/Delete appear on Memories.</p>
             </div>
 
             <div class="settings-section-label">Account</div>
-            <div class="settings-page-grid">
-                <div class="settings-page-tile wide danger-tile" id="settings-logout-tile" onclick="logoutTeam()" style="display:none;">
-                    <i class="fas fa-right-from-bracket" style="margin-right:8px;"></i><span>Log Out</span>
-                </div>
-                <div class="settings-page-tile wide" id="settings-signin-tile" onclick="showLoginScreen()" style="display:none;">
-                    <i class="fas fa-right-to-bracket" style="margin-right:8px;"></i><span>Log In / Pick a Team</span>
-                </div>
+            <div class="pf-grid">
+                <button type="button" class="pf-card pf-wide pf-danger" id="settings-logout-tile" onclick="logoutTeam()" style="display:none;"><b class="pf-ic"><i class="fas fa-right-from-bracket"></i></b><span>Log Out</span></button>
+                <button type="button" class="pf-card pf-wide" id="settings-signin-tile" onclick="showLoginScreen()" style="display:none;"><b class="pf-ic"><i class="fas fa-right-to-bracket"></i></b><span>Log In / Pick a Team</span></button>
             </div>
             <div id="settings-app-version" style="text-align:center;font-size:0.58rem;color:#6b7280;opacity:.75;margin:10px 0 2px;letter-spacing:.04em;"></div>
             <button type="button" class="settings-update-btn" id="settings-update-btn" onclick="harfsApplyUpdate()" hidden>
@@ -1266,6 +1258,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Site Default Musics bubble (filled by js/audio.js) -->
+            <div class="mp-site-slot" id="mp-site-slot"></div>
 
             <!-- Library button: Search + albums stay hidden until this is tapped -->
             <button type="button" class="mp-lib-toggle" id="mp-lib-toggle" onclick="mpToggleLibrary()" aria-expanded="false" aria-controls="mp-lib">
