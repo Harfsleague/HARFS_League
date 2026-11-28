@@ -253,6 +253,16 @@ function openFontSheet(){
 function closeFontSheet(){
     document.getElementById('font-sheet').classList.remove('open');
 }
+// Music has its own sheet too (Appearance → Music): HARFS Music on/off, background glow, mini player position
+function openMusicSheet(){
+    haptic([6]);
+    syncMusicPanelUI(true);
+    if(typeof syncMiniPosUI === 'function') syncMiniPosUI();
+    document.getElementById('music-settings-sheet').classList.add('open');
+}
+function closeMusicSheet(){
+    document.getElementById('music-settings-sheet').classList.remove('open');
+}
 // val is 'lite' | 'custom'. Picking 'custom' just switches the source
 // of truth to perfCustom/Auto-Detect (seeded from whatever was active)
 // and reveals the panel below.
@@ -499,11 +509,12 @@ function syncMusicPanelUI(instant){
     if(t) t.classList.toggle('on', musicPanelEnabled);
     if(!musicPanelEnabled && typeof miniMusicClose === 'function') miniMusicClose();
     // the background-glow option only exists while HARFS Music is on — it slides open / closed smoothly
-    const wrap = document.getElementById('music-glow-wrap');
-    if(wrap){
+    const pill = document.getElementById('ap-music-current'); if(pill) pill.textContent = musicPanelEnabled ? 'On' : 'Off';
+    ['music-glow-wrap','music-mini-wrap'].forEach(id => {
+        const wrap = document.getElementById(id); if(!wrap) return;
         if(instant){ wrap.classList.add('ap-collapse-instant'); wrap.classList.toggle('open', musicPanelEnabled); void wrap.offsetWidth; requestAnimationFrame(() => wrap.classList.remove('ap-collapse-instant')); }
         else wrap.classList.toggle('open', musicPanelEnabled);
-    }
+    });
 }
 function toggleMusicPanelVisibility(){
     haptic([8]);

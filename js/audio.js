@@ -582,6 +582,7 @@ async function onMusicPageEntered(){
     if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled){ navigate('main-league'); return; }   // HARFS Music is a beta switch (Appearance → Beta)
     mpApplyStaticLabels();
     closeMusicPlaylistPop();                               // the playlist bubble starts closed
+    if(typeof miniMusicClose === 'function') miniMusicClose(true);   // the mini player folds away when the full page opens
     const scr = document.getElementById('music-screen');   // replay the entrance of every part
     if(scr){ scr.classList.remove('mp-enter'); void scr.offsetWidth; scr.classList.add('mp-enter'); }
     const tabsEl = document.getElementById('mp-tabs'); if(tabsEl) tabsEl.style.setProperty('--ti', ['benyamin','community','all'].indexOf(mpTab));
@@ -1209,11 +1210,25 @@ async function mpDeleteTrack(filename){
 
 
 // ============================================================
-// Mini music player: tap the HARFS capsule at the top -> a small player grows out of it (only while HARFS Music is on).
-// Its round button opens the full Music page. Tap anywhere else to fold it back into the capsule.
+// Mini music player: tap the HARFS capsule at the top -> a player grows out of it (only while HARFS Music is on) and folds back
+// into it when closed. Where it appears (under the capsule / above the bottom bar) is a setting: Appearance -> Music.
+// The square on its left shows the song's cover; tapping it grows the cover to full screen and lands on the Music page.
 // ============================================================
+let miniPos = (localStorage.getItem('miniPos') === 'bottom') ? 'bottom' : 'top';
+function setMiniPos(v){
+    miniPos = (v === 'bottom') ? 'bottom' : 'top';
+    try{ localStorage.setItem('miniPos', miniPos); }catch(e){}
+    if(typeof haptic === 'function') haptic([6]);
+    miniMusicClose(true);
+    syncMiniPosUI();
+}
+function syncMiniPosUI(){ document.querySelectorAll('#mini-pos-segmented .segmented-btn').forEach(b => b.classList.toggle('active', b.dataset.value === miniPos)); }
 function miniMusicEl(){ return document.getElementById('hmini'); }
 function miniMusicIsOpen(){ const m = miniMusicEl(); return !!(m && m.classList.contains('show')); }
+function miniMusicCoverUrl(){
+    const cur = (bgMusic && bgMusic.src && typeof mpCurrentTrackInfo === 'function') ? mpCurrentTrackInfo() : null;
+    return (cur && cur.albumId) ? mpAlbumCoverUrl(cur.albumId) : '';
+}
 function miniMusicSync(){
     const m = miniMusicEl(); if(!m) return;
     const playing = !!(bgMusic && bgMusic.src && !bgMusic.paused);
@@ -1222,6 +1237,14 @@ function miniMusicSync(){
     const t = document.getElementById('hmini-title'); if(t && t.textContent !== title) t.textContent = title;
     m.classList.toggle('playing', playing);
     const pb = document.getElementById('hmini-play'); if(pb) pb.innerHTML = `<i class="fas fa-${playing ? 'pause' : 'play'}"></i>`;
+    const cv = document.getElementById('hmini-cover'), url = miniMusicCoverUrl();
+    if(cv){ cv.style.setProperty('--cv', url ? `url('${url}')` : 'none'); cv.classList.toggle('has-cover', !!url); }
+    // the same little pixel equaliser as everywhere else: moves while a song plays
+    const px = document.getElementById('hmini-px');
+    if(px && typeof npxAttach === 'function'){
+        if(playing && m.classList.contains('show')){ if(!px._on){ px._on = true; npxAttach(px); } }
+        else { if(px._on){ px._on = false; npxDetach(px); } if(!px.firstChild) npxAttach(px), npxDetach(px); }
+    }
     miniMusicProgress();
 }
 function miniMusicProgress(){
@@ -1233,21 +1256,64 @@ function miniMusicOpen(){
     if(typeof musicPanelEnabled !== 'undefined' && !musicPanelEnabled) return;
     if(document.getElementById('music-screen')?.classList.contains('active')) return;   // the full player is already on screen
     if(!mpQueue.length) renderMusicPage();                                              // so previous / next / play have a list to work with
-    const r = cap.getBoundingClientRect();
-    m.style.setProperty('--hm-top', Math.round(r.bottom + 10) + 'px');
-    m.style.setProperty('--hm-ox', '50%');
+    m.classList.add('instant');                                                         // set the start pose without animating to it
+    m.classList.toggle('pos-bottom', miniPos === 'bottom');
+    if(miniPos === 'bottom'){
+        const nav = document.getElementById('bottom-navigation'), nr = nav ? nav.getBoundingClientRect() : null;
+        m.style.setProperty('--hm-bottom', ((nr && nr.height) ? Math.round(window.innerHeight - nr.top + 10) : 96) + 'px');
+    } else {
+        // start pose = exactly the capsule's box, so it truly grows out of it (and folds back into it)
+        const r = cap.getBoundingClientRect(), top = Math.round(r.bottom + 10);
+        m.style.setProperty('--hm-top', top + 'px');
+        const mw = m.offsetWidth || 340, mh = m.offsetHeight || 62;
+        m.style.setProperty('--hm-dy', Math.round((r.top + r.height / 2) - (top + mh / 2)) + 'px');
+        m.style.setProperty('--hm-sx', Math.max(.2, Math.min(1, r.width / mw)).toFixed(3));
+        m.style.setProperty('--hm-sy', Math.max(.2, Math.min(1, r.height / mh)).toFixed(3));
+    }
+    void m.offsetWidth;
+    m.classList.remove('instant');
+    m.classList.add('show'); m.setAttribute('aria-hidden','false');
     miniMusicSync();
-    m.classList.remove('leaving'); m.classList.add('show'); m.setAttribute('aria-hidden','false');
     if(typeof haptic === 'function') haptic([8]);
 }
-function miniMusicClose(){
-    const m = miniMusicEl(); if(!m || !m.classList.contains('show')) return;
+function miniMusicClose(instant){
+    const m = miniMusicEl(); if(!m) return;
+    if(instant){ m.classList.add('instant'); void m.offsetWidth; }
     m.classList.remove('show'); m.setAttribute('aria-hidden','true');
+    const px = document.getElementById('hmini-px'); if(px && px._on){ px._on = false; if(typeof npxDetach === 'function') npxDetach(px); }
+    if(instant) requestAnimationFrame(() => m.classList.remove('instant'));
 }
 function miniMusicPlay(){ mpTogglePlay(); miniMusicSync(); }
 function miniMusicNext(){ if(!mpQueue.length) renderMusicPage(); mpNext(); }
 function miniMusicPrev(){ if(!mpQueue.length) renderMusicPage(); mpPrev(); }
-function miniMusicOpenPage(){ miniMusicClose(); if(typeof haptic === 'function') haptic([8]); openMusicPage(); }
+// the cover square grows from where it is to the whole screen, then the Music page appears and the cover melts away
+function miniMusicExpand(){
+    const cv = document.getElementById('hmini-cover'); if(!cv) return;
+    if(typeof haptic === 'function') haptic([8]);
+    const still = document.body.classList.contains('perf-no-anim') || document.body.classList.contains('lite-mode') || (window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches);
+    const url = miniMusicCoverUrl();
+    if(still || !cv.animate){ miniMusicClose(true); openMusicPage(); return; }
+    const r = cv.getBoundingClientRect();
+    const ov = document.createElement('div');
+    ov.className = 'hmini-grow';
+    ov.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:12px;` +
+        (url ? `background:url('${url}') center/cover no-repeat;` : 'background:linear-gradient(135deg,var(--primary),var(--accent));');
+    ov.innerHTML = url ? '' : '<i class="fas fa-music"></i>';
+    document.body.appendChild(ov);
+    const grow = ov.animate([
+        { left:r.left + 'px', top:r.top + 'px', width:r.width + 'px', height:r.height + 'px', borderRadius:'12px' },
+        { left:'0px', top:'0px', width:'100vw', height:'100vh', borderRadius:'0px' }
+    ], { duration:560, easing:'cubic-bezier(.22,1,.36,1)', fill:'forwards' });
+    const done = () => {
+        miniMusicClose(true);
+        openMusicPage();
+        setTimeout(() => {
+            const fade = ov.animate([{ opacity:1 }, { opacity:0 }], { duration:420, easing:'ease-out', fill:'forwards' });
+            fade.onfinish = () => ov.remove();
+        }, 140);
+    };
+    grow.onfinish = done;
+}
 (function wireMiniMusic(){
     const cap = document.getElementById('hero-logo-container'); if(!cap) return;
     let downAt = 0;
@@ -1266,4 +1332,5 @@ function miniMusicOpenPage(){ miniMusicClose(); if(typeof haptic === 'function')
         bgMusic.addEventListener('timeupdate', miniMusicProgress);
         ['play','pause','ended','loadedmetadata','emptied'].forEach(ev => bgMusic.addEventListener(ev, miniMusicSync));
     }
+    syncMiniPosUI();
 })();

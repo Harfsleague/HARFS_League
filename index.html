@@ -67,13 +67,13 @@
 <!-- Mini music player: grows out of the HARFS capsule when it is tapped (only while HARFS Music is on); the round button opens the full Music page -->
 <div class="hmini" id="hmini" aria-hidden="true">
     <div class="hmini-pill">
-        <div class="hmini-eq" id="hmini-eq" aria-hidden="true"><i></i><i></i><i></i></div>
+        <button type="button" class="hmini-cover" id="hmini-cover" onclick="miniMusicExpand()" aria-label="Open Music"><i class="fas fa-music"></i></button>
         <div class="hmini-meta"><div class="hmini-title" id="hmini-title" dir="auto">Select a song</div><div class="hmini-prog" aria-hidden="true"><i id="hmini-fill"></i></div></div>
         <button type="button" class="hmini-btn" onclick="miniMusicPrev()" aria-label="Previous"><i class="fas fa-backward-step"></i></button>
         <button type="button" class="hmini-btn hmini-play" id="hmini-play" onclick="miniMusicPlay()" aria-label="Play / pause"><i class="fas fa-play"></i></button>
         <button type="button" class="hmini-btn" onclick="miniMusicNext()" aria-label="Next"><i class="fas fa-forward-step"></i></button>
+        <div class="hmini-px pl-px" id="hmini-px" aria-hidden="true"></div>
     </div>
-    <button type="button" class="hmini-open" onclick="miniMusicOpenPage()" aria-label="Open Music"><i class="fas fa-expand"></i></button>
 </div>
 
 <!-- ============ LOGIN SCREEN ============
@@ -161,26 +161,16 @@
 
         </div>
 
-        <div class="ap-card">
-        <div class="appearance-section-label"><i class="fas fa-puzzle-piece"></i><span id="ap-lbl-features">Features</span></div>
-        <div class="perf-option-row" onclick="toggleMusicPanelVisibility()" style="cursor:pointer;">
-            <div class="perf-option-icon"><i class="fas fa-music"></i></div>
-            <div class="perf-option-textcol">
-                <span class="perf-option-title"><span id="music-panel-toggle-lbl">HARFS Music</span> <span class="beta-pill">BETA</span></span>
-                <span class="perf-option-sub">Adds the Music section to the Home page</span>
-            </div>
-            <div class="perf-toggle" id="music-panel-toggle"></div>
-        </div>
-        <div class="ap-collapse" id="music-glow-wrap"><div class="ap-collapse-in">
-        <div class="perf-option-row" id="music-glow-row" onclick="toggleMusicAmbient()" style="cursor:pointer;">
-            <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
-            <div class="perf-option-textcol">
-                <span class="perf-option-title">Music background glow</span>
-                <span class="perf-option-sub">Moving colour glow behind the Music page</span>
-            </div>
-            <div class="perf-toggle on" id="music-ambient-toggle"></div>
-        </div>
-        </div></div>
+        <div class="ap-card ap-font-card">
+            <button type="button" class="lang-toggle-btn" id="ap-music-btn" onclick="openMusicSheet()">
+                <div class="perf-option-icon"><i class="fas fa-music"></i></div>
+                <div class="perf-option-textcol">
+                    <span class="perf-option-title">Music</span>
+                    <span class="perf-option-sub">HARFS Music, glow &amp; mini player</span>
+                </div>
+                <span class="lang-current-pill" id="ap-music-current"></span>
+                <i class="fas fa-chevron-right lang-chevron"></i>
+            </button>
         </div>
 
         <div class="ap-card ap-lang-card">
@@ -239,6 +229,49 @@
             <button class="font-size-btn large" onclick="adjustFontSize('magazine',10)" id="magazine-font-size-plus" title="Larger text"><i class="fas fa-plus"></i></button>
         </div>
         </div>
+    </div>
+</div>
+
+<!-- Music settings sheet (opened from Appearance → Music) -->
+<div class="team-picker-sheet as-modal" id="music-settings-sheet" onclick="if(event.target===this)closeMusicSheet()">
+    <div class="team-picker-panel appearance-panel team-modal">
+        <div class="modal-x-close" onclick="closeMusicSheet()"><i class="fas fa-times"></i></div>
+        <div class="team-picker-handle"></div>
+        <div class="team-picker-title">Music</div>
+
+        <div class="ap-card">
+        <div class="appearance-section-label"><i class="fas fa-puzzle-piece"></i><span id="ap-lbl-features">Features</span></div>
+        <div class="perf-option-row" onclick="toggleMusicPanelVisibility()" style="cursor:pointer;">
+            <div class="perf-option-icon"><i class="fas fa-music"></i></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title"><span id="music-panel-toggle-lbl">HARFS Music</span> <span class="beta-pill">BETA</span></span>
+                <span class="perf-option-sub">Adds the Music section to the Home page</span>
+            </div>
+            <div class="perf-toggle" id="music-panel-toggle"></div>
+        </div>
+        <div class="ap-collapse" id="music-glow-wrap"><div class="ap-collapse-in">
+        <div class="perf-option-row" id="music-glow-row" onclick="toggleMusicAmbient()" style="cursor:pointer;">
+            <div class="perf-option-icon"><i class="fas fa-sun"></i></div>
+            <div class="perf-option-textcol">
+                <span class="perf-option-title">Music background glow</span>
+                <span class="perf-option-sub">Moving colour glow behind the Music page</span>
+            </div>
+            <div class="perf-toggle on" id="music-ambient-toggle"></div>
+        </div>
+        </div></div>
+        </div>
+
+        <div class="ap-collapse" id="music-mini-wrap"><div class="ap-collapse-in">
+        <div class="ap-card">
+            <div class="appearance-section-label"><i class="fas fa-window-maximize"></i><span>Mini player</span></div>
+            <div class="perf-option-sub" style="padding:0 2px 10px;line-height:1.5;">Tap HARFS at the top and the mini player pops out. Choose where it appears.</div>
+            <div class="segmented-control" id="mini-pos-segmented">
+                <button type="button" class="segmented-btn" data-value="top" onclick="setMiniPos('top')"><i class="fas fa-arrow-up"></i> Top</button>
+                <button type="button" class="segmented-btn" data-value="bottom" onclick="setMiniPos('bottom')"><i class="fas fa-arrow-down"></i> Bottom</button>
+            </div>
+            <div class="perf-option-sub" style="padding:9px 2px 0;line-height:1.5;">Bottom = just above the Home / Season / Profile bar.</div>
+        </div>
+        </div></div>
     </div>
 </div>
 
@@ -1225,6 +1258,7 @@
         <div class="mp-ambient" id="mp-ambient" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="mp-wrap">
             <div class="mp-topbar">
+                <button type="button" class="mp-menu-btn mp-back-btn" onclick="navigate('main-league')" aria-label="Back"><i class="fas fa-chevron-left"></i></button>
                 <div class="mp-topbar-title">
                     <i class="fas fa-headphones"></i>
                     <span id="mp-header-title">MUSIC</span>

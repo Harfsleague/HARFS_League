@@ -3711,33 +3711,43 @@ body.perf-no-anim .mp-stage-in *, body.lite-mode .mp-stage-in *, body.perf-no-an
 #hmp-pl-pop .mp-pl-stage{ max-height:var(--sh,300px); }
 #hmp-pl-pop .mp-pl-list{ max-height:none; overflow:visible; }
 
-/* ===== mini music player under the HARFS capsule ===== */
-.hmini{ position:fixed; left:50%; top:var(--hm-top,84px); z-index:199; width:min(372px,calc(100vw - 20px)); display:flex; align-items:center; gap:10px;
-    transform-origin:var(--hm-ox,50%) 0; transform:translateX(-50%) translateY(-38px) scale(.3); opacity:0; visibility:hidden; pointer-events:none;
-    transition:transform .45s cubic-bezier(.55,0,.8,.3), opacity .28s ease, visibility 0s linear .45s; }
-.hmini.show{ transform:translateX(-50%); opacity:1; visibility:visible; pointer-events:auto; transition:transform .7s cubic-bezier(.34,1.42,.5,1), opacity .35s ease, visibility 0s; }
-.hmini-pill, .hmini-open{
+/* ===== mini music player (grows out of the HARFS capsule, folds back into it) ===== */
+.hmini{ position:fixed; left:50%; top:var(--hm-top,84px); z-index:199; width:min(560px,calc(100vw - 20px)); height:62px; box-sizing:border-box;
+    transform-origin:50% 50%; transform:translateX(-50%) translateY(var(--hm-dy,-44px)) scale(var(--hm-sx,.5),var(--hm-sy,.9)); opacity:0; visibility:hidden; pointer-events:none;
+    transition:transform .5s cubic-bezier(.6,0,.35,1), opacity .2s ease .3s, visibility 0s linear .5s; }
+.hmini.show{ transform:translateX(-50%); opacity:1; visibility:visible; pointer-events:auto;
+    transition:transform .75s cubic-bezier(.34,1.32,.5,1), opacity .18s ease, visibility 0s; }
+.hmini.pos-bottom{ top:auto; bottom:var(--hm-bottom,96px); transform-origin:50% 100%; transform:translateX(-50%) translateY(36px) scale(.9); }
+.hmini.pos-bottom.show{ transform:translateX(-50%); }
+.hmini.instant{ transition:none !important; }
+.hmini-pill{
+    width:100%; height:100%; box-sizing:border-box; display:flex; align-items:center; gap:9px; padding:0 14px 0 9px; border-radius:24px;
     background-color:color-mix(in srgb,var(--bg-to) 28%,rgba(4,8,18,0.34));
     background-image:radial-gradient(130% 90% at 14% 0%,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.03) 34%,transparent 58%), linear-gradient(180deg,rgba(255,255,255,0.12) 0%,rgba(255,255,255,0.01) 16%,rgba(0,0,0,0.18) 100%);
     -webkit-backdrop-filter:blur(10px) saturate(185%); backdrop-filter:blur(10px) saturate(185%);
     border:1px solid rgba(255,255,255,0.16); border-top-color:rgba(255,255,255,0.4);
     box-shadow:0 16px 32px -8px rgba(0,0,0,0.6), inset 0 1.5px 1px rgba(255,255,255,0.4), inset 0 0 14px rgba(0,0,0,0.34); }
-body.perf-no-blur .hmini-pill, body.perf-no-blur .hmini-open, body.lite-mode .hmini-pill, body.lite-mode .hmini-open{ background-color:var(--bg-mid); background-image:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
-.hmini-pill{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; height:52px; padding:0 8px 0 12px; border-radius:26px; }
-.hmini-open{ flex:none; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.95rem; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:scale .2s cubic-bezier(.22,1,.36,1); }
-.hmini-open:active{ scale:.9; }
-.hmini-eq{ flex:none; display:flex; align-items:flex-end; gap:3px; width:20px; height:20px; }
-.hmini-eq i{ flex:1; height:30%; border-radius:2px; background:linear-gradient(180deg,var(--primary),var(--accent)); transform-origin:bottom; }
-.hmini.playing .hmini-eq i{ animation:hminiEq 1s ease-in-out infinite alternate; }
-.hmini.playing .hmini-eq i:nth-child(2){ animation-duration:.8s; animation-delay:-.3s; }
-.hmini.playing .hmini-eq i:nth-child(3){ animation-duration:1.2s; animation-delay:-.6s; }
-@keyframes hminiEq{ 0%{ height:25%; } 100%{ height:100%; } }
-.hmini-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
-.hmini-title{ font-size:.76rem; font-weight:800; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+body.perf-no-blur .hmini-pill, body.lite-mode .hmini-pill{ background-color:var(--bg-mid); background-image:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+.hmini-cover{ flex:none; position:relative; width:44px; height:44px; border-radius:12px; border:0; padding:0; cursor:pointer; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.05rem;
+    background:var(--cv,none) center/cover no-repeat, linear-gradient(135deg,var(--primary),var(--accent));
+    box-shadow:0 6px 14px -5px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.22); -webkit-tap-highlight-color:transparent; transition:transform .25s cubic-bezier(.22,1,.36,1); }
+.hmini-cover:active{ transform:scale(.9); }
+.hmini-cover.has-cover i{ display:none; }
+.hmini-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.hmini-title{ font-size:.78rem; font-weight:800; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hmini-prog{ height:3px; border-radius:3px; background:rgba(255,255,255,.14); overflow:hidden; }
 .hmini-prog i{ display:block; height:100%; width:100%; transform-origin:left; transform:scaleX(0); background:linear-gradient(90deg,var(--primary),var(--accent)); transition:transform .3s linear; }
 .hmini-btn{ flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#e2e8f0; font-size:.8rem; background:none; border:0; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .2s ease, background .2s ease; }
 .hmini-btn:active{ transform:scale(.86); background:rgba(255,255,255,.12); }
 .hmini-play{ width:38px; height:38px; font-size:.85rem; color:#fff; background:linear-gradient(135deg,var(--primary),var(--accent)); box-shadow:0 6px 14px -4px var(--primary-glow); }
-body.perf-no-anim .hmini, body.perf-no-anim .hmini.show, body.lite-mode .hmini, body.lite-mode .hmini.show{ transition:opacity .15s ease, visibility 0s; transform:translateX(-50%); }
-body.perf-no-anim .hmini.playing .hmini-eq i{ animation:none; height:60%; }
+.hmini-px{ flex:none; margin-left:3px; opacity:.4; transition:opacity .35s ease; }
+.hmini.playing .hmini-px{ opacity:1; }
+body.perf-no-anim .hmini, body.perf-no-anim .hmini.show, body.lite-mode .hmini, body.lite-mode .hmini.show{ transition:opacity .15s ease, visibility 0s; }
+/* the cover growing to full screen */
+.hmini-grow{ position:fixed; z-index:900; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.9); font-size:3rem; overflow:hidden; pointer-events:none; box-shadow:0 20px 50px -10px rgba(0,0,0,.7); }
+
+/* Appearance -> Music sheet */
+#music-settings-sheet .ap-card:first-of-type{ margin-top:10px; }
+#music-settings-sheet.open .team-picker-title + .ap-card{ animation:cardIn .35s ease .1s both; }
+#music-settings-sheet .appearance-section-label{ display:flex; align-items:center; gap:8px; }
+#music-mini-wrap .ap-card{ margin-top:0; }
